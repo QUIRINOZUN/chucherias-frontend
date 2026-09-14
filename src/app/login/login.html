@@ -1,0 +1,34 @@
+<div class="login-container">
+  <form (ngSubmit)="onSubmit()">
+    <h1>CHUCHERIAS</h1>
+    <p>Inicia sesión para continuar</p>
+
+    <label for="usuario">Usuario</label>
+    <input
+      id="usuario"
+      type="text"
+      name="usuario"
+      [(ngModel)]="usuario"
+      required
+      autocomplete="username"
+    />
+
+    <label for="contrasena">Contraseña</label>
+    <input
+      id="contrasena"
+      type="password"
+      name="contrasena"
+      [(ngModel)]="contrasena"
+      required
+      autocomplete="current-password"
+    />
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+
+    <button type="submit" [disabled]="cargando()">
+      {{ cargando() ? 'Ingresando...' : 'Ingresar' }}
+    </button>
+  </form>
+</div>

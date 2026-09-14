@@ -1,0 +1,8 @@
+<div class="dashboard-container">
+  @if (authService.usuarioActual(); as usuario) {
+    <h1>Bienvenido, {{ usuario.nombre }}</h1>
+    <p>Rol: {{ usuario.rol }}</p>
+  }
+
+  <button (click)="authService.logout()">Cerrar sesión</button>
+</div>
