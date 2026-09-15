@@ -1,34 +1,69 @@
 <div class="login-container">
-  <form (ngSubmit)="onSubmit()">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
     <h1>CHUCHERIAS</h1>
-    <p>Inicia sesión para continuar</p>
+    <p class="subtitulo">Inicia sesión para continuar</p>
 
-    <label for="usuario">Usuario</label>
-    <input
-      id="usuario"
-      type="text"
-      name="usuario"
-      [(ngModel)]="usuario"
-      required
-      autocomplete="username"
-    />
+    <div class="campo">
+      <label for="usuario">Usuario</label>
+      <input
+        id="usuario"
+        type="text"
+        formControlName="usuario"
+        autocomplete="username"
+        [class.campo-invalido]="usuarioInvalido"
+      />
+      @if (usuarioInvalido) {
+        <span class="mensaje-error-campo">
+          @if (form.get('usuario')?.hasError('required')) {
+            El usuario es obligatorio.
+          } @else if (form.get('usuario')?.hasError('minlength')) {
+            El usuario debe tener al menos 3 caracteres.
+          }
+        </span>
+      }
+    </div>
 
-    <label for="contrasena">Contraseña</label>
-    <input
-      id="contrasena"
-      type="password"
-      name="contrasena"
-      [(ngModel)]="contrasena"
-      required
-      autocomplete="current-password"
-    />
+    <div class="campo">
+      <label for="contrasena">Contraseña</label>
+      <div class="campo-contrasena">
+        <input
+          id="contrasena"
+          [type]="mostrarContrasena() ? 'text' : 'password'"
+          formControlName="contrasena"
+          autocomplete="current-password"
+          [class.campo-invalido]="contrasenaInvalida"
+        />
+        <button
+          type="button"
+          class="boton-mostrar"
+          (click)="alternarVisibilidadContrasena()"
+          tabindex="-1"
+        >
+          {{ mostrarContrasena() ? 'Ocultar' : 'Mostrar' }}
+        </button>
+      </div>
+      @if (contrasenaInvalida) {
+        <span class="mensaje-error-campo">
+          @if (form.get('contrasena')?.hasError('required')) {
+            La contraseña es obligatoria.
+          } @else if (form.get('contrasena')?.hasError('minlength')) {
+            La contraseña debe tener al menos 6 caracteres.
+          }
+        </span>
+      }
+    </div>
 
     @if (error()) {
-      <p class="error">{{ error() }}</p>
+      <div class="mensaje-error-general">{{ error() }}</div>
     }
 
-    <button type="submit" [disabled]="cargando()">
-      {{ cargando() ? 'Ingresando...' : 'Ingresar' }}
+    <button type="submit" class="boton-enviar" [disabled]="cargando()">
+      @if (cargando()) {
+        <span class="spinner"></span>
+        Ingresando...
+      } @else {
+        Ingresar
+      }
     </button>
   </form>
 </div>
