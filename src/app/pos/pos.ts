@@ -40,6 +40,7 @@ export class PosComponent implements OnInit {
   categorias = signal<Categoria[]>([]);
   productos = signal<Producto[]>([]);
   categoriaSeleccionada = signal<number | null>(null);
+  productosExpandidos = signal<ReadonlySet<number>>(new Set());
   carrito = signal<ItemCarrito[]>([]);
   carritoAbierto = signal(false);
 
@@ -108,6 +109,26 @@ export class PosComponent implements OnInit {
     this.categoriaSeleccionada.set(categoriaId);
   }
 
+  estaExpandido(productoId: number): boolean {
+    return this.productosExpandidos().has(productoId);
+  }
+
+  alternarExpansion(productoId: number): void {
+    this.productosExpandidos.update((actuales) => {
+      const nuevo = new Set(actuales);
+      if (nuevo.has(productoId)) {
+        nuevo.delete(productoId);
+      } else {
+        nuevo.add(productoId);
+      }
+      return nuevo;
+    });
+  }
+
+  precioDesde(producto: Producto): number {
+    return Math.min(...producto.variantes.map((v) => v.precio));
+  }
+
   agregarAlCarrito(producto: Producto, variante: Variante): void {
     this.carrito.update((items) => {
       const existente = items.find((item) => item.varianteId === variante.id);
@@ -127,6 +148,17 @@ export class PosComponent implements OnInit {
           notas: '',
         },
       ];
+    });
+
+    // La tarjeta se cierra sola tras agregar: confirma la acción de un
+    // vistazo y libera espacio para seguir viendo el resto del menú.
+    this.productosExpandidos.update((actuales) => {
+      if (!actuales.has(producto.id)) {
+        return actuales;
+      }
+      const nuevo = new Set(actuales);
+      nuevo.delete(producto.id);
+      return nuevo;
     });
   }
 

@@ -46,31 +46,57 @@
         } @else {
           <div class="grid-productos">
             @for (producto of productosFiltrados(); track producto.id) {
-              <article class="tarjeta-producto" [style.--color-categoria]="estiloCategoria(producto.categoria).color">
-                @if (producto.imagen_url) {
-                  <img [src]="producto.imagen_url" [alt]="producto.nombre" class="imagen-producto" />
-                }
-                <div class="info-producto">
-                  <span class="insignia-categoria">
-                    {{ estiloCategoria(producto.categoria).icono }} {{ producto.categoria }}
-                  </span>
-                  <h3>{{ producto.nombre }}</h3>
-                  @if (producto.descripcion) {
-                    <p class="descripcion-producto">{{ producto.descripcion }}</p>
+              <article
+                class="tarjeta-producto"
+                [class.tarjeta-expandida]="estaExpandido(producto.id)"
+                [style.--color-categoria]="estiloCategoria(producto.categoria).color"
+              >
+                <button
+                  type="button"
+                  class="cabecera-producto"
+                  (click)="alternarExpansion(producto.id)"
+                  [attr.aria-expanded]="estaExpandido(producto.id)"
+                >
+                  @if (producto.imagen_url) {
+                    <img [src]="producto.imagen_url" [alt]="producto.nombre" class="imagen-producto" />
+                  } @else {
+                    <div class="imagen-marcador">
+                      <span class="imagen-marcador-icono">{{ estiloCategoria(producto.categoria).icono }}</span>
+                    </div>
                   }
-                  <div class="variantes">
-                    @for (variante of producto.variantes; track variante.id) {
-                      <button
-                        type="button"
-                        class="boton-variante"
-                        (click)="agregarAlCarrito(producto, variante)"
-                      >
-                        <span>{{ variante.nombre }}</span>
-                        <span class="precio-variante">{{ variante.precio | currency: 'MXN' }}</span>
-                      </button>
-                    }
+                  <div class="info-producto">
+                    <span class="insignia-categoria">
+                      {{ estiloCategoria(producto.categoria).icono }} {{ producto.categoria }}
+                    </span>
+                    <h3>{{ producto.nombre }}</h3>
+                    <div class="fila-precio-flecha">
+                      <span class="precio-desde">
+                        {{ producto.variantes.length > 1 ? 'Desde ' : '' }}{{ precioDesde(producto) | currency: 'MXN' }}
+                      </span>
+                      <span class="flecha-expandir">{{ estaExpandido(producto.id) ? '▲' : '▼' }}</span>
+                    </div>
                   </div>
-                </div>
+                </button>
+
+                @if (estaExpandido(producto.id)) {
+                  <div class="detalle-producto">
+                    @if (producto.descripcion) {
+                      <p class="descripcion-producto">{{ producto.descripcion }}</p>
+                    }
+                    <div class="variantes">
+                      @for (variante of producto.variantes; track variante.id) {
+                        <button
+                          type="button"
+                          class="boton-variante"
+                          (click)="agregarAlCarrito(producto, variante)"
+                        >
+                          <span>{{ variante.nombre }}</span>
+                          <span class="precio-variante">{{ variante.precio | currency: 'MXN' }}</span>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
               </article>
             }
           </div>
