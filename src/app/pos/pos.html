@@ -1,0 +1,280 @@
+<div class="pos-container">
+  <header class="pos-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">← Volver</button>
+    <h1>Punto de venta</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+    >
+      {{ themeService.tema() === 'dark' ? '☀️' : '🌙' }}
+    </button>
+  </header>
+
+  <div class="pos-cuerpo">
+    <section class="pos-menu">
+      @if (cargando()) {
+        <p class="mensaje-estado">Cargando menú...</p>
+      } @else if (errorCarga()) {
+        <p class="mensaje-estado mensaje-error">{{ errorCarga() }}</p>
+      } @else {
+        <div class="categorias">
+          <button
+            type="button"
+            class="chip-categoria"
+            [class.chip-activa]="categoriaSeleccionada() === null"
+            (click)="seleccionarCategoria(null)"
+          >
+            🧾 Todas
+          </button>
+          @for (categoria of categorias(); track categoria.id) {
+            <button
+              type="button"
+              class="chip-categoria"
+              [class.chip-activa]="categoriaSeleccionada() === categoria.id"
+              [style.--color-chip]="estiloCategoria(categoria.nombre).color"
+              (click)="seleccionarCategoria(categoria.id)"
+            >
+              {{ estiloCategoria(categoria.nombre).icono }} {{ categoria.nombre }}
+            </button>
+          }
+        </div>
+
+        @if (productosFiltrados().length === 0) {
+          <p class="mensaje-estado">No hay productos en esta categoría.</p>
+        } @else {
+          <div class="grid-productos">
+            @for (producto of productosFiltrados(); track producto.id) {
+              <article class="tarjeta-producto" [style.--color-categoria]="estiloCategoria(producto.categoria).color">
+                @if (producto.imagen_url) {
+                  <img [src]="producto.imagen_url" [alt]="producto.nombre" class="imagen-producto" />
+                }
+                <div class="info-producto">
+                  <span class="insignia-categoria">
+                    {{ estiloCategoria(producto.categoria).icono }} {{ producto.categoria }}
+                  </span>
+                  <h3>{{ producto.nombre }}</h3>
+                  @if (producto.descripcion) {
+                    <p class="descripcion-producto">{{ producto.descripcion }}</p>
+                  }
+                  <div class="variantes">
+                    @for (variante of producto.variantes; track variante.id) {
+                      <button
+                        type="button"
+                        class="boton-variante"
+                        (click)="agregarAlCarrito(producto, variante)"
+                      >
+                        <span>{{ variante.nombre }}</span>
+                        <span class="precio-variante">{{ variante.precio | currency: 'MXN' }}</span>
+                      </button>
+                    }
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      }
+    </section>
+
+    <!-- En pantallas anchas es la barra lateral fija; en angostas, un panel
+         deslizable desde abajo que se abre con el botón flotante. -->
+    <aside class="pos-carrito" [class.carrito-abierto-movil]="carritoAbierto()">
+      <div class="carrito-encabezado">
+        <h2>Carrito</h2>
+        <button type="button" class="boton-cerrar-carrito" (click)="cerrarCarrito()" aria-label="Cerrar carrito">
+          ✕
+        </button>
+      </div>
+
+      @if (carrito().length === 0) {
+        <p class="mensaje-estado">Aún no has agregado productos.</p>
+      } @else {
+        <ul class="lista-carrito">
+          @for (item of carrito(); track item.varianteId) {
+            <li class="item-carrito">
+              <div class="item-fila">
+                <div class="item-info">
+                  <span class="item-nombre">{{ item.productoNombre }}</span>
+                  <span class="item-variante">{{ item.varianteNombre }}</span>
+                </div>
+                <div class="item-controles">
+                  <button type="button" (click)="decrementar(item)" aria-label="Quitar uno">−</button>
+                  <span class="item-cantidad">{{ item.cantidad }}</span>
+                  <button type="button" (click)="incrementar(item)" aria-label="Agregar uno">+</button>
+                </div>
+                <span class="item-subtotal">{{ item.precio * item.cantidad | currency: 'MXN' }}</span>
+                <button
+                  type="button"
+                  class="boton-quitar"
+                  (click)="quitarDelCarrito(item)"
+                  aria-label="Eliminar producto"
+                >
+                  ✕
+                </button>
+              </div>
+              <input
+                type="text"
+                class="item-notas"
+                placeholder="Sin cebolla, salsa BBQ, extra queso..."
+                [value]="item.notas"
+                (input)="actualizarNotas(item, $any($event.target).value)"
+              />
+            </li>
+          }
+        </ul>
+
+        <div class="resumen-carrito">
+          <span>Total ({{ cantidadItems() }} {{ cantidadItems() === 1 ? 'artículo' : 'artículos' }})</span>
+          <span class="total-monto">{{ totalCarrito() | currency: 'MXN' }}</span>
+        </div>
+
+        <button type="button" class="boton-cobrar" (click)="abrirCobro()">Cobrar</button>
+      }
+    </aside>
+
+    <!-- Fondo oscuro detrás del panel deslizable, solo en móvil -->
+    @if (carritoAbierto()) {
+      <div class="fondo-carrito-movil" (click)="cerrarCarrito()"></div>
+    }
+  </div>
+
+  <!-- Botón flotante: única forma de llegar al carrito en pantallas angostas -->
+  @if (carrito().length > 0 && !carritoAbierto()) {
+    <button type="button" class="boton-flotante-carrito" (click)="abrirCarrito()">
+      <span class="fab-icono">🧾</span>
+      <span class="fab-texto">
+        {{ cantidadItems() }} {{ cantidadItems() === 1 ? 'artículo' : 'artículos' }} · {{ totalCarrito() | currency: 'MXN' }}
+      </span>
+    </button>
+  }
+
+  @if (mostrarCobro()) {
+    <div class="overlay">
+      <div class="panel-cobro">
+        @if (recibo(); as r) {
+          <div class="comprobante" id="comprobante-imprimible">
+            <div class="comprobante-encabezado">
+              <h2>CHUCHERIAS</h2>
+              <p class="venta-registrada-badge">Venta registrada</p>
+              <p class="comprobante-orden">Orden {{ r.venta.orden.numero_orden }}</p>
+              <p class="comprobante-fecha">{{ r.fecha | date: 'dd/MM/yyyy HH:mm' }}</p>
+              @if (r.cajero) {
+                <p class="comprobante-cajero">Atendió: {{ r.cajero }}</p>
+              }
+            </div>
+
+            <ul class="comprobante-items">
+              @for (item of r.items; track item.varianteId) {
+                <li>
+                  <div class="comprobante-item-linea">
+                    <span>{{ item.cantidad }}× {{ item.productoNombre }} ({{ item.varianteNombre }})</span>
+                    <span>{{ item.precio * item.cantidad | currency: 'MXN' }}</span>
+                  </div>
+                  @if (item.notas) {
+                    <p class="comprobante-item-notas">{{ item.notas }}</p>
+                  }
+                </li>
+              }
+            </ul>
+
+            <div class="comprobante-totales">
+              <div class="comprobante-linea">
+                <span>Subtotal</span>
+                <span>{{ r.subtotal | currency: 'MXN' }}</span>
+              </div>
+              <div class="comprobante-linea comprobante-total-final">
+                <span>Total</span>
+                <span>{{ r.total | currency: 'MXN' }}</span>
+              </div>
+              <div class="comprobante-linea">
+                <span>Método de pago</span>
+                <span>{{ r.metodoPago === 'efectivo' ? 'Efectivo' : 'Transferencia' }}</span>
+              </div>
+              @if (r.metodoPago === 'efectivo') {
+                <div class="comprobante-linea">
+                  <span>Recibido</span>
+                  <span>{{ r.montoRecibido | currency: 'MXN' }}</span>
+                </div>
+                <div class="comprobante-linea">
+                  <span>Cambio</span>
+                  <span>{{ r.cambio | currency: 'MXN' }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="comprobante-acciones">
+              <button type="button" class="boton-cancelar" (click)="imprimirRecibo()">Imprimir</button>
+              <button type="button" class="boton-confirmar" (click)="nuevaVenta()">Nueva venta</button>
+            </div>
+          </div>
+        } @else {
+          <h2>Cobrar</h2>
+          <p class="total-a-pagar">Total a pagar: <strong>{{ totalCarrito() | currency: 'MXN' }}</strong></p>
+
+          <div class="metodos-pago">
+            <button
+              type="button"
+              class="boton-metodo"
+              [class.metodo-activo]="metodoPago() === 'efectivo'"
+              (click)="seleccionarMetodoPago('efectivo')"
+            >
+              Efectivo
+            </button>
+            <button
+              type="button"
+              class="boton-metodo"
+              [class.metodo-activo]="metodoPago() === 'transferencia'"
+              (click)="seleccionarMetodoPago('transferencia')"
+            >
+              Transferencia
+            </button>
+          </div>
+
+          @if (metodoPago() === 'efectivo') {
+            <div class="campo-monto">
+              <label for="monto-recibido">Monto recibido</label>
+              <input
+                id="monto-recibido"
+                type="number"
+                min="0"
+                step="0.01"
+                [value]="montoRecibido() ?? ''"
+                (input)="actualizarMontoRecibido($any($event.target).value)"
+              />
+            </div>
+
+            @if (montoRecibido() != null) {
+              <div class="cambio" [class.cambio-invalido]="(cambio() ?? -1) < 0">
+                @if ((cambio() ?? -1) < 0) {
+                  <span>Falta {{ (totalCarrito() - (montoRecibido() ?? 0)) | currency: 'MXN' }}</span>
+                } @else {
+                  <span>Cambio: {{ cambio() | currency: 'MXN' }}</span>
+                }
+              </div>
+            }
+          }
+
+          @if (errorVenta()) {
+            <p class="mensaje-error">{{ errorVenta() }}</p>
+          }
+
+          <div class="acciones-cobro">
+            <button type="button" class="boton-cancelar" (click)="cerrarCobro()" [disabled]="procesandoVenta()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton-confirmar"
+              (click)="confirmarVenta()"
+              [disabled]="!puedeConfirmar()"
+            >
+              {{ procesandoVenta() ? 'Procesando...' : 'Confirmar venta' }}
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

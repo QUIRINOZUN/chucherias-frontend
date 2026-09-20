@@ -6,6 +6,18 @@
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <script>
+      // Aplica el tema guardado antes de que Angular arranque, para evitar
+      // un parpadeo del tema por defecto al cargar la página.
+      (function () {
+        try {
+          var tema = localStorage.getItem('tema');
+          document.documentElement.setAttribute('data-theme', tema === 'light' ? 'light' : 'dark');
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <app-root></app-root>

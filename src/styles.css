@@ -1,1 +1,62 @@
 /* You can add global styles to this file, and also import other style files */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ===================== Sistema de temas (POS) =====================
+   Oscuro es el tema por defecto; [data-theme="light"] lo sobreescribe.
+   El color de cada categoría es el mismo en ambos temas (ya se validó
+   que da suficiente contraste sobre tarjeta clara y oscura); solo la
+   superficie y el texto cambian entre temas. */
+:root {
+  color-scheme: dark;
+
+  --pos-bg-main: #0f172a;
+  --pos-bg-card: #1e293b;
+  --pos-bg-sidebar: #0b1220;
+  --pos-border: #334155;
+  --pos-text-primary: #f8fafc;
+  --pos-text-secondary: #94a3b8;
+  --pos-text-muted: #64748b;
+
+  --cat-hamburguesas: #d85900;
+  --cat-pizzas: #e14660;
+  --cat-alitas: #b05ad3;
+  --cat-snacks: #009d82;
+  --cat-crepas: #0097aa;
+  --cat-bebidas: #1d84f5;
+
+  --action-success: #15803d;
+  --action-success-hover: #166534;
+  --action-danger: #dc2626;
+  --action-danger-hover: #b91c1c;
+
+  --pos-radio: 10px;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --pos-bg-main: #f8fafc;
+  --pos-bg-card: #ffffff;
+  --pos-bg-sidebar: #f1f5f9;
+  --pos-border: #e2e8f0;
+  --pos-text-primary: #0f172a;
+  --pos-text-secondary: #475569;
+  --pos-text-muted: #94a3b8;
+}
+
+body {
+  margin: 0;
+  background: var(--pos-bg-main);
+}
+
+/* Un recibo nunca debe imprimirse con fondo oscuro, sin importar el tema activo. */
+@media print {
+  :root {
+    color-scheme: light;
+  }
+}
