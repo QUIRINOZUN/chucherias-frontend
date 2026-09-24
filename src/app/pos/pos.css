@@ -76,11 +76,38 @@
   color: var(--action-danger);
 }
 
+.campo-busqueda {
+  margin-bottom: 14px;
+}
+
+.campo-busqueda input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 0.95rem;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--pos-radio);
+  background: var(--pos-bg-card);
+  color: var(--pos-text-primary);
+}
+
+.campo-busqueda input:focus {
+  outline: none;
+  border-color: var(--pos-text-secondary);
+}
+
 .categorias {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 20px;
+  transition: opacity 0.15s ease;
+}
+
+.categorias.categorias-inactivas {
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 .chip-categoria {
@@ -168,10 +195,14 @@
 }
 
 .insignia-categoria {
+  /* El ícono ya es a color por sí mismo (los emoji no toman "color" de
+     CSS); el texto se queda en tinta neutra para no arriesgar contraste
+     AA con 12 tonos distintos — el color vive en el ícono y en el borde
+     izquierdo de la tarjeta, nunca en texto pequeño. */
   align-self: flex-start;
   font-size: 0.72rem;
   font-weight: 600;
-  color: var(--color-categoria, var(--pos-text-secondary));
+  color: var(--pos-text-secondary);
 }
 
 .info-producto h3 {
@@ -345,11 +376,56 @@
   gap: 8px;
 }
 
+.boton-separar-unidad {
+  width: 100%;
+  min-height: 36px;
+  margin-top: 6px;
+  padding: 0 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px dashed var(--pos-border);
+  border-radius: 6px;
+  background: none;
+  color: var(--pos-text-secondary);
+  cursor: pointer;
+}
+
+.boton-separar-unidad:hover {
+  border-color: var(--pos-text-primary);
+  color: var(--pos-text-primary);
+}
+
+.item-personalizacion {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.boton-quitar-ingredientes {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--pos-border);
+  border-radius: 6px;
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.boton-quitar-ingredientes.boton-quitar-activo {
+  border-color: var(--action-danger);
+  color: var(--action-danger);
+  background: color-mix(in srgb, var(--action-danger) 12%, var(--pos-bg-main));
+}
+
 .item-notas {
   width: 100%;
   box-sizing: border-box;
-  margin-top: 6px;
-  padding: 8px;
+  min-height: 36px;
+  padding: 0 8px;
   font-size: 0.78rem;
   border: 1px solid var(--pos-border);
   border-radius: 6px;
@@ -364,6 +440,34 @@
 
 .item-notas::placeholder {
   color: var(--pos-text-muted);
+}
+
+.lista-ingredientes-quitar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px dashed var(--pos-border);
+  border-radius: 6px;
+  background: var(--pos-bg-main);
+}
+
+.opcion-ingrediente {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--pos-text-primary);
+  cursor: pointer;
+  min-height: 24px;
+}
+
+.opcion-ingrediente input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--action-danger);
+  cursor: pointer;
 }
 
 .item-info {
@@ -500,6 +604,14 @@
   font-size: 1.3rem;
 }
 
+.etiqueta-seccion-cobro {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--pos-text-secondary);
+}
+
 .metodos-pago {
   display: flex;
   gap: 8px;
@@ -521,6 +633,36 @@
   background: var(--pos-text-primary);
   border-color: var(--pos-text-primary);
   color: var(--pos-bg-main);
+}
+
+.sugerencias-efectivo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.boton-billete {
+  flex: 1;
+  min-width: 64px;
+  min-height: 44px;
+  border: 1px solid var(--pos-border);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  border-radius: var(--pos-radio);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-billete:hover {
+  border-color: var(--action-success);
+}
+
+.boton-billete.billete-activo {
+  border-color: var(--action-success);
+  background: color-mix(in srgb, var(--action-success) 20%, var(--pos-bg-main));
+  color: var(--action-success);
 }
 
 .campo-monto {

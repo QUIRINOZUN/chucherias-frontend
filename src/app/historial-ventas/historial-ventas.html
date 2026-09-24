@@ -1,0 +1,97 @@
+<div class="historial-container">
+  <header class="historial-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">← Volver</button>
+    <h1>Ventas de hoy</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+    >
+      {{ themeService.tema() === 'dark' ? '☀️' : '🌙' }}
+    </button>
+  </header>
+
+  <div class="historial-cuerpo">
+    @if (cargando()) {
+      <p class="mensaje-estado">Cargando ventas...</p>
+    } @else {
+      @if (error()) {
+        <p class="mensaje-estado mensaje-error">{{ error() }}</p>
+      }
+
+      <div class="resumen-dia">
+        <span>Total del día ({{ ventas().length }} {{ ventas().length === 1 ? 'venta' : 'ventas' }})</span>
+        <span class="resumen-dia-monto">{{ totalDelDia() | currency: 'MXN' }}</span>
+      </div>
+
+      @if (ventas().length === 0) {
+        <p class="mensaje-estado">Todavía no hay ventas hoy.</p>
+      }
+
+      <ul class="lista-ventas">
+        @for (venta of ventas(); track venta.id) {
+          <li class="tarjeta-venta" [class.tarjeta-venta-cancelada]="venta.estado === 'cancelada'">
+            <div class="venta-encabezado">
+              <div>
+                <span class="venta-orden">{{ venta.numero_orden }}</span>
+                <span class="venta-hora">{{ venta.fecha | date: 'HH:mm' }} · {{ venta.cajero }}</span>
+              </div>
+              <span class="badge-estado-venta" [class.badge-cancelada]="venta.estado === 'cancelada'">
+                {{ venta.estado === 'completada' ? 'Completada' : 'Cancelada' }}
+              </span>
+            </div>
+
+            <ul class="venta-items">
+              @for (item of venta.items; track $index) {
+                <li>{{ item.cantidad }}× {{ item.producto }} ({{ item.variante }})</li>
+              }
+            </ul>
+
+            @if (venta.estado === 'cancelada' && venta.motivo_cancelacion) {
+              <p class="venta-motivo">Motivo: {{ venta.motivo_cancelacion }}</p>
+            }
+
+            <div class="venta-pie">
+              <span class="venta-metodo">
+                {{ venta.metodo_pago === 'efectivo' ? 'Efectivo' : 'Transferencia' }} ·
+                {{ venta.tipo_entrega === 'presencial' ? 'Presencial' : 'A domicilio' }}
+              </span>
+              <span class="venta-total">{{ venta.total | currency: 'MXN' }}</span>
+            </div>
+
+            @if (venta.estado === 'completada') {
+              @if (cancelandoId() === venta.id) {
+                <div class="panel-cancelacion">
+                  <input
+                    type="text"
+                    placeholder="Motivo de la cancelación (opcional)"
+                    [value]="motivoCancelacion()"
+                    (input)="motivoCancelacion.set($any($event.target).value)"
+                  />
+                  <div class="panel-cancelacion-acciones">
+                    <button type="button" class="boton-cancelar-mini" (click)="cerrarCancelacion()">
+                      Volver
+                    </button>
+                    <button
+                      type="button"
+                      class="boton-confirmar-cancelacion"
+                      [disabled]="procesandoCancelacion()"
+                      (click)="confirmarCancelacion(venta)"
+                    >
+                      {{ procesandoCancelacion() ? 'Cancelando...' : 'Confirmar cancelación' }}
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <button type="button" class="boton-cancelar-venta" (click)="abrirCancelacion(venta)">
+                  Cancelar esta venta
+                </button>
+              }
+            }
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</div>

@@ -19,7 +19,16 @@
       } @else if (errorCarga()) {
         <p class="mensaje-estado mensaje-error">{{ errorCarga() }}</p>
       } @else {
-        <div class="categorias">
+        <div class="campo-busqueda">
+          <input
+            type="search"
+            placeholder="Buscar producto por nombre..."
+            [value]="busqueda()"
+            (input)="actualizarBusqueda($any($event.target).value)"
+          />
+        </div>
+
+        <div class="categorias" [class.categorias-inactivas]="busqueda().trim().length > 0">
           <button
             type="button"
             class="chip-categoria"
@@ -118,7 +127,7 @@
         <p class="mensaje-estado">Aún no has agregado productos.</p>
       } @else {
         <ul class="lista-carrito">
-          @for (item of carrito(); track item.varianteId) {
+          @for (item of carrito(); track item.id) {
             <li class="item-carrito">
               <div class="item-fila">
                 <div class="item-info">
@@ -140,13 +149,51 @@
                   ✕
                 </button>
               </div>
-              <input
-                type="text"
-                class="item-notas"
-                placeholder="Sin cebolla, salsa BBQ, extra queso..."
-                [value]="item.notas"
-                (input)="actualizarNotas(item, $any($event.target).value)"
-              />
+
+              @if (item.cantidad > 1) {
+                <!-- Con más de 1 unidad idéntica no se sabe a cuál personalizar:
+                     hay que separar una unidad primero. -->
+                <button type="button" class="boton-separar-unidad" (click)="separarUnidad(item)">
+                  Personalizar 1 unidad aparte
+                </button>
+              } @else {
+                <div class="item-personalizacion">
+                  @if (ingredientesDisponibles(item.productoNombre).length > 0) {
+                    <button
+                      type="button"
+                      class="boton-quitar-ingredientes"
+                      [class.boton-quitar-activo]="item.ingredientesQuitados.length > 0"
+                      (click)="alternarPickerQuitar(item)"
+                    >
+                      Quitar{{ item.ingredientesQuitados.length > 0 ? ' (' + item.ingredientesQuitados.length + ')' : '' }}
+                    </button>
+                  }
+                  <input
+                    type="text"
+                    class="item-notas"
+                    [name]="'notas-' + item.id"
+                    autocomplete="off"
+                    placeholder="Otras indicaciones (opcional)"
+                    [value]="item.notasLibres"
+                    (input)="actualizarNotasLibres(item, $any($event.target).value)"
+                  />
+                </div>
+
+                @if (quitarAbiertoPara() === item.id) {
+                  <div class="lista-ingredientes-quitar">
+                    @for (ingrediente of ingredientesDisponibles(item.productoNombre); track ingrediente) {
+                      <label class="opcion-ingrediente">
+                        <input
+                          type="checkbox"
+                          [checked]="estaQuitado(item, ingrediente)"
+                          (change)="alternarIngredienteQuitado(item, ingrediente)"
+                        />
+                        {{ ingrediente }}
+                      </label>
+                    }
+                  </div>
+                }
+              }
             </li>
           }
         </ul>
@@ -192,14 +239,14 @@
             </div>
 
             <ul class="comprobante-items">
-              @for (item of r.items; track item.varianteId) {
+              @for (item of r.items; track item.id) {
                 <li>
                   <div class="comprobante-item-linea">
                     <span>{{ item.cantidad }}× {{ item.productoNombre }} ({{ item.varianteNombre }})</span>
                     <span>{{ item.precio * item.cantidad | currency: 'MXN' }}</span>
                   </div>
-                  @if (item.notas) {
-                    <p class="comprobante-item-notas">{{ item.notas }}</p>
+                  @if (notaCompleta(item)) {
+                    <p class="comprobante-item-notas">{{ notaCompleta(item) }}</p>
                   }
                 </li>
               }
@@ -213,6 +260,10 @@
               <div class="comprobante-linea comprobante-total-final">
                 <span>Total</span>
                 <span>{{ r.total | currency: 'MXN' }}</span>
+              </div>
+              <div class="comprobante-linea">
+                <span>Entrega</span>
+                <span>{{ r.tipoEntrega === 'presencial' ? 'Presencial' : 'A domicilio' }}</span>
               </div>
               <div class="comprobante-linea">
                 <span>Método de pago</span>
@@ -239,6 +290,27 @@
           <h2>Cobrar</h2>
           <p class="total-a-pagar">Total a pagar: <strong>{{ totalCarrito() | currency: 'MXN' }}</strong></p>
 
+          <span class="etiqueta-seccion-cobro">Entrega</span>
+          <div class="metodos-pago">
+            <button
+              type="button"
+              class="boton-metodo"
+              [class.metodo-activo]="tipoEntrega() === 'presencial'"
+              (click)="seleccionarTipoEntrega('presencial')"
+            >
+              Presencial
+            </button>
+            <button
+              type="button"
+              class="boton-metodo"
+              [class.metodo-activo]="tipoEntrega() === 'domicilio'"
+              (click)="seleccionarTipoEntrega('domicilio')"
+            >
+              A domicilio
+            </button>
+          </div>
+
+          <span class="etiqueta-seccion-cobro">Método de pago</span>
           <div class="metodos-pago">
             <button
               type="button"
@@ -259,8 +331,21 @@
           </div>
 
           @if (metodoPago() === 'efectivo') {
+            <div class="sugerencias-efectivo">
+              @for (monto of sugerenciasEfectivo(); track monto) {
+                <button
+                  type="button"
+                  class="boton-billete"
+                  [class.billete-activo]="montoRecibido() === monto"
+                  (click)="seleccionarMontoSugerido(monto)"
+                >
+                  {{ monto | currency: 'MXN' : 'symbol' : '1.0-0' }}
+                </button>
+              }
+            </div>
+
             <div class="campo-monto">
-              <label for="monto-recibido">Monto recibido</label>
+              <label for="monto-recibido">O teclea el monto exacto</label>
               <input
                 id="monto-recibido"
                 type="number"

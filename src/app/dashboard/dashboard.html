@@ -1,9 +1,38 @@
 <div class="dashboard-container">
-  @if (authService.usuarioActual(); as usuario) {
-    <h1>Bienvenido, {{ usuario.nombre }}</h1>
-    <p>Rol: {{ usuario.rol }}</p>
-  }
+  <header class="dashboard-header">
+    <div class="dashboard-header-texto">
+      @if (authService.usuarioActual(); as usuario) {
+        <h1>Hola, {{ usuario.nombre }}</h1>
+        <p class="dashboard-rol">{{ usuario.rol }}</p>
+      }
+    </div>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+    >
+      {{ themeService.tema() === 'dark' ? '☀️' : '🌙' }}
+    </button>
+  </header>
 
-  <a routerLink="/pos">Ir al punto de venta</a>
-  <button (click)="authService.logout()">Cerrar sesión</button>
+  <div class="dashboard-cuerpo">
+    @if (modulosVisibles().length === 0) {
+      <p class="mensaje-vacio">
+        Todavía no tienes módulos asignados. Habla con tu encargado o el administrador.
+      </p>
+    } @else {
+      <div class="grid-modulos">
+        @for (modulo of modulosVisibles(); track modulo.ruta) {
+          <a class="tarjeta-modulo" [routerLink]="modulo.ruta">
+            <span class="modulo-icono">{{ modulo.icono }}</span>
+            <span class="modulo-titulo">{{ modulo.titulo }}</span>
+            <span class="modulo-descripcion">{{ modulo.descripcion }}</span>
+          </a>
+        }
+      </div>
+    }
+  </div>
+
+  <button type="button" class="boton-cerrar-sesion" (click)="authService.logout()">Cerrar sesión</button>
 </div>

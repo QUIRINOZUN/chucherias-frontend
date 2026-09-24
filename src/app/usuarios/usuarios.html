@@ -1,0 +1,123 @@
+<div class="usuarios-container">
+  <header class="usuarios-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">← Volver</button>
+    <h1>Usuarios</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+    >
+      {{ themeService.tema() === 'dark' ? '☀️' : '🌙' }}
+    </button>
+  </header>
+
+  <div class="usuarios-cuerpo">
+    @if (cargando()) {
+      <p class="mensaje-estado">Cargando usuarios...</p>
+    } @else {
+      @if (error()) {
+        <p class="mensaje-estado mensaje-error">{{ error() }}</p>
+      }
+
+      @if (esAdministrador()) {
+        <button type="button" class="boton-nuevo-usuario" (click)="abrirCreacion()">+ Nuevo usuario</button>
+      }
+
+      <ul class="lista-usuarios">
+        @for (usuario of usuarios(); track usuario.id) {
+          <li class="tarjeta-usuario">
+            <div class="usuario-info">
+              <span class="usuario-nombre">{{ usuario.nombre }}</span>
+              <span class="usuario-detalle">
+                &#64;{{ usuario.usuario }} · {{ usuario.rol }} · desde {{ usuario.fecha_creacion | date: 'dd/MM/yyyy' }}
+              </span>
+            </div>
+            <span class="badge-estado" [class.badge-inactivo]="!usuario.activo">
+              {{ usuario.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+            @if (esAdministrador()) {
+              <button type="button" class="boton-editar" (click)="abrirEdicion(usuario)">Editar</button>
+              <button
+                type="button"
+                class="boton-alternar"
+                [class.boton-alternar-desactivar]="usuario.activo"
+                [disabled]="actualizandoId() === usuario.id || usuario.id === authService.usuarioActual()?.id"
+                [title]="usuario.id === authService.usuarioActual()?.id ? 'No puedes desactivar tu propia cuenta' : ''"
+                (click)="alternarActivo(usuario)"
+              >
+                {{ actualizandoId() === usuario.id ? '...' : usuario.activo ? 'Desactivar' : 'Activar' }}
+              </button>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  @if (modoFormulario(); as modo) {
+    <div class="overlay">
+      <div class="panel-formulario">
+        <h2>{{ modo === 'crear' ? 'Nuevo usuario' : 'Editar usuario' }}</h2>
+
+        <div class="campo">
+          <label for="nombre-form">Nombre completo</label>
+          <input
+            id="nombre-form"
+            type="text"
+            [value]="nombreForm()"
+            (input)="nombreForm.set($any($event.target).value)"
+          />
+        </div>
+
+        <div class="campo">
+          <label for="usuario-form">Usuario</label>
+          <input
+            id="usuario-form"
+            type="text"
+            [value]="usuarioForm()"
+            (input)="usuarioForm.set($any($event.target).value)"
+          />
+        </div>
+
+        <div class="campo">
+          <label for="contrasena-form">
+            Contraseña{{ modo === 'editar' ? ' (dejar en blanco para no cambiarla)' : '' }}
+          </label>
+          <input
+            id="contrasena-form"
+            type="password"
+            [value]="contrasenaForm()"
+            (input)="contrasenaForm.set($any($event.target).value)"
+          />
+        </div>
+
+        <div class="campo">
+          <label for="rol-form">Rol</label>
+          <select
+            id="rol-form"
+            [value]="rolIdForm()"
+            (change)="rolIdForm.set(+$any($event.target).value)"
+          >
+            @for (rol of roles(); track rol.id) {
+              <option [value]="rol.id">{{ rol.nombre }}</option>
+            }
+          </select>
+        </div>
+
+        @if (errorFormulario()) {
+          <p class="mensaje-error">{{ errorFormulario() }}</p>
+        }
+
+        <div class="acciones-formulario">
+          <button type="button" class="boton-cancelar" (click)="cerrarFormulario()" [disabled]="procesandoForm()">
+            Cancelar
+          </button>
+          <button type="button" class="boton-confirmar" (click)="guardarFormulario()" [disabled]="!puedeGuardar()">
+            {{ procesandoForm() ? 'Guardando...' : modo === 'crear' ? 'Crear usuario' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

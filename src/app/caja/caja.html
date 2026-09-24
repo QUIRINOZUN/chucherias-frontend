@@ -1,0 +1,182 @@
+<div class="caja-container">
+  <header class="caja-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">← Volver</button>
+    <h1>Corte de caja</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+    >
+      {{ themeService.tema() === 'dark' ? '☀️' : '🌙' }}
+    </button>
+  </header>
+
+  <div class="caja-cuerpo">
+    @if (cargando()) {
+      <p class="mensaje-estado">Calculando resumen del día...</p>
+    } @else if (error()) {
+      <p class="mensaje-estado mensaje-error">{{ error() }}</p>
+    } @else if (resumen(); as r) {
+      @if (corteGuardado(); as corte) {
+        <div class="tarjeta-corte-guardado">
+          <h2>Corte guardado</h2>
+          <div class="linea-corte">
+            <span>Sistema esperaba</span>
+            <span>{{ corte.total_sistema | currency: 'MXN' }}</span>
+          </div>
+          <div class="linea-corte">
+            <span>Contado (efectivo + transferencia)</span>
+            <span>{{ +corte.total_efectivo + +corte.total_transferencia | currency: 'MXN' }}</span>
+          </div>
+          <div class="linea-corte linea-corte-diferencia" [class.diferencia-negativa]="+corte.diferencia < 0">
+            <span>Diferencia</span>
+            <span>{{ corte.diferencia | currency: 'MXN' }}</span>
+          </div>
+          <button type="button" class="boton-nuevo-corte" (click)="nuevoCorte()">Hecho</button>
+        </div>
+      } @else {
+        <section class="tarjeta-resumen">
+          <h2>Lo que el sistema calculó hoy</h2>
+          <div class="linea-corte">
+            <span>Efectivo</span>
+            <span>{{ r.total_efectivo | currency: 'MXN' }}</span>
+          </div>
+          <div class="linea-corte">
+            <span>Transferencia</span>
+            <span>{{ r.total_transferencia | currency: 'MXN' }}</span>
+          </div>
+          <div class="linea-corte linea-corte-total">
+            <span>Total sistema</span>
+            <span>{{ r.total_sistema | currency: 'MXN' }}</span>
+          </div>
+        </section>
+
+        <section class="tarjeta-contar">
+          <h2>Lo que contaste físicamente</h2>
+          <div class="campo-caja">
+            <label for="efectivo-contado">Efectivo contado</label>
+            <input
+              id="efectivo-contado"
+              type="number"
+              min="0"
+              step="0.01"
+              [value]="efectivoContado() ?? ''"
+              (input)="actualizarEfectivoContado($any($event.target).value)"
+            />
+          </div>
+          <div class="campo-caja">
+            <label for="transferencia-contado">Transferencias contadas</label>
+            <input
+              id="transferencia-contado"
+              type="number"
+              min="0"
+              step="0.01"
+              [value]="transferenciaContado() ?? ''"
+              (input)="actualizarTransferenciaContado($any($event.target).value)"
+            />
+          </div>
+
+          @if (diferencia() !== null) {
+            <div class="diferencia-en-vivo" [class.diferencia-negativa]="diferencia()! < 0">
+              @if (diferencia() === 0) {
+                <span>Cuadra exacto</span>
+              } @else if (diferencia()! > 0) {
+                <span>Sobran {{ diferencia() | currency: 'MXN' }}</span>
+              } @else {
+                <span>Faltan {{ -diferencia()! | currency: 'MXN' }}</span>
+              }
+            </div>
+          }
+
+          @if (errorRegistro()) {
+            <p class="mensaje-error">{{ errorRegistro() }}</p>
+          }
+
+          <button
+            type="button"
+            class="boton-guardar-corte"
+            [disabled]="!puedeRegistrar()"
+            (click)="registrarCorte()"
+          >
+            {{ registrando() ? 'Guardando...' : 'Guardar corte de caja' }}
+          </button>
+        </section>
+      }
+
+      @if (esAdministradorOEncargado()) {
+        <section class="tarjeta-historial">
+          <h2>Consultar cortes</h2>
+
+          <div class="filtros-historial">
+            <div class="campo-filtro">
+              <label for="filtro-desde">Desde</label>
+              <input
+                id="filtro-desde"
+                type="date"
+                [value]="filtroDesde()"
+                (change)="cambiarDesde($any($event.target).value)"
+              />
+            </div>
+            <div class="campo-filtro">
+              <label for="filtro-hasta">Hasta</label>
+              <input
+                id="filtro-hasta"
+                type="date"
+                [value]="filtroHasta()"
+                (change)="cambiarHasta($any($event.target).value)"
+              />
+            </div>
+            <div class="campo-filtro campo-filtro-ancho">
+              <label for="filtro-usuario">Usuario</label>
+              <select
+                id="filtro-usuario"
+                [value]="filtroUsuarioId() ?? ''"
+                (change)="cambiarUsuario($any($event.target).value)"
+              >
+                <option value="">Todos</option>
+                @for (usuario of usuarios(); track usuario.id) {
+                  <option [value]="usuario.id">{{ usuario.nombre }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          @if (hayFiltros()) {
+            <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltros()">
+              Limpiar filtros
+            </button>
+          }
+
+          @if (errorHistorial()) {
+            <p class="mensaje-error">{{ errorHistorial() }}</p>
+          } @else if (cargandoHistorial()) {
+            <p class="mensaje-estado">Consultando cortes...</p>
+          } @else if (historial().length === 0) {
+            <p class="mensaje-estado">
+              {{ hayFiltros() ? 'No hay cortes con esos filtros.' : 'Todavía no hay cortes guardados.' }}
+            </p>
+          } @else {
+            <ul class="lista-historial">
+              @for (corte of historial(); track corte.id) {
+                <li class="item-historial">
+                  <div>
+                    <span class="item-historial-fecha">{{ corte.fecha | date: 'dd/MM/yyyy' }}</span>
+                    <span class="item-historial-responsable">{{ corte.responsable }}</span>
+                    <span class="item-historial-detalle">
+                      Sistema {{ corte.total_sistema | currency: 'MXN' }} · Contado
+                      {{ +corte.total_efectivo + +corte.total_transferencia | currency: 'MXN' }}
+                    </span>
+                  </div>
+                  <span class="item-historial-diferencia" [class.diferencia-negativa]="+corte.diferencia < 0">
+                    {{ corte.diferencia | currency: 'MXN' }}
+                  </span>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      }
+    }
+  </div>
+</div>

@@ -1,0 +1,248 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: var(--pos-bg-main);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--pos-text-primary);
+}
+
+.usuarios-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.usuarios-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--pos-bg-card);
+  border-bottom: 1px solid var(--pos-border);
+  position: sticky;
+  top: 0;
+}
+
+.usuarios-header h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.boton-volver,
+.boton-tema {
+  min-height: 44px;
+  border: 1px solid var(--pos-border);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  border-radius: var(--pos-radio);
+  padding: 0 14px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.boton-tema {
+  min-width: 44px;
+  padding: 0;
+  font-size: 1.15rem;
+}
+
+.usuarios-cuerpo {
+  flex: 1;
+  padding: 16px;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.mensaje-estado {
+  color: var(--pos-text-secondary);
+  font-size: 0.9rem;
+}
+
+.mensaje-error {
+  color: var(--action-danger);
+}
+
+.boton-nuevo-usuario {
+  min-height: 44px;
+  width: 100%;
+  margin-bottom: 16px;
+  border: none;
+  border-radius: var(--pos-radio);
+  background: var(--action-success);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.boton-nuevo-usuario:hover {
+  background: var(--action-success-hover);
+}
+
+.lista-usuarios {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tarjeta-usuario {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--pos-bg-card);
+  border: 1px solid var(--pos-border);
+  border-radius: var(--pos-radio);
+  padding: 12px 14px;
+}
+
+.usuario-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.usuario-nombre {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.usuario-detalle {
+  font-size: 0.75rem;
+  color: var(--pos-text-secondary);
+}
+
+.badge-estado {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--action-success) 20%, var(--pos-bg-card));
+  color: var(--action-success);
+  white-space: nowrap;
+}
+
+.badge-estado.badge-inactivo {
+  background: color-mix(in srgb, var(--action-danger) 20%, var(--pos-bg-card));
+  color: var(--action-danger);
+}
+
+.boton-editar,
+.boton-alternar {
+  min-height: 40px;
+  border: 1px solid var(--pos-border);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  border-radius: var(--pos-radio);
+  padding: 0 12px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.boton-editar:hover {
+  border-color: var(--pos-text-secondary);
+}
+
+.boton-alternar-desactivar:hover:not(:disabled) {
+  border-color: var(--action-danger);
+  color: var(--action-danger);
+}
+
+.boton-alternar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 20;
+}
+
+.panel-formulario {
+  width: 100%;
+  max-width: 380px;
+  background: var(--pos-bg-card);
+  border-radius: var(--pos-radio);
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.panel-formulario h2 {
+  margin: 0 0 16px;
+}
+
+.campo {
+  margin-bottom: 14px;
+}
+
+.campo label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.campo input,
+.campo select {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 1rem;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--pos-radio);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.campo input:focus,
+.campo select:focus {
+  outline: none;
+  border-color: var(--pos-text-secondary);
+}
+
+.acciones-formulario {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.boton-cancelar {
+  flex: 1;
+  min-height: 44px;
+  border: 1px solid var(--pos-border);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  border-radius: var(--pos-radio);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.boton-confirmar {
+  flex: 1;
+  min-height: 44px;
+  border: none;
+  background: var(--action-success);
+  color: #fff;
+  border-radius: var(--pos-radio);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.boton-confirmar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
