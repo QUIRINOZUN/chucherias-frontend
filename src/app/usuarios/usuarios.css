@@ -2,7 +2,7 @@
   display: block;
   min-height: 100vh;
   background: var(--pos-bg-main);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
 }
 
@@ -62,7 +62,7 @@
 }
 
 .mensaje-error {
-  color: var(--action-danger);
+  color: var(--peligro-texto);
 }
 
 .boton-nuevo-usuario {
@@ -71,14 +71,14 @@
   margin-bottom: 16px;
   border: none;
   border-radius: var(--pos-radio);
-  background: var(--action-success);
+  background: var(--action-primary);
   color: #fff;
   font-weight: 700;
   cursor: pointer;
 }
 
 .boton-nuevo-usuario:hover {
-  background: var(--action-success-hover);
+  background: var(--action-primary-hover);
 }
 
 .lista-usuarios {
@@ -123,13 +123,13 @@
   padding: 3px 10px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--action-success) 20%, var(--pos-bg-card));
-  color: var(--action-success);
+  color: var(--exito-texto);
   white-space: nowrap;
 }
 
 .badge-estado.badge-inactivo {
   background: color-mix(in srgb, var(--action-danger) 20%, var(--pos-bg-card));
-  color: var(--action-danger);
+  color: var(--peligro-texto);
 }
 
 .boton-editar,
@@ -150,8 +150,8 @@
 }
 
 .boton-alternar-desactivar:hover:not(:disabled) {
-  border-color: var(--action-danger);
-  color: var(--action-danger);
+  border-color: var(--peligro-texto);
+  color: var(--peligro-texto);
 }
 
 .boton-alternar:disabled {
@@ -234,7 +234,7 @@
   flex: 1;
   min-height: 44px;
   border: none;
-  background: var(--action-success);
+  background: var(--action-primary);
   color: #fff;
   border-radius: var(--pos-radio);
   cursor: pointer;
@@ -245,4 +245,92 @@
 .boton-confirmar:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* ===== Rediseño: botones de encabezado y jerarquía ===== */
+.boton-volver,
+.boton-tema {
+  border: none;
+  border-radius: var(--radio-pastilla);
+  padding: 0 18px;
+  font-weight: 600;
+}
+
+.boton-tema {
+  padding: 0;
+}
+
+.usuarios-header h1 {
+  font-size: 1.25rem;
+}
+
+.boton-nuevo-usuario {
+  min-height: 56px;
+  border-radius: var(--radio-md);
+  font-size: 1rem;
+  box-shadow: var(--sombra-acento);
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.boton-nuevo-usuario:active {
+  transform: scale(0.98);
+}
+
+.tarjeta-usuario {
+  border-color: transparent;
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: 14px 18px;
+}
+
+.usuario-nombre {
+  font-family: var(--fuente-titulo);
+}
+
+.overlay {
+  backdrop-filter: blur(3px);
+  animation: aparecer 0.2s ease;
+}
+
+.panel-formulario {
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-elevada);
+  animation: escalar 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.panel-formulario h2 {
+  font-size: 1.4rem;
+}
+
+.campo input,
+.campo select {
+  min-height: 48px;
+  border-width: 2px;
+  border-radius: var(--radio-sm);
+}
+
+.boton-cancelar,
+.boton-confirmar {
+  min-height: 52px;
+  border-radius: var(--radio-md);
+}
+
+.boton-confirmar {
+  box-shadow: var(--sombra-acento);
+}
+
+.boton-confirmar:disabled {
+  box-shadow: none;
+}
+
+/* En pantallas angostas el nombre y las acciones no caben en una sola fila:
+   el nombre ocupa la fila completa y badge + botones pasan debajo. */
+@media (max-width: 600px) {
+  .tarjeta-usuario {
+    flex-wrap: wrap;
+  }
+
+  .usuario-info {
+    flex: 1 1 100%;
+  }
 }

@@ -1,4 +1,25 @@
-/* You can add global styles to this file, and also import other style files */
+/* ============================================================================
+   CHUCHERIAS — sistema de diseño global
+   ============================================================================
+   Dirección: cálida y gastronómica (antojitos), no corporativa.
+
+   Decisiones de diseño (las ambiguas se resolvieron por lo más cálido):
+   - Tipografía: Fraunces (serif con carácter) para títulos, precios y totales;
+     DM Sans para texto e interfaz. Los números usan cifras tabulares para que
+     los precios se alineen.
+   - Paleta: oscuros cálidos (café tostado / carbón), crema para texto, y el
+     naranja quemado de la marca (#c2410c) como ÚNICO color de acción principal.
+     El verde queda solo para estados de éxito (cambio correcto, venta
+     registrada); el rojo, para peligro/cancelación.
+   - Contraste AA: los colores de acción se usan como FONDO con texto blanco
+     (5.2:1); cuando un color va como TEXTO sobre superficie se usan las
+     variantes --acento-texto / --exito-texto / --peligro-texto, elegidas por
+     tema para llegar a 4.5:1.
+   - Radios con jerarquía: chips y botones flotantes = pastilla; tarjetas y
+     paneles = radio grande; controles = medio; detalles pequeños = chico.
+   - Sombras con tinte café en vez de negro puro; menos bordes de 1px.
+   - Los 12 tokens --cat-* NO se tocan: ya están validados (AA y daltonismo).
+   ========================================================================= */
 
 *,
 *::before,
@@ -6,21 +27,21 @@
   box-sizing: border-box;
 }
 
-/* ===================== Sistema de temas (POS) =====================
-   Oscuro es el tema por defecto; [data-theme="light"] lo sobreescribe.
-   El color de cada categoría es el mismo en ambos temas (ya se validó
-   que da suficiente contraste sobre tarjeta clara y oscura); solo la
-   superficie y el texto cambian entre temas. */
+/* ===================== Tema oscuro (por defecto) ===================== */
 :root {
   color-scheme: dark;
 
-  --pos-bg-main: #0f172a;
-  --pos-bg-card: #1e293b;
-  --pos-bg-sidebar: #0b1220;
-  --pos-border: #334155;
-  --pos-text-primary: #f8fafc;
-  --pos-text-secondary: #94a3b8;
-  --pos-text-muted: #64748b;
+  --fuente-titulo: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --fuente-texto: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* Superficies: café tostado / carbón cálido */
+  --pos-bg-main: #1d1511;
+  --pos-bg-card: #2b2019;
+  --pos-bg-sidebar: #251b15;
+  --pos-border: #4a392e;
+  --pos-text-primary: #fbf0e2;
+  --pos-text-secondary: #d2bfac;
+  --pos-text-muted: #ad9682;
 
   /* 12 categorías reales, agrupadas en 4 familias por tono (más fácil de
      recordar y de distinguir que 12 tonos sueltos — ver notas de la
@@ -42,34 +63,192 @@
   --cat-bebidas-preparadas: #006bc6;
   --cat-bebidas-embotelladas: #188fff;
 
+  /* Acción principal: naranja de la marca (texto blanco encima = 5.2:1) */
+  --action-primary: #c2410c;
+  --action-primary-hover: #9a3412;
+  --acento-texto: #ff9a62; /* acento cuando va como texto/ícono sobre superficie */
+  --acento-suave: color-mix(in srgb, #c2410c 22%, var(--pos-bg-card));
+  --acento-foco: #ff9a62;
+
+  /* Estados */
   --action-success: #15803d;
   --action-success-hover: #166534;
+  --exito-texto: #6ee7a0;
   --action-danger: #dc2626;
   --action-danger-hover: #b91c1c;
+  --peligro-texto: #ff8f85;
 
-  --pos-radio: 10px;
+  /* Escala de radios */
+  --radio-xs: 8px;
+  --radio-sm: 12px;
+  --radio-md: 16px;
+  --radio-lg: 22px;
+  --radio-pastilla: 999px;
+  --pos-radio: var(--radio-sm);
+
+  /* Sombras cálidas */
+  --sombra-suave: 0 1px 2px rgba(10, 4, 0, 0.4), 0 6px 18px rgba(10, 4, 0, 0.3);
+  --sombra-elevada: 0 2px 4px rgba(10, 4, 0, 0.4), 0 16px 40px rgba(10, 4, 0, 0.5);
+  --sombra-acento: 0 6px 20px rgba(194, 65, 12, 0.4);
 }
 
+/* ===================== Tema claro ===================== */
 :root[data-theme='light'] {
   color-scheme: light;
 
-  --pos-bg-main: #f8fafc;
-  --pos-bg-card: #ffffff;
-  --pos-bg-sidebar: #f1f5f9;
-  --pos-border: #e2e8f0;
-  --pos-text-primary: #0f172a;
-  --pos-text-secondary: #475569;
-  --pos-text-muted: #94a3b8;
+  --pos-bg-main: #fdf6ec;
+  --pos-bg-card: #fffbf5;
+  --pos-bg-sidebar: #f7ecdc;
+  --pos-border: #e6d6bf;
+  --pos-text-primary: #2a1c12;
+  --pos-text-secondary: #5c4a3b;
+  --pos-text-muted: #7a6553;
+
+  --acento-texto: #b0380a;
+  --acento-suave: color-mix(in srgb, #c2410c 12%, var(--pos-bg-card));
+  --acento-foco: #c2410c;
+
+  --exito-texto: #166534;
+  --peligro-texto: #b91c1c;
+
+  --sombra-suave: 0 1px 2px rgba(74, 40, 15, 0.08), 0 6px 18px rgba(74, 40, 15, 0.09);
+  --sombra-elevada: 0 2px 4px rgba(74, 40, 15, 0.1), 0 16px 40px rgba(74, 40, 15, 0.18);
+  --sombra-acento: 0 6px 20px rgba(194, 65, 12, 0.32);
 }
 
 body {
   margin: 0;
   background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  font-family: var(--fuente-texto);
+  /* Cifras de ancho fijo: los precios y totales se alinean en columna. */
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Los controles nativos no heredan la tipografía por defecto. */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* Foco visible con intención: un anillo acento, no solo un cambio de borde. */
+:focus-visible {
+  outline: 3px solid var(--acento-foco);
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--acento-foco) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--acento-foco) 30%, transparent);
+}
+
+/* ===================== Íconos SVG (sprite en index.html) ===================== */
+.icono {
+  width: 1.25em;
+  height: 1.25em;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: middle;
+}
+
+/* Botones de encabezado compartidos por todas las pantallas. */
+.boton-volver,
+.boton-tema {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.boton-volver:hover,
+.boton-tema:hover {
+  background: var(--acento-suave) !important;
+}
+
+.boton-volver:active,
+.boton-tema:active {
+  transform: scale(0.96);
+}
+
+/* Encabezados de pantalla: profundidad con sombra en vez de línea de 1px. */
+.pos-header,
+.caja-header,
+.historial-header,
+.usuarios-header,
+.dashboard-header {
+  border-bottom: 0 !important;
+  box-shadow: var(--sombra-suave);
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes subir {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+@keyframes escalar {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes rebote {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.22);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Sin animaciones para quien lo pide en su sistema. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Un recibo nunca debe imprimirse con fondo oscuro, sin importar el tema activo. */
 @media print {
   :root {
     color-scheme: light;
+  }
+
+  body {
+    background: #fff;
   }
 }

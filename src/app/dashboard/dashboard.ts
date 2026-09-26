@@ -6,6 +6,7 @@ import { ThemeService } from '../core/theme';
 interface Modulo {
   ruta: string;
   titulo: string;
+  // Nombre del ícono del sprite SVG de index.html (id "ic-<icono>").
   icono: string;
   descripcion: string;
   roles: string[];
@@ -18,28 +19,28 @@ const MODULOS: Modulo[] = [
   {
     ruta: '/pos',
     titulo: 'Punto de venta',
-    icono: '🛒',
+    icono: 'bolsa',
     descripcion: 'Menú, carrito y cobro.',
     roles: ['administrador', 'encargado', 'cajero'],
   },
   {
     ruta: '/caja',
     titulo: 'Corte de caja',
-    icono: '💰',
+    icono: 'billetes',
     descripcion: 'Resumen del día y registrar corte.',
     roles: ['administrador', 'encargado', 'cajero'],
   },
   {
     ruta: '/ventas',
     titulo: 'Ventas de hoy',
-    icono: '🧾',
+    icono: 'recibo',
     descripcion: 'Historial y cancelación de ventas.',
     roles: ['administrador', 'encargado'],
   },
   {
     ruta: '/usuarios',
     titulo: 'Usuarios',
-    icono: '👥',
+    icono: 'usuarios',
     descripcion: 'Cuentas, roles y permisos.',
     roles: ['administrador', 'encargado'],
   },

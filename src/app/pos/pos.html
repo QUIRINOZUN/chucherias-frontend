@@ -1,6 +1,8 @@
 <div class="pos-container">
   <header class="pos-header">
-    <button type="button" class="boton-volver" (click)="volverAlDashboard()">← Volver</button>
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()"><svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      Volver
+    </button>
     <h1>Punto de venta</h1>
     <button
       type="button"
@@ -8,7 +10,9 @@
       (click)="themeService.alternarTema()"
       [attr.aria-label]="themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
     >
-      {{ themeService.tema() === 'dark' ? '☀️' : '🌙' }}
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
     </button>
   </header>
 
@@ -20,8 +24,10 @@
         <p class="mensaje-estado mensaje-error">{{ errorCarga() }}</p>
       } @else {
         <div class="campo-busqueda">
+          <svg class="icono icono-busqueda" aria-hidden="true"><use href="#ic-buscar" /></svg>
           <input
             type="search"
+            aria-label="Buscar producto por nombre"
             placeholder="Buscar producto por nombre..."
             [value]="busqueda()"
             (input)="actualizarBusqueda($any($event.target).value)"
@@ -35,7 +41,10 @@
             [class.chip-activa]="categoriaSeleccionada() === null"
             (click)="seleccionarCategoria(null)"
           >
-            🧾 Todas
+            <span class="chip-icono chip-icono-neutro">
+              <svg class="icono" aria-hidden="true"><use href="#ic-todas" /></svg>
+            </span>
+            Todas
           </button>
           @for (categoria of categorias(); track categoria.id) {
             <button
@@ -45,7 +54,12 @@
               [style.--color-chip]="estiloCategoria(categoria.nombre).color"
               (click)="seleccionarCategoria(categoria.id)"
             >
-              {{ estiloCategoria(categoria.nombre).icono }} {{ categoria.nombre }}
+              <span class="chip-icono">
+                <svg class="icono" aria-hidden="true">
+                  <use [attr.href]="'#ic-' + estiloCategoria(categoria.nombre).icono" />
+                </svg>
+              </span>
+              {{ categoria.nombre }}
             </button>
           }
         </div>
@@ -70,19 +84,28 @@
                     <img [src]="producto.imagen_url" [alt]="producto.nombre" class="imagen-producto" />
                   } @else {
                     <div class="imagen-marcador">
-                      <span class="imagen-marcador-icono">{{ estiloCategoria(producto.categoria).icono }}</span>
+                      <span class="imagen-marcador-icono">
+                        <svg class="icono" aria-hidden="true">
+                          <use [attr.href]="'#ic-' + estiloCategoria(producto.categoria).icono" />
+                        </svg>
+                      </span>
                     </div>
                   }
                   <div class="info-producto">
                     <span class="insignia-categoria">
-                      {{ estiloCategoria(producto.categoria).icono }} {{ producto.categoria }}
+                      <svg class="icono" aria-hidden="true">
+                        <use [attr.href]="'#ic-' + estiloCategoria(producto.categoria).icono" />
+                      </svg>
+                      {{ producto.categoria }}
                     </span>
                     <h3>{{ producto.nombre }}</h3>
                     <div class="fila-precio-flecha">
                       <span class="precio-desde">
                         {{ producto.variantes.length > 1 ? 'Desde ' : '' }}{{ precioDesde(producto) | currency: 'MXN' }}
                       </span>
-                      <span class="flecha-expandir">{{ estaExpandido(producto.id) ? '▲' : '▼' }}</span>
+                      <span class="flecha-expandir" aria-hidden="true">
+                        <svg class="icono"><use href="#ic-chevron" /></svg>
+                      </span>
                     </div>
                   </div>
                 </button>
@@ -119,7 +142,7 @@
       <div class="carrito-encabezado">
         <h2>Carrito</h2>
         <button type="button" class="boton-cerrar-carrito" (click)="cerrarCarrito()" aria-label="Cerrar carrito">
-          ✕
+          <svg class="icono" aria-hidden="true"><use href="#ic-cerrar" /></svg>
         </button>
       </div>
 
@@ -135,9 +158,13 @@
                   <span class="item-variante">{{ item.varianteNombre }}</span>
                 </div>
                 <div class="item-controles">
-                  <button type="button" (click)="decrementar(item)" aria-label="Quitar uno">−</button>
+                  <button type="button" (click)="decrementar(item)" aria-label="Quitar uno">
+                    <svg class="icono" aria-hidden="true"><use href="#ic-menos" /></svg>
+                  </button>
                   <span class="item-cantidad">{{ item.cantidad }}</span>
-                  <button type="button" (click)="incrementar(item)" aria-label="Agregar uno">+</button>
+                  <button type="button" (click)="incrementar(item)" aria-label="Agregar uno">
+                    <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
+                  </button>
                 </div>
                 <span class="item-subtotal">{{ item.precio * item.cantidad | currency: 'MXN' }}</span>
                 <button
@@ -146,7 +173,7 @@
                   (click)="quitarDelCarrito(item)"
                   aria-label="Eliminar producto"
                 >
-                  ✕
+                  <svg class="icono" aria-hidden="true"><use href="#ic-cerrar" /></svg>
                 </button>
               </div>
 
@@ -200,10 +227,15 @@
 
         <div class="resumen-carrito">
           <span>Total ({{ cantidadItems() }} {{ cantidadItems() === 1 ? 'artículo' : 'artículos' }})</span>
-          <span class="total-monto">{{ totalCarrito() | currency: 'MXN' }}</span>
+          @for (total of [totalCarrito()]; track total) {
+            <span class="total-monto">{{ total | currency: 'MXN' }}</span>
+          }
         </div>
 
-        <button type="button" class="boton-cobrar" (click)="abrirCobro()">Cobrar</button>
+        <button type="button" class="boton-cobrar" (click)="abrirCobro()">
+          Cobrar
+          <svg class="icono" aria-hidden="true"><use href="#ic-siguiente" /></svg>
+        </button>
       }
     </aside>
 
@@ -216,10 +248,15 @@
   <!-- Botón flotante: única forma de llegar al carrito en pantallas angostas -->
   @if (carrito().length > 0 && !carritoAbierto()) {
     <button type="button" class="boton-flotante-carrito" (click)="abrirCarrito()">
-      <span class="fab-icono">🧾</span>
-      <span class="fab-texto">
-        {{ cantidadItems() }} {{ cantidadItems() === 1 ? 'artículo' : 'artículos' }} · {{ totalCarrito() | currency: 'MXN' }}
+      <span class="fab-icono">
+        <svg class="icono" aria-hidden="true"><use href="#ic-bolsa" /></svg>
+        <!-- Al cambiar la cantidad el nodo se recrea y repite la animación de rebote. -->
+        @for (cantidad of [cantidadItems()]; track cantidad) {
+          <span class="fab-contador">{{ cantidad }}</span>
+        }
       </span>
+      <span class="fab-texto">Ver carrito</span>
+      <span class="fab-total">{{ totalCarrito() | currency: 'MXN' }}</span>
     </button>
   }
 

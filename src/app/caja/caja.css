@@ -2,7 +2,7 @@
   display: block;
   min-height: 100vh;
   background: var(--pos-bg-main);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
 }
 
@@ -65,7 +65,7 @@
 }
 
 .mensaje-error {
-  color: var(--action-danger);
+  color: var(--peligro-texto);
 }
 
 .tarjeta-resumen,
@@ -103,11 +103,11 @@
 
 .linea-corte-diferencia {
   font-weight: 700;
-  color: var(--action-success);
+  color: var(--exito-texto);
 }
 
 .linea-corte-diferencia.diferencia-negativa {
-  color: var(--action-danger);
+  color: var(--peligro-texto);
 }
 
 .campo-caja {
@@ -144,15 +144,15 @@
   border-radius: var(--pos-radio);
   background: color-mix(in srgb, var(--action-success) 18%, var(--pos-bg-card));
   border: 1px solid var(--action-success);
-  color: var(--action-success);
+  color: var(--exito-texto);
   font-weight: 600;
   font-size: 0.9rem;
 }
 
 .diferencia-en-vivo.diferencia-negativa {
   background: color-mix(in srgb, var(--action-danger) 18%, var(--pos-bg-card));
-  border-color: var(--action-danger);
-  color: var(--action-danger);
+  border-color: var(--peligro-texto);
+  color: var(--peligro-texto);
 }
 
 .boton-guardar-corte,
@@ -161,7 +161,7 @@
   min-height: 48px;
   border: none;
   border-radius: var(--pos-radio);
-  background: var(--action-success);
+  background: var(--action-primary);
   color: #fff;
   font-size: 0.95rem;
   font-weight: 700;
@@ -170,7 +170,7 @@
 
 .boton-guardar-corte:hover:not(:disabled),
 .boton-nuevo-corte:hover {
-  background: var(--action-success-hover);
+  background: var(--action-primary-hover);
 }
 
 .boton-guardar-corte:disabled {
@@ -291,9 +291,92 @@
 
 .item-historial-diferencia {
   font-weight: 700;
-  color: var(--action-success);
+  color: var(--exito-texto);
 }
 
 .item-historial-diferencia.diferencia-negativa {
-  color: var(--action-danger);
+  color: var(--peligro-texto);
+}
+
+/* ===== Rediseño: botones de encabezado y jerarquía ===== */
+.boton-volver,
+.boton-tema {
+  border: none;
+  border-radius: var(--radio-pastilla);
+  padding: 0 18px;
+  font-weight: 600;
+}
+
+.boton-tema {
+  padding: 0;
+}
+
+.caja-header h1 {
+  font-size: 1.25rem;
+}
+
+.tarjeta-resumen,
+.tarjeta-contar,
+.tarjeta-corte-guardado,
+.tarjeta-historial {
+  border-color: transparent;
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: 22px;
+}
+
+.tarjeta-resumen h2,
+.tarjeta-contar h2,
+.tarjeta-corte-guardado h2,
+.tarjeta-historial h2 {
+  font-size: 1.2rem;
+}
+
+.linea-corte-total {
+  font-family: var(--fuente-titulo);
+  font-size: 1.35rem;
+}
+
+.campo-caja input,
+.campo-filtro input,
+.campo-filtro select {
+  border-width: 2px;
+  border-radius: var(--radio-sm);
+}
+
+.boton-guardar-corte,
+.boton-nuevo-corte {
+  min-height: 56px;
+  border-radius: var(--radio-md);
+  font-size: 1.02rem;
+  box-shadow: var(--sombra-acento);
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.boton-guardar-corte:active:not(:disabled),
+.boton-nuevo-corte:active {
+  transform: scale(0.98);
+}
+
+.boton-guardar-corte:disabled {
+  box-shadow: none;
+}
+
+.boton-limpiar-filtros {
+  border-radius: var(--radio-pastilla);
+  min-height: 44px;
+}
+
+.diferencia-en-vivo {
+  border-radius: var(--radio-md);
+  font-family: var(--fuente-titulo);
+  font-size: 1.1rem;
+}
+
+.item-historial-diferencia {
+  font-family: var(--fuente-titulo);
+}
+
+.item-historial {
+  border-bottom-style: dashed;
 }

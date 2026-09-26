@@ -1,6 +1,25 @@
 <div class="login-container">
+  <aside class="login-marca">
+    <!-- Composición decorativa: íconos de la carta girados sobre el fondo. -->
+    <div class="marca-composicion" aria-hidden="true">
+      <svg class="icono deco deco-1"><use href="#ic-hamburguesa" /></svg>
+      <svg class="icono deco deco-2"><use href="#ic-pizza" /></svg>
+      <svg class="icono deco deco-3"><use href="#ic-alitas" /></svg>
+      <svg class="icono deco deco-4"><use href="#ic-papas" /></svg>
+      <svg class="icono deco deco-5"><use href="#ic-vaso" /></svg>
+      <svg class="icono deco deco-6"><use href="#ic-waffle" /></svg>
+      <svg class="icono deco deco-7"><use href="#ic-picante" /></svg>
+    </div>
+    <div class="marca-texto">
+      <p class="marca-etiqueta">Sistema de gestión</p>
+      <h1 class="marca-nombre">Chucherías</h1>
+      <p class="marca-lema">Hamburguesas, pizzas, alitas y antojitos. Todo el negocio en un solo lugar.</p>
+    </div>
+  </aside>
+
+  <main class="login-formulario">
   <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
-    <h1>CHUCHERIAS</h1>
+    <h2>Bienvenido</h2>
     <p class="subtitulo">Inicia sesión para continuar</p>
 
     <div class="campo">
@@ -66,4 +85,5 @@
       }
     </button>
   </form>
+  </main>
 </div>

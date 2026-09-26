@@ -1,6 +1,8 @@
 <div class="historial-container">
   <header class="historial-header">
-    <button type="button" class="boton-volver" (click)="volverAlDashboard()">← Volver</button>
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()"><svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      Volver
+    </button>
     <h1>Ventas de hoy</h1>
     <button
       type="button"
@@ -8,7 +10,9 @@
       (click)="themeService.alternarTema()"
       [attr.aria-label]="themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
     >
-      {{ themeService.tema() === 'dark' ? '☀️' : '🌙' }}
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
     </button>
   </header>
 

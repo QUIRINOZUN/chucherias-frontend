@@ -2,7 +2,7 @@
   display: block;
   min-height: 100vh;
   background: var(--pos-bg-main);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
 }
 
@@ -62,7 +62,7 @@
 }
 
 .mensaje-error {
-  color: var(--action-danger);
+  color: var(--peligro-texto);
 }
 
 .resumen-dia {
@@ -100,7 +100,7 @@
 }
 
 .tarjeta-venta.tarjeta-venta-cancelada {
-  border-left-color: var(--action-danger);
+  border-left-color: var(--peligro-texto);
   opacity: 0.75;
 }
 
@@ -129,13 +129,13 @@
   padding: 3px 9px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--action-success) 20%, var(--pos-bg-card));
-  color: var(--action-success);
+  color: var(--exito-texto);
   white-space: nowrap;
 }
 
 .badge-estado-venta.badge-cancelada {
   background: color-mix(in srgb, var(--action-danger) 20%, var(--pos-bg-card));
-  color: var(--action-danger);
+  color: var(--peligro-texto);
 }
 
 .venta-items {
@@ -153,7 +153,7 @@
   margin: 0 0 10px;
   font-size: 0.8rem;
   font-style: italic;
-  color: var(--action-danger);
+  color: var(--peligro-texto);
 }
 
 .venta-pie {
@@ -174,7 +174,7 @@
   margin-top: 10px;
   border: 1px solid var(--action-danger);
   background: none;
-  color: var(--action-danger);
+  color: var(--peligro-texto);
   border-radius: var(--pos-radio);
   font-size: 0.8rem;
   font-weight: 600;
@@ -234,4 +234,54 @@
 .boton-confirmar-cancelacion:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* ===== Rediseño: botones de encabezado y jerarquía ===== */
+.boton-volver,
+.boton-tema {
+  border: none;
+  border-radius: var(--radio-pastilla);
+  padding: 0 18px;
+  font-weight: 600;
+}
+
+.boton-tema {
+  padding: 0;
+}
+
+.historial-header h1 {
+  font-size: 1.25rem;
+}
+
+.resumen-dia,
+.tarjeta-venta {
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+}
+
+.resumen-dia {
+  border-color: transparent;
+}
+
+.resumen-dia-monto,
+.venta-total {
+  font-family: var(--fuente-titulo);
+  font-weight: 800;
+}
+
+.venta-orden {
+  font-family: var(--fuente-titulo);
+}
+
+.boton-cancelar-venta,
+.boton-cancelar-mini,
+.boton-confirmar-cancelacion {
+  min-height: 44px;
+  border-radius: var(--radio-sm);
+}
+
+.panel-cancelacion input {
+  min-height: 44px;
+  border-width: 2px;
+  border-radius: var(--radio-sm);
 }

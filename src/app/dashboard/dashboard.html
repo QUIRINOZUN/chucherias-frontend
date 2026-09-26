@@ -3,7 +3,7 @@
     <div class="dashboard-header-texto">
       @if (authService.usuarioActual(); as usuario) {
         <h1>Hola, {{ usuario.nombre }}</h1>
-        <p class="dashboard-rol">{{ usuario.rol }}</p>
+        <p class="dashboard-rol"><span class="rol-pastilla">{{ usuario.rol }}</span></p>
       }
     </div>
     <button
@@ -12,7 +12,9 @@
       (click)="themeService.alternarTema()"
       [attr.aria-label]="themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
     >
-      {{ themeService.tema() === 'dark' ? '☀️' : '🌙' }}
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
     </button>
   </header>
 
@@ -25,7 +27,9 @@
       <div class="grid-modulos">
         @for (modulo of modulosVisibles(); track modulo.ruta) {
           <a class="tarjeta-modulo" [routerLink]="modulo.ruta">
-            <span class="modulo-icono">{{ modulo.icono }}</span>
+            <span class="modulo-icono">
+              <svg class="icono" aria-hidden="true"><use [attr.href]="'#ic-' + modulo.icono" /></svg>
+            </span>
             <span class="modulo-titulo">{{ modulo.titulo }}</span>
             <span class="modulo-descripcion">{{ modulo.descripcion }}</span>
           </a>
@@ -34,5 +38,7 @@
     }
   </div>
 
-  <button type="button" class="boton-cerrar-sesion" (click)="authService.logout()">Cerrar sesión</button>
+  <button type="button" class="boton-cerrar-sesion" (click)="authService.logout()">
+    Cerrar sesión
+  </button>
 </div>

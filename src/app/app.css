@@ -10,7 +10,7 @@
   flex-direction: column;
   gap: 10px;
   padding: 16px;
-  border-radius: var(--pos-radio, 12px);
+  border-radius: var(--radio-lg);
   border: 1px solid var(--action-danger);
   background: var(--pos-bg-card);
   color: var(--pos-text-primary);
@@ -26,8 +26,8 @@
 .aviso-inactividad button {
   min-height: 44px;
   border: none;
-  border-radius: var(--pos-radio, 12px);
-  background: var(--action-success);
+  border-radius: var(--radio-lg);
+  background: var(--action-primary);
   color: #fff;
   font-size: 0.95rem;
   font-weight: 700;
