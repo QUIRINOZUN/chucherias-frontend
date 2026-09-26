@@ -44,6 +44,8 @@ export interface VentaHistorial {
   estado: 'completada' | 'cancelada';
   cajero: string;
   motivo_cancelacion: string | null;
+  cancelado_por_nombre: string | null;
+  fecha_cancelacion: string | null;
   items: ItemVentaHistorial[];
 }
 

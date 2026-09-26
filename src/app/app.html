@@ -1,1 +1,8 @@
 <router-outlet></router-outlet>
+
+@if (inactividad.segundosRestantes(); as restantes) {
+  <div class="aviso-inactividad" role="alertdialog" aria-live="assertive" aria-label="Aviso de inactividad">
+    <p>Tu sesión se cerrará en {{ restantes }} s por inactividad.</p>
+    <button type="button" (click)="inactividad.continuarSesion()">Seguir conectado</button>
+  </div>
+}

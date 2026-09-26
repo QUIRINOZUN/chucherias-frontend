@@ -48,6 +48,17 @@
               }
             </ul>
 
+            @if (venta.estado === 'cancelada') {
+              <p class="venta-motivo">
+                Cancelada
+                @if (venta.cancelado_por_nombre) {
+                  por {{ venta.cancelado_por_nombre }}
+                }
+                @if (venta.fecha_cancelacion) {
+                  el {{ venta.fecha_cancelacion | date: 'dd/MM/yyyy HH:mm' }}
+                }
+              </p>
+            }
             @if (venta.estado === 'cancelada' && venta.motivo_cancelacion) {
               <p class="venta-motivo">Motivo: {{ venta.motivo_cancelacion }}</p>
             }

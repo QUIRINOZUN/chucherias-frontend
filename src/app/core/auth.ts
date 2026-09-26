@@ -24,6 +24,10 @@ export class AuthService {
   // Cualquier componente puede leerla con authService.usuarioActual()
   usuarioActual = signal<Usuario | null>(this.obtenerUsuarioGuardado());
 
+  // Mensaje que el login muestra tras un cierre automático de sesión
+  // (inactividad o token vencido); vacío en un logout normal.
+  avisoSesion = signal('');
+
   constructor(
     private http: HttpClient,
     private router: Router,
@@ -41,7 +45,8 @@ export class AuthService {
       );
   }
 
-  logout(): void {
+  logout(aviso = ''): void {
+    this.avisoSesion.set(aviso);
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
     this.usuarioActual.set(null);

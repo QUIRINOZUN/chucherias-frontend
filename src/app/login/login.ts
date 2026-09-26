@@ -23,6 +23,9 @@ export class LoginComponent {
     private authService: AuthService,
     private router: Router
   ) {
+    // Si se llegó aquí por un cierre automático de sesión, se explica por qué.
+    this.error.set(this.authService.avisoSesion());
+    this.authService.avisoSesion.set('');
     this.form = this.fb.group({
       usuario: ['', [Validators.required, Validators.minLength(3)]],
       contrasena: ['', [Validators.required, Validators.minLength(6)]],
