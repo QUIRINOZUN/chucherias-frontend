@@ -1,3 +1,10 @@
+/* =============================================================================
+   historial-ventas.css — VENTAS DEL DÍA Y CANCELACIÓN
+   =============================================================================
+   Encabezado, total del día, tarjetas de venta (verde = completada, rojo =
+   cancelada) y el panel para cancelar con motivo. */
+
+/* Contenedor del componente. */
 :host {
   display: block;
   min-height: 100vh;
@@ -65,6 +72,7 @@
   color: var(--peligro-texto);
 }
 
+/* Barra con el total del día. */
 .resumen-dia {
   display: flex;
   justify-content: space-between;
@@ -91,6 +99,7 @@
   gap: 12px;
 }
 
+/* Tarjeta de una venta: el borde izquierdo indica el estado (verde completada / rojo cancelada). */
 .tarjeta-venta {
   background: var(--pos-bg-card);
   border: 1px solid var(--pos-border);
@@ -123,6 +132,7 @@
   color: var(--pos-text-secondary);
 }
 
+/* Etiqueta de estado de la venta. */
 .badge-estado-venta {
   font-size: 0.7rem;
   font-weight: 700;
@@ -181,6 +191,7 @@
   cursor: pointer;
 }
 
+/* Panel que se abre dentro de la tarjeta para escribir el motivo y confirmar la cancelación. */
 .panel-cancelacion {
   margin-top: 10px;
   padding-top: 10px;

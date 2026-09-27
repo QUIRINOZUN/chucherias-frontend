@@ -1,0 +1,97 @@
+<!-- ============================================================================
+     comandas.html — TABLERO DE COMANDAS (lógica en comandas.ts)
+     ============================================================================
+     Tres columnas (sin preparar / preparando / por entregar) generadas con un solo
+     @for a partir de la lista COLUMNAS. Se actualiza solo cada 15 segundos.
+     ============================================================================ -->
+<div class="comandas-container">
+  <!-- ENCABEZADO: volver, título y cambio de tema. -->
+  <header class="comandas-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      Volver
+    </button>
+    <h1>Comandas</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+    >
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
+    </button>
+  </header>
+
+  @if (cargando()) {
+    <p class="mensaje-estado">Cargando comandas...</p>
+  } @else {
+    @if (error()) {
+      <p class="mensaje-estado mensaje-error" role="alert">{{ error() }}</p>
+    }
+
+    <!-- MODO CONSULTA: el cajero ve el tablero pero no puede avanzar comandas. -->
+    @if (!puedeAvanzar()) {
+      <p class="aviso-solo-lectura">Estás en modo consulta: solo cocina y encargados avanzan las comandas.</p>
+    }
+
+    <!-- TABLERO: una columna por estado, con su contador de órdenes. -->
+    <div class="tablero">
+      @for (columna of columnas; track columna.estado) {
+        <section class="columna">
+          <h2 class="columna-titulo">
+            <span class="columna-icono">
+              <svg class="icono" aria-hidden="true"><use [attr.href]="'#ic-' + columna.icono" /></svg>
+            </span>
+            {{ columna.titulo }}
+            <span class="columna-contador">{{ (ordenesPorEstado()[columna.estado] ?? []).length }}</span>
+          </h2>
+
+          @if ((ordenesPorEstado()[columna.estado] ?? []).length === 0) {
+            <p class="mensaje-vacio">{{ columna.vacio }}</p>
+          }
+
+          @for (orden of ordenesPorEstado()[columna.estado] ?? []; track orden.id) {
+            <!-- TARJETA DE COMANDA: número, tiempo de espera (se marca en rojo si es urgente), tipo de entrega y productos con notas. -->
+            <article class="tarjeta-orden" [class.tarjeta-urgente]="esUrgente(orden)">
+              <div class="tarjeta-orden-encabezado">
+                <span class="numero-orden">{{ orden.numero_orden }}</span>
+                <span class="tiempo-transcurrido">{{ tiempoTranscurrido(orden.fecha_creacion) }}</span>
+              </div>
+
+              <span class="etiqueta-entrega" [class.etiqueta-domicilio]="orden.tipo_entrega === 'domicilio'">
+                {{ orden.tipo_entrega === 'domicilio' ? 'A domicilio' : 'Presencial' }}
+              </span>
+
+              <ul class="lista-items-orden">
+                @for (item of orden.items; track $index) {
+                  <li>
+                    <span>{{ item.cantidad }}× {{ item.producto }} ({{ item.variante }})</span>
+                    @if (item.notas) {
+                      <p class="notas-item">{{ item.notas }}</p>
+                    }
+                  </li>
+                }
+              </ul>
+
+              <!-- BOTÓN DE AVANCE: solo administrador, encargado y auxiliar. Pasa la comanda al siguiente estado;
+                   en "por entregar" el botón es verde porque cierra el ciclo. -->
+              @if (puedeAvanzar()) {
+                <button
+                  type="button"
+                  class="boton-avanzar"
+                  [class.boton-avanzar-final]="orden.estado === 'por_entregar'"
+                  (click)="avanzar(orden)"
+                  [disabled]="actualizandoOrdenId() === orden.id"
+                >
+                  {{ actualizandoOrdenId() === orden.id ? 'Actualizando...' : etiquetaAccion[orden.estado] }}
+                </button>
+              }
+            </article>
+          }
+        </section>
+      }
+    </div>
+  }
+</div>

@@ -1,5 +1,9 @@
+<!-- app.html — PLANTILLA RAÍZ (lógica en app.ts) -->
+<!-- AQUÍ se pinta la pantalla actual según la ruta (login, dashboard, POS, caja…). -->
 <router-outlet></router-outlet>
 
+<!-- AVISO DE INACTIVIDAD (RNF-01): aparece cuando faltan 60 segundos para cerrar la sesión.
+     Solo el botón "Seguir conectado" lo cancela. -->
 @if (inactividad.segundosRestantes(); as restantes) {
   <div class="aviso-inactividad" role="alertdialog" aria-live="assertive" aria-label="Aviso de inactividad">
     <p>Tu sesión se cerrará en {{ restantes }} s por inactividad.</p>

@@ -1,4 +1,12 @@
+<!-- ============================================================================
+     caja.html — CORTE DE CAJA (lógica en caja.ts)
+     ============================================================================
+     1) Resumen calculado por el sistema  2) Captura de lo contado físicamente
+     con diferencia en vivo  3) Historial de cortes con filtros (solo
+     administrador y encargado).
+     ============================================================================ -->
 <div class="caja-container">
+  <!-- ENCABEZADO: volver, título y cambio de tema. -->
   <header class="caja-header">
     <button type="button" class="boton-volver" (click)="volverAlDashboard()"><svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
       Volver
@@ -17,11 +25,14 @@
   </header>
 
   <div class="caja-cuerpo">
+    <!-- Estados de la pantalla: cargando el resumen, error de conexión, o el contenido. -->
     @if (cargando()) {
       <p class="mensaje-estado">Calculando resumen del día...</p>
     } @else if (error()) {
       <p class="mensaje-estado mensaje-error">{{ error() }}</p>
     } @else if (resumen(); as r) {
+      <!-- TARJETA "CORTE GUARDADO": aparece justo después de guardar; muestra lo que esperaba el sistema,
+           lo contado y la diferencia. "Hecho" vuelve al formulario limpio. -->
       @if (corteGuardado(); as corte) {
         <div class="tarjeta-corte-guardado">
           <h2>Corte guardado</h2>
@@ -40,6 +51,7 @@
           <button type="button" class="boton-nuevo-corte" (click)="nuevoCorte()">Hecho</button>
         </div>
       } @else {
+        <!-- RESUMEN DEL SISTEMA: efectivo, transferencia y total que el servidor calculó de las ventas completadas del día. -->
         <section class="tarjeta-resumen">
           <h2>Lo que el sistema calculó hoy</h2>
           <div class="linea-corte">
@@ -56,6 +68,7 @@
           </div>
         </section>
 
+        <!-- CAPTURA: lo que la persona contó físicamente (efectivo y transferencias). -->
         <section class="tarjeta-contar">
           <h2>Lo que contaste físicamente</h2>
           <div class="campo-caja">
@@ -81,6 +94,8 @@
             />
           </div>
 
+          <!-- DIFERENCIA EN VIVO: contado - sistema. Cuadra exacto / Sobran $X / Faltan $X.
+               (Se compara con null porque una diferencia de 0 es un resultado válido.) -->
           @if (diferencia() !== null) {
             <div class="diferencia-en-vivo" [class.diferencia-negativa]="diferencia()! < 0">
               @if (diferencia() === 0) {
@@ -97,6 +112,7 @@
             <p class="mensaje-error">{{ errorRegistro() }}</p>
           }
 
+          <!-- Guardar el corte: se habilita solo con ambos montos capturados. -->
           <button
             type="button"
             class="boton-guardar-corte"
@@ -108,10 +124,12 @@
         </section>
       }
 
+      <!-- HISTORIAL DE CORTES (solo administrador y encargado): consulta con filtros. -->
       @if (esAdministradorOEncargado()) {
         <section class="tarjeta-historial">
           <h2>Consultar cortes</h2>
 
+          <!-- FILTROS: rango de fechas y usuario. Cada cambio vuelve a consultar de inmediato. -->
           <div class="filtros-historial">
             <div class="campo-filtro">
               <label for="filtro-desde">Desde</label>
@@ -152,6 +170,8 @@
             </button>
           }
 
+          <!-- RESULTADOS: error, cargando, sin cortes o la lista. Cada corte muestra sistema vs. contado y su diferencia
+               (verde si sobra o cuadra, rojo si falta). -->
           @if (errorHistorial()) {
             <p class="mensaje-error">{{ errorHistorial() }}</p>
           } @else if (cargandoHistorial()) {

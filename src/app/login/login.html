@@ -1,4 +1,11 @@
+<!-- ============================================================================
+     login.html — INICIO DE SESIÓN (lógica en login.ts)
+     ============================================================================
+     Diseño dividido: panel de marca a la izquierda y formulario a la derecha
+     (en móvil se apilan). El formulario es reactivo: valida al tocar cada campo.
+     ============================================================================ -->
 <div class="login-container">
+  <!-- PANEL DE MARCA: nombre del negocio y composición decorativa (los íconos son solo adorno, no se leen en pantalla). -->
   <aside class="login-marca">
     <!-- Composición decorativa: íconos de la carta girados sobre el fondo. -->
     <div class="marca-composicion" aria-hidden="true">
@@ -17,11 +24,13 @@
     </div>
   </aside>
 
+  <!-- FORMULARIO DE ACCESO. -->
   <main class="login-formulario">
   <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
     <h2>Bienvenido</h2>
     <p class="subtitulo">Inicia sesión para continuar</p>
 
+    <!-- Campo de usuario (obligatorio, mínimo 3 caracteres). -->
     <div class="campo">
       <label for="usuario">Usuario</label>
       <input
@@ -44,6 +53,7 @@
 
     <div class="campo">
       <label for="contrasena">Contraseña</label>
+      <!-- Campo de contraseña (obligatorio, mínimo 6) con botón para mostrar/ocultar. -->
       <div class="campo-contrasena">
         <input
           id="contrasena"
@@ -72,10 +82,13 @@
       }
     </div>
 
+    <!-- MENSAJE DE ERROR GENERAL: credenciales incorrectas, cuenta desactivada, sin conexión o el motivo de un cierre
+         automático de sesión (inactividad / token vencido). -->
     @if (error()) {
       <div class="mensaje-error-general">{{ error() }}</div>
     }
 
+    <!-- BOTÓN INGRESAR: muestra un spinner y se deshabilita mientras espera al servidor. -->
     <button type="submit" class="boton-enviar" [disabled]="cargando()">
       @if (cargando()) {
         <span class="spinner"></span>

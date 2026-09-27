@@ -1,4 +1,11 @@
+<!-- ============================================================================
+     usuarios.html — GESTIÓN DE CUENTAS DE PERSONAL (lógica en usuarios.ts)
+     ============================================================================
+     Encabezado + lista de cuentas + ventana emergente de alta/edición.
+     Solo el administrador ve los botones de crear, editar y activar/desactivar.
+     ============================================================================ -->
 <div class="usuarios-container">
+  <!-- ENCABEZADO: volver, título y cambio de tema. -->
   <header class="usuarios-header">
     <button type="button" class="boton-volver" (click)="volverAlDashboard()"><svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
       Volver
@@ -16,6 +23,7 @@
     </button>
   </header>
 
+  <!-- CUERPO: estados de carga/error, botón de alta y lista de cuentas. -->
   <div class="usuarios-cuerpo">
     @if (cargando()) {
       <p class="mensaje-estado">Cargando usuarios...</p>
@@ -25,9 +33,11 @@
       }
 
       @if (esAdministrador()) {
+        <!-- Alta de cuenta: solo administrador. -->
         <button type="button" class="boton-nuevo-usuario" (click)="abrirCreacion()">+ Nuevo usuario</button>
       }
 
+      <!-- LISTA: una tarjeta por cuenta con nombre, usuario, rol, fecha de alta y estado (Activo/Inactivo). -->
       <ul class="lista-usuarios">
         @for (usuario of usuarios(); track usuario.id) {
           <li class="tarjeta-usuario">
@@ -41,6 +51,8 @@
               {{ usuario.activo ? 'Activo' : 'Inactivo' }}
             </span>
             @if (esAdministrador()) {
+              <!-- Controles de administrador: editar y activar/desactivar. Un administrador NO puede desactivar su propia cuenta
+                   (el botón se deshabilita) para no quedarse sin acceso. -->
               <button type="button" class="boton-editar" (click)="abrirEdicion(usuario)">Editar</button>
               <button
                 type="button"
@@ -59,6 +71,8 @@
     }
   </div>
 
+  <!-- VENTANA EMERGENTE de alta/edición: un solo formulario para ambos modos.
+       Al editar, la contraseña es opcional (en blanco = no cambiarla). -->
   @if (modoFormulario(); as modo) {
     <div class="overlay">
       <div class="panel-formulario">
@@ -113,6 +127,7 @@
           <p class="mensaje-error">{{ errorFormulario() }}</p>
         }
 
+        <!-- ACCIONES: cancelar o guardar (se habilita solo si el formulario es válido, ver puedeGuardar() en usuarios.ts). -->
         <div class="acciones-formulario">
           <button type="button" class="boton-cancelar" (click)="cerrarFormulario()" [disabled]="procesandoForm()">
             Cancelar

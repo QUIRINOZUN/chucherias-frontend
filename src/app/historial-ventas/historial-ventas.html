@@ -1,4 +1,11 @@
+<!-- ============================================================================
+     historial-ventas.html — VENTAS DEL DÍA Y CANCELACIÓN (lógica en historial-ventas.ts)
+     ============================================================================
+     Solo administrador y encargado. Lista las ventas del día del negocio con sus
+     productos y permite cancelar las completadas (RF-03).
+     ============================================================================ -->
 <div class="historial-container">
+  <!-- ENCABEZADO: volver, título y cambio de tema. -->
   <header class="historial-header">
     <button type="button" class="boton-volver" (click)="volverAlDashboard()"><svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
       Volver
@@ -24,6 +31,7 @@
         <p class="mensaje-estado mensaje-error">{{ error() }}</p>
       }
 
+      <!-- TOTAL DEL DÍA: suma solo las ventas completadas (las canceladas no cuentan). -->
       <div class="resumen-dia">
         <span>Total del día ({{ ventas().length }} {{ ventas().length === 1 ? 'venta' : 'ventas' }})</span>
         <span class="resumen-dia-monto">{{ totalDelDia() | currency: 'MXN' }}</span>
@@ -33,6 +41,7 @@
         <p class="mensaje-estado">Todavía no hay ventas hoy.</p>
       }
 
+      <!-- LISTA DE VENTAS: más recientes primero. Las canceladas se muestran atenuadas y con su auditoría. -->
       <ul class="lista-ventas">
         @for (venta of ventas(); track venta.id) {
           <li class="tarjeta-venta" [class.tarjeta-venta-cancelada]="venta.estado === 'cancelada'">
@@ -52,6 +61,7 @@
               }
             </ul>
 
+            <!-- AUDITORÍA DE CANCELACIÓN (RF-03): quién canceló y cuándo. -->
             @if (venta.estado === 'cancelada') {
               <p class="venta-motivo">
                 Cancelada
@@ -63,6 +73,7 @@
                 }
               </p>
             }
+            <!-- Motivo de la cancelación (solo si se escribió). -->
             @if (venta.estado === 'cancelada' && venta.motivo_cancelacion) {
               <p class="venta-motivo">Motivo: {{ venta.motivo_cancelacion }}</p>
             }
@@ -75,6 +86,8 @@
               <span class="venta-total">{{ venta.total | currency: 'MXN' }}</span>
             </div>
 
+            <!-- CANCELAR: solo las ventas completadas. Primero un botón; al pulsarlo se abre un panel para escribir el motivo
+                 y confirmar. Solo llega aquí quien tiene permiso (administrador/encargado). -->
             @if (venta.estado === 'completada') {
               @if (cancelandoId() === venta.id) {
                 <div class="panel-cancelacion">

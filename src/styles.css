@@ -194,6 +194,7 @@ textarea:focus-visible {
 .caja-header,
 .historial-header,
 .usuarios-header,
+.comandas-header,
 .dashboard-header {
   border-bottom: 0 !important;
   box-shadow: var(--sombra-suave);

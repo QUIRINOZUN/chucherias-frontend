@@ -1,3 +1,31 @@
+// =============================================================================
+// pos/pos.ts — PUNTO DE VENTA (POS): MENÚ, CARRITO Y COBRO (RF-01, RF-02)
+// =============================================================================
+// Es la pantalla principal de trabajo del cajero. Su plantilla (pos.html) tiene
+// cuatro zonas y esta clase maneja el estado de todas:
+//
+//   1. MENÚ ......... búsqueda por nombre, chips de categoría y tarjetas de
+//                     producto expandibles (al tocar una se ven sus variantes).
+//   2. CARRITO ...... líneas con cantidad, "Quitar ingredientes", notas y total.
+//                     En pantallas anchas es una barra lateral; en angostas es
+//                     un panel que sube desde abajo (botón flotante).
+//   3. COBRO ........ ventana para elegir entrega y método de pago, capturar
+//                     el monto recibido (efectivo) y ver el cambio.
+//   4. COMPROBANTE .. resumen de la venta registrada, imprimible.
+//
+// FLUJO COMPLETO DE UNA VENTA
+//   elegir producto → tocar una variante (se agrega al carrito) → personalizar
+//   si hace falta → "Cobrar" → elegir entrega y pago → "Confirmar venta"
+//   (POST /api/ventas) → comprobante → "Nueva venta" (limpia todo).
+//
+// REGLAS QUE ESTA PANTALLA RESPETA
+//   - NUNCA envía precios al servidor: solo variante y cantidad. El servidor
+//     lee el precio real de la base de datos.
+//   - La personalización es POR UNIDAD: "sin tocino" en una hamburguesa nunca
+//     afecta a otra idéntica del carrito (ver separarUnidad).
+//   - Estado con "signals": cada dato reactivo se lee llamándolo como función,
+//     p. ej. carrito(), y se cambia con .set() o .update().
+// =============================================================================
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -9,6 +37,7 @@ import { MetodoPago, RespuestaVenta, TipoEntrega, VentasService } from '../core/
 import { obtenerEstiloCategoria } from './categoria-estilos';
 import { obtenerIngredientesRemovibles } from './producto-ingredientes';
 
+// Una LÍNEA del carrito (no un producto: ver el campo `id`).
 interface ItemCarrito {
   // Identifica la LÍNEA del carrito, no el producto: dos hamburguesas BBQ
   // personalizadas distinto (una sin tocino, otra normal) son dos líneas
@@ -18,9 +47,12 @@ interface ItemCarrito {
   varianteId: number;
   productoNombre: string;
   varianteNombre: string;
+  // Precio solo para mostrar en pantalla; el servidor ignora esto y usa el suyo.
   precio: number;
   cantidad: number;
+  // Ingredientes marcados con "Quitar" en esta línea.
   ingredientesQuitados: string[];
+  // Texto libre de "otras indicaciones".
   notasLibres: string;
 }
 
@@ -28,6 +60,9 @@ interface ItemCarrito {
 // ofrecerlas como "monto entregado" de un vistazo).
 const DENOMINACIONES_MXN = [20, 50, 100, 200, 500, 1000];
 
+// Foto de la venta ya registrada, con todo lo que muestra el comprobante.
+// Se arma con los datos LOCALES del momento de cobrar (carrito, monto
+// recibido…) más el número de orden que devolvió el servidor.
 interface Recibo {
   venta: RespuestaVenta;
   items: ItemCarrito[];
@@ -49,19 +84,32 @@ interface Recibo {
   styleUrl: './pos.css',
 })
 export class PosComponent implements OnInit {
+  // ---------------------------------------------------------------------------
+  // Estado del MENÚ
+  // ---------------------------------------------------------------------------
   categorias = signal<Categoria[]>([]);
   productos = signal<Producto[]>([]);
+  // null = "Todas las categorías".
   categoriaSeleccionada = signal<number | null>(null);
   busqueda = signal('');
+  // Conjunto de ids de productos cuya tarjeta está expandida (mostrando variantes).
   productosExpandidos = signal<ReadonlySet<number>>(new Set());
+
+  // ---------------------------------------------------------------------------
+  // Estado del CARRITO
+  // ---------------------------------------------------------------------------
   carrito = signal<ItemCarrito[]>([]);
+  // Solo aplica en pantallas angostas: si el panel deslizable está abierto.
   carritoAbierto = signal(false);
   // id de línea del carrito cuyo selector de "Quitar ingredientes" está
   // abierto; null si ninguno lo está.
   quitarAbiertoPara = signal<string | null>(null);
+  // Se expone la función tal cual para que la plantilla pueda consultar los
+  // ingredientes removibles de cada producto.
   ingredientesDisponibles = obtenerIngredientesRemovibles;
   tipoEntrega = signal<TipoEntrega>('presencial');
 
+  // Contador para fabricar ids únicos de línea (item-1, item-2, …).
   private contadorIdItem = 0;
 
   cargando = signal(true);
@@ -71,13 +119,23 @@ export class PosComponent implements OnInit {
   // color e ícono, con un valor por defecto si aparece una categoría nueva.
   estiloCategoria = obtenerEstiloCategoria;
 
+  // ---------------------------------------------------------------------------
+  // Estado del COBRO y el COMPROBANTE
+  // ---------------------------------------------------------------------------
   mostrarCobro = signal(false);
   metodoPago = signal<MetodoPago>('efectivo');
+  // Lo que el cliente entregó en efectivo (null = aún no se captura).
   montoRecibido = signal<number | null>(null);
   procesandoVenta = signal(false);
   errorVenta = signal('');
+  // Cuando tiene valor, la ventana muestra el comprobante en vez del cobro.
   recibo = signal<Recibo | null>(null);
 
+  // ---------------------------------------------------------------------------
+  // Valores calculados (se recalculan solos cuando cambia lo que leen)
+  // ---------------------------------------------------------------------------
+
+  // Productos que se muestran en el catálogo según búsqueda y categoría.
   productosFiltrados = computed(() => {
     const productos = this.productos();
     const texto = this.busqueda().trim().toLowerCase();
@@ -93,10 +151,12 @@ export class PosComponent implements OnInit {
     return categoriaId ? productos.filter((p) => p.categoria_id === categoriaId) : productos;
   });
 
+  // Total a cobrar: suma de precio × cantidad de cada línea.
   totalCarrito = computed(() =>
     this.carrito().reduce((suma, item) => suma + item.precio * item.cantidad, 0),
   );
 
+  // Cantidad total de artículos (suma de cantidades, no de líneas).
   cantidadItems = computed(() => this.carrito().reduce((suma, item) => suma + item.cantidad, 0));
 
   // Botones rápidos de "con qué billete pagó": el total exacto (pago
@@ -108,6 +168,8 @@ export class PosComponent implements OnInit {
     return [total, ...DENOMINACIONES_MXN.filter((billete) => billete > total)];
   });
 
+  // Cambio a devolver = monto recibido - total. Solo tiene sentido en
+  // efectivo y con un monto capturado; si es negativo, todavía falta dinero.
   cambio = computed(() => {
     const recibido = this.montoRecibido();
     if (this.metodoPago() !== 'efectivo' || recibido == null) {
@@ -125,6 +187,7 @@ export class PosComponent implements OnInit {
     private router: Router,
   ) {}
 
+  // Al abrir la pantalla se cargan categorías y productos del servidor.
   ngOnInit(): void {
     this.catalogoService.obtenerCategorias().subscribe({
       next: (categorias) => this.categorias.set(categorias),
@@ -143,6 +206,11 @@ export class PosComponent implements OnInit {
     });
   }
 
+  // ===========================================================================
+  // MENÚ: categorías, búsqueda y tarjetas
+  // ===========================================================================
+
+  // Chip de categoría (null = "Todas").
   seleccionarCategoria(categoriaId: number | null): void {
     this.categoriaSeleccionada.set(categoriaId);
     // Elegir una categoría con la búsqueda activa sería confuso (la
@@ -166,10 +234,13 @@ export class PosComponent implements OnInit {
     return 'Ocurrió un error inesperado. Intenta de nuevo en unos momentos.';
   }
 
+  // ¿La tarjeta de este producto está desplegada?
   estaExpandido(productoId: number): boolean {
     return this.productosExpandidos().has(productoId);
   }
 
+  // Expande o colapsa una tarjeta. Se crea un Set NUEVO en cada cambio porque
+  // las signals detectan cambios por referencia, no por contenido.
   alternarExpansion(productoId: number): void {
     this.productosExpandidos.update((actuales) => {
       const nuevo = new Set(actuales);
@@ -182,15 +253,24 @@ export class PosComponent implements OnInit {
     });
   }
 
+  // Precio mostrado en la tarjeta colapsada: el de la variante más barata
+  // (con "Desde" si el producto tiene más de una).
   precioDesde(producto: Producto): number {
     return Math.min(...producto.variantes.map((v) => v.precio));
   }
 
+  // ===========================================================================
+  // CARRITO
+  // ===========================================================================
+
+  // Fabrica un id único para una línea nueva del carrito.
   private generarIdItem(): string {
     this.contadorIdItem += 1;
     return `item-${this.contadorIdItem}`;
   }
 
+  // Agrega UNA unidad de una variante al carrito (al tocar una variante en la
+  // tarjeta expandida).
   agregarAlCarrito(producto: Producto, variante: Variante): void {
     this.carrito.update((items) => {
       // Solo se apila cantidad sobre una línea ya existente si esa línea
@@ -204,10 +284,12 @@ export class PosComponent implements OnInit {
           !item.notasLibres,
       );
       if (existente) {
+        // Ya hay una línea limpia de esta variante: solo sube su cantidad.
         return items.map((item) =>
           item.id === existente.id ? { ...item, cantidad: item.cantidad + 1 } : item,
         );
       }
+      // Si no, se crea una línea nueva con cantidad 1.
       return [
         ...items,
         {
@@ -251,6 +333,8 @@ export class PosComponent implements OnInit {
         return items;
       }
       const original = items[indice];
+      // La línea original pierde una unidad y aparece una línea nueva de 1
+      // unidad justo debajo, con los mismos datos.
       const restante: ItemCarrito = { ...original, cantidad: original.cantidad - 1 };
       const nuevaLinea: ItemCarrito = { ...original, id: nuevoId, cantidad: 1 };
       const copia = [...items];
@@ -264,6 +348,7 @@ export class PosComponent implements OnInit {
     }
   }
 
+  // Abre/cierra la lista de casillas de "Quitar" de una línea (solo una a la vez).
   alternarPickerQuitar(item: ItemCarrito): void {
     this.quitarAbiertoPara.update((actual) => (actual === item.id ? null : item.id));
   }
@@ -272,6 +357,7 @@ export class PosComponent implements OnInit {
     return item.ingredientesQuitados.includes(ingrediente);
   }
 
+  // Marca o desmarca un ingrediente como "quitado" en esa línea.
   alternarIngredienteQuitado(item: ItemCarrito, ingrediente: string): void {
     this.carrito.update((items) =>
       items.map((i) => {
@@ -289,6 +375,7 @@ export class PosComponent implements OnInit {
     );
   }
 
+  // Guarda lo que se escribe en "Otras indicaciones" de esa línea.
   actualizarNotasLibres(item: ItemCarrito, valor: string): void {
     this.carrito.update((items) =>
       items.map((i) => (i.id === item.id ? { ...i, notasLibres: valor } : i)),
@@ -298,6 +385,7 @@ export class PosComponent implements OnInit {
   // Combina lo que se marcó "quitar" con cualquier indicación libre en un
   // solo texto — es lo que realmente viaja al backend (columna `notas`,
   // texto libre; no hay tabla de ingredientes removibles todavía).
+  // Ejemplo de resultado: "Sin: Tocino, Cebolla morada · sin picante".
   notaCompleta(item: ItemCarrito): string {
     const partes: string[] = [];
     if (item.ingredientesQuitados.length > 0) {
@@ -309,12 +397,14 @@ export class PosComponent implements OnInit {
     return partes.join(' · ');
   }
 
+  // Botón "+" de una línea.
   incrementar(item: ItemCarrito): void {
     this.carrito.update((items) =>
       items.map((i) => (i.id === item.id ? { ...i, cantidad: i.cantidad + 1 } : i)),
     );
   }
 
+  // Botón "−" de una línea: baja la cantidad y, si llega a 0, la línea se elimina.
   decrementar(item: ItemCarrito): void {
     this.carrito.update((items) =>
       items
@@ -323,6 +413,7 @@ export class PosComponent implements OnInit {
     );
   }
 
+  // Botón de eliminar una línea completa.
   quitarDelCarrito(item: ItemCarrito): void {
     this.carrito.update((items) => items.filter((i) => i.id !== item.id));
     if (this.quitarAbiertoPara() === item.id) {
@@ -330,10 +421,13 @@ export class PosComponent implements OnInit {
     }
   }
 
+  // Presencial (el cliente está en el local) o a domicilio. Viaja al servidor
+  // y aparece en el comprobante y en el tablero de comandas.
   seleccionarTipoEntrega(tipo: TipoEntrega): void {
     this.tipoEntrega.set(tipo);
   }
 
+  // Panel del carrito en pantallas angostas.
   abrirCarrito(): void {
     this.carritoAbierto.set(true);
   }
@@ -342,6 +436,12 @@ export class PosComponent implements OnInit {
     this.carritoAbierto.set(false);
   }
 
+  // ===========================================================================
+  // COBRO
+  // ===========================================================================
+
+  // Botón "Cobrar": abre la ventana de cobro con valores iniciales limpios
+  // (efectivo, sin monto). No hace nada si el carrito está vacío.
   abrirCobro(): void {
     if (this.carrito().length === 0) {
       return;
@@ -357,6 +457,7 @@ export class PosComponent implements OnInit {
     this.mostrarCobro.set(false);
   }
 
+  // Elige efectivo o transferencia. En transferencia no hay monto que capturar.
   seleccionarMetodoPago(metodo: MetodoPago): void {
     this.metodoPago.set(metodo);
     if (metodo !== 'efectivo') {
@@ -364,15 +465,19 @@ export class PosComponent implements OnInit {
     }
   }
 
+  // Campo "O teclea el monto exacto": vacío o inválido = sin monto.
   actualizarMontoRecibido(valor: string): void {
     const numero = Number(valor);
     this.montoRecibido.set(valor === '' || Number.isNaN(numero) ? null : numero);
   }
 
+  // Botones rápidos de billete: llenan el monto igual que si se tecleara.
   seleccionarMontoSugerido(monto: number): void {
     this.montoRecibido.set(monto);
   }
 
+  // Decide si "Confirmar venta" está habilitado: hay carrito, no hay otra venta
+  // en proceso y, si es efectivo, el monto cubre el total (cambio ≥ 0).
   puedeConfirmar(): boolean {
     if (this.carrito().length === 0 || this.procesandoVenta()) {
       return false;
@@ -384,6 +489,8 @@ export class PosComponent implements OnInit {
     return true;
   }
 
+  // "Confirmar venta": envía la venta al servidor y, si sale bien, arma el
+  // comprobante con los datos del momento.
   confirmarVenta(): void {
     if (!this.puedeConfirmar()) {
       return;
@@ -392,12 +499,16 @@ export class PosComponent implements OnInit {
     this.procesandoVenta.set(true);
     this.errorVenta.set('');
 
+    // Se toma una "foto" de los datos ahora: el comprobante debe reflejar lo
+    // cobrado aunque el carrito cambie después.
     const itemsCarrito = this.carrito();
     const metodoPago = this.metodoPago();
     const tipoEntrega = this.tipoEntrega();
     const montoRecibido = this.montoRecibido();
     const total = this.totalCarrito();
 
+    // Lo que viaja al servidor: método, entrega y, por línea, SOLO variante,
+    // cantidad y notas. Ningún precio.
     const payload = {
       metodo_pago: metodoPago,
       tipo_entrega: this.tipoEntrega(),
@@ -411,6 +522,7 @@ export class PosComponent implements OnInit {
     this.ventasService.registrarVenta(payload).subscribe({
       next: (respuesta) => {
         this.procesandoVenta.set(false);
+        // Al tener `recibo`, la ventana pasa de "cobro" a "comprobante".
         this.recibo.set({
           venta: respuesta,
           items: itemsCarrito,
@@ -426,15 +538,20 @@ export class PosComponent implements OnInit {
       },
       error: (error: HttpErrorResponse) => {
         this.procesandoVenta.set(false);
+        // Se prefiere el mensaje del servidor; si no hubo respuesta, el de conexión.
         this.errorVenta.set(error.error?.error || this.interpretarErrorConexion(error));
       },
     });
   }
 
+  // Abre el diálogo de impresión del navegador. El estilo @media print de
+  // pos.css hace que solo salga el comprobante, en blanco y negro.
   imprimirRecibo(): void {
     window.print();
   }
 
+  // "Nueva venta": deja la pantalla lista para el siguiente cliente, con todos
+  // los valores en su estado inicial.
   nuevaVenta(): void {
     this.carrito.set([]);
     this.carritoAbierto.set(false);

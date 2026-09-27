@@ -1,4 +1,11 @@
+<!-- ============================================================================
+     dashboard.html — MENÚ PRINCIPAL (lógica en dashboard.ts)
+     ============================================================================
+     Saludo con nombre y rol + una tarjeta por cada módulo permitido para el rol
+     del usuario. La lista sale de MODULOS en dashboard.ts, ya filtrada.
+     ============================================================================ -->
 <div class="dashboard-container">
+  <!-- ENCABEZADO: saludo con el nombre, el rol del usuario en sesión y el cambio de tema. -->
   <header class="dashboard-header">
     <div class="dashboard-header-texto">
       @if (authService.usuarioActual(); as usuario) {
@@ -19,11 +26,13 @@
   </header>
 
   <div class="dashboard-cuerpo">
+    <!-- Sin módulos: rol sin permisos asignados (ver dashboard.ts). -->
     @if (modulosVisibles().length === 0) {
       <p class="mensaje-vacio">
         Todavía no tienes módulos asignados. Habla con tu encargado o el administrador.
       </p>
     } @else {
+      <!-- TARJETAS DE MÓDULOS: cada una es un enlace a su ruta (protegida además por rolGuard en app.routes.ts). -->
       <div class="grid-modulos">
         @for (modulo of modulosVisibles(); track modulo.ruta) {
           <a class="tarjeta-modulo" [routerLink]="modulo.ruta">
@@ -38,6 +47,7 @@
     }
   </div>
 
+  <!-- CERRAR SESIÓN: borra token y usuario y regresa al login (AuthService.logout). -->
   <button type="button" class="boton-cerrar-sesion" (click)="authService.logout()">
     Cerrar sesión
   </button>

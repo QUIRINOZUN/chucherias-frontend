@@ -1,3 +1,10 @@
+/* =============================================================================
+   caja.css — CORTE DE CAJA
+   =============================================================================
+   Bloques: encabezado, tarjetas (resumen / captura / corte guardado),
+   diferencia en vivo, y el historial con sus filtros. */
+
+/* Contenedor del componente. */
 :host {
   display: block;
   min-height: 100vh;
@@ -47,6 +54,7 @@
   font-size: 1.15rem;
 }
 
+/* Columna centrada de ancho máximo 480 px: es una pantalla de captura, no de tablero. */
 .caja-cuerpo {
   flex: 1;
   padding: 16px;
@@ -68,6 +76,7 @@
   color: var(--peligro-texto);
 }
 
+/* Tarjetas base compartidas por los cuatro bloques de la pantalla. */
 .tarjeta-resumen,
 .tarjeta-contar,
 .tarjeta-corte-guardado,
@@ -86,6 +95,7 @@
   font-size: 1rem;
 }
 
+/* Renglón "etiqueta ........ monto" del resumen. */
 .linea-corte {
   display: flex;
   justify-content: space-between;
@@ -101,6 +111,7 @@
   padding-top: 10px;
 }
 
+/* La diferencia: verde si sobra o cuadra, rojo (clase diferencia-negativa) si falta. */
 .linea-corte-diferencia {
   font-weight: 700;
   color: var(--exito-texto);
@@ -110,6 +121,7 @@
   color: var(--peligro-texto);
 }
 
+/* Campos de captura de lo contado físicamente. */
 .campo-caja {
   margin-bottom: 14px;
 }
@@ -138,6 +150,7 @@
   border-color: var(--pos-text-secondary);
 }
 
+/* Recuadro que se actualiza mientras se escriben los montos ("Cuadra exacto", "Sobran", "Faltan"). */
 .diferencia-en-vivo {
   margin-bottom: 14px;
   padding: 10px 12px;
@@ -155,6 +168,7 @@
   color: var(--peligro-texto);
 }
 
+/* Botón principal de la pantalla: guardar el corte / "Hecho". */
 .boton-guardar-corte,
 .boton-nuevo-corte {
   width: 100%;
@@ -188,6 +202,7 @@
   margin-top: 14px;
 }
 
+/* HISTORIAL: filtros de fechas y usuario, y la lista de cortes. */
 .filtros-historial {
   display: flex;
   flex-wrap: wrap;

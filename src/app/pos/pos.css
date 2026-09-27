@@ -1,3 +1,10 @@
+/* =============================================================================
+   pos.css — PUNTO DE VENTA
+   =============================================================================
+   Secciones: encabezado · búsqueda y categorías · tarjetas de producto ·
+   carrito (móvil: panel deslizable; ≥860 px: barra lateral) · cobro y
+   comprobante · pantallas anchas · impresión. */
+
 /* Los tokens de color (--pos-*, --cat-*, --action-*), tipografía, radios y
    sombras vienen de styles.css global, para que el tema claro/oscuro y los
    colores de categoría se compartan entre toda la app en vez de vivir
@@ -54,6 +61,7 @@
   line-height: 1;
 }
 
+/* Cuerpo: en móvil una columna con espacio inferior para el botón flotante; en ≥860 px, dos columnas (ver abajo). */
 .pos-cuerpo {
   flex: 1;
   position: relative;
@@ -175,6 +183,7 @@
 }
 
 /* ===================== Tarjetas de producto ===================== */
+/* REJILLA de tarjetas: tantas columnas como quepan (mínimo 220 px). */
 .grid-productos {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -425,6 +434,7 @@
   animation: aparecer 0.2s ease;
 }
 
+/* Botón flotante del carrito: la única forma de abrir el carrito en pantallas angostas. */
 .boton-flotante-carrito {
   position: fixed;
   left: 16px;
@@ -517,6 +527,7 @@
   padding-bottom: 0;
 }
 
+/* Cada línea del carrito: nombre y subtotal arriba, controles (−, cantidad, +) y eliminar abajo (todos de 44 px). */
 .item-fila {
   display: grid;
   grid-template-columns: 1fr auto auto;
@@ -734,6 +745,7 @@
 }
 
 /* El elemento más prominente de la pantalla. */
+/* Botón COBRAR: el elemento más prominente de la pantalla. */
 .boton-cobrar {
   width: 100%;
   min-height: 60px;
@@ -764,6 +776,7 @@
 }
 
 /* ===================== Cobro y comprobante ===================== */
+/* Fondo oscuro con desenfoque detrás de la ventana de cobro/comprobante. */
 .overlay {
   position: fixed;
   inset: 0;

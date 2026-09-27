@@ -1,3 +1,19 @@
+// =============================================================================
+// usuarios/usuarios.ts — GESTIÓN DE CUENTAS DE PERSONAL (RF-24)
+// =============================================================================
+// Pantalla "Usuarios". La ven administrador y encargado; solo el ADMINISTRADOR
+// ve los controles para crear, editar y activar/desactivar cuentas.
+//
+// QUÉ HACE
+//   - Lista todas las cuentas con su rol y estado.
+//   - Un mismo formulario (ventana emergente) sirve para CREAR y para EDITAR:
+//     el "modo" decide a qué endpoint se manda y si la contraseña es
+//     obligatoria (crear) u opcional (editar: en blanco = no cambiarla).
+//   - Activar/desactivar una cuenta: no borra nada, solo impide iniciar sesión.
+//
+// El formulario usa señales sueltas (nombreForm, usuarioForm…) en vez de un
+// FormGroup: la validación es corta y se resume en puedeGuardar().
+// =============================================================================
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -6,6 +22,7 @@ import { AuthService } from '../core/auth';
 import { ThemeService } from '../core/theme';
 import { EdicionUsuario, NuevoUsuario, Rol, Usuario, UsuariosService } from '../core/usuarios';
 
+// null = formulario cerrado; 'crear' / 'editar' = formulario abierto en ese modo.
 type ModoFormulario = 'crear' | 'editar' | null;
 
 @Component({
@@ -24,6 +41,7 @@ export class UsuariosComponent implements OnInit {
   // Un solo formulario sirve para dar de alta y para editar; el modo decide
   // a qué endpoint se manda y si la contraseña es obligatoria u opcional.
   modoFormulario = signal<ModoFormulario>(null);
+  // id de la cuenta que se está editando (null cuando se está creando).
   usuarioEditandoId = signal<number | null>(null);
   nombreForm = signal('');
   usuarioForm = signal('');
@@ -32,6 +50,8 @@ export class UsuariosComponent implements OnInit {
   procesandoForm = signal(false);
   errorFormulario = signal('');
 
+  // id de la cuenta a la que se está cambiando el estado activo (deshabilita
+  // su botón mientras el servidor responde).
   actualizandoId = signal<number | null>(null);
 
   // Solo el administrador da de alta, edita o activa/desactiva cuentas
@@ -40,6 +60,8 @@ export class UsuariosComponent implements OnInit {
 
   constructor(
     private usuariosService: UsuariosService,
+    // `public` porque la plantilla necesita saber quién es el usuario actual
+    // (para no permitirle desactivar su propia cuenta).
     public authService: AuthService,
     public themeService: ThemeService,
     private router: Router,
@@ -47,6 +69,8 @@ export class UsuariosComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarUsuarios();
+    // El catálogo de roles solo lo puede pedir el administrador (el servidor
+    // lo restringe), y solo él lo necesita para el formulario.
     if (this.esAdministrador()) {
       this.usuariosService.listarRoles().subscribe({
         next: (roles) => this.roles.set(roles),
@@ -58,6 +82,7 @@ export class UsuariosComponent implements OnInit {
     }
   }
 
+  // Carga (o recarga) la lista de usuarios desde el servidor.
   cargarUsuarios(): void {
     this.cargando.set(true);
     this.usuariosService.listar().subscribe({
@@ -72,6 +97,7 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
+  // Abre el formulario vacío en modo "crear" (el primer rol queda preseleccionado).
   abrirCreacion(): void {
     this.modoFormulario.set('crear');
     this.usuarioEditandoId.set(null);
@@ -82,12 +108,15 @@ export class UsuariosComponent implements OnInit {
     this.errorFormulario.set('');
   }
 
+  // Abre el formulario en modo "editar", precargado con los datos actuales.
+  // La contraseña siempre arranca vacía (nunca se conoce la actual).
   abrirEdicion(usuario: Usuario): void {
     this.modoFormulario.set('editar');
     this.usuarioEditandoId.set(usuario.id);
     this.nombreForm.set(usuario.nombre);
     this.usuarioForm.set(usuario.usuario);
     this.contrasenaForm.set('');
+    // La lista trae el NOMBRE del rol; se busca su id para el selector.
     this.rolIdForm.set(this.roles().find((r) => r.nombre === usuario.rol)?.id ?? null);
     this.errorFormulario.set('');
   }
@@ -96,6 +125,8 @@ export class UsuariosComponent implements OnInit {
     this.modoFormulario.set(null);
   }
 
+  // Decide si el botón "Guardar" está habilitado. Refleja las mismas reglas
+  // que valida el servidor (nombre obligatorio, usuario ≥ 3, contraseña ≥ 6).
   puedeGuardar(): boolean {
     if (this.procesandoForm() || this.rolIdForm() == null) {
       return false;
@@ -114,6 +145,7 @@ export class UsuariosComponent implements OnInit {
     return true;
   }
 
+  // Envía el formulario: crea o edita según el modo actual.
   guardarFormulario(): void {
     if (!this.puedeGuardar()) {
       return;
@@ -122,6 +154,7 @@ export class UsuariosComponent implements OnInit {
     this.procesandoForm.set(true);
     this.errorFormulario.set('');
 
+    // Modo "crear": POST /api/usuarios con todos los campos.
     if (this.modoFormulario() === 'crear') {
       const datos: NuevoUsuario = {
         nombre: this.nombreForm().trim(),
@@ -136,6 +169,8 @@ export class UsuariosComponent implements OnInit {
       return;
     }
 
+    // Modo "editar": PATCH /api/usuarios/:id. La contraseña solo se incluye si
+    // se escribió una nueva (el `...` agrega la propiedad únicamente entonces).
     const datos: EdicionUsuario = {
       nombre: this.nombreForm().trim(),
       usuario: this.usuarioForm().trim(),
@@ -148,22 +183,27 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
+  // Tras guardar: cierra el formulario y recarga la lista para ver el cambio.
   private alGuardarConExito(): void {
     this.procesandoForm.set(false);
     this.modoFormulario.set(null);
     this.cargarUsuarios();
   }
 
+  // Muestra dentro del formulario el mensaje del servidor (ej. "Ese nombre de
+  // usuario ya está en uso") o uno genérico si no vino ninguno.
   private alFallarGuardado(error: HttpErrorResponse): void {
     this.procesandoForm.set(false);
     this.errorFormulario.set(error.error?.error || 'Ocurrió un error al guardar el usuario.');
   }
 
+  // Activa o desactiva una cuenta y actualiza esa fila sin recargar la lista.
   alternarActivo(usuario: Usuario): void {
     this.actualizandoId.set(usuario.id);
     this.usuariosService.cambiarActivo(usuario.id, !usuario.activo).subscribe({
       next: (actualizado) => {
         this.actualizandoId.set(null);
+        // Solo cambia el campo `activo` de la fila afectada.
         this.usuarios.update((lista) =>
           lista.map((u) => (u.id === actualizado.id ? { ...u, activo: actualizado.activo } : u)),
         );

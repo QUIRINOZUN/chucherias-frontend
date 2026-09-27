@@ -1,3 +1,10 @@
+/* =============================================================================
+   usuarios.css — GESTIÓN DE USUARIOS
+   =============================================================================
+   Lista de cuentas y ventana emergente de alta/edición. Verde y naranja de
+   marca siguen las reglas globales: el naranja es la acción principal. */
+
+/* Contenedor del componente. */
 :host {
   display: block;
   min-height: 100vh;
@@ -65,6 +72,7 @@
   color: var(--peligro-texto);
 }
 
+/* Botón de alta (solo lo ve el administrador). */
 .boton-nuevo-usuario {
   min-height: 44px;
   width: 100%;
@@ -90,6 +98,7 @@
   gap: 10px;
 }
 
+/* Tarjeta de una cuenta con su nombre, estado y acciones. */
 .tarjeta-usuario {
   display: flex;
   align-items: center;
@@ -117,6 +126,7 @@
   color: var(--pos-text-secondary);
 }
 
+/* Etiqueta Activo / Inactivo. */
 .badge-estado {
   font-size: 0.72rem;
   font-weight: 700;
@@ -159,6 +169,7 @@
   cursor: not-allowed;
 }
 
+/* Fondo oscuro que cubre la pantalla detrás de la ventana emergente. */
 .overlay {
   position: fixed;
   inset: 0;
@@ -170,6 +181,7 @@
   z-index: 20;
 }
 
+/* Ventana de alta/edición de cuenta. */
 .panel-formulario {
   width: 100%;
   max-width: 380px;

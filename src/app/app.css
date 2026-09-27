@@ -1,3 +1,10 @@
+/* =============================================================================
+   app.css — ESTILOS DEL COMPONENTE RAÍZ
+   =============================================================================
+   Solo contiene el aviso de inactividad (RNF-01), que flota sobre cualquier
+   pantalla. Los colores salen de los tokens globales de styles.css. */
+
+/* Tarjeta fija en la parte baja de la pantalla, por encima de todo (z-index alto). */
 .aviso-inactividad {
   position: fixed;
   left: 16px;
@@ -17,12 +24,14 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
+/* Mensaje con la cuenta regresiva. */
 .aviso-inactividad p {
   margin: 0;
   font-size: 0.95rem;
   font-weight: 600;
 }
 
+/* Botón "Seguir conectado" (acción principal en naranja de marca, área táctil de 44 px). */
 .aviso-inactividad button {
   min-height: 44px;
   border: none;

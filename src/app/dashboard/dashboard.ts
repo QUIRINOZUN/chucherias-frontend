@@ -1,14 +1,32 @@
+// =============================================================================
+// dashboard/dashboard.ts — MENÚ PRINCIPAL DE MÓDULOS (filtrado por rol)
+// =============================================================================
+// Es la pantalla a la que se llega tras iniciar sesión. Muestra una tarjeta por
+// cada módulo al que el usuario tiene permiso. Cada rol ve solo lo suyo:
+//
+//   administrador → Punto de venta, Comandas, Corte de caja, Ventas de hoy, Usuarios
+//   encargado     → Punto de venta, Comandas, Corte de caja, Ventas de hoy, Usuarios
+//   cajero        → Punto de venta, Comandas (consulta), Corte de caja
+//   auxiliar      → Comandas
+//
+// PARA AGREGAR UN MÓDULO NUEVO: añade su entrada a MODULOS (ruta, título,
+// ícono, descripción y roles) y registra la misma ruta con rolGuard en
+// app.routes.ts. La lista de roles debe coincidir con la del backend.
+// =============================================================================
 import { Component, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth';
 import { ThemeService } from '../core/theme';
 
+// Descripción de una tarjeta del menú.
 interface Modulo {
+  // URL de la pantalla (debe existir en app.routes.ts).
   ruta: string;
   titulo: string;
   // Nombre del ícono del sprite SVG de index.html (id "ic-<icono>").
   icono: string;
   descripcion: string;
+  // Roles que pueden ver (y abrir) este módulo.
   roles: string[];
 }
 
@@ -22,6 +40,13 @@ const MODULOS: Modulo[] = [
     icono: 'bolsa',
     descripcion: 'Menú, carrito y cobro.',
     roles: ['administrador', 'encargado', 'cajero'],
+  },
+  {
+    ruta: '/comandas',
+    titulo: 'Comandas',
+    icono: 'comanda',
+    descripcion: 'Pedidos en preparación y por entregar.',
+    roles: ['administrador', 'encargado', 'cajero', 'auxiliar'],
   },
   {
     ruta: '/caja',
@@ -54,12 +79,16 @@ const MODULOS: Modulo[] = [
   styleUrl: './dashboard.css',
 })
 export class DashboardComponent {
+  // Solo los módulos cuyo listado de roles incluye el rol del usuario en
+  // sesión. Se recalcula solo si cambia el usuario. Si no hay rol (o ningún
+  // módulo lo incluye) la plantilla muestra el mensaje de "sin módulos".
   modulosVisibles = computed(() => {
     const rol = this.authService.usuarioActual()?.rol;
     return MODULOS.filter((modulo) => rol && modulo.roles.includes(rol));
   });
 
   constructor(
+    // `public` para que la plantilla muestre el nombre/rol y llame a logout().
     public authService: AuthService,
     public themeService: ThemeService,
   ) {}

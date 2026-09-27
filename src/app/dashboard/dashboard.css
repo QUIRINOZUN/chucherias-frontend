@@ -1,3 +1,10 @@
+/* =============================================================================
+   dashboard.css — MENÚ PRINCIPAL
+   =============================================================================
+   Encabezado con saludo, rejilla de tarjetas de módulos y botón de cerrar
+   sesión. Usa los tokens globales (--pos-*, --sombra-*, --radio-*). */
+
+/* Contenedor del componente: fondo, tipografía y color de texto base. */
 :host {
   display: block;
   min-height: 100vh;
@@ -12,6 +19,7 @@
   min-height: 100vh;
 }
 
+/* Encabezado con el saludo; sin línea inferior, con sombra suave (regla global de styles.css). */
 .dashboard-header {
   display: flex;
   align-items: flex-start;
@@ -31,6 +39,7 @@
   margin: 10px 0 0;
 }
 
+/* Etiqueta del rol del usuario en sesión. */
 .rol-pastilla {
   display: inline-block;
   padding: 4px 12px;
@@ -65,6 +74,7 @@
   max-width: 40ch;
 }
 
+/* Rejilla adaptable: tantas columnas como quepan (mínimo 170 px por tarjeta). */
 .grid-modulos {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
@@ -72,6 +82,7 @@
   max-width: 720px;
 }
 
+/* Tarjeta de un módulo: es un enlace completo (área táctil grande). */
 .tarjeta-modulo {
   display: flex;
   flex-direction: column;
@@ -102,6 +113,7 @@
   transform: scale(0.98);
 }
 
+/* Cuadro del ícono; se rellena de naranja al pasar el cursor sobre la tarjeta. */
 .modulo-icono {
   width: 52px;
   height: 52px;
@@ -131,6 +143,7 @@
   color: var(--pos-text-secondary);
 }
 
+/* Botón de cerrar sesión: contorno neutro y texto de peligro. */
 .boton-cerrar-sesion {
   min-height: 44px;
   margin: 0 20px 24px;
