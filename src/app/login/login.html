@@ -19,84 +19,95 @@
     </div>
     <div class="marca-texto">
       <p class="marca-etiqueta">Sistema de gestión</p>
-      <h1 class="marca-nombre">Chucherías</h1>
-      <p class="marca-lema">Hamburguesas, pizzas, alitas y antojitos. Todo el negocio en un solo lugar.</p>
+      <!-- Logotipo en vez del nombre tipográfico. Aquí va la variante de
+           letras BLANCAS (no la de color) porque el fondo de este panel es
+           un degradado naranja/café oscuro — el logo a color comparte tono
+           con el fondo y se perdía; en blanco contrasta bien. El dashboard y
+           el POS sí usan la versión a color, sobre fondos neutros. Por ahora
+           es un archivo local (public/img/); más adelante se servirá desde
+           Cloudinary — cuando eso pase, solo cambia el `src`. -->
+      <h1 class="marca-nombre">
+        <img src="/img/logo-chucherias-blanco.png" alt="Chucherías" class="marca-logo" />
+      </h1>
+      <p class="marca-lema">
+        Hamburguesas, pizzas, alitas y antojitos. Todo el negocio en un solo lugar.
+      </p>
     </div>
   </aside>
 
   <!-- FORMULARIO DE ACCESO. -->
   <main class="login-formulario">
-  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
-    <h2>Bienvenido</h2>
-    <p class="subtitulo">Inicia sesión para continuar</p>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      <h2>Bienvenido</h2>
+      <p class="subtitulo">Inicia sesión para continuar</p>
 
-    <!-- Campo de usuario (obligatorio, mínimo 3 caracteres). -->
-    <div class="campo">
-      <label for="usuario">Usuario</label>
-      <input
-        id="usuario"
-        type="text"
-        formControlName="usuario"
-        autocomplete="username"
-        [class.campo-invalido]="usuarioInvalido"
-      />
-      @if (usuarioInvalido) {
-        <span class="mensaje-error-campo">
-          @if (form.get('usuario')?.hasError('required')) {
-            El usuario es obligatorio.
-          } @else if (form.get('usuario')?.hasError('minlength')) {
-            El usuario debe tener al menos 3 caracteres.
-          }
-        </span>
-      }
-    </div>
-
-    <div class="campo">
-      <label for="contrasena">Contraseña</label>
-      <!-- Campo de contraseña (obligatorio, mínimo 6) con botón para mostrar/ocultar. -->
-      <div class="campo-contrasena">
+      <!-- Campo de usuario (obligatorio, mínimo 3 caracteres). -->
+      <div class="campo">
+        <label for="usuario">Usuario</label>
         <input
-          id="contrasena"
-          [type]="mostrarContrasena() ? 'text' : 'password'"
-          formControlName="contrasena"
-          autocomplete="current-password"
-          [class.campo-invalido]="contrasenaInvalida"
+          id="usuario"
+          type="text"
+          formControlName="usuario"
+          autocomplete="username"
+          [class.campo-invalido]="usuarioInvalido"
         />
-        <button
-          type="button"
-          class="boton-mostrar"
-          (click)="alternarVisibilidadContrasena()"
-          tabindex="-1"
-        >
-          {{ mostrarContrasena() ? 'Ocultar' : 'Mostrar' }}
-        </button>
+        @if (usuarioInvalido) {
+          <span class="mensaje-error-campo">
+            @if (form.get('usuario')?.hasError('required')) {
+              El usuario es obligatorio.
+            } @else if (form.get('usuario')?.hasError('minlength')) {
+              El usuario debe tener al menos 3 caracteres.
+            }
+          </span>
+        }
       </div>
-      @if (contrasenaInvalida) {
-        <span class="mensaje-error-campo">
-          @if (form.get('contrasena')?.hasError('required')) {
-            La contraseña es obligatoria.
-          } @else if (form.get('contrasena')?.hasError('minlength')) {
-            La contraseña debe tener al menos 6 caracteres.
-          }
-        </span>
-      }
-    </div>
 
-    <!-- MENSAJE DE ERROR GENERAL: credenciales incorrectas, cuenta desactivada, sin conexión o el motivo de un cierre
+      <div class="campo">
+        <label for="contrasena">Contraseña</label>
+        <!-- Campo de contraseña (obligatorio, mínimo 6) con botón para mostrar/ocultar. -->
+        <div class="campo-contrasena">
+          <input
+            id="contrasena"
+            [type]="mostrarContrasena() ? 'text' : 'password'"
+            formControlName="contrasena"
+            autocomplete="current-password"
+            [class.campo-invalido]="contrasenaInvalida"
+          />
+          <button
+            type="button"
+            class="boton-mostrar"
+            (click)="alternarVisibilidadContrasena()"
+            tabindex="-1"
+          >
+            {{ mostrarContrasena() ? 'Ocultar' : 'Mostrar' }}
+          </button>
+        </div>
+        @if (contrasenaInvalida) {
+          <span class="mensaje-error-campo">
+            @if (form.get('contrasena')?.hasError('required')) {
+              La contraseña es obligatoria.
+            } @else if (form.get('contrasena')?.hasError('minlength')) {
+              La contraseña debe tener al menos 6 caracteres.
+            }
+          </span>
+        }
+      </div>
+
+      <!-- MENSAJE DE ERROR GENERAL: credenciales incorrectas, cuenta desactivada, sin conexión o el motivo de un cierre
          automático de sesión (inactividad / token vencido). -->
-    @if (error()) {
-      <div class="mensaje-error-general">{{ error() }}</div>
-    }
-
-    <!-- BOTÓN INGRESAR: muestra un spinner y se deshabilita mientras espera al servidor. -->
-    <button type="submit" class="boton-enviar" [disabled]="cargando()">
-      @if (cargando()) {
-        <span class="spinner"></span>
-        Ingresando...
-      } @else {
-        Ingresar
+      @if (error()) {
+        <div class="mensaje-error-general">{{ error() }}</div>
       }
-    </button>
-  </form>
+
+      <!-- BOTÓN INGRESAR: muestra un spinner y se deshabilita mientras espera al servidor. -->
+      <button type="submit" class="boton-enviar" [disabled]="cargando()">
+        @if (cargando()) {
+          <span class="spinner"></span>
+          Ingresando...
+        } @else {
+          Ingresar
+        }
+      </button>
+    </form>
   </main>
 </div>

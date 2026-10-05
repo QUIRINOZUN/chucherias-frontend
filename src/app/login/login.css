@@ -49,13 +49,39 @@
   opacity: 0.16;
 }
 
-.deco-1 { width: 132px; height: 132px; right: -18px; top: -20px; transform: rotate(14deg); }
-.deco-2 { width: 88px; height: 88px; right: 96px; bottom: 30px; transform: rotate(-16deg); }
-.deco-3 { width: 76px; height: 76px; left: 46%; top: 14px; transform: rotate(28deg); }
-.deco-4 { display: none; }
-.deco-5 { display: none; }
-.deco-6 { display: none; }
-.deco-7 { display: none; }
+.deco-1 {
+  width: 132px;
+  height: 132px;
+  right: -18px;
+  top: -20px;
+  transform: rotate(14deg);
+}
+.deco-2 {
+  width: 88px;
+  height: 88px;
+  right: 96px;
+  bottom: 30px;
+  transform: rotate(-16deg);
+}
+.deco-3 {
+  width: 76px;
+  height: 76px;
+  left: 46%;
+  top: 14px;
+  transform: rotate(28deg);
+}
+.deco-4 {
+  display: none;
+}
+.deco-5 {
+  display: none;
+}
+.deco-6 {
+  display: none;
+}
+.deco-7 {
+  display: none;
+}
 
 .marca-texto {
   position: relative;
@@ -72,11 +98,15 @@
 
 .marca-nombre {
   margin: 0;
-  font-family: var(--fuente-titulo);
-  font-size: clamp(2.8rem, 13vw, 4.5rem);
-  font-weight: 800;
-  line-height: 0.95;
-  letter-spacing: -0.03em;
+  line-height: 0;
+}
+
+/* El logo sustituye al nombre tipográfico; se escala por ancho (su relación
+   de aspecto es fija, ~3:1) en vez de por font-size. */
+.marca-logo {
+  display: block;
+  width: clamp(220px, 60vw, 380px);
+  height: auto;
 }
 
 .marca-lema {
@@ -140,7 +170,9 @@ input {
   border-radius: var(--radio);
   background: var(--color-superficie);
   color: var(--color-texto);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 input:focus {
@@ -219,7 +251,10 @@ input.campo-invalido {
   justify-content: center;
   gap: 10px;
   box-shadow: 0 8px 22px rgba(194, 65, 12, 0.32);
-  transition: background-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease,
+    box-shadow 0.15s ease;
 }
 
 .boton-enviar:hover:not(:disabled) {
@@ -276,8 +311,8 @@ input.campo-invalido {
     padding: 64px;
   }
 
-  .marca-nombre {
-    font-size: clamp(4rem, 8vw, 7rem);
+  .marca-logo {
+    width: clamp(320px, 30vw, 480px);
   }
 
   .marca-lema {
@@ -285,13 +320,59 @@ input.campo-invalido {
     max-width: 30ch;
   }
 
-  .deco-1 { width: 300px; height: 300px; right: -60px; top: -50px; transform: rotate(14deg); }
-  .deco-2 { width: 200px; height: 200px; right: 22%; bottom: -30px; transform: rotate(-16deg); }
-  .deco-3 { width: 150px; height: 150px; left: 34%; top: 7%; transform: rotate(28deg); }
-  .deco-4 { display: block; width: 130px; height: 130px; left: -24px; bottom: 9%; transform: rotate(-12deg); }
-  .deco-5 { display: block; width: 110px; height: 110px; right: 8%; top: 42%; transform: rotate(10deg); }
-  .deco-6 { display: block; width: 120px; height: 120px; left: 8%; top: 5%; transform: rotate(-8deg); }
-  .deco-7 { display: block; width: 90px; height: 90px; left: 40%; bottom: 5%; transform: rotate(18deg); }
+  .deco-1 {
+    width: 300px;
+    height: 300px;
+    right: -60px;
+    top: -50px;
+    transform: rotate(14deg);
+  }
+  .deco-2 {
+    width: 200px;
+    height: 200px;
+    right: 22%;
+    bottom: -30px;
+    transform: rotate(-16deg);
+  }
+  .deco-3 {
+    width: 150px;
+    height: 150px;
+    left: 34%;
+    top: 7%;
+    transform: rotate(28deg);
+  }
+  .deco-4 {
+    display: block;
+    width: 130px;
+    height: 130px;
+    left: -24px;
+    bottom: 9%;
+    transform: rotate(-12deg);
+  }
+  .deco-5 {
+    display: block;
+    width: 110px;
+    height: 110px;
+    right: 8%;
+    top: 42%;
+    transform: rotate(10deg);
+  }
+  .deco-6 {
+    display: block;
+    width: 120px;
+    height: 120px;
+    left: 8%;
+    top: 5%;
+    transform: rotate(-8deg);
+  }
+  .deco-7 {
+    display: block;
+    width: 90px;
+    height: 90px;
+    left: 40%;
+    bottom: 5%;
+    transform: rotate(18deg);
+  }
 
   .login-formulario {
     align-items: center;

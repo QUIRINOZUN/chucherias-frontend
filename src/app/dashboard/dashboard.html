@@ -7,17 +7,22 @@
 <div class="dashboard-container">
   <!-- ENCABEZADO: saludo con el nombre, el rol del usuario en sesión y el cambio de tema. -->
   <header class="dashboard-header">
+    <img src="/img/logo-chucherias.png" alt="Chucherías" class="dashboard-logo" />
     <div class="dashboard-header-texto">
       @if (authService.usuarioActual(); as usuario) {
         <h1>Hola, {{ usuario.nombre }}</h1>
-        <p class="dashboard-rol"><span class="rol-pastilla">{{ usuario.rol }}</span></p>
+        <p class="dashboard-rol">
+          <span class="rol-pastilla">{{ usuario.rol }}</span>
+        </p>
       }
     </div>
     <button
       type="button"
       class="boton-tema"
       (click)="themeService.alternarTema()"
-      [attr.aria-label]="themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
     >
       <svg class="icono" aria-hidden="true">
         <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
@@ -37,7 +42,9 @@
         @for (modulo of modulosVisibles(); track modulo.ruta) {
           <a class="tarjeta-modulo" [routerLink]="modulo.ruta">
             <span class="modulo-icono">
-              <svg class="icono" aria-hidden="true"><use [attr.href]="'#ic-' + modulo.icono" /></svg>
+              <svg class="icono" aria-hidden="true">
+                <use [attr.href]="'#ic-' + modulo.icono" />
+              </svg>
             </span>
             <span class="modulo-titulo">{{ modulo.titulo }}</span>
             <span class="modulo-descripcion">{{ modulo.descripcion }}</span>

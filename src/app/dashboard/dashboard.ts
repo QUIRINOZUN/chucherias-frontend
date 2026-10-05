@@ -4,8 +4,8 @@
 // Es la pantalla a la que se llega tras iniciar sesión. Muestra una tarjeta por
 // cada módulo al que el usuario tiene permiso. Cada rol ve solo lo suyo:
 //
-//   administrador → Punto de venta, Comandas, Corte de caja, Ventas de hoy, Usuarios
-//   encargado     → Punto de venta, Comandas, Corte de caja, Ventas de hoy, Usuarios
+//   administrador → Punto de venta, Comandas, Corte de caja, Ventas de hoy, Usuarios, Inventario, Mermas
+//   encargado     → Punto de venta, Comandas, Corte de caja, Ventas de hoy, Usuarios, Inventario, Mermas
 //   cajero        → Punto de venta, Comandas (consulta), Corte de caja
 //   auxiliar      → Comandas
 //
@@ -67,6 +67,20 @@ const MODULOS: Modulo[] = [
     titulo: 'Usuarios',
     icono: 'usuarios',
     descripcion: 'Cuentas, roles y permisos.',
+    roles: ['administrador', 'encargado'],
+  },
+  {
+    ruta: '/inventario',
+    titulo: 'Inventario',
+    icono: 'paquete',
+    descripcion: 'Insumos, existencias y proveedores.',
+    roles: ['administrador', 'encargado'],
+  },
+  {
+    ruta: '/mermas',
+    titulo: 'Mermas',
+    icono: 'picante',
+    descripcion: 'Reporte de producto e insumo perdidos.',
     roles: ['administrador', 'encargado'],
   },
 ];
