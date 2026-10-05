@@ -20,9 +20,16 @@
 }
 
 /* Encabezado: logo a la izquierda, saludo junto a él, botón de tema a la
-   derecha — sin línea inferior, con sombra suave (regla global de styles.css). */
+   derecha — sin línea inferior, con sombra suave (regla global de styles.css).
+   MOBILE-FIRST: en un teléfono angosto (320-375px) logo + botón + saludo NO
+   caben los tres en un solo renglón sin apretar demasiado el texto (el
+   nombre/rol llegaba a desbordar) — por eso aquí, por default, el saludo
+   baja a su propio renglón completo (envuelve con flex-wrap) debajo de
+   logo+botón, que sí se quedan juntos arriba. A partir de 480px (ver media
+   query abajo) ya cabe todo en una sola fila, como pidió el usuario. */
 .dashboard-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 16px;
   padding: 20px;
@@ -33,13 +40,48 @@
   margin: 0;
   font-size: clamp(1.3rem, 4vw, 1.9rem);
   line-height: 1.1;
+  /* Defensa adicional: un nombre largo nunca debe forzar scroll horizontal,
+     sin importar qué tan angosta sea la pantalla. */
+  overflow-wrap: anywhere;
 }
 
-/* El saludo ocupa el espacio que sobra entre el logo (ancho fijo) y el
-   botón de tema, para que el logo quede fijo a la izquierda. */
+/* En el renglón angosto (logo + botón), el saludo se manda a su propio
+   renglón completo porque flex-basis: 100% es más ancho que lo que sobra
+   en esa primera fila. Desde 480px (media query abajo) vuelve a compartir
+   fila con logo y botón. */
 .dashboard-header-texto {
-  flex: 1;
+  order: 3;
+  flex: 1 1 100%;
   min-width: 0;
+}
+
+.dashboard-logo {
+  order: 1;
+}
+
+.boton-tema {
+  order: 2;
+  /* Empuja el botón al extremo derecho de la primera fila (junto al logo),
+     sin necesitar que el saludo esté ahí para "llenar" el espacio. */
+  margin-left: auto;
+}
+
+@media (min-width: 480px) {
+  .dashboard-header {
+    flex-wrap: nowrap;
+  }
+
+  .dashboard-header-texto {
+    order: initial;
+    flex: 1;
+    margin-left: 0;
+  }
+
+  .dashboard-logo,
+  .boton-tema {
+    order: initial;
+    margin-left: 0;
+  }
 }
 
 /* Logotipo a la izquierda del encabezado: grande y llamativo a propósito
@@ -63,6 +105,7 @@
 /* Etiqueta del rol del usuario en sesión. */
 .rol-pastilla {
   display: inline-block;
+  max-width: 100%;
   padding: 4px 12px;
   border-radius: var(--radio-pastilla);
   background: var(--acento-suave);
@@ -71,6 +114,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: capitalize;
+  overflow-wrap: anywhere;
 }
 
 .boton-tema {
