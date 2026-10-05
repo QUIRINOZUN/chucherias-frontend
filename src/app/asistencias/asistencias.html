@@ -139,6 +139,85 @@
       }
     </section>
 
+    <!-- ========================== SECCIÓN: HORARIOS ============================ -->
+    <section class="seccion-asistencias">
+      <h2 class="titulo-seccion">Horarios</h2>
+
+      <div class="campo-filtro campo-filtro-ancho campo-selector-horario">
+        <label for="empleado-horario">Empleado</label>
+        <select
+          id="empleado-horario"
+          [value]="empleadoIdHorario() ?? ''"
+          (change)="seleccionarEmpleadoHorario($any($event.target).value)"
+        >
+          <option value="">Selecciona un empleado</option>
+          @for (empleado of empleadosActivos(); track empleado.id) {
+            <option [value]="empleado.id">{{ empleado.nombre }}</option>
+          }
+        </select>
+      </div>
+
+      @if (empleadoIdHorario()) {
+        @if (cargandoHorario()) {
+          <p class="mensaje-estado">Cargando horario...</p>
+        } @else {
+          <ul class="lista-calendario">
+            @for (dia of diasOperativos; track dia.valor) {
+              <li class="item-calendario">
+                <label class="dia-calendario-check">
+                  <input
+                    type="checkbox"
+                    [checked]="horarioForm()[dia.valor].trabaja"
+                    (change)="alternarDiaHorario(dia.valor)"
+                  />
+                  {{ dia.etiqueta }}
+                </label>
+                @if (horarioForm()[dia.valor].trabaja) {
+                  <div class="dia-calendario-horas">
+                    <input
+                      type="time"
+                      aria-label="Hora de entrada"
+                      [value]="horarioForm()[dia.valor].horaEntrada"
+                      (input)="
+                        actualizarHoraHorario(dia.valor, 'horaEntrada', $any($event.target).value)
+                      "
+                    />
+                    <span class="dia-calendario-separador">a</span>
+                    <input
+                      type="time"
+                      aria-label="Hora de salida"
+                      [value]="horarioForm()[dia.valor].horaSalida"
+                      (input)="
+                        actualizarHoraHorario(dia.valor, 'horaSalida', $any($event.target).value)
+                      "
+                    />
+                  </div>
+                } @else {
+                  <span class="dia-calendario-libre">Libre</span>
+                }
+              </li>
+            }
+          </ul>
+
+          @if (errorHorario()) {
+            <p class="mensaje-error">{{ errorHorario() }}</p>
+          }
+          @if (exitoHorario()) {
+            <p class="mensaje-exito">{{ exitoHorario() }}</p>
+          }
+
+          <button
+            type="button"
+            class="boton-nuevo"
+            [disabled]="!puedeGuardarHorario()"
+            (click)="guardarHorario()"
+          >
+            {{ guardandoHorario() ? 'Guardando...' : 'Guardar horario' }}
+          </button>
+        }
+      }
+    </section>
+
     <!-- ========================= SECCIÓN: HISTORIAL ============================ -->
     <section class="seccion-asistencias">
       <h2 class="titulo-seccion">Historial</h2>

@@ -2,14 +2,18 @@
 // asistencias/asistencias.ts — CONTROL DE PERSONAL Y ASISTENCIAS (Sprint 3)
 // =============================================================================
 // Pantalla "Asistencias". Solo administrador y encargado (igual que
-// usuarios/inventario/caja — es información de personal). Tres secciones:
+// usuarios/inventario/caja — es información de personal). Cuatro secciones:
 //
 //   1. HOY: una tarjeta por empleado activo con un botón grande para marcar
 //      su entrada o su salida AHORA. El botón decide solo cuál mostrar según
 //      si ese empleado ya tiene un registro abierto hoy (asistenciasHoy).
 //   2. EMPLEADOS: alta, edición y activar/desactivar — mismo patrón de
 //      formulario único crear/editar que ya usa usuarios/usuarios.ts.
-//   3. HISTORIAL: filtros de fecha/empleado + un formulario (el mismo que la
+//   3. HORARIOS: calendario SEMANAL recurrente (sin fecha propia, se repite
+//      cada semana) — se elige un empleado y se marca qué días trabaja con
+//      sus horas; "Guardar" reemplaza TODO su horario de una vez (ver
+//      routes/horarios.js). Es informativo por ahora, no calcula retardos.
+//   4. HISTORIAL: filtros de fecha/empleado + un formulario (el mismo que la
 //      captura manual) para corregir un registro ya existente.
 //
 // Un empleado LIGADO a una cuenta (`empleados.usuario_id`) ya no necesita
@@ -34,7 +38,27 @@ import {
 } from '../core/asistencias';
 import { DatosEmpleado, Empleado, EmpleadosService } from '../core/empleados';
 import { Usuario, UsuariosService } from '../core/usuarios';
+import { DiaHorario, DiaSemana, HorariosService } from '../core/horarios';
 import { ThemeService } from '../core/theme';
+
+// Días que opera el negocio (martes a domingo, cerrado lunes — ver
+// CLAUDE.md) en el orden en que se muestran en el calendario.
+const DIAS_OPERATIVOS: { valor: DiaSemana; etiqueta: string }[] = [
+  { valor: 'martes', etiqueta: 'Martes' },
+  { valor: 'miercoles', etiqueta: 'Miércoles' },
+  { valor: 'jueves', etiqueta: 'Jueves' },
+  { valor: 'viernes', etiqueta: 'Viernes' },
+  { valor: 'sabado', etiqueta: 'Sábado' },
+  { valor: 'domingo', etiqueta: 'Domingo' },
+];
+
+// Estado de un día dentro del formulario de horario (no se manda tal cual al
+// servidor — ver guardarHorario()).
+interface DiaFormHorario {
+  trabaja: boolean;
+  horaEntrada: string;
+  horaSalida: string;
+}
 
 type ModoFormularioEmpleado = 'crear' | 'editar' | null;
 type ModoFormularioAsistencia = 'crear' | 'editar' | null;
@@ -85,6 +109,7 @@ export class AsistenciasComponent implements OnInit {
     private empleadosService: EmpleadosService,
     private asistenciasService: AsistenciasService,
     private usuariosService: UsuariosService,
+    private horariosService: HorariosService,
     public themeService: ThemeService,
     private router: Router,
   ) {}
@@ -260,6 +285,125 @@ export class AsistenciasComponent implements OnInit {
       error: () => {
         this.actualizandoActivoId.set(null);
         this.errorEmpleados.set('No se pudo actualizar el estado del empleado.');
+      },
+    });
+  }
+
+  // =====================================================================
+  // HORARIOS (calendario semanal recurrente por empleado)
+  // =====================================================================
+  diasOperativos = DIAS_OPERATIVOS;
+
+  empleadoIdHorario = signal<number | null>(null);
+  // Un registro por día operativo; se inicializa vacío y se llena al elegir
+  // un empleado (cargarHorario). record en vez de Map para que la plantilla
+  // pueda leerlo directo con horarioForm()[dia.valor].
+  horarioForm = signal<Record<DiaSemana, DiaFormHorario>>(this.horarioVacio());
+  cargandoHorario = signal(false);
+  guardandoHorario = signal(false);
+  errorHorario = signal('');
+  exitoHorario = signal('');
+
+  private horarioVacio(): Record<DiaSemana, DiaFormHorario> {
+    const vacio = {} as Record<DiaSemana, DiaFormHorario>;
+    for (const dia of DIAS_OPERATIVOS) {
+      vacio[dia.valor] = { trabaja: false, horaEntrada: '', horaSalida: '' };
+    }
+    return vacio;
+  }
+
+  seleccionarEmpleadoHorario(valor: string): void {
+    const empleadoId = valor === '' ? null : +valor;
+    this.empleadoIdHorario.set(empleadoId);
+    this.exitoHorario.set('');
+    this.errorHorario.set('');
+    if (empleadoId) {
+      this.cargarHorario(empleadoId);
+    } else {
+      this.horarioForm.set(this.horarioVacio());
+    }
+  }
+
+  cargarHorario(empleadoId: number): void {
+    this.cargandoHorario.set(true);
+    this.horariosService.listar(empleadoId).subscribe({
+      next: (horarios) => {
+        const form = this.horarioVacio();
+        for (const h of horarios) {
+          // Un día fuera de DIAS_OPERATIVOS (ej. "lunes", que el negocio no
+          // opera pero el modelo no lo prohíbe) simplemente no tiene casilla
+          // en este calendario — se ignora aquí, no se pierde en el servidor.
+          if (form[h.dia_semana]) {
+            form[h.dia_semana] = {
+              trabaja: true,
+              horaEntrada: h.hora_entrada.slice(0, 5),
+              horaSalida: h.hora_salida.slice(0, 5),
+            };
+          }
+        }
+        this.horarioForm.set(form);
+        this.cargandoHorario.set(false);
+      },
+      error: () => {
+        this.errorHorario.set('No se pudo cargar el horario de ese empleado.');
+        this.cargandoHorario.set(false);
+      },
+    });
+  }
+
+  alternarDiaHorario(dia: DiaSemana): void {
+    this.horarioForm.update((form) => ({
+      ...form,
+      [dia]: { ...form[dia], trabaja: !form[dia].trabaja },
+    }));
+  }
+
+  actualizarHoraHorario(dia: DiaSemana, campo: 'horaEntrada' | 'horaSalida', valor: string): void {
+    this.horarioForm.update((form) => ({
+      ...form,
+      [dia]: { ...form[dia], [campo]: valor },
+    }));
+  }
+
+  puedeGuardarHorario(): boolean {
+    if (this.guardandoHorario() || !this.empleadoIdHorario()) {
+      return false;
+    }
+    const form = this.horarioForm();
+    return this.diasOperativos.every((dia) => {
+      const d = form[dia.valor];
+      if (!d.trabaja) {
+        return true;
+      }
+      return !!d.horaEntrada && !!d.horaSalida && d.horaSalida > d.horaEntrada;
+    });
+  }
+
+  guardarHorario(): void {
+    if (!this.puedeGuardarHorario()) {
+      return;
+    }
+    const empleadoId = this.empleadoIdHorario()!;
+    const form = this.horarioForm();
+    const dias: DiaHorario[] = this.diasOperativos
+      .filter((dia) => form[dia.valor].trabaja)
+      .map((dia) => ({
+        dia_semana: dia.valor,
+        hora_entrada: form[dia.valor].horaEntrada,
+        hora_salida: form[dia.valor].horaSalida,
+      }));
+
+    this.guardandoHorario.set(true);
+    this.errorHorario.set('');
+    this.exitoHorario.set('');
+    this.horariosService.guardarSemana(empleadoId, dias).subscribe({
+      next: () => {
+        this.guardandoHorario.set(false);
+        this.exitoHorario.set('Horario guardado.');
+      },
+      error: (error: HttpErrorResponse) => {
+        this.guardandoHorario.set(false);
+        this.errorHorario.set(error.error?.error || 'No se pudo guardar el horario.');
       },
     });
   }
