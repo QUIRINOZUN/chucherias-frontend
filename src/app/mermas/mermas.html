@@ -1,0 +1,121 @@
+<!-- ============================================================================
+     mermas.html — REPORTE CONSOLIDADO DE MERMAS (lógica en mermas.ts)
+     ============================================================================
+     Solo administrador y encargado. Junta en un solo listado las mermas de
+     PRODUCTO (venta cancelada) y de INSUMO (manual, o por no rescatar algo al
+     cancelar en 'preparando'), con filtros de fecha y tipo.
+     ============================================================================ -->
+<div class="mermas-container">
+  <!-- ENCABEZADO: volver, título y cambio de tema. -->
+  <header class="mermas-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      Volver
+    </button>
+    <h1>Mermas</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
+    >
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
+    </button>
+  </header>
+
+  <div class="mermas-cuerpo">
+    <!-- RESUMEN de lo que está filtrado en pantalla. -->
+    <section class="tarjeta-resumen-mermas">
+      <div class="resumen-mermas-linea">
+        <span
+          >{{ totalMermas() }} {{ totalMermas() === 1 ? 'merma' : 'mermas' }} ({{
+            totalProducto()
+          }}
+          de producto · {{ totalInsumo() }} de insumo)</span
+        >
+        <span class="resumen-mermas-monto">{{ valorTotalPerdido() | currency: 'MXN' }}</span>
+      </div>
+    </section>
+
+    <!-- FILTROS: rango de fechas y tipo. Cada cambio vuelve a consultar de inmediato. -->
+    <section class="tarjeta-filtros-mermas">
+      <div class="filtros-historial">
+        <div class="campo-filtro">
+          <label for="filtro-desde">Desde</label>
+          <input
+            id="filtro-desde"
+            type="date"
+            [value]="filtroDesde()"
+            (change)="cambiarDesde($any($event.target).value)"
+          />
+        </div>
+        <div class="campo-filtro">
+          <label for="filtro-hasta">Hasta</label>
+          <input
+            id="filtro-hasta"
+            type="date"
+            [value]="filtroHasta()"
+            (change)="cambiarHasta($any($event.target).value)"
+          />
+        </div>
+        <div class="campo-filtro campo-filtro-ancho">
+          <label for="filtro-tipo">Tipo</label>
+          <select
+            id="filtro-tipo"
+            [value]="filtroTipo() ?? ''"
+            (change)="cambiarTipo($any($event.target).value)"
+          >
+            <option value="">Todas</option>
+            <option value="producto">De producto (venta cancelada)</option>
+            <option value="insumo">De insumo</option>
+          </select>
+        </div>
+      </div>
+
+      @if (hayFiltrosDeFecha() || filtroTipo()) {
+        <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltros()">
+          Limpiar filtros
+        </button>
+      }
+    </section>
+
+    <!-- RESULTADOS: error, cargando, sin mermas o la lista. -->
+    @if (error()) {
+      <p class="mensaje-estado mensaje-error">{{ error() }}</p>
+    } @else if (cargando()) {
+      <p class="mensaje-estado">Consultando mermas...</p>
+    } @else if (mermas().length === 0) {
+      <p class="mensaje-estado">No hay mermas con esos filtros.</p>
+    } @else {
+      <ul class="lista-mermas">
+        @for (m of mermas(); track m.id) {
+          <li class="item-merma">
+            <div class="item-merma-encabezado">
+              <span class="item-merma-nombre">{{ m.nombre }}</span>
+              <span class="item-merma-badge" [class.badge-insumo]="m.tipo === 'insumo'">
+                {{ m.tipo === 'producto' ? 'Producto' : 'Insumo' }}
+              </span>
+            </div>
+            <div class="item-merma-detalle">
+              {{ m.cantidad }} {{ m.unidad_medida ?? 'pza' }} ·
+              {{ m.fecha | date: 'dd/MM/yyyy HH:mm' }} · {{ m.responsable }}
+              @if (m.numero_orden) {
+                · {{ m.numero_orden }}
+              }
+            </div>
+            @if (m.motivo) {
+              <div class="item-merma-motivo">{{ m.motivo }}</div>
+            }
+            @if (m.valor_total != null) {
+              <div class="item-merma-valor">{{ m.valor_total | currency: 'MXN' }} perdidos</div>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</div>
