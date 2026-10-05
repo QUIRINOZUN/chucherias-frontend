@@ -16,6 +16,7 @@
 //   /comandas   → administrador, encargado, cajero (solo consulta), auxiliar (Sprint 2)
 //   /inventario → administrador, encargado                (módulo de inventario)
 //   /mermas     → administrador, encargado                (reporte consolidado de mermas)
+//   /asistencias → administrador, encargado                (Sprint 3: personal y asistencias)
 //
 // Estas reglas deben coincidir con las del backend (requiereRol en routes/*.js)
 // y con la lista de módulos del dashboard (dashboard/dashboard.ts).
@@ -30,6 +31,7 @@ import { CajaComponent } from './caja/caja';
 import { HistorialVentasComponent } from './historial-ventas/historial-ventas';
 import { InventarioComponent } from './inventario/inventario';
 import { MermasComponent } from './mermas/mermas';
+import { AsistenciasComponent } from './asistencias/asistencias';
 import { authGuard, rolGuard } from './core/auth-guard';
 
 export const routes: Routes = [
@@ -78,6 +80,12 @@ export const routes: Routes = [
   {
     path: 'mermas',
     component: MermasComponent,
+    canActivate: [authGuard, rolGuard('administrador', 'encargado')],
+  },
+  // Control de personal: empleados y asistencias (Sprint 3).
+  {
+    path: 'asistencias',
+    component: AsistenciasComponent,
     canActivate: [authGuard, rolGuard('administrador', 'encargado')],
   },
   // La raíz del sitio y cualquier URL desconocida llevan al login. (La pantalla

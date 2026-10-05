@@ -1,0 +1,538 @@
+/* =============================================================================
+   asistencias.css — CONTROL DE PERSONAL Y ASISTENCIAS
+   =============================================================================
+   Mismo lenguaje visual que usuarios.css/mermas.css/caja.css: tarjetas con
+   sombra suave, radios grandes, el naranja de marca como única acción
+   principal. "Marcar salida" usa verde (--action-success) porque cierra el
+   turno con éxito, a diferencia de "Marcar entrada" que es la acción
+   primaria de siempre (naranja). */
+
+:host {
+  display: block;
+  min-height: 100vh;
+  background: var(--pos-bg-main);
+  font-family: var(--fuente-texto);
+  color: var(--pos-text-primary);
+}
+
+.asistencias-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.asistencias-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--pos-bg-card);
+  border-bottom: 1px solid var(--pos-border);
+  position: sticky;
+  top: 0;
+}
+
+.asistencias-header h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.boton-volver,
+.boton-tema {
+  min-height: 44px;
+  border: none;
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  border-radius: var(--radio-pastilla);
+  padding: 0 18px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.boton-tema {
+  min-width: 44px;
+  padding: 0;
+  font-size: 1.15rem;
+}
+
+.asistencias-cuerpo {
+  flex: 1;
+  padding: 16px;
+  max-width: 680px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.mensaje-estado {
+  color: var(--pos-text-secondary);
+  font-size: 0.9rem;
+}
+
+.mensaje-error {
+  color: var(--peligro-texto);
+}
+
+.seccion-asistencias {
+  margin-bottom: 28px;
+}
+
+.titulo-seccion {
+  font-family: var(--fuente-titulo);
+  font-size: 1.1rem;
+  margin: 0 0 12px;
+}
+
+.encabezado-seccion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.encabezado-seccion .titulo-seccion {
+  margin: 0;
+}
+
+.boton-enlace {
+  border: none;
+  background: none;
+  color: var(--acento-texto);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 10px 0;
+  min-height: 44px;
+}
+
+.boton-enlace:hover {
+  text-decoration: underline;
+}
+
+.boton-nuevo {
+  min-height: 52px;
+  width: 100%;
+  margin-bottom: 14px;
+  border: none;
+  border-radius: var(--radio-md);
+  background: var(--action-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: var(--sombra-acento);
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.boton-nuevo:active {
+  transform: scale(0.98);
+}
+
+/* ---- Sección Hoy ---- */
+.lista-hoy {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tarjeta-hoy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: 14px 16px;
+}
+
+.hoy-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hoy-nombre {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.hoy-puesto {
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+  text-transform: capitalize;
+}
+
+.hoy-estado {
+  font-size: 0.76rem;
+  color: var(--pos-text-secondary);
+  margin-top: 2px;
+}
+
+.hoy-estado-adentro {
+  color: var(--exito-texto);
+  font-weight: 600;
+}
+
+.boton-marcar {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 18px;
+  border: none;
+  border-radius: var(--radio-pastilla);
+  background: var(--action-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.boton-marcar-salida {
+  background: var(--action-success);
+}
+
+.boton-marcar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---- Sección Empleados (mismo patrón que usuarios.css) ---- */
+.lista-empleados {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tarjeta-empleado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: 14px 16px;
+}
+
+.empleado-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.empleado-nombre {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.empleado-detalle {
+  font-size: 0.75rem;
+  color: var(--pos-text-secondary);
+  text-transform: capitalize;
+}
+
+.badge-estado {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--action-success) 20%, var(--pos-bg-card));
+  color: var(--exito-texto);
+  white-space: nowrap;
+}
+
+.badge-estado.badge-inactivo {
+  background: color-mix(in srgb, var(--action-danger) 20%, var(--pos-bg-card));
+  color: var(--peligro-texto);
+}
+
+.boton-editar,
+.boton-alternar {
+  flex-shrink: 0;
+  min-height: 40px;
+  border: 1px solid var(--pos-border);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  border-radius: var(--radio-pastilla);
+  padding: 0 12px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.boton-editar:hover {
+  border-color: var(--pos-text-secondary);
+}
+
+.boton-alternar-desactivar:hover:not(:disabled) {
+  border-color: var(--peligro-texto);
+  color: var(--peligro-texto);
+}
+
+.boton-alternar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---- Sección Historial (filtros, mismo patrón que mermas.css) ---- */
+.filtros-historial {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.campo-filtro {
+  flex: 1;
+  min-width: 130px;
+}
+
+.campo-filtro-ancho {
+  flex-basis: 100%;
+}
+
+.campo-filtro label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pos-text-secondary);
+}
+
+.campo-filtro input,
+.campo-filtro select {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 10px;
+  font-size: 0.9rem;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.campo-filtro input:focus,
+.campo-filtro select:focus {
+  outline: none;
+  border-color: var(--pos-text-secondary);
+}
+
+.boton-limpiar-filtros {
+  min-height: 44px;
+  padding: 0 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: none;
+  color: var(--pos-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-limpiar-filtros:hover {
+  border-color: var(--pos-text-primary);
+  color: var(--pos-text-primary);
+}
+
+.lista-historial {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item-historial {
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: 14px;
+}
+
+.item-historial-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.item-historial-nombre {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.item-historial-fecha {
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+  white-space: nowrap;
+}
+
+.item-historial-horas {
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+.item-historial-observaciones {
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--pos-text-secondary);
+  margin-bottom: 4px;
+}
+
+.item-historial-pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.item-historial-registrado-por {
+  font-size: 0.72rem;
+  color: var(--pos-text-secondary);
+}
+
+/* ---- Ventanas emergentes (mismo patrón que usuarios.css) ---- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 20;
+  backdrop-filter: blur(3px);
+  animation: aparecer 0.2s ease;
+  overflow-y: auto;
+}
+
+.panel-formulario {
+  width: 100%;
+  max-width: 380px;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-elevada);
+  padding: 24px;
+  box-sizing: border-box;
+  animation: escalar 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.panel-formulario h2 {
+  margin: 0 0 16px;
+  font-size: 1.4rem;
+}
+
+.campo {
+  margin-bottom: 14px;
+}
+
+.campo-fila {
+  display: flex;
+  gap: 10px;
+}
+
+.campo-fila .campo {
+  flex: 1;
+}
+
+.campo label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.campo input,
+.campo select {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: 0 12px;
+  font-size: 1rem;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.campo input:focus,
+.campo select:focus {
+  outline: none;
+  border-color: var(--pos-text-secondary);
+}
+
+.acciones-formulario {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.boton-cancelar,
+.boton-confirmar {
+  flex: 1;
+  min-height: 52px;
+  border-radius: var(--radio-md);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.boton-cancelar {
+  border: 1px solid var(--pos-border);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.boton-confirmar {
+  border: none;
+  background: var(--action-primary);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: var(--sombra-acento);
+}
+
+.boton-confirmar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* En pantallas angostas el nombre y las acciones no caben en una fila. */
+@media (max-width: 600px) {
+  .tarjeta-hoy,
+  .tarjeta-empleado {
+    flex-wrap: wrap;
+  }
+
+  .hoy-info,
+  .empleado-info {
+    flex: 1 1 100%;
+  }
+
+  .boton-marcar {
+    flex: 1 1 100%;
+  }
+
+  .campo-fila {
+    flex-direction: column;
+  }
+}

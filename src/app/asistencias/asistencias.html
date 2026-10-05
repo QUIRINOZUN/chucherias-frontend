@@ -1,0 +1,389 @@
+<!-- ============================================================================
+     asistencias.html — CONTROL DE PERSONAL Y ASISTENCIAS (lógica en asistencias.ts)
+     ============================================================================
+     Tres secciones: marcar entrada/salida de HOY, gestión de empleados, e
+     historial con filtros y corrección de registros. Solo administrador y
+     encargado.
+     ============================================================================ -->
+<div class="asistencias-container">
+  <!-- ENCABEZADO: volver, título y cambio de tema. -->
+  <header class="asistencias-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      Volver
+    </button>
+    <h1>Asistencias</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
+    >
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
+    </button>
+  </header>
+
+  <div class="asistencias-cuerpo">
+    <!-- ============================= SECCIÓN: HOY ============================= -->
+    <section class="seccion-asistencias">
+      <h2 class="titulo-seccion">Hoy</h2>
+
+      @if (errorEmpleados()) {
+        <p class="mensaje-estado mensaje-error">{{ errorEmpleados() }}</p>
+      }
+
+      @if (cargandoHoy() || cargandoEmpleados()) {
+        <p class="mensaje-estado">Cargando...</p>
+      } @else if (empleadosActivos().length === 0) {
+        <p class="mensaje-estado">
+          No hay empleados activos todavía. Da de alta uno en "Empleados" abajo.
+        </p>
+      } @else {
+        <ul class="lista-hoy">
+          @for (empleado of empleadosActivos(); track empleado.id) {
+            <li class="tarjeta-hoy">
+              <div class="hoy-info">
+                <span class="hoy-nombre">{{ empleado.nombre }}</span>
+                <span class="hoy-puesto">{{ empleado.puesto }}</span>
+                @if (abiertaPorEmpleado().get(empleado.id); as abierta) {
+                  <span class="hoy-estado hoy-estado-adentro">
+                    Entró a las {{ abierta.hora_entrada?.slice(0, 5) }}
+                  </span>
+                } @else if (turnosCompletadosHoy(empleado.id) > 0) {
+                  <span class="hoy-estado">
+                    Ya marcó
+                    {{ turnosCompletadosHoy(empleado.id) }}
+                    {{ turnosCompletadosHoy(empleado.id) === 1 ? 'turno' : 'turnos' }} hoy
+                  </span>
+                }
+              </div>
+              <button
+                type="button"
+                class="boton-marcar"
+                [class.boton-marcar-salida]="abiertaPorEmpleado().has(empleado.id)"
+                [disabled]="procesandoEmpleadoId() === empleado.id"
+                (click)="marcarAsistencia(empleado)"
+              >
+                {{
+                  procesandoEmpleadoId() === empleado.id
+                    ? '...'
+                    : abiertaPorEmpleado().has(empleado.id)
+                      ? 'Marcar salida'
+                      : 'Marcar entrada'
+                }}
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <!-- ========================= SECCIÓN: EMPLEADOS =========================== -->
+    <section class="seccion-asistencias">
+      <div class="encabezado-seccion">
+        <h2 class="titulo-seccion">Empleados</h2>
+        <button type="button" class="boton-enlace" (click)="alternarMostrarInactivos()">
+          {{ mostrarInactivos() ? 'Ocultar inactivos' : 'Ver inactivos' }}
+        </button>
+      </div>
+
+      <button type="button" class="boton-nuevo" (click)="abrirCreacionEmpleado()">
+        + Nuevo empleado
+      </button>
+
+      @if (cargandoEmpleados()) {
+        <p class="mensaje-estado">Cargando empleados...</p>
+      } @else if (empleados().length === 0) {
+        <p class="mensaje-estado">Todavía no hay empleados dados de alta.</p>
+      } @else {
+        <ul class="lista-empleados">
+          @for (empleado of empleados(); track empleado.id) {
+            <li class="tarjeta-empleado">
+              <div class="empleado-info">
+                <span class="empleado-nombre">{{ empleado.nombre }}</span>
+                <span class="empleado-detalle">
+                  {{ empleado.puesto }} · desde {{ empleado.fecha_ingreso | date: 'dd/MM/yyyy' }}
+                  @if (empleado.usuario_login) {
+                    · &#64;{{ empleado.usuario_login }}
+                  }
+                </span>
+              </div>
+              <span class="badge-estado" [class.badge-inactivo]="!empleado.activo">
+                {{ empleado.activo ? 'Activo' : 'Inactivo' }}
+              </span>
+              <button type="button" class="boton-editar" (click)="abrirEdicionEmpleado(empleado)">
+                Editar
+              </button>
+              <button
+                type="button"
+                class="boton-alternar"
+                [class.boton-alternar-desactivar]="empleado.activo"
+                [disabled]="actualizandoActivoId() === empleado.id"
+                (click)="alternarActivoEmpleado(empleado)"
+              >
+                {{
+                  actualizandoActivoId() === empleado.id
+                    ? '...'
+                    : empleado.activo
+                      ? 'Desactivar'
+                      : 'Activar'
+                }}
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <!-- ========================= SECCIÓN: HISTORIAL ============================ -->
+    <section class="seccion-asistencias">
+      <h2 class="titulo-seccion">Historial</h2>
+
+      <button type="button" class="boton-nuevo" (click)="abrirCapturaManual()">
+        + Registrar asistencia manual
+      </button>
+
+      <!-- FILTROS: rango de fechas y empleado. Cada cambio vuelve a consultar. -->
+      <div class="filtros-historial">
+        <div class="campo-filtro">
+          <label for="filtro-desde">Desde</label>
+          <input
+            id="filtro-desde"
+            type="date"
+            [value]="filtroDesde()"
+            (change)="cambiarFiltroDesde($any($event.target).value)"
+          />
+        </div>
+        <div class="campo-filtro">
+          <label for="filtro-hasta">Hasta</label>
+          <input
+            id="filtro-hasta"
+            type="date"
+            [value]="filtroHasta()"
+            (change)="cambiarFiltroHasta($any($event.target).value)"
+          />
+        </div>
+        <div class="campo-filtro campo-filtro-ancho">
+          <label for="filtro-empleado">Empleado</label>
+          <select
+            id="filtro-empleado"
+            [value]="filtroEmpleadoId() ?? ''"
+            (change)="cambiarFiltroEmpleado($any($event.target).value)"
+          >
+            <option value="">Todos</option>
+            @for (empleado of empleados(); track empleado.id) {
+              <option [value]="empleado.id">{{ empleado.nombre }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (hayFiltrosHistorial()) {
+        <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltrosHistorial()">
+          Limpiar filtros
+        </button>
+      }
+
+      @if (errorHistorial()) {
+        <p class="mensaje-estado mensaje-error">{{ errorHistorial() }}</p>
+      } @else if (cargandoHistorial()) {
+        <p class="mensaje-estado">Consultando historial...</p>
+      } @else if (asistencias().length === 0) {
+        <p class="mensaje-estado">No hay asistencias con esos filtros.</p>
+      } @else {
+        <ul class="lista-historial">
+          @for (a of asistencias(); track a.id) {
+            <li class="item-historial">
+              <div class="item-historial-encabezado">
+                <span class="item-historial-nombre">{{ a.empleado_nombre }}</span>
+                <span class="item-historial-fecha">{{ a.fecha | date: 'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="item-historial-horas">
+                Entrada: {{ a.hora_entrada?.slice(0, 5) ?? '—' }} · Salida:
+                {{ a.hora_salida?.slice(0, 5) ?? '—' }}
+              </div>
+              @if (a.observaciones) {
+                <div class="item-historial-observaciones">{{ a.observaciones }}</div>
+              }
+              <div class="item-historial-pie">
+                <span class="item-historial-registrado-por">
+                  Registrado por {{ a.registrado_por_nombre ?? '—' }}
+                </span>
+                <button type="button" class="boton-enlace" (click)="abrirCorreccion(a)">
+                  Corregir
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
+
+  <!-- VENTANA EMERGENTE: alta/edición de empleado. -->
+  @if (modoFormularioEmpleado(); as modo) {
+    <div class="overlay">
+      <div class="panel-formulario">
+        <h2>{{ modo === 'crear' ? 'Nuevo empleado' : 'Editar empleado' }}</h2>
+
+        <div class="campo">
+          <label for="nombre-empleado-form">Nombre completo</label>
+          <input
+            id="nombre-empleado-form"
+            type="text"
+            [value]="nombreEmpleadoForm()"
+            (input)="nombreEmpleadoForm.set($any($event.target).value)"
+          />
+        </div>
+
+        <div class="campo">
+          <label for="puesto-empleado-form">Puesto</label>
+          <input
+            id="puesto-empleado-form"
+            type="text"
+            placeholder="Ej. cajero, auxiliar de cocina, repartidor"
+            [value]="puestoEmpleadoForm()"
+            (input)="puestoEmpleadoForm.set($any($event.target).value)"
+          />
+        </div>
+
+        <div class="campo">
+          <label for="fecha-ingreso-form">Fecha de ingreso</label>
+          <input
+            id="fecha-ingreso-form"
+            type="date"
+            [value]="fechaIngresoForm()"
+            (input)="fechaIngresoForm.set($any($event.target).value)"
+          />
+        </div>
+
+        @if (errorFormularioEmpleado()) {
+          <p class="mensaje-error">{{ errorFormularioEmpleado() }}</p>
+        }
+
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarFormularioEmpleado()"
+            [disabled]="procesandoFormEmpleado()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar"
+            (click)="guardarFormularioEmpleado()"
+            [disabled]="!puedeGuardarEmpleado()"
+          >
+            {{
+              procesandoFormEmpleado()
+                ? 'Guardando...'
+                : modo === 'crear'
+                  ? 'Crear empleado'
+                  : 'Guardar cambios'
+            }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- VENTANA EMERGENTE: captura manual / corrección de una asistencia. -->
+  @if (modoFormularioAsistencia(); as modoAsistencia) {
+    <div class="overlay">
+      <div class="panel-formulario">
+        <h2>{{ modoAsistencia === 'crear' ? 'Registrar asistencia' : 'Corregir asistencia' }}</h2>
+
+        @if (modoAsistencia === 'crear') {
+          <div class="campo">
+            <label for="empleado-asistencia-form">Empleado</label>
+            <select
+              id="empleado-asistencia-form"
+              [value]="empleadoIdAsistenciaForm()"
+              (change)="empleadoIdAsistenciaForm.set(+$any($event.target).value)"
+            >
+              @for (empleado of empleadosActivos(); track empleado.id) {
+                <option [value]="empleado.id">{{ empleado.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="campo">
+            <label for="fecha-asistencia-form">Fecha</label>
+            <input
+              id="fecha-asistencia-form"
+              type="date"
+              [value]="fechaAsistenciaForm()"
+              (input)="fechaAsistenciaForm.set($any($event.target).value)"
+            />
+          </div>
+        }
+
+        <div class="campo-fila">
+          <div class="campo">
+            <label for="hora-entrada-form">Hora de entrada</label>
+            <input
+              id="hora-entrada-form"
+              type="time"
+              [value]="horaEntradaForm()"
+              (input)="horaEntradaForm.set($any($event.target).value)"
+            />
+          </div>
+          <div class="campo">
+            <label for="hora-salida-form">Hora de salida</label>
+            <input
+              id="hora-salida-form"
+              type="time"
+              [value]="horaSalidaForm()"
+              (input)="horaSalidaForm.set($any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="observaciones-form">Observaciones (opcional)</label>
+          <input
+            id="observaciones-form"
+            type="text"
+            [value]="observacionesForm()"
+            (input)="observacionesForm.set($any($event.target).value)"
+          />
+        </div>
+
+        @if (errorFormularioAsistencia()) {
+          <p class="mensaje-error">{{ errorFormularioAsistencia() }}</p>
+        }
+
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarFormularioAsistencia()"
+            [disabled]="procesandoFormAsistencia()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar"
+            (click)="guardarFormularioAsistencia()"
+            [disabled]="!puedeGuardarAsistencia()"
+          >
+            {{
+              procesandoFormAsistencia()
+                ? 'Guardando...'
+                : modoAsistencia === 'crear'
+                  ? 'Registrar'
+                  : 'Guardar cambios'
+            }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
