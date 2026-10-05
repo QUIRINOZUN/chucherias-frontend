@@ -1,0 +1,481 @@
+<!-- ============================================================================
+     inventario.html — INVENTARIO DE INSUMOS (lógica en inventario.ts)
+     ============================================================================
+     Encabezado + buscador + lista de insumos con existencia y alerta de
+     mínimo + ventanas emergentes de alta/edición y de movimiento.
+     ============================================================================ -->
+<div class="inventario-container">
+  <!-- ENCABEZADO: volver, título y cambio de tema. -->
+  <header class="inventario-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      Volver
+    </button>
+    <h1>Inventario</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
+    >
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
+    </button>
+  </header>
+
+  <div class="inventario-cuerpo">
+    @if (cargando()) {
+      <p class="mensaje-estado">Cargando insumos...</p>
+    } @else {
+      @if (error()) {
+        <p class="mensaje-estado mensaje-error">{{ error() }}</p>
+      }
+
+      <!-- En pantallas angostas los controles y la lista se apilan (igual
+           que antes); a partir de 860px se separan en dos columnas: los
+           controles a la izquierda (fijos mientras se recorre la lista),
+           la lista a la derecha. -->
+      <div class="inventario-layout">
+        <aside class="inventario-controles">
+          @if (cantidadAlertas() > 0) {
+            <p class="aviso-alertas">
+              <svg class="icono" aria-hidden="true"><use href="#ic-picante" /></svg>
+              {{ cantidadAlertas() }} insumo{{ cantidadAlertas() === 1 ? '' : 's' }} en o por debajo
+              del mínimo.
+            </p>
+          }
+
+          <button type="button" class="boton-nuevo-insumo" (click)="abrirCreacionInsumo()">
+            + Nuevo insumo
+          </button>
+
+          <div class="campo-busqueda">
+            <svg class="icono" aria-hidden="true"><use href="#ic-buscar" /></svg>
+            <input
+              type="text"
+              placeholder="Buscar insumo..."
+              [value]="busqueda()"
+              (input)="busqueda.set($any($event.target).value)"
+            />
+          </div>
+
+          <!-- CHIPS DE CATEGORÍA: filtran la lista; "Todas" es el default.
+               Elegir un chip limpia la búsqueda (mismo criterio que el POS). -->
+          <div class="fila-chips">
+            <button
+              type="button"
+              class="chip-categoria"
+              [class.chip-activa]="categoriaFiltroId() === null"
+              (click)="seleccionarCategoria(null)"
+            >
+              Todas <span class="chip-conteo">{{ contarCategoria(null) }}</span>
+            </button>
+            @for (categoria of categorias(); track categoria.id) {
+              <button
+                type="button"
+                class="chip-categoria"
+                [class.chip-activa]="categoriaFiltroId() === categoria.id"
+                (click)="seleccionarCategoria(categoria.id)"
+              >
+                {{ categoria.nombre }}
+                <span class="chip-conteo">{{ contarCategoria(categoria.id) }}</span>
+              </button>
+            }
+          </div>
+
+          <!-- CHIPS DE NIVEL DE STOCK: eje independiente de la categoría, se
+               combina con ella y con la búsqueda en vez de limpiarlas
+               (ver seleccionarNivel en inventario.ts). -->
+          <div class="fila-chips">
+            <button
+              type="button"
+              class="chip-categoria"
+              [class.chip-activa]="nivelStockFiltro() === null"
+              (click)="seleccionarNivel(null)"
+            >
+              Todo el stock <span class="chip-conteo">{{ contarNivel(null) }}</span>
+            </button>
+            <button
+              type="button"
+              class="chip-categoria chip-nivel-bajo"
+              [class.chip-activa]="nivelStockFiltro() === 'bajo'"
+              (click)="seleccionarNivel('bajo')"
+            >
+              Bajo <span class="chip-conteo">{{ contarNivel('bajo') }}</span>
+            </button>
+            <button
+              type="button"
+              class="chip-categoria chip-nivel-medio"
+              [class.chip-activa]="nivelStockFiltro() === 'medio'"
+              (click)="seleccionarNivel('medio')"
+            >
+              Medio <span class="chip-conteo">{{ contarNivel('medio') }}</span>
+            </button>
+            <button
+              type="button"
+              class="chip-categoria chip-nivel-alto"
+              [class.chip-activa]="nivelStockFiltro() === 'alto'"
+              (click)="seleccionarNivel('alto')"
+            >
+              Alto <span class="chip-conteo">{{ contarNivel('alto') }}</span>
+            </button>
+          </div>
+        </aside>
+
+        <!-- LISTA agrupada por categoría; cada sección se puede colapsar. -->
+        <div class="inventario-lista">
+          @for (grupo of gruposVisibles(); track grupo.id) {
+            <section class="grupo-categoria">
+              <button type="button" class="grupo-encabezado" (click)="alternarColapso(grupo.id)">
+                <span class="grupo-nombre">{{ grupo.nombre }}</span>
+                <span class="grupo-conteo">{{ grupo.insumos.length }}</span>
+                <svg
+                  class="icono icono-chevron"
+                  [class.icono-colapsado]="estaColapsada(grupo.id)"
+                  aria-hidden="true"
+                >
+                  <use href="#ic-chevron" />
+                </svg>
+              </button>
+
+              @if (!estaColapsada(grupo.id)) {
+                <ul class="lista-insumos">
+                  @for (insumo of grupo.insumos; track insumo.id) {
+                    <li class="tarjeta-insumo" [class.tarjeta-alerta]="insumo.alerta">
+                      <!-- Nombre + datos secundarios a la izquierda, existencia en
+                           número grande a la derecha (RF de inventario dinámico:
+                           es el dato que más se necesita identificar de un vistazo). -->
+                      <div class="insumo-principal">
+                        <div class="insumo-info">
+                          <span class="insumo-nombre">{{ insumo.nombre }}</span>
+                          <span class="insumo-detalle-secundario">
+                            mín. {{ insumo.cantidad_minima }} {{ insumo.unidad_medida }}
+                            @if (insumo.proveedor) {
+                              · {{ insumo.proveedor }}
+                            }
+                          </span>
+                          @if (insumo.alerta) {
+                            <span class="badge-alerta">Bajo mínimo</span>
+                          }
+                        </div>
+
+                        <div class="insumo-stat">
+                          <span class="stat-numero" [class.stat-numero-alerta]="insumo.alerta">{{
+                            insumo.existencia
+                          }}</span>
+                          <span class="stat-unidad">{{ insumo.unidad_medida }}</span>
+                        </div>
+                      </div>
+
+                      <div class="insumo-acciones">
+                        <!-- Surtir/agregar existencia: botón "+" prioritario, es la acción más frecuente. -->
+                        <button
+                          type="button"
+                          class="boton-surtir"
+                          [attr.aria-label]="'Registrar entrada de ' + insumo.nombre"
+                          (click)="abrirMovimiento(insumo, 'entrada')"
+                        >
+                          <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
+                        </button>
+                        <button
+                          type="button"
+                          class="boton-accion"
+                          (click)="abrirMovimiento(insumo, 'ajuste')"
+                        >
+                          Ajuste
+                        </button>
+                        <button
+                          type="button"
+                          class="boton-accion"
+                          (click)="abrirMovimiento(insumo, 'merma')"
+                        >
+                          Merma
+                        </button>
+                        <button
+                          type="button"
+                          class="boton-accion"
+                          (click)="abrirEdicionInsumo(insumo)"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          class="boton-accion"
+                          (click)="alternarHistorial(insumo)"
+                        >
+                          {{ insumoHistorialId() === insumo.id ? 'Ocultar' : 'Historial' }}
+                        </button>
+                      </div>
+
+                      @if (insumoHistorialId() === insumo.id) {
+                        <div class="historial-panel">
+                          @if (cargandoHistorial()) {
+                            <p class="mensaje-estado">Cargando historial...</p>
+                          } @else if (historialMovimientos().length === 0) {
+                            <p class="mensaje-estado">Sin movimientos todavía.</p>
+                          } @else {
+                            <ul class="lista-movimientos">
+                              @for (m of historialMovimientos(); track m.id) {
+                                <li class="movimiento-fila">
+                                  <span class="movimiento-tipo" [class]="'tipo-' + m.tipo">{{
+                                    m.tipo
+                                  }}</span>
+                                  <span class="movimiento-cantidad"
+                                    >{{ m.cantidad }} {{ insumo.unidad_medida }}</span
+                                  >
+                                  <span class="movimiento-detalle">
+                                    {{ m.motivo }} · {{ m.responsable }} ·
+                                    {{ m.fecha | date: 'dd/MM/yyyy HH:mm' }}
+                                  </span>
+                                </li>
+                              }
+                            </ul>
+                          }
+                        </div>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+            </section>
+          } @empty {
+            <p class="mensaje-estado">No hay insumos que coincidan con los filtros.</p>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- VENTANA de alta/edición de insumo. -->
+  @if (modoFormulario(); as modo) {
+    <div class="overlay">
+      <div class="panel-formulario">
+        <h2>{{ modo === 'crear' ? 'Nuevo insumo' : 'Editar insumo' }}</h2>
+
+        <div class="campo">
+          <label for="nombre-insumo">Nombre</label>
+          <input
+            id="nombre-insumo"
+            type="text"
+            [value]="nombreForm()"
+            (input)="nombreForm.set($any($event.target).value)"
+          />
+        </div>
+
+        <div class="campo">
+          <label for="unidad-insumo">Unidad de medida</label>
+          <select
+            id="unidad-insumo"
+            [value]="unidadForm()"
+            (change)="unidadForm.set($any($event.target).value)"
+          >
+            <option value="g">Gramos (g)</option>
+            <option value="kg">Kilogramos (kg)</option>
+            <option value="ml">Mililitros (ml)</option>
+            <option value="l">Litros (l)</option>
+            <option value="u">Unidad/pieza (u)</option>
+            <option value="porcion">Porción</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="categoria-insumo">Categoría</label>
+          <select
+            id="categoria-insumo"
+            [value]="categoriaIdForm()"
+            (change)="
+              categoriaIdForm.set($any($event.target).value ? +$any($event.target).value : null)
+            "
+          >
+            <option [value]="null">Sin categoría</option>
+            @for (categoria of categorias(); track categoria.id) {
+              <option [value]="categoria.id">{{ categoria.nombre }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="minimo-insumo">Cantidad mínima (para la alerta)</label>
+          <input
+            id="minimo-insumo"
+            type="number"
+            min="0"
+            step="0.01"
+            [value]="minimoForm()"
+            (input)="minimoForm.set(+$any($event.target).value)"
+          />
+        </div>
+
+        <div class="campo">
+          <label for="proveedor-insumo">Proveedor (opcional)</label>
+          <select
+            id="proveedor-insumo"
+            [value]="proveedorIdForm()"
+            (change)="
+              proveedorIdForm.set($any($event.target).value ? +$any($event.target).value : null)
+            "
+          >
+            <option [value]="null">Sin proveedor</option>
+            @for (proveedor of proveedores(); track proveedor.id) {
+              <option [value]="proveedor.id">{{ proveedor.nombre }}</option>
+            }
+          </select>
+          @if (!mostrarNuevoProveedor()) {
+            <button type="button" class="boton-enlace" (click)="mostrarNuevoProveedor.set(true)">
+              + Nuevo proveedor
+            </button>
+          } @else {
+            <div class="fila-proveedor-rapido">
+              <input
+                type="text"
+                placeholder="Nombre del proveedor"
+                [value]="nombreProveedorForm()"
+                (input)="nombreProveedorForm.set($any($event.target).value)"
+              />
+              <button
+                type="button"
+                class="boton-accion"
+                [disabled]="!nombreProveedorForm().trim() || procesandoProveedor()"
+                (click)="crearProveedorRapido()"
+              >
+                {{ procesandoProveedor() ? '...' : 'Agregar' }}
+              </button>
+            </div>
+          }
+        </div>
+
+        @if (errorFormulario()) {
+          <p class="mensaje-error">{{ errorFormulario() }}</p>
+        }
+
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarFormularioInsumo()"
+            [disabled]="procesandoForm()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar"
+            (click)="guardarFormularioInsumo()"
+            [disabled]="!puedeGuardarInsumo()"
+          >
+            {{
+              procesandoForm()
+                ? 'Guardando...'
+                : modo === 'crear'
+                  ? 'Crear insumo'
+                  : 'Guardar cambios'
+            }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- VENTANA de movimiento: entrada, ajuste o merma. -->
+  @if (tipoMovimiento(); as tipo) {
+    <div class="overlay">
+      <div class="panel-formulario">
+        <h2>
+          {{
+            tipo === 'entrada'
+              ? 'Registrar entrada'
+              : tipo === 'merma'
+                ? 'Registrar merma'
+                : 'Registrar ajuste'
+          }}
+        </h2>
+        <p class="subtitulo-movimiento">{{ insumoMovimiento()?.nombre }}</p>
+
+        <div class="campo">
+          <label for="cantidad-movimiento">
+            Cantidad{{ tipo === 'ajuste' ? ' — negativa para restar' : '' }}
+          </label>
+          <div class="fila-cantidad-unidad">
+            <input
+              id="cantidad-movimiento"
+              type="number"
+              step="0.01"
+              [value]="cantidadMovimientoForm()"
+              (input)="
+                cantidadMovimientoForm.set(
+                  $any($event.target).value ? +$any($event.target).value : null
+                )
+              "
+            />
+            <!-- Unidad de CAPTURA (puede ser kg/L aunque el insumo se consuma en g/ml):
+                 solo aparece el selector si hay más de una opción; si no, se muestra fija. -->
+            @if (opcionesUnidadMovimiento().length > 1) {
+              <div class="selector-unidad">
+                @for (opcion of opcionesUnidadMovimiento(); track opcion.valor) {
+                  <button
+                    type="button"
+                    class="pastilla-unidad"
+                    [class.pastilla-activa]="unidadMovimientoForm() === opcion.valor"
+                    (click)="unidadMovimientoForm.set(opcion.valor)"
+                  >
+                    {{ opcion.etiqueta }}
+                  </button>
+                }
+              </div>
+            } @else {
+              <span class="unidad-fija">{{ opcionesUnidadMovimiento()[0]?.etiqueta }}</span>
+            }
+          </div>
+          @if (mostrarConversion()) {
+            <p class="texto-conversion">
+              = {{ cantidadConvertida() }} {{ insumoMovimiento()?.unidad_medida }}
+            </p>
+          }
+        </div>
+
+        <div class="campo">
+          <label for="motivo-movimiento">Motivo{{ tipo === 'entrada' ? ' (opcional)' : '' }}</label>
+          <input
+            id="motivo-movimiento"
+            type="text"
+            [placeholder]="
+              tipo === 'entrada'
+                ? 'Ej. Compra semanal'
+                : tipo === 'merma'
+                  ? 'Ej. Se cayó el bote, caducó'
+                  : 'Ej. Conteo físico distinto'
+            "
+            [value]="motivoMovimientoForm()"
+            (input)="motivoMovimientoForm.set($any($event.target).value)"
+          />
+        </div>
+
+        @if (errorMovimiento()) {
+          <p class="mensaje-error">{{ errorMovimiento() }}</p>
+        }
+
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarMovimiento()"
+            [disabled]="procesandoMovimiento()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar"
+            (click)="guardarMovimiento()"
+            [disabled]="!puedeGuardarMovimiento()"
+          >
+            {{ procesandoMovimiento() ? 'Guardando...' : 'Registrar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

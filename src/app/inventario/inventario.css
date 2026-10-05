@@ -1,0 +1,749 @@
+/* =============================================================================
+   inventario.css — INVENTARIO DE INSUMOS
+   =============================================================================
+   Sigue el mismo patrón visual que usuarios.css: encabezado sticky, lista de
+   tarjetas y ventanas emergentes de formulario. El naranja de marca sigue
+   siendo la única acción principal; el rojo solo marca alerta de mínimo. */
+
+:host {
+  display: block;
+  min-height: 100vh;
+  background: var(--pos-bg-main);
+  font-family: var(--fuente-texto);
+  color: var(--pos-text-primary);
+}
+
+.inventario-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.inventario-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--pos-bg-card);
+  border-bottom: 1px solid var(--pos-border);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.inventario-header h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.25rem;
+  font-family: var(--fuente-titulo);
+}
+
+.boton-volver,
+.boton-tema {
+  min-height: 44px;
+  border: none;
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  border-radius: var(--radio-pastilla);
+  padding: 0 18px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.boton-tema {
+  min-width: 44px;
+  padding: 0;
+  font-size: 1.15rem;
+}
+
+.inventario-cuerpo {
+  flex: 1;
+  padding: 16px;
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* En móvil los controles (alta, buscador, chips) y la lista van uno debajo
+   del otro, en el mismo orden que antes de separarlos en columnas. A partir
+   de 860px (mismo quiebre que pos.css) se acomodan lado a lado — ver el
+   media query al final del archivo. */
+.inventario-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.inventario-controles {
+  display: flex;
+  flex-direction: column;
+}
+
+.inventario-lista {
+  min-width: 0;
+}
+
+.mensaje-estado {
+  color: var(--pos-text-secondary);
+  font-size: 0.9rem;
+}
+
+.mensaje-error {
+  color: var(--peligro-texto);
+}
+
+.aviso-alertas {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: var(--radio-sm);
+  background: color-mix(in srgb, var(--action-danger) 16%, var(--pos-bg-card));
+  color: var(--peligro-texto);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.boton-nuevo-insumo {
+  min-height: 56px;
+  width: 100%;
+  margin-bottom: 12px;
+  border: none;
+  border-radius: var(--radio-md);
+  background: var(--action-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: var(--sombra-acento);
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.boton-nuevo-insumo:hover {
+  background: var(--action-primary-hover);
+}
+
+.boton-nuevo-insumo:active {
+  transform: scale(0.98);
+}
+
+.campo-busqueda {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-bottom: 16px;
+  padding: 0 14px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-card);
+  color: var(--pos-text-secondary);
+}
+
+.campo-busqueda .icono {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.campo-busqueda input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--pos-text-primary);
+  font-size: 0.95rem;
+  min-height: 44px;
+}
+
+.campo-busqueda input:focus {
+  outline: none;
+}
+
+/* Chips de categoría: fila desplazable horizontalmente, "Todas" primero. */
+.fila-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 16px;
+  scrollbar-width: thin;
+}
+
+.chip-categoria {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-card);
+  color: var(--pos-text-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.chip-categoria.chip-activa {
+  border-color: var(--action-primary);
+  background: var(--action-primary);
+  color: #fff;
+}
+
+.chip-conteo {
+  font-size: 0.72rem;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+/* Chips de nivel de stock: cuando están activos usan el color del nivel en
+   vez del naranja de acción (bajo = rojo, medio = acento, alto = verde).
+   Mismo patrón que .diferencia-en-vivo/.retiro-aviso (fondo = tinte suave
+   del color sobre la tarjeta, texto = la variante de texto del tema): las
+   variables --peligro-texto/--acento-texto/--exito-texto cambian de tono
+   claro↔oscuro según el tema, así que NO sirven como relleno sólido con un
+   texto fijo (se vuelven ilegibles en tema claro). */
+.chip-nivel-bajo.chip-activa {
+  border-color: var(--peligro-texto);
+  background: color-mix(in srgb, var(--action-danger) 20%, var(--pos-bg-card));
+  color: var(--peligro-texto);
+}
+
+.chip-nivel-medio.chip-activa {
+  border-color: var(--acento-texto);
+  background: color-mix(in srgb, var(--acento-texto) 20%, var(--pos-bg-card));
+  color: var(--acento-texto);
+}
+
+.chip-nivel-alto.chip-activa {
+  border-color: var(--exito-texto);
+  background: color-mix(in srgb, var(--action-success) 20%, var(--pos-bg-card));
+  color: var(--exito-texto);
+}
+
+/* Secciones por categoría: encabezado colapsable + su lista. */
+.grupo-categoria {
+  margin-bottom: 18px;
+}
+
+.grupo-encabezado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 10px;
+  padding: 0 4px;
+  border: none;
+  border-bottom: 1px solid var(--pos-border);
+  background: none;
+  color: var(--pos-text-primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.grupo-nombre {
+  font-family: var(--fuente-titulo);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.grupo-conteo {
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-pastilla);
+  padding: 2px 9px;
+}
+
+.icono-chevron {
+  margin-left: auto;
+  width: 18px;
+  height: 18px;
+  transition: transform 0.2s ease;
+}
+
+.icono-chevron.icono-colapsado {
+  transform: rotate(-90deg);
+}
+
+.lista-insumos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tarjeta-insumo {
+  background: var(--pos-bg-card);
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: 14px 16px;
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.tarjeta-insumo.tarjeta-alerta {
+  border-color: var(--action-danger);
+}
+
+.tarjeta-insumo:hover {
+  box-shadow: var(--sombra-elevada);
+  transform: translateY(-1px);
+}
+
+/* Fila principal de la tarjeta: nombre + datos secundarios a la izquierda,
+   existencia en grande a la derecha — el patrón clásico de "etiqueta +
+   cifra destacada" para que el número salte a la vista sin tener que leer
+   el resto de la tarjeta. */
+.insumo-principal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.insumo-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.insumo-nombre {
+  font-weight: 700;
+  font-family: var(--fuente-titulo);
+  font-size: 1.2rem;
+  line-height: 1.25;
+}
+
+.badge-alerta {
+  align-self: flex-start;
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radio-pastilla);
+  background: color-mix(in srgb, var(--action-danger) 20%, var(--pos-bg-card));
+  color: var(--peligro-texto);
+  white-space: nowrap;
+}
+
+/* Existencia como dato "de un vistazo": número grande y tabular, alineado a
+   la derecha de la tarjeta; la unidad queda debajo, más pequeña. */
+.insumo-stat {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1;
+}
+
+.stat-numero {
+  font-family: var(--fuente-titulo);
+  font-size: clamp(1.8rem, 6vw, 2.3rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--pos-text-primary);
+  transition: color 0.2s ease;
+}
+
+.stat-numero-alerta {
+  color: var(--peligro-texto);
+}
+
+.stat-unidad {
+  margin-top: 2px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--pos-text-secondary);
+  text-transform: uppercase;
+}
+
+.insumo-detalle-secundario {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+}
+
+.insumo-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Surtir/agregar existencia es la acción más frecuente de la pantalla: va
+   primero, como botón circular de acento, para que salte a la vista. */
+.boton-surtir {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--action-primary);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: var(--sombra-acento);
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.boton-surtir .icono {
+  width: 22px;
+  height: 22px;
+}
+
+.boton-surtir:hover {
+  background: var(--action-primary-hover);
+}
+
+.boton-surtir:active {
+  transform: scale(0.94);
+}
+
+.boton-accion {
+  min-height: 40px;
+  border: 1px solid var(--pos-border);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  border-radius: var(--radio-sm);
+  padding: 0 14px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.boton-accion:hover {
+  border-color: var(--pos-text-secondary);
+}
+
+.boton-accion:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.historial-panel {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--pos-border);
+}
+
+.lista-movimientos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.movimiento-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.78rem;
+}
+
+.movimiento-tipo {
+  flex-shrink: 0;
+  font-weight: 700;
+  text-transform: capitalize;
+  padding: 2px 8px;
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+}
+
+.movimiento-tipo.tipo-entrada {
+  color: var(--exito-texto);
+}
+
+.movimiento-tipo.tipo-salida,
+.movimiento-tipo.tipo-merma {
+  color: var(--peligro-texto);
+}
+
+.movimiento-tipo.tipo-ajuste {
+  color: var(--acento-texto);
+}
+
+.movimiento-cantidad {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--pos-text-primary);
+}
+
+.movimiento-detalle {
+  color: var(--pos-text-secondary);
+  min-width: 0;
+}
+
+/* ---- Ventanas emergentes (formulario de insumo y de movimiento) ---- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 20;
+  animation: aparecer 0.2s ease;
+}
+
+.panel-formulario {
+  width: 100%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-elevada);
+  padding: 24px;
+  box-sizing: border-box;
+  animation: escalar 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.panel-formulario h2 {
+  margin: 0 0 16px;
+  font-size: 1.4rem;
+  font-family: var(--fuente-titulo);
+}
+
+.subtitulo-movimiento {
+  margin: -12px 0 16px;
+  color: var(--pos-text-secondary);
+  font-size: 0.9rem;
+}
+
+.campo {
+  margin-bottom: 14px;
+}
+
+.campo label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.campo input,
+.campo select {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: 0 12px;
+  font-size: 1rem;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.campo input:focus,
+.campo select:focus {
+  outline: none;
+  border-color: var(--pos-text-secondary);
+}
+
+/* Cantidad + selector de unidad de captura (kg/L junto a g/ml), en la
+   ventana de entrada/ajuste. */
+.fila-cantidad-unidad {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.fila-cantidad-unidad input {
+  flex: 1;
+  min-width: 0;
+}
+
+.selector-unidad {
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+.pastilla-unidad {
+  min-width: 44px;
+  min-height: 48px;
+  padding: 0 10px;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.pastilla-unidad.pastilla-activa {
+  border-color: var(--action-primary);
+  background: var(--action-primary);
+  color: #fff;
+}
+
+.unidad-fija {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  border: 2px solid var(--pos-border);
+  color: var(--pos-text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.texto-conversion {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  color: var(--acento-texto);
+  font-weight: 600;
+}
+
+.boton-enlace {
+  margin-top: 8px;
+  border: none;
+  background: none;
+  color: var(--acento-texto);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.fila-proveedor-rapido {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.fila-proveedor-rapido input {
+  flex: 1;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.fila-proveedor-rapido .boton-accion {
+  flex-shrink: 0;
+}
+
+.acciones-formulario {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.boton-cancelar {
+  flex: 1;
+  min-height: 52px;
+  border: 1px solid var(--pos-border);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  border-radius: var(--radio-md);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.boton-confirmar {
+  flex: 1;
+  min-height: 52px;
+  border: none;
+  background: var(--action-primary);
+  color: #fff;
+  border-radius: var(--radio-md);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  box-shadow: var(--sombra-acento);
+}
+
+.boton-confirmar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+@media (max-width: 600px) {
+  .fila-cantidad-unidad {
+    flex-wrap: wrap;
+  }
+
+  .selector-unidad {
+    width: 100%;
+  }
+
+  .pastilla-unidad {
+    flex: 1;
+  }
+}
+
+/* A partir de aquí ya cabe una columna de controles fija junto a la lista
+   (mismo quiebre de 860px que pos.css para su layout de dos columnas). Los
+   controles quedan pegados al desplazarse (position: sticky) para no tener
+   que subir hasta arriba para buscar o cambiar de categoría. */
+@media (min-width: 860px) {
+  .inventario-cuerpo {
+    max-width: 1120px;
+  }
+
+  .inventario-layout {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 28px;
+  }
+
+  .inventario-controles {
+    flex: 0 0 300px;
+    position: sticky;
+    top: 84px;
+  }
+
+  .inventario-lista {
+    flex: 1;
+  }
+
+  /* Dentro de la columna angosta, los chips se acomodan en varias filas en
+     vez de desplazarse horizontalmente (que solo tiene sentido a lo ancho). */
+  .fila-chips {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
