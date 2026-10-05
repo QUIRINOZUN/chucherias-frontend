@@ -77,6 +77,14 @@ export class AuthService {
   // `aviso` es opcional: si se indica (cierre por inactividad o token
   // vencido), la pantalla de login lo muestra para explicar el motivo.
   logout(aviso = ''): void {
+    // Mejor esfuerzo: si hay sesión, avisa al servidor para que cierre el
+    // turno de asistencia del empleado ligado a esta cuenta (Sprint 3), si
+    // tiene uno. Se dispara ANTES de borrar el token (el interceptor todavía
+    // lo necesita para esta petición) pero sin esperar la respuesta: el
+    // cierre de sesión visual nunca debe depender de que esto funcione.
+    if (this.getToken()) {
+      this.http.post(`${this.apiUrl}/auth/logout`, {}).subscribe({ error: () => {} });
+    }
     this.avisoSesion.set(aviso);
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');

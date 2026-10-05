@@ -261,6 +261,30 @@
           />
         </div>
 
+        <div class="campo">
+          <label for="usuario-empleado-form">Cuenta de acceso (opcional)</label>
+          <select
+            id="usuario-empleado-form"
+            [value]="usuarioIdEmpleadoForm() ?? ''"
+            (change)="
+              usuarioIdEmpleadoForm.set(
+                $any($event.target).value === '' ? null : +$any($event.target).value
+              )
+            "
+          >
+            <option value="">Ninguna (ej. repartidor, horario variable)</option>
+            @for (usuario of usuariosDisponibles(); track usuario.id) {
+              <option [value]="usuario.id">
+                &#64;{{ usuario.usuario }} ({{ usuario.nombre }})
+              </option>
+            }
+          </select>
+          <p class="campo-ayuda">
+            Si tiene cuenta, su entrada y salida se registran solas al iniciar y cerrar sesión — no
+            hace falta marcarlas aquí.
+          </p>
+        </div>
+
         @if (errorFormularioEmpleado()) {
           <p class="mensaje-error">{{ errorFormularioEmpleado() }}</p>
         }

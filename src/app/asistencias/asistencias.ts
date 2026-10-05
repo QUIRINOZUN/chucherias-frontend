@@ -12,10 +12,13 @@
 //   3. HISTORIAL: filtros de fecha/empleado + un formulario (el mismo que la
 //      captura manual) para corregir un registro ya existente.
 //
-// No existe un flujo de "marca tu propia entrada": no todo empleado tiene
-// una cuenta de usuario (`empleados.usuario_id` es opcional), así que quien
-// abre o cierra el turno de alguien es siempre administrador/encargado —
-// ver la nota de diseño completa en routes/asistencias.js.
+// Un empleado LIGADO a una cuenta (`empleados.usuario_id`) ya no necesita
+// que nadie le marque nada aquí: iniciar/cerrar sesión registra su entrada/
+// salida solo (ver routes/auth.js). Esta pantalla sigue sirviendo para: (a)
+// ligar cada cuenta con su empleado (selector en el formulario de alta/
+// edición de abajo), (b) el repartidor, que no tiene cuenta porque su
+// horario varía — a ese el encargado lo registra aquí a mano, y (c)
+// corregir cualquier registro (automático o manual) que haya quedado mal.
 // =============================================================================
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
@@ -30,6 +33,7 @@ import {
   FiltrosAsistencias,
 } from '../core/asistencias';
 import { DatosEmpleado, Empleado, EmpleadosService } from '../core/empleados';
+import { Usuario, UsuariosService } from '../core/usuarios';
 import { ThemeService } from '../core/theme';
 
 type ModoFormularioEmpleado = 'crear' | 'editar' | null;
@@ -80,6 +84,7 @@ export class AsistenciasComponent implements OnInit {
   constructor(
     private empleadosService: EmpleadosService,
     private asistenciasService: AsistenciasService,
+    private usuariosService: UsuariosService,
     public themeService: ThemeService,
     private router: Router,
   ) {}
@@ -88,6 +93,23 @@ export class AsistenciasComponent implements OnInit {
     this.cargarEmpleados();
     this.cargarHoy();
     this.cargarHistorial();
+    this.cargarUsuariosDisponibles();
+  }
+
+  // Cuentas que se pueden ligar a un empleado en el formulario de alta/
+  // edición (ver nota de asistencia automática al inicio del archivo). El
+  // administrador queda fuera a propósito: no se le lleva asistencia.
+  usuariosDisponibles = signal<Usuario[]>([]);
+
+  cargarUsuariosDisponibles(): void {
+    this.usuariosService.listar().subscribe({
+      next: (usuarios) =>
+        this.usuariosDisponibles.set(usuarios.filter((u) => u.rol !== 'administrador')),
+      error: () => {
+        // El selector simplemente queda vacío; el resto del formulario sigue
+        // funcionando (usuario_id es opcional).
+      },
+    });
   }
 
   cargarEmpleados(): void {
@@ -152,6 +174,8 @@ export class AsistenciasComponent implements OnInit {
   nombreEmpleadoForm = signal('');
   puestoEmpleadoForm = signal('');
   fechaIngresoForm = signal('');
+  // Cuenta ligada (asistencia automática) — null = ninguna (ej. repartidor).
+  usuarioIdEmpleadoForm = signal<number | null>(null);
   procesandoFormEmpleado = signal(false);
   errorFormularioEmpleado = signal('');
 
@@ -163,6 +187,7 @@ export class AsistenciasComponent implements OnInit {
     this.nombreEmpleadoForm.set('');
     this.puestoEmpleadoForm.set('');
     this.fechaIngresoForm.set('');
+    this.usuarioIdEmpleadoForm.set(null);
     this.errorFormularioEmpleado.set('');
   }
 
@@ -172,6 +197,7 @@ export class AsistenciasComponent implements OnInit {
     this.nombreEmpleadoForm.set(empleado.nombre);
     this.puestoEmpleadoForm.set(empleado.puesto);
     this.fechaIngresoForm.set(empleado.fecha_ingreso);
+    this.usuarioIdEmpleadoForm.set(empleado.usuario_id);
     this.errorFormularioEmpleado.set('');
   }
 
@@ -201,6 +227,7 @@ export class AsistenciasComponent implements OnInit {
       nombre: this.nombreEmpleadoForm().trim(),
       puesto: this.puestoEmpleadoForm().trim(),
       fecha_ingreso: this.fechaIngresoForm(),
+      usuario_id: this.usuarioIdEmpleadoForm(),
     };
 
     const peticion =

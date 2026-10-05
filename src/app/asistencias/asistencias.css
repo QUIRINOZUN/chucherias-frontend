@@ -462,6 +462,12 @@
   font-weight: 600;
 }
 
+.campo-ayuda {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  color: var(--pos-text-secondary);
+}
+
 .campo input,
 .campo select {
   width: 100%;
