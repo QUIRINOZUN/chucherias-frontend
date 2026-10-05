@@ -1,14 +1,20 @@
 // =============================================================================
 // caja/caja.ts — PANTALLA DE CORTE DE CAJA (RF-04)
 // =============================================================================
-// Tiene tres bloques:
-//   1. RESUMEN: lo que el sistema calculó que debería haber hoy (efectivo,
-//      transferencia y total). Lo ven administrador, encargado y cajero.
-//   2. CAPTURA DEL CORTE: la persona escribe lo que contó físicamente; la
+// Tiene cuatro bloques:
+//   1. RESUMEN: lo que el sistema calculó que debería haber hoy, desglosado
+//      en ventas en efectivo, apertura, ingresos y retiros (efectivo),
+//      transferencia y total. Lo ven administrador, encargado y cajero.
+//   2. RETIRO DE EFECTIVO (solo administrador): registra un retiro para
+//      pagar proveedores o comprar insumos en el día. El cajero lo confirma
+//      del lado del POS, donde se le imprime su comprobante — aquí solo se
+//      emite.
+//   3. CAPTURA DEL CORTE: la persona escribe lo que contó físicamente; la
 //      pantalla muestra la diferencia EN VIVO ("Cuadra exacto", "Sobran $X",
 //      "Faltan $X") y al guardar se registra el corte.
-//   3. HISTORIAL (solo administrador y encargado): consulta de cortes
-//      anteriores con filtros por rango de fechas y por usuario.
+//   4. HISTORIAL (solo administrador y encargado): consulta de cortes
+//      anteriores con filtros por rango de fechas y por usuario, y los
+//      movimientos de caja (apertura/ingreso/retiro) del día.
 //
 // El total del sistema lo calcula siempre el servidor; aquí solo se muestra.
 // =============================================================================
@@ -18,7 +24,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../core/auth';
-import { CajaService, CorteCaja, ResumenCaja } from '../core/caja';
+import { CajaService, CorteCaja, MovimientoCaja, ResumenCaja } from '../core/caja';
 import { ThemeService } from '../core/theme';
 import { Usuario, UsuariosService } from '../core/usuarios';
 
@@ -39,7 +45,16 @@ export class CajaComponent implements OnInit {
   cargando = signal(true);
   error = signal('');
 
-  // ---- Bloque 2: captura de lo contado físicamente -------------------------
+  // ---- Bloque 2: retiro de efectivo (solo administrador) -------------------
+  montoRetiro = signal<number | null>(null);
+  motivoRetiro = signal('');
+  registrandoRetiro = signal(false);
+  errorRetiro = signal('');
+  // Último retiro que ESTE administrador acaba de emitir: se muestra como
+  // confirmación en pantalla mientras el cajero lo ve y lo confirma en el POS.
+  retiroEmitido = signal<MovimientoCaja | null>(null);
+
+  // ---- Bloque 3: captura de lo contado físicamente -------------------------
   // null = todavía no se ha escrito nada en ese campo.
   efectivoContado = signal<number | null>(null);
   transferenciaContado = signal<number | null>(null);
@@ -49,7 +64,7 @@ export class CajaComponent implements OnInit {
   // en lugar del formulario.
   corteGuardado = signal<CorteCaja | null>(null);
 
-  // ---- Bloque 3: historial de cortes con filtros ---------------------------
+  // ---- Bloque 4: historial de cortes y movimientos con filtros -------------
   historial = signal<CorteCaja[]>([]);
   cargandoHistorial = signal(false);
   errorHistorial = signal('');
@@ -57,6 +72,8 @@ export class CajaComponent implements OnInit {
   filtroDesde = signal('');
   filtroHasta = signal('');
   filtroUsuarioId = signal<number | null>(null);
+  // Movimientos de caja (apertura/ingreso/retiro) de HOY, para el historial.
+  movimientosHoy = signal<MovimientoCaja[]>([]);
 
   // Consulta de historial en curso; se guarda para poder cancelarla.
   private consultaHistorial?: Subscription;
@@ -67,6 +84,10 @@ export class CajaComponent implements OnInit {
     const rol = this.authService.usuarioActual()?.rol;
     return rol === 'administrador' || rol === 'encargado';
   });
+
+  // Solo el administrador emite retiros de efectivo (decisión del negocio:
+  // ni siquiera el encargado puede). El servidor lo vuelve a exigir.
+  esAdministrador = computed(() => this.authService.usuarioActual()?.rol === 'administrador');
 
   // true si hay al menos un filtro aplicado (muestra "Limpiar filtros" y ajusta
   // el mensaje cuando no hay resultados).
@@ -97,9 +118,11 @@ export class CajaComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarResumen();
-    // El historial y el filtro de usuarios solo se cargan para quien puede verlos.
+    // El historial, los movimientos de hoy y el filtro de usuarios solo se
+    // cargan para quien puede verlos.
     if (this.esAdministradorOEncargado()) {
       this.cargarHistorial();
+      this.cargarMovimientosHoy();
       this.usuariosService.listar().subscribe({
         next: (usuarios) =>
           this.usuarios.set(usuarios.filter((u) => ROLES_QUE_HACEN_CORTE.includes(u.rol))),
@@ -131,6 +154,74 @@ export class CajaComponent implements OnInit {
     });
   }
 
+  // Movimientos de caja de HOY (apertura/ingreso/retiro), para el historial.
+  cargarMovimientosHoy(): void {
+    this.cajaService.obtenerMovimientos().subscribe({
+      next: (movimientos) => this.movimientosHoy.set(movimientos),
+      error: () => {
+        // La lista simplemente queda vacía; el resto de la pantalla sigue funcionando.
+      },
+    });
+  }
+
+  // Habilita "Registrar retiro" solo con monto y motivo capturados y sin
+  // exceder el efectivo disponible (el servidor vuelve a validar esto mismo
+  // al guardar — aquí es solo para no dejar intentar un retiro imposible).
+  puedeRegistrarRetiro(): boolean {
+    const monto = this.montoRetiro();
+    const disponible = this.resumen()?.total_efectivo ?? 0;
+    return (
+      monto != null &&
+      monto > 0 &&
+      monto <= disponible &&
+      this.motivoRetiro().trim().length > 0 &&
+      !this.registrandoRetiro()
+    );
+  }
+
+  // true si lo capturado ya supera el efectivo disponible — para marcar el
+  // campo en rojo antes de intentar guardar.
+  retiroExcedeDisponible(): boolean {
+    const monto = this.montoRetiro();
+    const disponible = this.resumen()?.total_efectivo ?? 0;
+    return monto != null && monto > disponible;
+  }
+
+  // Emite el retiro: el cajero lo verá en el POS (polling de
+  // /retiros-pendientes) y lo confirmará ahí, donde se imprime su comprobante.
+  registrarRetiro(): void {
+    if (!this.puedeRegistrarRetiro()) {
+      return;
+    }
+    this.registrandoRetiro.set(true);
+    this.errorRetiro.set('');
+
+    this.cajaService
+      .registrarMovimiento('retiro', this.montoRetiro()!, this.motivoRetiro().trim())
+      .subscribe({
+        next: (movimiento) => {
+          this.registrandoRetiro.set(false);
+          this.retiroEmitido.set(movimiento);
+          this.montoRetiro.set(null);
+          this.motivoRetiro.set('');
+          // El resumen y el historial cambian de inmediato (el retiro ya
+          // descuenta del total del sistema aunque el cajero no lo haya
+          // confirmado todavía — ver resumenCajaDelDia en el backend).
+          this.cargarResumen();
+          this.cargarMovimientosHoy();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.registrandoRetiro.set(false);
+          this.errorRetiro.set(error.error?.error || 'No se pudo registrar el retiro.');
+        },
+      });
+  }
+
+  // Botón "Registrar otro" de la tarjeta "Retiro emitido": vuelve al formulario.
+  nuevoRetiro(): void {
+    this.retiroEmitido.set(null);
+  }
+
   // Consulta el historial aplicando los filtros actuales.
   cargarHistorial(): void {
     // Si el usuario cambia otro filtro antes de que responda la consulta
@@ -151,7 +242,9 @@ export class CajaComponent implements OnInit {
           this.cargandoHistorial.set(false);
         },
         error: (error: HttpErrorResponse) => {
-          this.errorHistorial.set(error.error?.error || 'No se pudo consultar el historial de cortes.');
+          this.errorHistorial.set(
+            error.error?.error || 'No se pudo consultar el historial de cortes.',
+          );
           this.cargandoHistorial.set(false);
         },
       });
@@ -197,7 +290,9 @@ export class CajaComponent implements OnInit {
   // El botón "Guardar corte" solo se habilita con AMBOS montos capturados y sin
   // otro guardado en curso.
   puedeRegistrar(): boolean {
-    return this.efectivoContado() != null && this.transferenciaContado() != null && !this.registrando();
+    return (
+      this.efectivoContado() != null && this.transferenciaContado() != null && !this.registrando()
+    );
   }
 
   // Guarda el corte: envía SOLO lo contado; el servidor calcula el total del

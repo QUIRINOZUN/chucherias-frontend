@@ -166,6 +166,124 @@
   color: var(--peligro-texto);
 }
 
+/* Un producto cancelado dentro de una venta parcialmente cancelada: tachado
+   y con su propio badge + motivo, sin afectar el resto de la lista. */
+.item-cancelado {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.badge-item-cancelado {
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: var(--radio-pastilla);
+  background: color-mix(in srgb, var(--action-danger) 20%, var(--pos-bg-card));
+  color: var(--peligro-texto);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.item-motivo-cancelacion {
+  margin-left: 4px;
+  font-style: italic;
+  text-decoration: none;
+  opacity: 0.85;
+}
+
+/* Reembolso al cliente: mismo patrón que .venta-restitucion (verde, es dinero
+   que se le devuelve, no una pérdida del negocio). */
+.venta-reembolso {
+  margin: 0 0 10px;
+  padding: 4px 10px;
+  display: inline-block;
+  border-radius: var(--radio-pastilla);
+  background: color-mix(in srgb, var(--action-success) 14%, var(--pos-bg-card));
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--exito-texto);
+}
+
+/* Aviso de merma: mismo tono que la auditoría de cancelación, pero con
+   ícono/etiqueta propios para que no se confunda con el motivo escrito. */
+.venta-merma {
+  margin: 0 0 10px;
+  padding: 4px 10px;
+  display: inline-block;
+  border-radius: var(--radio-pastilla);
+  background: color-mix(in srgb, var(--action-danger) 14%, var(--pos-bg-card));
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--peligro-texto);
+}
+
+/* Restitución de inventario (RF-11): mismo patrón que .venta-merma pero en
+   verde — es una corrección a favor, no una pérdida. */
+.venta-restitucion {
+  margin: 0 0 10px;
+  padding: 4px 10px;
+  display: inline-block;
+  border-radius: var(--radio-pastilla);
+  background: color-mix(in srgb, var(--action-success) 14%, var(--pos-bg-card));
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--exito-texto);
+}
+
+/* Tiempos (RF-08): línea discreta + botón para expandir el detalle por estado. */
+.venta-tiempos {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+}
+
+.boton-enlace {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--acento-texto);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.tiempos-panel {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  border: 1px solid var(--pos-border);
+}
+
+.lista-tiempos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lista-tiempos li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+}
+
+.tiempo-estado {
+  color: var(--pos-text-secondary);
+}
+
+.tiempo-duracion {
+  font-weight: 700;
+  font-family: var(--fuente-titulo);
+}
+
 .venta-pie {
   display: flex;
   justify-content: space-between;
@@ -209,6 +327,43 @@
   border-radius: 6px;
   background: var(--pos-bg-main);
   color: var(--pos-text-primary);
+}
+
+.panel-cancelacion-subtitulo {
+  margin: 10px 0 4px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.panel-cancelacion-nota {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+}
+
+.checklist-cancelacion {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.checklist-cancelacion label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.checklist-cancelacion input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .panel-cancelacion-acciones {

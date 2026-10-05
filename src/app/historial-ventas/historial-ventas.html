@@ -2,12 +2,14 @@
      historial-ventas.html — VENTAS DEL DÍA Y CANCELACIÓN (lógica en historial-ventas.ts)
      ============================================================================
      Solo administrador y encargado. Lista las ventas del día del negocio con sus
-     productos y permite cancelar las completadas (RF-03).
+     productos y permite cancelar, total o PARCIALMENTE, las que tengan algún
+     producto activo (RF-03 + ajuste de cancelación parcial del 2026-10-03).
      ============================================================================ -->
 <div class="historial-container">
   <!-- ENCABEZADO: volver, título y cambio de tema. -->
   <header class="historial-header">
-    <button type="button" class="boton-volver" (click)="volverAlDashboard()"><svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
       Volver
     </button>
     <h1>Ventas de hoy</h1>
@@ -15,7 +17,9 @@
       type="button"
       class="boton-tema"
       (click)="themeService.alternarTema()"
-      [attr.aria-label]="themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
     >
       <svg class="icono" aria-hidden="true">
         <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
@@ -33,7 +37,10 @@
 
       <!-- TOTAL DEL DÍA: suma solo las ventas completadas (las canceladas no cuentan). -->
       <div class="resumen-dia">
-        <span>Total del día ({{ ventas().length }} {{ ventas().length === 1 ? 'venta' : 'ventas' }})</span>
+        <span
+          >Total del día ({{ ventas().length }}
+          {{ ventas().length === 1 ? 'venta' : 'ventas' }})</span
+        >
         <span class="resumen-dia-monto">{{ totalDelDia() | currency: 'MXN' }}</span>
       </div>
 
@@ -48,16 +55,29 @@
             <div class="venta-encabezado">
               <div>
                 <span class="venta-orden">{{ venta.numero_orden }}</span>
-                <span class="venta-hora">{{ venta.fecha | date: 'HH:mm' }} · {{ venta.cajero }}</span>
+                <span class="venta-hora"
+                  >{{ venta.fecha | date: 'HH:mm' }} · {{ venta.cajero }}</span
+                >
               </div>
-              <span class="badge-estado-venta" [class.badge-cancelada]="venta.estado === 'cancelada'">
+              <span
+                class="badge-estado-venta"
+                [class.badge-cancelada]="venta.estado === 'cancelada'"
+              >
                 {{ venta.estado === 'completada' ? 'Completada' : 'Cancelada' }}
               </span>
             </div>
 
             <ul class="venta-items">
-              @for (item of venta.items; track $index) {
-                <li>{{ item.cantidad }}× {{ item.producto }} ({{ item.variante }})</li>
+              @for (item of venta.items; track item.orden_detalle_id) {
+                <li [class.item-cancelado]="item.cancelado">
+                  {{ item.cantidad }}× {{ item.producto }} ({{ item.variante }})
+                  @if (item.cancelado) {
+                    <span class="badge-item-cancelado">Cancelado</span>
+                    @if (item.motivo_cancelacion) {
+                      <span class="item-motivo-cancelacion">— {{ item.motivo_cancelacion }}</span>
+                    }
+                  }
+                </li>
               }
             </ul>
 
@@ -73,9 +93,69 @@
                 }
               </p>
             }
-            <!-- Motivo de la cancelación (solo si se escribió). -->
+            <!-- Motivo de la cancelación TOTAL (solo si se escribió). Si la venta
+                 sigue 'completada' (cancelación parcial), el motivo de cada
+                 producto cancelado ya se muestra junto a su renglón arriba. -->
             @if (venta.estado === 'cancelada' && venta.motivo_cancelacion) {
               <p class="venta-motivo">Motivo: {{ venta.motivo_cancelacion }}</p>
+            }
+            <!-- MERMA: productos cancelados que ya no se pueden volver a vender —
+                 aparece aunque la venta siga 'completada' (cancelación parcial). -->
+            @if (venta.mermas_generadas > 0) {
+              <p class="venta-merma">
+                Merma registrada: {{ venta.mermas_generadas }}
+                {{ venta.mermas_generadas === 1 ? 'producto' : 'productos' }}
+                · {{ venta.mermas_valor_total | currency: 'MXN' }} perdidos
+              </p>
+            }
+            <!-- RESTITUCIÓN DE INVENTARIO (RF-11): solo aparece si se rescató algún
+                 insumo (la comanda estaba 'preparando' y se marcó para rescatar). -->
+            @if (venta.insumos_restituidos > 0) {
+              <p class="venta-restitucion">
+                Inventario restituido: {{ venta.insumos_restituidos }}
+                {{ venta.insumos_restituidos === 1 ? 'insumo' : 'insumos' }}
+              </p>
+            }
+            <!-- REEMBOLSO: dinero devuelto al cliente por lo cancelado (total o parcial). -->
+            @if (+venta.monto_reembolsado > 0) {
+              <p class="venta-reembolso">
+                Reembolsado al cliente: {{ venta.monto_reembolsado | currency: 'MXN' }}
+              </p>
+            }
+
+            <!-- TIEMPOS (RF-08): cuánto duró en cocina, con el detalle por estado
+                 disponible bajo demanda (no se carga para todas las ventas de una vez). -->
+            <div class="venta-tiempos">
+              @if (venta.segundos_preparacion != null) {
+                <span class="venta-tiempo-cocina">
+                  Tiempo en cocina: {{ formatoDuracion(venta.segundos_preparacion) }}
+                </span>
+              }
+              <button type="button" class="boton-enlace" (click)="alternarTiempos(venta)">
+                {{
+                  tiemposAbiertosOrdenId() === venta.orden_id ? 'Ocultar tiempos' : 'Ver tiempos'
+                }}
+              </button>
+            </div>
+            @if (tiemposAbiertosOrdenId() === venta.orden_id) {
+              <div class="tiempos-panel">
+                @if (cargandoTiempos()) {
+                  <p class="mensaje-estado">Cargando tiempos...</p>
+                } @else if (tiemposDetalle().length === 0) {
+                  <p class="mensaje-estado">Sin historial de tiempos.</p>
+                } @else {
+                  <ul class="lista-tiempos">
+                    @for (t of tiemposDetalle(); track t.estado) {
+                      <li>
+                        <span class="tiempo-estado">{{ etiquetaEstado(t.estado) }}</span>
+                        <span class="tiempo-duracion">{{
+                          formatoDuracion(t.duracion_segundos)
+                        }}</span>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
             }
 
             <div class="venta-pie">
@@ -86,11 +166,75 @@
               <span class="venta-total">{{ venta.total | currency: 'MXN' }}</span>
             </div>
 
-            <!-- CANCELAR: solo las ventas completadas. Primero un botón; al pulsarlo se abre un panel para escribir el motivo
-                 y confirmar. Solo llega aquí quien tiene permiso (administrador/encargado). -->
+            <!-- CANCELAR: solo las ventas con algún producto activo. Primero un
+                 botón; al pulsarlo se abre un panel para elegir QUÉ productos
+                 cancelar (si hay más de uno), qué insumos rescatar (si la comanda
+                 sigue 'preparando') y el motivo. Solo llega aquí quien tiene
+                 permiso (administrador/encargado). -->
             @if (venta.estado === 'completada') {
               @if (cancelandoId() === venta.id) {
                 <div class="panel-cancelacion">
+                  <!-- Qué productos se cancelan — solo si hay más de uno activo;
+                       con uno solo, cancelarlo ES cancelar la venta. -->
+                  @if (lineasActivas(venta).length > 1) {
+                    <p class="panel-cancelacion-subtitulo">¿Qué productos se cancelan?</p>
+                    <ul class="checklist-cancelacion">
+                      @for (item of lineasActivas(venta); track item.orden_detalle_id) {
+                        <li>
+                          <label>
+                            <input
+                              type="checkbox"
+                              [checked]="lineasACancelar().has(item.orden_detalle_id)"
+                              (change)="alternarLinea(venta, item.orden_detalle_id)"
+                            />
+                            {{ item.cantidad }}× {{ item.producto }} ({{ item.variante }})
+                          </label>
+                        </li>
+                      }
+                    </ul>
+                  }
+
+                  <!-- Qué pasa con los insumos, según el estado de la comanda. -->
+                  @if (venta.estado_orden === 'preparando') {
+                    <p class="panel-cancelacion-subtitulo">¿Qué insumos se rescatan?</p>
+                    <p class="panel-cancelacion-nota">
+                      Esta comanda ya se empezó a preparar. Marca los insumos que SÍ se pueden
+                      regresar al inventario; el resto queda como merma.
+                    </p>
+                    @if (cargandoInsumosRescate()) {
+                      <p class="mensaje-estado">Calculando insumos...</p>
+                    } @else if (insumosParaRescate().length === 0) {
+                      <p class="mensaje-estado">
+                        Los productos elegidos no tienen insumos registrados.
+                      </p>
+                    } @else {
+                      <ul class="checklist-cancelacion">
+                        @for (insumo of insumosParaRescate(); track insumo.insumo_id) {
+                          <li>
+                            <label>
+                              <input
+                                type="checkbox"
+                                [checked]="insumosRescatados().has(insumo.insumo_id)"
+                                (change)="alternarInsumoRescate(insumo.insumo_id)"
+                              />
+                              {{ insumo.nombre }} ({{ insumo.cantidad }} {{ insumo.unidad_medida }})
+                            </label>
+                          </li>
+                        }
+                      </ul>
+                    }
+                  } @else if (venta.estado_orden === 'sin_preparar') {
+                    <p class="panel-cancelacion-nota">
+                      Esta comanda no se ha empezado a preparar: no se descontó ningún insumo, así
+                      que no hay nada que rescatar.
+                    </p>
+                  } @else {
+                    <p class="panel-cancelacion-nota">
+                      Esta comanda ya está lista o fue entregada: los insumos ya se usaron y
+                      quedarán como merma.
+                    </p>
+                  }
+
                   <input
                     type="text"
                     placeholder="Motivo de la cancelación (opcional)"
@@ -104,7 +248,7 @@
                     <button
                       type="button"
                       class="boton-confirmar-cancelacion"
-                      [disabled]="procesandoCancelacion()"
+                      [disabled]="!puedeConfirmarCancelacion()"
                       (click)="confirmarCancelacion(venta)"
                     >
                       {{ procesandoCancelacion() ? 'Cancelando...' : 'Confirmar cancelación' }}
@@ -112,8 +256,12 @@
                   </div>
                 </div>
               } @else {
-                <button type="button" class="boton-cancelar-venta" (click)="abrirCancelacion(venta)">
-                  Cancelar esta venta
+                <button
+                  type="button"
+                  class="boton-cancelar-venta"
+                  (click)="abrirCancelacion(venta)"
+                >
+                  Cancelar productos
                 </button>
               }
             }

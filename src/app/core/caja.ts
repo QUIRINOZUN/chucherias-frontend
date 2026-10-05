@@ -1,25 +1,57 @@
 // =============================================================================
-// core/caja.ts — SERVICIO DE CAJA Y CORTES (RF-04)
+// core/caja.ts — SERVICIO DE CAJA, CORTES Y MOVIMIENTOS (RF-04)
 // =============================================================================
-// Habla con /api/caja. Lo usa la pantalla de Corte de caja para:
-//   - obtenerResumen  → lo que el SISTEMA calcula que debería haber hoy.
-//   - registrarCorte  → guardar el corte (contado físicamente vs. sistema).
+// Habla con /api/caja. Lo usan la pantalla de Corte de caja y el POS:
+//   - obtenerResumen   → lo que el SISTEMA calcula que debería haber hoy
+//                        (ventas + apertura + ingresos − retiros).
+//   - registrarCorte   → guardar el corte (contado físicamente vs. sistema).
 //   - obtenerHistorial → consultar cortes anteriores con filtros.
+//   - registrarMovimiento → apertura (saldo inicial), ingreso (efectivo que
+//     entra fuera de una venta) o retiro (solo administrador) de efectivo.
+//   - obtenerRetirosPendientes / confirmarRetiro → el POS hace polling de
+//     retiros sin confirmar y, al confirmarlos, imprime su comprobante.
 //
-// Permisos (los aplica el servidor): resumen y corte → administrador,
-// encargado y cajero; historial → solo administrador y encargado.
+// Permisos (los aplica el servidor): resumen, corte, apertura/ingreso →
+// administrador, encargado y cajero; retiro → solo administrador; historial
+// y GET /movimientos → solo administrador y encargado.
 // =============================================================================
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-// Lo que el sistema calculó para un día (suma de ventas completadas).
+// Lo que el sistema calculó para un día: ventas + movimientos de caja ya
+// combinados en lo que debería haber físicamente (ver routes/caja.js).
 export interface ResumenCaja {
   fecha: string;
+  ventas_efectivo: number;
+  apertura: number;
+  ingresos_efectivo: number;
+  retiros_efectivo: number;
+  // Reembolsos a clientes por productos cancelados (ver routes/ventas.js,
+  // PATCH /:id/cancelar) — resta del efectivo esperado igual que un retiro.
+  reembolsos_efectivo: number;
   total_efectivo: number;
   total_transferencia: number;
   total_sistema: number;
+}
+
+// 'reembolso' no se crea con registrarMovimiento (el servidor lo rechaza por
+// esa vía) — lo genera automáticamente la cancelación de una venta.
+export type TipoMovimientoCaja = 'apertura' | 'ingreso' | 'retiro' | 'reembolso';
+
+// Un movimiento de caja tal como lo devuelve el servidor. Los montos llegan
+// como texto (NUMERIC de PostgreSQL).
+export interface MovimientoCaja {
+  id: number;
+  tipo: TipoMovimientoCaja;
+  monto: string;
+  motivo: string | null;
+  fecha: string;
+  confirmado: boolean;
+  responsable: string;
+  confirmado_por_nombre?: string | null;
+  fecha_confirmacion?: string | null;
 }
 
 // Cuerpo de POST /api/caja/corte: lo que la persona CONTÓ físicamente.
@@ -87,5 +119,37 @@ export class CajaService {
       params['responsable_id'] = String(filtros.responsableId);
     }
     return this.http.get<CorteCaja[]>(`${this.apiUrl}/caja/cortes`, { params });
+  }
+
+  // POST /api/caja/movimientos — apertura/ingreso: roles que usan el POS;
+  // retiro: solo administrador (el servidor lo vuelve a exigir).
+  registrarMovimiento(
+    tipo: TipoMovimientoCaja,
+    monto: number,
+    motivo?: string,
+  ): Observable<MovimientoCaja> {
+    return this.http.post<MovimientoCaja>(`${this.apiUrl}/caja/movimientos`, {
+      tipo,
+      monto,
+      motivo,
+    });
+  }
+
+  // GET /api/caja/movimientos — historial del día, solo administrador/encargado.
+  obtenerMovimientos(fecha?: string): Observable<MovimientoCaja[]> {
+    return this.http.get<MovimientoCaja[]>(`${this.apiUrl}/caja/movimientos`, {
+      params: fecha ? { fecha } : {},
+    });
+  }
+
+  // GET /api/caja/retiros-pendientes — el POS hace polling de esto.
+  obtenerRetirosPendientes(): Observable<MovimientoCaja[]> {
+    return this.http.get<MovimientoCaja[]>(`${this.apiUrl}/caja/retiros-pendientes`);
+  }
+
+  // PATCH /api/caja/movimientos/:id/confirmar — el cajero confirma que vio
+  // el retiro; la respuesta trae lo necesario para imprimir el comprobante.
+  confirmarRetiro(id: number): Observable<MovimientoCaja> {
+    return this.http.patch<MovimientoCaja>(`${this.apiUrl}/caja/movimientos/${id}/confirmar`, {});
   }
 }

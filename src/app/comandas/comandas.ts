@@ -18,6 +18,19 @@
 //   - Cada tarjeta indica si es presencial o a domicilio y resalta las notas
 //     de personalización ("Sin: cebolla").
 //   - Una comanda con 15 minutos o más esperando se marca en rojo.
+//
+// AVISO SONORO (RF-07: "notificar al personal de cocina la llegada de una
+// nueva orden y notificar la orden lista para entrega o para el
+// repartidor"). Sin impresoras ni notificaciones push (fuera de alcance del
+// proyecto — ver CLAUDE.md), así que se resuelve con un beep del propio
+// navegador (Web Audio API, sin archivo de audio ni dependencia nueva): cada
+// vez que el sondeo trae una orden que no estaba antes en 'sin_preparar' se
+// oye un tono; cada vez que una orden pasa de 'preparando' a 'por_entregar'
+// se oye un tono distinto. Compara contra la foto del sondeo ANTERIOR
+// (estadosAnteriores), no contra el total de órdenes, así que cada cambio
+// suena una sola vez. Limitación real de los navegadores (no de este
+// código): algunos bloquean el audio hasta que la persona interactúa con la
+// página al menos una vez — el primer aviso de una sesión podría no sonar.
 // =============================================================================
 import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -62,9 +75,24 @@ interface ColumnaTablero {
 // Las tres columnas, de izquierda a derecha en el orden del flujo. La plantilla
 // las recorre con un solo @for, así agregar un estado nuevo es agregar una línea.
 const COLUMNAS: ColumnaTablero[] = [
-  { estado: 'sin_preparar', titulo: 'Sin preparar', icono: 'reloj', vacio: 'Sin órdenes pendientes.' },
-  { estado: 'preparando', titulo: 'Preparando', icono: 'cocinar', vacio: 'Sin órdenes en preparación.' },
-  { estado: 'por_entregar', titulo: 'Por entregar', icono: 'paquete', vacio: 'Sin órdenes listas.' },
+  {
+    estado: 'sin_preparar',
+    titulo: 'Sin preparar',
+    icono: 'reloj',
+    vacio: 'Sin órdenes pendientes.',
+  },
+  {
+    estado: 'preparando',
+    titulo: 'Preparando',
+    icono: 'cocinar',
+    vacio: 'Sin órdenes en preparación.',
+  },
+  {
+    estado: 'por_entregar',
+    titulo: 'Por entregar',
+    icono: 'paquete',
+    vacio: 'Sin órdenes listas.',
+  },
 ];
 
 @Component({
@@ -103,6 +131,15 @@ export class ComandasComponent implements OnInit, OnDestroy {
   // Referencia al temporizador del sondeo, para poder detenerlo al salir.
   private intervaloId?: ReturnType<typeof setInterval>;
 
+  // Foto del último sondeo (id de orden -> su estado), para detectar qué
+  // cambió desde la vez anterior y avisar solo UNA vez por cambio.
+  private estadosAnteriores = new Map<number, EstadoOrden>();
+  // La primera carga no debe sonar (no son "cambios", es solo abrir la pantalla).
+  private primeraCarga = true;
+  // Se crea perezosamente: construir un AudioContext antes de que haga falta
+  // puede quedar "suspended" por la política de autoplay del navegador.
+  private contextoAudio?: AudioContext;
+
   constructor(
     private ordenesService: OrdenesService,
     private authService: AuthService,
@@ -122,12 +159,14 @@ export class ComandasComponent implements OnInit, OnDestroy {
     if (this.intervaloId) {
       clearInterval(this.intervaloId);
     }
+    this.contextoAudio?.close();
   }
 
   // Pide al servidor las órdenes activas y reemplaza el tablero completo.
   cargarOrdenes(): void {
     this.ordenesService.obtenerOrdenesActivas().subscribe({
       next: (ordenes) => {
+        this.detectarCambiosYAvisar(ordenes);
         this.ordenes.set(ordenes);
         this.cargando.set(false);
         this.error.set('');
@@ -141,6 +180,69 @@ export class ComandasComponent implements OnInit, OnDestroy {
         );
       },
     });
+  }
+
+  // RF-07: compara este sondeo contra el anterior y suena un aviso por cada
+  // orden nueva en 'sin_preparar' y por cada orden que acaba de quedar
+  // 'por_entregar' (transición preparando -> por_entregar). La primera carga
+  // de la pantalla no cuenta como "cambio".
+  private detectarCambiosYAvisar(ordenes: Orden[]): void {
+    if (this.primeraCarga) {
+      this.primeraCarga = false;
+    } else {
+      let hayNueva = false;
+      let hayLista = false;
+      for (const orden of ordenes) {
+        const estadoAnterior = this.estadosAnteriores.get(orden.id);
+        if (estadoAnterior === undefined && orden.estado === 'sin_preparar') {
+          hayNueva = true;
+        } else if (estadoAnterior === 'preparando' && orden.estado === 'por_entregar') {
+          hayLista = true;
+        }
+      }
+      if (hayNueva) {
+        this.reproducirAviso([880, 880]); // dos tonos iguales: "llegó una orden"
+      }
+      if (hayLista) {
+        this.reproducirAviso([660, 990]); // dos tonos distintos: "lista para entregar"
+      }
+    }
+
+    this.estadosAnteriores = new Map(ordenes.map((o) => [o.id, o.estado]));
+  }
+
+  // Beep corto generado con la Web Audio API (sin archivo de audio ni
+  // dependencia nueva): una secuencia de tonos de 160 ms cada uno.
+  private reproducirAviso(frecuencias: number[]): void {
+    try {
+      if (!this.contextoAudio) {
+        this.contextoAudio = new AudioContext();
+      }
+      const contexto = this.contextoAudio;
+      if (contexto.state === 'suspended') {
+        contexto.resume();
+      }
+
+      const duracionTono = 0.16;
+      frecuencias.forEach((frecuencia, indice) => {
+        const inicio = contexto.currentTime + indice * duracionTono;
+        const oscilador = contexto.createOscillator();
+        const ganancia = contexto.createGain();
+        oscilador.frequency.value = frecuencia;
+        oscilador.type = 'sine';
+        ganancia.gain.setValueAtTime(0.0001, inicio);
+        ganancia.gain.exponentialRampToValueAtTime(0.2, inicio + 0.01);
+        ganancia.gain.exponentialRampToValueAtTime(0.0001, inicio + duracionTono);
+        oscilador.connect(ganancia);
+        ganancia.connect(contexto.destination);
+        oscilador.start(inicio);
+        oscilador.stop(inicio + duracionTono);
+      });
+    } catch {
+      // Si el navegador bloquea el audio (política de autoplay sin
+      // interacción previa) simplemente no suena — el tablero sigue
+      // funcionando igual, el aviso es un extra, no una dependencia.
+    }
   }
 
   // Botón de cada tarjeta: mueve la comanda al estado siguiente.

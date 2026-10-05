@@ -67,6 +67,23 @@
   gap: 16px;
 }
 
+/* En móvil, retiro y el resto se apilan en una sola columna (retiro primero,
+   es la acción más urgente para el administrador); a partir de 860px se
+   separan en dos — ver el media query al final del archivo, donde `order`
+   pone el retiro a la derecha sin cambiar el orden del DOM. */
+.caja-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.caja-principal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
 .mensaje-estado {
   color: var(--pos-text-secondary);
   font-size: 0.9rem;
@@ -76,10 +93,11 @@
   color: var(--peligro-texto);
 }
 
-/* Tarjetas base compartidas por los cuatro bloques de la pantalla. */
+/* Tarjetas base compartidas por los bloques de la pantalla. */
 .tarjeta-resumen,
 .tarjeta-contar,
 .tarjeta-corte-guardado,
+.tarjeta-retiro,
 .tarjeta-historial {
   background: var(--pos-bg-card);
   border: 1px solid var(--pos-border);
@@ -90,9 +108,54 @@
 .tarjeta-resumen h2,
 .tarjeta-contar h2,
 .tarjeta-corte-guardado h2,
+.tarjeta-retiro h2,
 .tarjeta-historial h2 {
   margin: 0 0 12px;
   font-size: 1rem;
+}
+
+/* Renglón secundario del resumen (apertura/ingresos/retiros): más tenue que
+   los renglones principales, para no competir con "Efectivo esperado". */
+.linea-corte-secundaria {
+  color: var(--pos-text-secondary);
+  font-size: 0.8rem;
+  padding: 3px 0;
+}
+
+.retiro-descripcion,
+.retiro-aviso {
+  margin: 0 0 14px;
+  font-size: 0.85rem;
+  color: var(--pos-text-secondary);
+}
+
+.retiro-disponible {
+  margin: 0 0 14px;
+  font-size: 0.85rem;
+  color: var(--pos-text-primary);
+}
+
+.retiro-disponible strong {
+  font-family: var(--fuente-titulo);
+}
+
+.campo-caja input.campo-invalido {
+  border-color: var(--peligro-texto);
+}
+
+.retiro-aviso {
+  padding: 10px 12px;
+  border-radius: var(--pos-radio);
+  background: color-mix(in srgb, var(--action-danger) 14%, var(--pos-bg-card));
+  color: var(--peligro-texto);
+}
+
+.boton-retiro {
+  background: var(--action-danger);
+}
+
+.boton-retiro:hover:not(:disabled) {
+  background: var(--action-danger-hover);
 }
 
 /* Renglón "etiqueta ........ monto" del resumen. */
@@ -333,6 +396,7 @@
 .tarjeta-resumen,
 .tarjeta-contar,
 .tarjeta-corte-guardado,
+.tarjeta-retiro,
 .tarjeta-historial {
   border-color: transparent;
   border-radius: var(--radio-lg);
@@ -343,6 +407,7 @@
 .tarjeta-resumen h2,
 .tarjeta-contar h2,
 .tarjeta-corte-guardado h2,
+.tarjeta-retiro h2,
 .tarjeta-historial h2 {
   font-size: 1.2rem;
 }
@@ -365,7 +430,9 @@
   border-radius: var(--radio-md);
   font-size: 1.02rem;
   box-shadow: var(--sombra-acento);
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
 }
 
 .boton-guardar-corte:active:not(:disabled),
@@ -394,4 +461,32 @@
 
 .item-historial {
   border-bottom-style: dashed;
+}
+
+/* A partir de aquí ya cabe el retiro como columna propia junto al resto
+   (mismo quiebre de 860px que usan inventario.css y pos.css). `order` pone
+   el retiro a la derecha sin tocar el orden del DOM (así en móvil sigue
+   apareciendo primero, antes que el resumen y el corte). */
+@media (min-width: 860px) {
+  .caja-cuerpo {
+    max-width: 920px;
+  }
+
+  .caja-layout {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 24px;
+  }
+
+  .caja-principal {
+    order: 1;
+    flex: 1;
+  }
+
+  .caja-lateral {
+    order: 2;
+    flex: 0 0 340px;
+    position: sticky;
+    top: 84px;
+  }
 }
