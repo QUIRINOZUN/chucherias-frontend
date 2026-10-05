@@ -1,9 +1,13 @@
 // =============================================================================
 // core/asistencias.ts — SERVICIO DE CONTROL DE ASISTENCIAS (Sprint 3)
 // =============================================================================
-// Habla con /api/asistencias. Permisos (los aplica el servidor): todo
-// administrador y encargado — no hay registro propio del empleado (ver la
-// nota de diseño en routes/asistencias.js: no todo empleado tiene cuenta).
+// Habla con /api/asistencias. Dos grupos de métodos:
+//   - Gestión (listar, listarHoy, marcarEntrada/Salida de OTRO empleado,
+//     capturarManual, corregir): solo administrador/encargado.
+//   - Autoservicio (miHoy, marcarMiEntrada, marcarMiSalida): cualquier rol
+//     salvo administrador — para cuando el personal no inicia/cierra sesión
+//     por turno y necesita marcar su propia asistencia desde el dashboard.
+//     Respeta la ventana horaria del negocio (ver routes/asistencias.js).
 // =============================================================================
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -43,6 +47,16 @@ export interface CorreccionAsistencia {
   hora_entrada?: string | null;
   hora_salida?: string | null;
   observaciones?: string | null;
+}
+
+// Respuesta de GET /api/asistencias/mi-hoy — lo que necesita el widget de
+// autoservicio del dashboard para decidir qué botón mostrar.
+export interface MiEstadoHoy {
+  // false para administrador o para una cuenta que todavía no se ligó a
+  // ningún empleado (ver Asistencias → Empleados).
+  ligado: boolean;
+  abierta: { id: number; hora_entrada: string; hora_salida: null } | null;
+  completados: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -93,5 +107,22 @@ export class AsistenciasService {
   // PATCH /api/asistencias/:id — corrige un registro existente.
   corregir(id: number, datos: CorreccionAsistencia): Observable<Asistencia> {
     return this.http.patch<Asistencia>(`${this.apiUrl}/asistencias/${id}`, datos);
+  }
+
+  // ---- Autoservicio (cualquier rol salvo administrador) ----
+
+  // GET /api/asistencias/mi-hoy
+  miHoy(): Observable<MiEstadoHoy> {
+    return this.http.get<MiEstadoHoy>(`${this.apiUrl}/asistencias/mi-hoy`);
+  }
+
+  // POST /api/asistencias/mi-entrada — respeta la ventana horaria del negocio.
+  marcarMiEntrada(): Observable<{ ok: true }> {
+    return this.http.post<{ ok: true }>(`${this.apiUrl}/asistencias/mi-entrada`, {});
+  }
+
+  // PATCH /api/asistencias/mi-salida
+  marcarMiSalida(): Observable<{ ok: true }> {
+    return this.http.patch<{ ok: true }>(`${this.apiUrl}/asistencias/mi-salida`, {});
   }
 }

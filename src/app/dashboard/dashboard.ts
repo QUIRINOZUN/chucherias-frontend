@@ -12,11 +12,20 @@
 // PARA AGREGAR UN MÓDULO NUEVO: añade su entrada a MODULOS (ruta, título,
 // ícono, descripción y roles) y registra la misma ruta con rolGuard en
 // app.routes.ts. La lista de roles debe coincidir con la del backend.
+//
+// WIDGET DE AUTOSERVICIO (Sprint 3): además de los módulos, cualquier rol
+// salvo administrador ve aquí mismo un botón para marcar su propia entrada/
+// salida — para cuando el personal no inicia/cierra sesión por turno (ej.
+// un dispositivo de mostrador que se queda logueado todo el día), caso en
+// el que la asistencia automática por login/logout (routes/auth.js) no
+// aplica. Respeta la misma ventana horaria del negocio que el backend.
 // =============================================================================
-import { Component, computed } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../core/auth';
 import { ThemeService } from '../core/theme';
+import { AsistenciasService, MiEstadoHoy } from '../core/asistencias';
 
 // Descripción de una tarjeta del menú.
 interface Modulo {
@@ -99,7 +108,7 @@ const MODULOS: Modulo[] = [
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
   // Solo los módulos cuyo listado de roles incluye el rol del usuario en
   // sesión. Se recalcula solo si cambia el usuario. Si no hay rol (o ningún
   // módulo lo incluye) la plantilla muestra el mensaje de "sin módulos".
@@ -108,9 +117,59 @@ export class DashboardComponent {
     return MODULOS.filter((modulo) => rol && modulo.roles.includes(rol));
   });
 
+  // El administrador no lleva asistencia (ver nota de diseño de Sprint 3);
+  // para el resto de roles se muestra el widget si el servidor confirma que
+  // su cuenta sí está ligada a un empleado.
+  esAdministrador = computed(() => this.authService.usuarioActual()?.rol === 'administrador');
+
+  miEstadoHoy = signal<MiEstadoHoy | null>(null);
+  procesandoMiAsistencia = signal(false);
+  errorMiAsistencia = signal('');
+
   constructor(
     // `public` para que la plantilla muestre el nombre/rol y llame a logout().
     public authService: AuthService,
     public themeService: ThemeService,
+    private asistenciasService: AsistenciasService,
   ) {}
+
+  ngOnInit(): void {
+    if (!this.esAdministrador()) {
+      this.cargarMiEstadoHoy();
+    }
+  }
+
+  cargarMiEstadoHoy(): void {
+    this.asistenciasService.miHoy().subscribe({
+      next: (estado) => this.miEstadoHoy.set(estado),
+      error: () => {
+        // El widget simplemente no se muestra; el resto del dashboard sigue
+        // funcionando con normalidad.
+      },
+    });
+  }
+
+  marcarMiAsistencia(): void {
+    const estado = this.miEstadoHoy();
+    if (!estado) {
+      return;
+    }
+    this.procesandoMiAsistencia.set(true);
+    this.errorMiAsistencia.set('');
+
+    const accion = estado.abierta
+      ? this.asistenciasService.marcarMiSalida()
+      : this.asistenciasService.marcarMiEntrada();
+
+    accion.subscribe({
+      next: () => {
+        this.procesandoMiAsistencia.set(false);
+        this.cargarMiEstadoHoy();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.procesandoMiAsistencia.set(false);
+        this.errorMiAsistencia.set(error.error?.error || 'No se pudo registrar tu asistencia.');
+      },
+    });
+  }
 }

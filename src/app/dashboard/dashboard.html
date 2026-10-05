@@ -31,6 +31,43 @@
   </header>
 
   <div class="dashboard-cuerpo">
+    <!-- AUTOSERVICIO DE ASISTENCIA (Sprint 3): no se muestra al administrador
+         (no lleva asistencia) ni si el servidor no confirma que la cuenta
+         está ligada a un empleado (ver Asistencias → Empleados). -->
+    @if (!esAdministrador() && miEstadoHoy()?.ligado) {
+      <section class="tarjeta-mi-asistencia">
+        <div class="mi-asistencia-info">
+          @if (miEstadoHoy()?.abierta; as abierta) {
+            <span class="mi-asistencia-estado mi-asistencia-adentro">
+              Entraste a las {{ abierta.hora_entrada.slice(0, 5) }}
+            </span>
+          } @else if ((miEstadoHoy()?.completados ?? 0) > 0) {
+            <span class="mi-asistencia-estado">Ya marcaste tu asistencia hoy</span>
+          } @else {
+            <span class="mi-asistencia-estado">Todavía no marcas tu entrada hoy</span>
+          }
+        </div>
+        <button
+          type="button"
+          class="boton-mi-asistencia"
+          [class.boton-mi-asistencia-salida]="!!miEstadoHoy()?.abierta"
+          [disabled]="procesandoMiAsistencia()"
+          (click)="marcarMiAsistencia()"
+        >
+          {{
+            procesandoMiAsistencia()
+              ? '...'
+              : miEstadoHoy()?.abierta
+                ? 'Marcar mi salida'
+                : 'Marcar mi entrada'
+          }}
+        </button>
+        @if (errorMiAsistencia()) {
+          <p class="mi-asistencia-error">{{ errorMiAsistencia() }}</p>
+        }
+      </section>
+    }
+
     <!-- Sin módulos: rol sin permisos asignados (ver dashboard.ts). -->
     @if (modulosVisibles().length === 0) {
       <p class="mensaje-vacio">
