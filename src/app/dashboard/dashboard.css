@@ -131,8 +131,10 @@
 /* Centrado: la rejilla de módulos queda en medio del espacio disponible
    entre el encabezado y "Cerrar sesión" (vertical) y del ancho de pantalla
    (horizontal) — antes quedaba pegada a la izquierda/arriba en pantallas
-   anchas. En móvil no cambia nada visible: a ese ancho la rejilla ya ocupa
-   todo el ancho disponible. */
+   anchas. IMPORTANTE: `align-items: center` saca a `.grid-modulos` del
+   estiramiento por default, así que esa rejilla necesita su propio
+   `width: 100%` (ver su regla) para seguir ocupando el ancho disponible en
+   móvil — si se quita de ahí, vuelve el bug de columnas mal calculadas. */
 .dashboard-cuerpo {
   flex: 1;
   padding: 28px 20px;
@@ -149,11 +151,22 @@
   text-align: center;
 }
 
-/* Rejilla adaptable: tantas columnas como quepan (mínimo 170 px por tarjeta). */
+/* Rejilla adaptable: tantas columnas como quepan (mínimo 170 px por tarjeta).
+   `width: 100%` es necesario a propósito: `.dashboard-cuerpo` usa
+   `align-items: center` (para centrar la rejilla en pantallas anchas), y eso
+   hace que por default esta rejilla se dimensione "a su contenido" en vez de
+   estirarse al ancho disponible — sin un ancho definido, `auto-fill` no
+   puede calcular bien cuántas columnas caben y la rejilla se veía angosta o
+   mal distribuida en el teléfono. Con `width: 100%` (tope en `max-width`) la
+   rejilla siempre tiene un ancho definido, que es lo que `auto-fill`
+   necesita para repartir las columnas correctamente en cualquier tamaño de
+   pantalla; el centrado sigue funcionando igual en pantallas anchas porque
+   ahí `max-width: 720px` es quien gana. */
 .grid-modulos {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
   gap: 18px;
+  width: 100%;
   max-width: 720px;
 }
 
