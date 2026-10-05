@@ -12,21 +12,38 @@
 <div class="pos-container">
   <!-- ENCABEZADO: volver al menú principal, título y cambio de tema claro/oscuro. -->
   <header class="pos-header">
-    <button type="button" class="boton-volver" (click)="volverAlDashboard()"><svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
       Volver
     </button>
+    <img src="/img/logo-chucherias.png" alt="Chucherías" class="pos-logo" />
     <h1>Punto de venta</h1>
     <button
       type="button"
       class="boton-tema"
       (click)="themeService.alternarTema()"
-      [attr.aria-label]="themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
     >
       <svg class="icono" aria-hidden="true">
         <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
       </svg>
     </button>
   </header>
+
+  <!-- BARRA DE CAJA: "Saldo inicial" e "Ingresar efectivo" los registra quien está en el POS;
+       un retiro SOLO lo emite el administrador desde la pantalla de Caja — aquí no hay botón para eso. -->
+  <div class="pos-caja-barra">
+    <button type="button" class="boton-caja" (click)="abrirMovimientoCaja('apertura')">
+      <svg class="icono" aria-hidden="true"><use href="#ic-billetes" /></svg>
+      Saldo inicial
+    </button>
+    <button type="button" class="boton-caja" (click)="abrirMovimientoCaja('ingreso')">
+      <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
+      Ingresar efectivo
+    </button>
+  </div>
 
   <!-- CUERPO: catálogo a la izquierda y carrito a la derecha (en móvil el carrito es un panel aparte). -->
   <div class="pos-cuerpo">
@@ -101,7 +118,11 @@
                   [attr.aria-expanded]="estaExpandido(producto.id)"
                 >
                   @if (producto.imagen_url) {
-                    <img [src]="producto.imagen_url" [alt]="producto.nombre" class="imagen-producto" />
+                    <img
+                      [src]="producto.imagen_url"
+                      [alt]="producto.nombre"
+                      class="imagen-producto"
+                    />
                   } @else {
                     <div class="imagen-marcador">
                       <span class="imagen-marcador-icono">
@@ -121,7 +142,8 @@
                     <h3>{{ producto.nombre }}</h3>
                     <div class="fila-precio-flecha">
                       <span class="precio-desde">
-                        {{ producto.variantes.length > 1 ? 'Desde ' : '' }}{{ precioDesde(producto) | currency: 'MXN' }}
+                        {{ producto.variantes.length > 1 ? 'Desde ' : ''
+                        }}{{ precioDesde(producto) | currency: 'MXN' }}
                       </span>
                       <span class="flecha-expandir" aria-hidden="true">
                         <svg class="icono"><use href="#ic-chevron" /></svg>
@@ -144,7 +166,9 @@
                           (click)="agregarAlCarrito(producto, variante)"
                         >
                           <span>{{ variante.nombre }}</span>
-                          <span class="precio-variante">{{ variante.precio | currency: 'MXN' }}</span>
+                          <span class="precio-variante">{{
+                            variante.precio | currency: 'MXN'
+                          }}</span>
                         </button>
                       }
                     </div>
@@ -162,7 +186,12 @@
     <aside class="pos-carrito" [class.carrito-abierto-movil]="carritoAbierto()">
       <div class="carrito-encabezado">
         <h2>Carrito</h2>
-        <button type="button" class="boton-cerrar-carrito" (click)="cerrarCarrito()" aria-label="Cerrar carrito">
+        <button
+          type="button"
+          class="boton-cerrar-carrito"
+          (click)="cerrarCarrito()"
+          aria-label="Cerrar carrito"
+        >
           <svg class="icono" aria-hidden="true"><use href="#ic-cerrar" /></svg>
         </button>
       </div>
@@ -188,7 +217,9 @@
                     <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
                   </button>
                 </div>
-                <span class="item-subtotal">{{ item.precio * item.cantidad | currency: 'MXN' }}</span>
+                <span class="item-subtotal">{{
+                  item.precio * item.cantidad | currency: 'MXN'
+                }}</span>
                 <button
                   type="button"
                   class="boton-quitar"
@@ -206,38 +237,129 @@
                   Personalizar 1 unidad aparte
                 </button>
               } @else {
-                <div class="item-personalizacion">
-                  @if (ingredientesDisponibles(item.productoNombre).length > 0) {
-                    <button
-                      type="button"
-                      class="boton-quitar-ingredientes"
-                      [class.boton-quitar-activo]="item.ingredientesQuitados.length > 0"
-                      (click)="alternarPickerQuitar(item)"
+                <!-- RESUMEN compacto: colapsado por defecto para que el carrito no
+                     se alargue con un renglón fijo por producto. Si la línea ya
+                     tiene algo (quitado, elegido o nota), se ve aquí mismo sin
+                     tener que expandir; si falta una elección obligatoria, el
+                     aviso también queda visible sin expandir. -->
+                <div class="item-personalizacion-resumen">
+                  <button
+                    type="button"
+                    class="boton-personalizar"
+                    [class.boton-personalizar-activo]="notaCompleta(item).length > 0"
+                    (click)="alternarPersonalizacion(item)"
+                  >
+                    Personalizar
+                    <svg
+                      class="icono icono-chevron"
+                      [class.icono-colapsado]="personalizacionAbiertaPara() !== item.id"
+                      aria-hidden="true"
                     >
-                      Quitar{{ item.ingredientesQuitados.length > 0 ? ' (' + item.ingredientesQuitados.length + ')' : '' }}
-                    </button>
+                      <use href="#ic-chevron" />
+                    </svg>
+                  </button>
+                  @if (notaCompleta(item)) {
+                    <span class="resumen-personalizacion">{{ notaCompleta(item) }}</span>
                   }
-                  <input
-                    type="text"
-                    class="item-notas"
-                    [name]="'notas-' + item.id"
-                    autocomplete="off"
-                    placeholder="Otras indicaciones (opcional)"
-                    [value]="item.notasLibres"
-                    (input)="actualizarNotasLibres(item, $any($event.target).value)"
-                  />
+                  @if (grupoEleccion(item.varianteId); as grupo) {
+                    @if (!personalizacionCompleta(item)) {
+                      <span class="aviso-eleccion-pendiente"
+                        >Falta elegir {{ grupo.etiqueta }}</span
+                      >
+                    }
+                  }
                 </div>
+
+                @if (personalizacionAbiertaPara() === item.id) {
+                  <div class="item-personalizacion">
+                    @if (
+                      ingredientesDisponibles(item.productoNombre, item.varianteNombre).length > 0
+                    ) {
+                      <button
+                        type="button"
+                        class="boton-quitar-ingredientes"
+                        [class.boton-quitar-activo]="item.ingredientesQuitados.length > 0"
+                        (click)="alternarPickerQuitar(item)"
+                      >
+                        Quitar{{
+                          item.ingredientesQuitados.length > 0
+                            ? ' (' + item.ingredientesQuitados.length + ')'
+                            : ''
+                        }}
+                      </button>
+                    }
+                    <!-- ELECCIÓN (Fase 2 del recetario): salsa/topping/dip que el
+                         cliente elige de una lista — a diferencia de "Quitar", si
+                         la variante tiene un grupo de elección hay que completarlo
+                         antes de poder cobrar (ver puedeConfirmar() en pos.ts). -->
+                    @if (grupoEleccion(item.varianteId); as grupo) {
+                      <button
+                        type="button"
+                        class="boton-quitar-ingredientes"
+                        [class.boton-eleccion-incompleta]="!personalizacionCompleta(item)"
+                        [class.boton-eleccion-completa]="personalizacionCompleta(item)"
+                        (click)="alternarPickerEleccion(item)"
+                      >
+                        {{ grupo.etiqueta }}
+                        @if (personalizacionCompleta(item)) {
+                          ✓
+                        } @else {
+                          (falta)
+                        }
+                      </button>
+                    }
+                    <input
+                      type="text"
+                      class="item-notas"
+                      [name]="'notas-' + item.id"
+                      autocomplete="off"
+                      placeholder="Otras indicaciones (opcional)"
+                      [value]="item.notasLibres"
+                      (input)="actualizarNotasLibres(item, $any($event.target).value)"
+                    />
+                  </div>
+                }
 
                 @if (quitarAbiertoPara() === item.id) {
                   <div class="lista-ingredientes-quitar">
-                    @for (ingrediente of ingredientesDisponibles(item.productoNombre); track ingrediente) {
+                    @for (
+                      ingrediente of ingredientesDisponibles(
+                        item.productoNombre,
+                        item.varianteNombre
+                      );
+                      track ingrediente.insumo
+                    ) {
                       <label class="opcion-ingrediente">
                         <input
                           type="checkbox"
                           [checked]="estaQuitado(item, ingrediente)"
                           (change)="alternarIngredienteQuitado(item, ingrediente)"
                         />
-                        {{ ingrediente }}
+                        {{ ingrediente.display }}
+                      </label>
+                    }
+                  </div>
+                }
+
+                @if (
+                  eleccionAbiertaPara() === item.id && grupoEleccion(item.varianteId);
+                  as grupo
+                ) {
+                  <div class="lista-ingredientes-quitar">
+                    @if (grupo.seleccionesPermitidas > 1) {
+                      <p class="aviso-eleccion-multiple">
+                        Elige {{ grupo.seleccionesPermitidas }} — llevas
+                        {{ item.eleccionesSeleccionadas.length }}
+                      </p>
+                    }
+                    @for (opcion of grupo.opciones; track opcion.insumo) {
+                      <label class="opcion-ingrediente">
+                        <input
+                          type="checkbox"
+                          [checked]="estaElegido(item, opcion)"
+                          (change)="alternarEleccion(item, grupo, opcion)"
+                        />
+                        {{ opcion.display }}
                       </label>
                     }
                   </div>
@@ -249,7 +371,10 @@
 
         <!-- TOTAL del carrito y botón COBRAR (abre la ventana de cobro). -->
         <div class="resumen-carrito">
-          <span>Total ({{ cantidadItems() }} {{ cantidadItems() === 1 ? 'artículo' : 'artículos' }})</span>
+          <span
+            >Total ({{ cantidadItems() }}
+            {{ cantidadItems() === 1 ? 'artículo' : 'artículos' }})</span
+          >
           @for (total of [totalCarrito()]; track total) {
             <span class="total-monto">{{ total | currency: 'MXN' }}</span>
           }
@@ -307,7 +432,11 @@
               @for (item of r.items; track item.id) {
                 <li>
                   <div class="comprobante-item-linea">
-                    <span>{{ item.cantidad }}× {{ item.productoNombre }} ({{ item.varianteNombre }})</span>
+                    <span
+                      >{{ item.cantidad }}× {{ item.productoNombre }} ({{
+                        item.varianteNombre
+                      }})</span
+                    >
                     <span>{{ item.precio * item.cantidad | currency: 'MXN' }}</span>
                   </div>
                   @if (notaCompleta(item)) {
@@ -350,15 +479,21 @@
             <!-- Acciones del comprobante: imprimir (diálogo del navegador) o iniciar una nueva venta.
                  Se ocultan al imprimir. -->
             <div class="comprobante-acciones">
-              <button type="button" class="boton-cancelar" (click)="imprimirRecibo()">Imprimir</button>
-              <button type="button" class="boton-confirmar" (click)="nuevaVenta()">Nueva venta</button>
+              <button type="button" class="boton-cancelar" (click)="imprimirRecibo()">
+                Imprimir
+              </button>
+              <button type="button" class="boton-confirmar" (click)="nuevaVenta()">
+                Nueva venta
+              </button>
             </div>
           </div>
         } @else {
           <!-- FORMULARIO DE COBRO: total a pagar, tipo de entrega, método de pago y (si es efectivo)
                monto recibido con cambio. -->
           <h2>Cobrar</h2>
-          <p class="total-a-pagar">Total a pagar: <strong>{{ totalCarrito() | currency: 'MXN' }}</strong></p>
+          <p class="total-a-pagar">
+            Total a pagar: <strong>{{ totalCarrito() | currency: 'MXN' }}</strong>
+          </p>
 
           <span class="etiqueta-seccion-cobro">Entrega</span>
           <div class="metodos-pago">
@@ -434,7 +569,7 @@
                    "Confirmar venta" solo se habilita con cambio ≥ 0. -->
               <div class="cambio" [class.cambio-invalido]="(cambio() ?? -1) < 0">
                 @if ((cambio() ?? -1) < 0) {
-                  <span>Falta {{ (totalCarrito() - (montoRecibido() ?? 0)) | currency: 'MXN' }}</span>
+                  <span>Falta {{ totalCarrito() - (montoRecibido() ?? 0) | currency: 'MXN' }}</span>
                 } @else {
                   <span>Cambio: {{ cambio() | currency: 'MXN' }}</span>
                 }
@@ -444,11 +579,18 @@
 
           @if (errorVenta()) {
             <p class="mensaje-error">{{ errorVenta() }}</p>
+          } @else if (avisoPersonalizacionFaltante()) {
+            <p class="mensaje-error">{{ avisoPersonalizacionFaltante() }}</p>
           }
 
           <!-- ACCIONES: cancelar el cobro o confirmar la venta (envía la venta al servidor). -->
           <div class="acciones-cobro">
-            <button type="button" class="boton-cancelar" (click)="cerrarCobro()" [disabled]="procesandoVenta()">
+            <button
+              type="button"
+              class="boton-cancelar"
+              (click)="cerrarCobro()"
+              [disabled]="procesandoVenta()"
+            >
               Cancelar
             </button>
             <button
@@ -461,6 +603,153 @@
             </button>
           </div>
         }
+      </div>
+    </div>
+  }
+
+  <!-- VENTANA "Saldo inicial" / "Ingresar efectivo": lo registra directo quien está en el POS. -->
+  @if (mostrarMovimientoCaja(); as tipoMov) {
+    <div class="overlay">
+      <div class="panel-cobro">
+        <h2>{{ tipoMov === 'apertura' ? 'Saldo inicial de caja' : 'Ingresar efectivo' }}</h2>
+        <p class="movimiento-caja-descripcion">
+          {{
+            tipoMov === 'apertura'
+              ? 'El monto con el que arranca la caja en este turno.'
+              : 'Efectivo que entra a la caja fuera de una venta, por ejemplo una orden que se cobró después.'
+          }}
+        </p>
+
+        <div class="campo-monto">
+          <label for="monto-movimiento-caja">Monto</label>
+          <input
+            id="monto-movimiento-caja"
+            type="number"
+            min="0"
+            step="0.01"
+            [value]="montoMovimientoForm() ?? ''"
+            (input)="
+              montoMovimientoForm.set($any($event.target).value ? +$any($event.target).value : null)
+            "
+          />
+        </div>
+
+        <div class="campo-monto">
+          <label for="motivo-movimiento-caja">
+            {{
+              tipoMov === 'ingreso' ? 'Motivo o número de orden (opcional)' : 'Motivo (opcional)'
+            }}
+          </label>
+          <input
+            id="motivo-movimiento-caja"
+            type="text"
+            [placeholder]="tipoMov === 'ingreso' ? 'Ej. Orden #123 cobrada después' : ''"
+            [value]="motivoMovimientoForm()"
+            (input)="motivoMovimientoForm.set($any($event.target).value)"
+          />
+        </div>
+
+        @if (errorMovimientoCaja()) {
+          <p class="mensaje-error">{{ errorMovimientoCaja() }}</p>
+        }
+
+        <div class="acciones-cobro">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarMovimientoCaja()"
+            [disabled]="procesandoMovimientoCaja()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar"
+            (click)="guardarMovimientoCaja()"
+            [disabled]="!puedeGuardarMovimientoCaja()"
+          >
+            {{ procesandoMovimientoCaja() ? 'Guardando...' : 'Registrar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- AVISO DE RETIRO PENDIENTE: lo detecta el sondeo (ver pos.ts). El cajero debe confirmarlo
+       para seguir usando el POS; al confirmar se arma el ticket imprimible de abajo. -->
+  @if (retiroPendiente(); as retiro) {
+    <div class="overlay">
+      <div class="panel-cobro aviso-retiro">
+        <h2>Retiro de efectivo</h2>
+        <p class="venta-registrada-badge aviso-retiro-badge">Autorizó {{ retiro.responsable }}</p>
+        <p class="aviso-retiro-monto">{{ +retiro.monto | currency: 'MXN' }}</p>
+        @if (retiro.motivo) {
+          <p class="aviso-retiro-motivo">{{ retiro.motivo }}</p>
+        }
+        <p class="aviso-retiro-texto">
+          Este monto ya se descontó del total que calcula el sistema. Confirma que lo viste: se
+          generará un comprobante para imprimir.
+        </p>
+
+        @if (errorRetiro()) {
+          <p class="mensaje-error">{{ errorRetiro() }}</p>
+        }
+
+        <div class="acciones-cobro">
+          <button
+            type="button"
+            class="boton-confirmar"
+            (click)="confirmarRetiroPendiente()"
+            [disabled]="confirmandoRetiro()"
+          >
+            {{ confirmandoRetiro() ? 'Confirmando...' : 'Entendido, confirmar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TICKET DE RETIRO (comprobante físico para el cajero): mismas clases .comprobante-* que el
+       recibo de venta, así hereda el mismo @media print (fondo blanco, texto negro, sin acciones). -->
+  @if (ticketRetiro(); as ticket) {
+    <div class="overlay">
+      <div class="panel-cobro">
+        <div class="comprobante">
+          <div class="comprobante-encabezado">
+            <h2>CHUCHERIAS</h2>
+            <p class="venta-registrada-badge">Retiro de efectivo</p>
+            <p class="comprobante-fecha">
+              {{ ticket.fecha_confirmacion | date: 'dd/MM/yyyy HH:mm' }}
+            </p>
+            <p class="comprobante-cajero">Confirmó: {{ ticket.confirmado_por_nombre }}</p>
+          </div>
+
+          <div class="comprobante-totales">
+            <div class="comprobante-linea comprobante-total-final">
+              <span>Monto retirado</span>
+              <span>{{ +ticket.monto | currency: 'MXN' }}</span>
+            </div>
+            <div class="comprobante-linea">
+              <span>Autorizó</span>
+              <span>{{ ticket.responsable }}</span>
+            </div>
+            @if (ticket.motivo) {
+              <div class="comprobante-linea">
+                <span>Motivo</span>
+                <span>{{ ticket.motivo }}</span>
+              </div>
+            }
+          </div>
+
+          <div class="comprobante-acciones">
+            <button type="button" class="boton-cancelar" (click)="imprimirTicketRetiro()">
+              Imprimir
+            </button>
+            <button type="button" class="boton-confirmar" (click)="cerrarTicketRetiro()">
+              Cerrar
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   }

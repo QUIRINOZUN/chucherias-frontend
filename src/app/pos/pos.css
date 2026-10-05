@@ -41,6 +41,19 @@
   font-size: 1.25rem;
 }
 
+/* Logotipo junto al título del encabezado: grande y llamativo a propósito.
+   Se escala por ancho (relación de aspecto fija, ~3:1); como no tiene alto
+   fijo, el encabezado simplemente crece para darle espacio. El drop-shadow
+   sigue la silueta transparente del PNG (un box-shadow dibujaría un
+   rectángulo detrás del logo). */
+.pos-logo {
+  display: block;
+  width: clamp(110px, 24vw, 170px);
+  height: auto;
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 12px rgba(194, 65, 12, 0.35));
+}
+
 .boton-volver,
 .boton-tema {
   min-height: 44px;
@@ -59,6 +72,50 @@
   padding: 0;
   font-size: 1.15rem;
   line-height: 1;
+}
+
+/* Barra de caja: "Saldo inicial" / "Ingresar efectivo", siempre visibles
+   (un retiro solo lo emite el administrador desde la pantalla de Caja, así
+   que no tiene botón aquí). */
+.pos-caja-barra {
+  display: flex;
+  gap: 10px;
+  padding: 0 16px 14px;
+  overflow-x: auto;
+}
+
+.boton-caja {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-card);
+  color: var(--pos-text-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.boton-caja .icono {
+  width: 18px;
+  height: 18px;
+  color: var(--acento-texto);
+}
+
+.boton-caja:hover {
+  border-color: var(--pos-text-secondary);
+}
+
+.boton-caja:active {
+  transform: scale(0.97);
 }
 
 /* Cuerpo: en móvil una columna con espacio inferior para el botón flotante; en ≥860 px, dos columnas (ver abajo). */
@@ -143,7 +200,10 @@
   font-weight: 600;
   cursor: pointer;
   box-shadow: var(--sombra-suave);
-  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.1s ease;
 }
 
 .chip-categoria:hover {
@@ -156,7 +216,11 @@
 
 .chip-categoria.chip-activa {
   border-color: var(--color-chip, var(--pos-text-primary));
-  background: color-mix(in srgb, var(--color-chip, var(--pos-text-primary)) 22%, var(--pos-bg-card));
+  background: color-mix(
+    in srgb,
+    var(--color-chip, var(--pos-text-primary)) 22%,
+    var(--pos-bg-card)
+  );
   font-weight: 700;
 }
 
@@ -196,7 +260,9 @@
   border-radius: var(--radio-lg);
   overflow: hidden;
   box-shadow: var(--sombra-suave);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 @media (hover: hover) {
@@ -207,7 +273,9 @@
 }
 
 .tarjeta-producto.tarjeta-expandida {
-  box-shadow: 0 0 0 2px var(--color-categoria, var(--pos-border)), var(--sombra-elevada);
+  box-shadow:
+    0 0 0 2px var(--color-categoria, var(--pos-border)),
+    var(--sombra-elevada);
 }
 
 /* La cabecera es un <button> de ancho completo: toda la tarjeta (imagen +
@@ -243,7 +311,11 @@
   align-items: center;
   justify-content: center;
   background-color: var(--color-categoria, var(--pos-text-muted));
-  background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.2) 1.5px, transparent 0);
+  background-image: radial-gradient(
+    circle at 2px 2px,
+    rgba(255, 255, 255, 0.2) 1.5px,
+    transparent 0
+  );
   background-size: 16px 16px;
 }
 
@@ -360,7 +432,10 @@
   font-weight: 500;
   cursor: pointer;
   color: var(--pos-text-primary);
-  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.1s ease;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.1s ease;
 }
 
 .boton-variante:hover {
@@ -455,7 +530,9 @@
   box-shadow: var(--sombra-acento);
   z-index: 20;
   animation: subir 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
 }
 
 .boton-flotante-carrito:hover {
@@ -572,12 +649,75 @@
   background: none;
   color: var(--pos-text-secondary);
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .boton-separar-unidad:hover {
   border-color: var(--acento-texto);
   color: var(--acento-texto);
+}
+
+/* RESUMEN colapsado: botón "Personalizar" + lo que ya tenga la línea (texto
+   de notaCompleta()) + aviso de elección pendiente, SIEMPRE visibles aunque
+   el panel esté cerrado — así no hace falta expandir cada producto solo
+   para ver si algo ya se personalizó o si falta una elección obligatoria. */
+.item-personalizacion-resumen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 8px;
+}
+
+.boton-personalizar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1.5px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.boton-personalizar:hover {
+  border-color: var(--pos-text-secondary);
+}
+
+/* La línea ya trae algo (quitado/elegido/nota): se nota aunque esté colapsada. */
+.boton-personalizar.boton-personalizar-activo {
+  border-color: var(--acento-texto);
+  color: var(--acento-texto);
+  background: var(--acento-suave);
+}
+
+.boton-personalizar .icono-chevron {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+}
+
+.boton-personalizar .icono-chevron.icono-colapsado {
+  transform: rotate(-90deg);
+}
+
+.resumen-personalizacion {
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.aviso-eleccion-pendiente {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--peligro-texto);
 }
 
 .item-personalizacion {
@@ -609,6 +749,29 @@
   border-color: var(--peligro-texto);
   color: var(--peligro-texto);
   background: color-mix(in srgb, var(--action-danger) 14%, var(--pos-bg-main));
+}
+
+/* Botón de "elección" (salsa/topping/dip) — Fase 2 del recetario: rojo
+   mientras falta elegir (llama la atención, igual que "Quitar" activo),
+   verde una vez completa (a diferencia de "Quitar", aquí SÍ hay un estado
+   correcto que confirmar, no solo una exclusión opcional). */
+.boton-quitar-ingredientes.boton-eleccion-incompleta {
+  border-color: var(--peligro-texto);
+  color: var(--peligro-texto);
+  background: color-mix(in srgb, var(--action-danger) 14%, var(--pos-bg-main));
+}
+
+.boton-quitar-ingredientes.boton-eleccion-completa {
+  border-color: var(--exito-texto);
+  color: var(--exito-texto);
+  background: color-mix(in srgb, var(--action-success) 14%, var(--pos-bg-main));
+}
+
+.aviso-eleccion-multiple {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pos-text-secondary);
 }
 
 .item-notas {
@@ -679,7 +842,9 @@
   background: var(--pos-bg-main);
   color: var(--pos-text-primary);
   cursor: pointer;
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
 }
 
 .item-controles button:hover {
@@ -716,7 +881,9 @@
   background: none;
   color: var(--pos-text-muted);
   cursor: pointer;
-  transition: color 0.15s ease, background-color 0.15s ease;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
 }
 
 .boton-quitar:hover {
@@ -763,7 +930,10 @@
   letter-spacing: 0.01em;
   cursor: pointer;
   box-shadow: var(--sombra-acento);
-  transition: background-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease,
+    box-shadow 0.15s ease;
 }
 
 .boton-cobrar:hover {
@@ -824,6 +994,47 @@
   color: var(--pos-text-primary);
 }
 
+/* Ventana "Saldo inicial" / "Ingresar efectivo". */
+.movimiento-caja-descripcion {
+  margin: 0 0 20px;
+  font-size: 0.85rem;
+  color: var(--pos-text-secondary);
+}
+
+/* Aviso de retiro pendiente: ventana que el cajero no puede cerrar sin
+   confirmar (sin botón "Cancelar" a propósito). */
+.aviso-retiro {
+  text-align: center;
+}
+
+.aviso-retiro-badge {
+  margin: 10px auto 14px;
+}
+
+.aviso-retiro-monto {
+  margin: 0 0 10px;
+  font-family: var(--fuente-titulo);
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--peligro-texto);
+}
+
+.aviso-retiro-motivo {
+  margin: 0 0 14px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.aviso-retiro-texto {
+  margin: 0 0 20px;
+  font-size: 0.82rem;
+  color: var(--pos-text-secondary);
+}
+
+.aviso-retiro .acciones-cobro {
+  justify-content: center;
+}
+
 .etiqueta-seccion-cobro {
   display: block;
   margin-bottom: 8px;
@@ -850,7 +1061,10 @@
   font-size: 0.92rem;
   font-weight: 600;
   color: var(--pos-text-primary);
-  transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.1s ease;
 }
 
 .boton-metodo:hover:not(.metodo-activo) {
@@ -885,7 +1099,10 @@
   font-size: 1.05rem;
   font-weight: 800;
   cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.1s ease;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.1s ease;
 }
 
 .boton-billete:hover {
@@ -960,7 +1177,9 @@
   cursor: pointer;
   font-size: 0.95rem;
   font-weight: 600;
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
 }
 
 .boton-cancelar:hover:not(:disabled) {
@@ -982,7 +1201,9 @@
   font-size: 1rem;
   font-weight: 800;
   box-shadow: var(--sombra-acento);
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
 }
 
 .boton-confirmar:hover:not(:disabled) {
@@ -1097,6 +1318,10 @@
     padding: 16px 28px;
   }
 
+  .pos-logo {
+    width: clamp(160px, 14vw, 230px);
+  }
+
   .pos-cuerpo {
     flex-direction: row;
     align-items: flex-start;
@@ -1144,6 +1369,7 @@
    importar el tema activo: se reescriben los tokens dentro del panel. */
 @media print {
   .pos-header,
+  .pos-caja-barra,
   .pos-cuerpo,
   .boton-flotante-carrito {
     display: none !important;

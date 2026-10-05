@@ -12,11 +12,23 @@
 //   3. COBRO ........ ventana para elegir entrega y método de pago, capturar
 //                     el monto recibido (efectivo) y ver el cambio.
 //   4. COMPROBANTE .. resumen de la venta registrada, imprimible.
+//   5. CAJA .......... "Saldo inicial" e "Ingresar efectivo" (botones propios
+//                     del POS) y el aviso + ticket imprimible de un retiro
+//                     que el administrador haya emitido (ver caja/caja.ts).
 //
 // FLUJO COMPLETO DE UNA VENTA
 //   elegir producto → tocar una variante (se agrega al carrito) → personalizar
 //   si hace falta → "Cobrar" → elegir entrega y pago → "Confirmar venta"
 //   (POST /api/ventas) → comprobante → "Nueva venta" (limpia todo).
+//
+// MOVIMIENTOS DE CAJA DESDE EL POS
+//   "Saldo inicial" e "Ingresar efectivo" los registra directo quien está en
+//   el POS (POST /api/caja/movimientos). Un "Retiro" SOLO lo puede emitir el
+//   administrador (desde la pantalla de Caja) — aquí solo se recibe el
+//   aviso: cada 15 s (igual que el tablero de comandas) se consulta
+//   GET /api/caja/retiros-pendientes; si hay uno sin confirmar se muestra en
+//   pantalla, y al confirmarlo se imprime un ticket (comprobante físico para
+//   el cajero de que ese dinero salió con autorización).
 //
 // REGLAS QUE ESTA PANTALLA RESPETA
 //   - NUNCA envía precios al servidor: solo variante y cantidad. El servidor
@@ -26,16 +38,22 @@
 //   - Estado con "signals": cada dato reactivo se lee llamándolo como función,
 //     p. ej. carrito(), y se cambia con .set() o .update().
 // =============================================================================
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth';
+import { CajaService, MovimientoCaja, TipoMovimientoCaja } from '../core/caja';
 import { CatalogoService, Categoria, Producto, Variante } from '../core/catalogo';
 import { ThemeService } from '../core/theme';
 import { MetodoPago, RespuestaVenta, TipoEntrega, VentasService } from '../core/ventas';
 import { obtenerEstiloCategoria } from './categoria-estilos';
-import { obtenerIngredientesRemovibles } from './producto-ingredientes';
+import { IngredienteRemovible, obtenerIngredientesRemovibles } from './producto-ingredientes';
+import { GrupoEleccion, OpcionEleccion, obtenerEleccionesDeVariante } from './producto-elecciones';
+
+// Cada cuántos milisegundos se consulta si hay un retiro de efectivo sin
+// confirmar (mismo intervalo que usa el tablero de comandas).
+const INTERVALO_RETIROS_MS = 15000;
 
 // Una LÍNEA del carrito (no un producto: ver el campo `id`).
 interface ItemCarrito {
@@ -50,8 +68,11 @@ interface ItemCarrito {
   // Precio solo para mostrar en pantalla; el servidor ignora esto y usa el suyo.
   precio: number;
   cantidad: number;
-  // Ingredientes marcados con "Quitar" en esta línea.
-  ingredientesQuitados: string[];
+  // Ingredientes marcados con "Quitar" en esta línea (con su insumo real,
+  // para que el servidor sepa qué NO descontar del inventario).
+  ingredientesQuitados: IngredienteRemovible[];
+  // Opciones de "elección" marcadas (salsa, topping…) — Fase 2 del recetario.
+  eleccionesSeleccionadas: OpcionEleccion[];
   // Texto libre de "otras indicaciones".
   notasLibres: string;
 }
@@ -83,7 +104,7 @@ interface Recibo {
   templateUrl: './pos.html',
   styleUrl: './pos.css',
 })
-export class PosComponent implements OnInit {
+export class PosComponent implements OnInit, OnDestroy {
   // ---------------------------------------------------------------------------
   // Estado del MENÚ
   // ---------------------------------------------------------------------------
@@ -104,6 +125,16 @@ export class PosComponent implements OnInit {
   // id de línea del carrito cuyo selector de "Quitar ingredientes" está
   // abierto; null si ninguno lo está.
   quitarAbiertoPara = signal<string | null>(null);
+  // Igual que quitarAbiertoPara, pero para el selector de "elección"
+  // (salsa/topping/dip) — Fase 2 del recetario.
+  eleccionAbiertaPara = signal<string | null>(null);
+  // id de línea cuyo panel de personalización (Quitar / Elección / notas
+  // libres) está expandido; null = todas colapsadas. Colapsado por defecto
+  // a propósito: con una cuenta de varios productos, un renglón fijo de
+  // personalización por cada uno (casi siempre vacío) alargaba mucho el
+  // carrito y obligaba a desplazar de más — ver notaCompleta() para el
+  // resumen de una línea que SÍ tiene algo, visible aunque esté colapsada.
+  personalizacionAbiertaPara = signal<string | null>(null);
   // Se expone la función tal cual para que la plantilla pueda consultar los
   // ingredientes removibles de cada producto.
   ingredientesDisponibles = obtenerIngredientesRemovibles;
@@ -130,6 +161,27 @@ export class PosComponent implements OnInit {
   errorVenta = signal('');
   // Cuando tiene valor, la ventana muestra el comprobante en vez del cobro.
   recibo = signal<Recibo | null>(null);
+
+  // ---------------------------------------------------------------------------
+  // Estado de CAJA: "Saldo inicial" / "Ingresar efectivo" y el aviso + ticket
+  // de un retiro que el administrador haya emitido.
+  // ---------------------------------------------------------------------------
+  // null = ventana cerrada; 'apertura' o 'ingreso' = abierta en ese modo.
+  mostrarMovimientoCaja = signal<Extract<TipoMovimientoCaja, 'apertura' | 'ingreso'> | null>(null);
+  montoMovimientoForm = signal<number | null>(null);
+  motivoMovimientoForm = signal('');
+  procesandoMovimientoCaja = signal(false);
+  errorMovimientoCaja = signal('');
+
+  // Retiro sin confirmar que el POS detectó por sondeo (ver ngOnInit). Al
+  // confirmarlo pasa a `ticketRetiro`, que es lo que se imprime.
+  retiroPendiente = signal<MovimientoCaja | null>(null);
+  confirmandoRetiro = signal(false);
+  errorRetiro = signal('');
+  ticketRetiro = signal<MovimientoCaja | null>(null);
+
+  // Referencia al temporizador del sondeo, para poder detenerlo al salir.
+  private intervaloRetirosId?: ReturnType<typeof setInterval>;
 
   // ---------------------------------------------------------------------------
   // Valores calculados (se recalculan solos cuando cambia lo que leen)
@@ -182,16 +234,19 @@ export class PosComponent implements OnInit {
   constructor(
     private catalogoService: CatalogoService,
     private ventasService: VentasService,
+    private cajaService: CajaService,
     private authService: AuthService,
     public themeService: ThemeService,
     private router: Router,
   ) {}
 
-  // Al abrir la pantalla se cargan categorías y productos del servidor.
+  // Al abrir la pantalla se cargan categorías y productos del servidor, y
+  // arranca el sondeo de retiros de efectivo sin confirmar.
   ngOnInit(): void {
     this.catalogoService.obtenerCategorias().subscribe({
       next: (categorias) => this.categorias.set(categorias),
-      error: (error: HttpErrorResponse) => this.errorCarga.set(this.interpretarErrorConexion(error)),
+      error: (error: HttpErrorResponse) =>
+        this.errorCarga.set(this.interpretarErrorConexion(error)),
     });
 
     this.catalogoService.obtenerProductos().subscribe({
@@ -204,6 +259,20 @@ export class PosComponent implements OnInit {
         this.cargando.set(false);
       },
     });
+
+    this.verificarRetirosPendientes();
+    this.intervaloRetirosId = setInterval(
+      () => this.verificarRetirosPendientes(),
+      INTERVALO_RETIROS_MS,
+    );
+  }
+
+  // Al salir de la pantalla se apaga el sondeo; si no, seguiría consultando
+  // al servidor en segundo plano.
+  ngOnDestroy(): void {
+    if (this.intervaloRetirosId) {
+      clearInterval(this.intervaloRetirosId);
+    }
   }
 
   // ===========================================================================
@@ -281,6 +350,7 @@ export class PosComponent implements OnInit {
         (item) =>
           item.varianteId === variante.id &&
           item.ingredientesQuitados.length === 0 &&
+          item.eleccionesSeleccionadas.length === 0 &&
           !item.notasLibres,
       );
       if (existente) {
@@ -300,6 +370,7 @@ export class PosComponent implements OnInit {
           precio: variante.precio,
           cantidad: 1,
           ingredientesQuitados: [],
+          eleccionesSeleccionadas: [],
           notasLibres: '',
         },
       ];
@@ -341,38 +412,147 @@ export class PosComponent implements OnInit {
       copia.splice(indice, 1, restante, nuevaLinea);
       return copia;
     });
-    // Abre de una vez el selector de "Quitar" sobre la unidad recién
-    // separada, si el producto tiene ingredientes removibles conocidos.
-    if (this.ingredientesDisponibles(item.productoNombre).length > 0) {
+    // Abre de una vez el selector correspondiente sobre la unidad recién
+    // separada: "Quitar" si el producto tiene ingredientes removibles
+    // conocidos, o el de "elección" si la variante tiene salsa/topping/dip
+    // a elegir (nunca los dos a la vez: se prioriza "Quitar").
+    if (this.ingredientesDisponibles(item.productoNombre, item.varianteNombre).length > 0) {
       this.quitarAbiertoPara.set(nuevoId);
+      this.personalizacionAbiertaPara.set(nuevoId);
+    } else if (this.grupoEleccion(item.varianteId)) {
+      this.eleccionAbiertaPara.set(nuevoId);
+      this.personalizacionAbiertaPara.set(nuevoId);
     }
   }
 
-  // Abre/cierra la lista de casillas de "Quitar" de una línea (solo una a la vez).
-  alternarPickerQuitar(item: ItemCarrito): void {
-    this.quitarAbiertoPara.update((actual) => (actual === item.id ? null : item.id));
+  // Expande/colapsa el panel de personalización de una línea (Quitar /
+  // Elección / notas libres), oculto por defecto para que el carrito no se
+  // alargue con un renglón fijo por producto. Al colapsar se cierran
+  // también los checklists internos, para que la próxima vez que se abra
+  // empiece limpio.
+  alternarPersonalizacion(item: ItemCarrito): void {
+    const colapsando = this.personalizacionAbiertaPara() === item.id;
+    this.personalizacionAbiertaPara.set(colapsando ? null : item.id);
+    if (colapsando) {
+      if (this.quitarAbiertoPara() === item.id) {
+        this.quitarAbiertoPara.set(null);
+      }
+      if (this.eleccionAbiertaPara() === item.id) {
+        this.eleccionAbiertaPara.set(null);
+      }
+    }
   }
 
-  estaQuitado(item: ItemCarrito, ingrediente: string): boolean {
-    return item.ingredientesQuitados.includes(ingrediente);
+  // Abre/cierra la lista de casillas de "Quitar" de una línea (solo una a la
+  // vez, y nunca junto con el selector de elección).
+  alternarPickerQuitar(item: ItemCarrito): void {
+    this.quitarAbiertoPara.update((actual) => (actual === item.id ? null : item.id));
+    if (this.eleccionAbiertaPara() === item.id) {
+      this.eleccionAbiertaPara.set(null);
+    }
+  }
+
+  // Se compara por `insumo` (la clave real, estable) y no por el objeto en
+  // sí, que se recrea cada vez que se llama a ingredientesDisponibles().
+  estaQuitado(item: ItemCarrito, ingrediente: IngredienteRemovible): boolean {
+    return item.ingredientesQuitados.some((i) => i.insumo === ingrediente.insumo);
   }
 
   // Marca o desmarca un ingrediente como "quitado" en esa línea.
-  alternarIngredienteQuitado(item: ItemCarrito, ingrediente: string): void {
+  alternarIngredienteQuitado(item: ItemCarrito, ingrediente: IngredienteRemovible): void {
     this.carrito.update((items) =>
       items.map((i) => {
         if (i.id !== item.id) {
           return i;
         }
-        const yaEsta = i.ingredientesQuitados.includes(ingrediente);
+        const yaEsta = i.ingredientesQuitados.some((ing) => ing.insumo === ingrediente.insumo);
         return {
           ...i,
           ingredientesQuitados: yaEsta
-            ? i.ingredientesQuitados.filter((ing) => ing !== ingrediente)
+            ? i.ingredientesQuitados.filter((ing) => ing.insumo !== ingrediente.insumo)
             : [...i.ingredientesQuitados, ingrediente],
         };
       }),
     );
+  }
+
+  // ===========================================================================
+  // ELECCIÓN (salsa / topping / dip) — Fase 2 del recetario
+  // ===========================================================================
+
+  // El único grupo de elección de la variante de esta línea, o null si no
+  // tiene (en cuyo caso el POS no muestra el botón de elección). Hoy ningún
+  // producto tiene más de un grupo real (ver producto-elecciones.ts), así
+  // que la pantalla solo maneja "el primero".
+  grupoEleccion(varianteId: number): GrupoEleccion | null {
+    return obtenerEleccionesDeVariante(varianteId)[0] ?? null;
+  }
+
+  // Abre/cierra el selector de elección de una línea (solo uno a la vez, y
+  // nunca junto con el de "Quitar": se cierra el otro al abrir este).
+  alternarPickerEleccion(item: ItemCarrito): void {
+    this.eleccionAbiertaPara.update((actual) => (actual === item.id ? null : item.id));
+    if (this.quitarAbiertoPara() === item.id) {
+      this.quitarAbiertoPara.set(null);
+    }
+  }
+
+  estaElegido(item: ItemCarrito, opcion: OpcionEleccion): boolean {
+    return item.eleccionesSeleccionadas.some((e) => e.insumo === opcion.insumo);
+  }
+
+  // Marca/desmarca una opción. Si el grupo solo permite 1 (la mayoría), elegir
+  // una opción nueva reemplaza cualquier otra del mismo grupo (comportamiento
+  // de radio). Si permite varias (toppings de crepa especial: 3), se acumulan
+  // hasta el máximo; un toque de más simplemente no hace nada.
+  alternarEleccion(item: ItemCarrito, grupo: GrupoEleccion, opcion: OpcionEleccion): void {
+    this.carrito.update((items) =>
+      items.map((i) => {
+        if (i.id !== item.id) {
+          return i;
+        }
+        const insumosDelGrupo = new Set(grupo.opciones.map((o) => o.insumo));
+        const yaElegido = i.eleccionesSeleccionadas.some((e) => e.insumo === opcion.insumo);
+
+        if (yaElegido) {
+          return {
+            ...i,
+            eleccionesSeleccionadas: i.eleccionesSeleccionadas.filter(
+              (e) => e.insumo !== opcion.insumo,
+            ),
+          };
+        }
+
+        const fueraDelGrupo = i.eleccionesSeleccionadas.filter(
+          (e) => !insumosDelGrupo.has(e.insumo),
+        );
+        const dentroDelGrupo = i.eleccionesSeleccionadas.filter((e) =>
+          insumosDelGrupo.has(e.insumo),
+        );
+
+        if (grupo.seleccionesPermitidas === 1) {
+          // Radio: la nueva opción reemplaza cualquier otra de este grupo.
+          return { ...i, eleccionesSeleccionadas: [...fueraDelGrupo, opcion] };
+        }
+        if (dentroDelGrupo.length >= grupo.seleccionesPermitidas) {
+          return i; // Ya eligió el máximo permitido; se ignora el toque.
+        }
+        return { ...i, eleccionesSeleccionadas: [...fueraDelGrupo, ...dentroDelGrupo, opcion] };
+      }),
+    );
+  }
+
+  // true si la línea ya tiene todas las elecciones que su variante requiere
+  // (o si no requiere ninguna). Se usa para no dejar confirmar una venta con
+  // una elección a medias (ej. alitas sin salsa elegida).
+  personalizacionCompleta(item: ItemCarrito): boolean {
+    const grupo = this.grupoEleccion(item.varianteId);
+    if (!grupo) {
+      return true;
+    }
+    const insumosDelGrupo = new Set(grupo.opciones.map((o) => o.insumo));
+    const elegidas = item.eleccionesSeleccionadas.filter((e) => insumosDelGrupo.has(e.insumo));
+    return elegidas.length === grupo.seleccionesPermitidas;
   }
 
   // Guarda lo que se escribe en "Otras indicaciones" de esa línea.
@@ -382,14 +562,18 @@ export class PosComponent implements OnInit {
     );
   }
 
-  // Combina lo que se marcó "quitar" con cualquier indicación libre en un
-  // solo texto — es lo que realmente viaja al backend (columna `notas`,
-  // texto libre; no hay tabla de ingredientes removibles todavía).
-  // Ejemplo de resultado: "Sin: Tocino, Cebolla morada · sin picante".
+  // Combina "quitar" + "elección" + indicación libre en un solo texto — es lo
+  // que viaja al backend en la columna `notas` (texto libre, para que
+  // cualquiera lo lea de un vistazo). La versión ESTRUCTURADA (para el
+  // descuento automático) va aparte, en el payload de confirmarVenta().
+  // Ejemplo: "Sin: Tocino, Cebolla morada · Con: Buffalo · sin picante".
   notaCompleta(item: ItemCarrito): string {
     const partes: string[] = [];
     if (item.ingredientesQuitados.length > 0) {
-      partes.push('Sin: ' + item.ingredientesQuitados.join(', '));
+      partes.push('Sin: ' + item.ingredientesQuitados.map((i) => i.display).join(', '));
+    }
+    if (item.eleccionesSeleccionadas.length > 0) {
+      partes.push('Con: ' + item.eleccionesSeleccionadas.map((e) => e.display).join(', '));
     }
     if (item.notasLibres.trim()) {
       partes.push(item.notasLibres.trim());
@@ -418,6 +602,12 @@ export class PosComponent implements OnInit {
     this.carrito.update((items) => items.filter((i) => i.id !== item.id));
     if (this.quitarAbiertoPara() === item.id) {
       this.quitarAbiertoPara.set(null);
+    }
+    if (this.eleccionAbiertaPara() === item.id) {
+      this.eleccionAbiertaPara.set(null);
+    }
+    if (this.personalizacionAbiertaPara() === item.id) {
+      this.personalizacionAbiertaPara.set(null);
     }
   }
 
@@ -476,10 +666,14 @@ export class PosComponent implements OnInit {
     this.montoRecibido.set(monto);
   }
 
-  // Decide si "Confirmar venta" está habilitado: hay carrito, no hay otra venta
-  // en proceso y, si es efectivo, el monto cubre el total (cambio ≥ 0).
+  // Decide si "Confirmar venta" está habilitado: hay carrito, no hay otra
+  // venta en proceso, ninguna línea tiene una elección a medias (ej. alitas
+  // sin salsa) y, si es efectivo, el monto cubre el total (cambio ≥ 0).
   puedeConfirmar(): boolean {
     if (this.carrito().length === 0 || this.procesandoVenta()) {
+      return false;
+    }
+    if (!this.carrito().every((item) => this.personalizacionCompleta(item))) {
       return false;
     }
     if (this.metodoPago() === 'efectivo') {
@@ -487,6 +681,17 @@ export class PosComponent implements OnInit {
       return cambio != null && cambio >= 0;
     }
     return true;
+  }
+
+  // Mensaje que explica por qué no se puede cobrar todavía, si aplica (falta
+  // una elección). El botón deshabilitado por sí solo no dice qué falta.
+  avisoPersonalizacionFaltante(): string {
+    const falta = this.carrito().find((item) => !this.personalizacionCompleta(item));
+    if (!falta) {
+      return '';
+    }
+    const grupo = this.grupoEleccion(falta.varianteId);
+    return `Falta elegir "${grupo?.etiqueta}" en ${falta.productoNombre} (${falta.varianteNombre}).`;
   }
 
   // "Confirmar venta": envía la venta al servidor y, si sale bien, arma el
@@ -516,6 +721,18 @@ export class PosComponent implements OnInit {
         variante_id: item.varianteId,
         cantidad: item.cantidad,
         notas: this.notaCompleta(item) || undefined,
+        // Fase 2 del recetario: nombres de insumo EXACTOS (tabla `insumos`)
+        // que el servidor debe excluir del descuento automático al preparar
+        // esta línea. Vacío si no se quitó nada.
+        insumos_quitados: item.ingredientesQuitados.map((i) => i.insumo),
+        // Y los que SÍ se deben agregar al descuento (salsa/topping elegidos),
+        // con su cantidad — no vienen de la receta porque esa línea se dejó
+        // fuera a propósito (ver scripts/seed-recetas.js).
+        insumos_elegidos: item.eleccionesSeleccionadas.map((e) => ({
+          insumo: e.insumo,
+          cantidad: e.cantidad,
+          unidad_medida: e.unidad,
+        })),
       })),
     };
 
@@ -556,6 +773,7 @@ export class PosComponent implements OnInit {
     this.carrito.set([]);
     this.carritoAbierto.set(false);
     this.quitarAbiertoPara.set(null);
+    this.eleccionAbiertaPara.set(null);
     this.mostrarCobro.set(false);
     this.recibo.set(null);
     this.metodoPago.set('efectivo');
@@ -565,5 +783,104 @@ export class PosComponent implements OnInit {
 
   volverAlDashboard(): void {
     this.router.navigate(['/dashboard']);
+  }
+
+  // ===========================================================================
+  // CAJA: "Saldo inicial" / "Ingresar efectivo" y el aviso + ticket de retiro
+  // ===========================================================================
+
+  // Abre la ventana de "Saldo inicial" o "Ingresar efectivo" (nunca de
+  // retiro: eso solo lo emite el administrador desde la pantalla de Caja).
+  abrirMovimientoCaja(tipo: 'apertura' | 'ingreso'): void {
+    this.mostrarMovimientoCaja.set(tipo);
+    this.montoMovimientoForm.set(null);
+    this.motivoMovimientoForm.set('');
+    this.errorMovimientoCaja.set('');
+  }
+
+  cerrarMovimientoCaja(): void {
+    this.mostrarMovimientoCaja.set(null);
+  }
+
+  puedeGuardarMovimientoCaja(): boolean {
+    const monto = this.montoMovimientoForm();
+    return monto != null && monto > 0 && !this.procesandoMovimientoCaja();
+  }
+
+  guardarMovimientoCaja(): void {
+    const tipo = this.mostrarMovimientoCaja();
+    if (!tipo || !this.puedeGuardarMovimientoCaja()) {
+      return;
+    }
+    this.procesandoMovimientoCaja.set(true);
+    this.errorMovimientoCaja.set('');
+
+    this.cajaService
+      .registrarMovimiento(tipo, this.montoMovimientoForm()!, this.motivoMovimientoForm().trim())
+      .subscribe({
+        next: () => {
+          this.procesandoMovimientoCaja.set(false);
+          this.mostrarMovimientoCaja.set(null);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.procesandoMovimientoCaja.set(false);
+          this.errorMovimientoCaja.set(error.error?.error || 'No se pudo registrar el movimiento.');
+        },
+      });
+  }
+
+  // Sondeo: ¿hay un retiro de efectivo que el administrador ya emitió y este
+  // cajero todavía no ve? No se muestra encima del comprobante de una venta
+  // ni mientras ya se está confirmando otro, para no encimar ventanas.
+  private verificarRetirosPendientes(): void {
+    if (this.recibo() || this.confirmandoRetiro() || this.ticketRetiro()) {
+      return;
+    }
+    this.cajaService.obtenerRetirosPendientes().subscribe({
+      next: (retiros) => this.retiroPendiente.set(retiros[0] ?? null),
+      error: () => {
+        // Un fallo del sondeo no interrumpe el resto del POS; se reintenta
+        // en el siguiente ciclo (15 s después).
+      },
+    });
+  }
+
+  // El cajero confirma que vio el retiro: dispara el ticket imprimible.
+  confirmarRetiroPendiente(): void {
+    const retiro = this.retiroPendiente();
+    if (!retiro || this.confirmandoRetiro()) {
+      return;
+    }
+    this.confirmandoRetiro.set(true);
+    this.errorRetiro.set('');
+
+    this.cajaService.confirmarRetiro(retiro.id).subscribe({
+      next: (confirmado) => {
+        this.confirmandoRetiro.set(false);
+        this.retiroPendiente.set(null);
+        this.ticketRetiro.set(confirmado);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.confirmandoRetiro.set(false);
+        // 409 = alguien más (otra sesión del mismo cajero) ya lo confirmó;
+        // se quita el aviso sin tronar, el siguiente sondeo ya no lo trae.
+        if (error.status === 409) {
+          this.retiroPendiente.set(null);
+          return;
+        }
+        this.errorRetiro.set(error.error?.error || 'No se pudo confirmar el retiro.');
+      },
+    });
+  }
+
+  // Abre el diálogo de impresión del navegador para el ticket de retiro
+  // (mismo mecanismo que imprimirRecibo: @media print en pos.css).
+  imprimirTicketRetiro(): void {
+    window.print();
+  }
+
+  // Cierra el ticket una vez impreso/visto; el sondeo sigue su curso normal.
+  cerrarTicketRetiro(): void {
+    this.ticketRetiro.set(null);
   }
 }
