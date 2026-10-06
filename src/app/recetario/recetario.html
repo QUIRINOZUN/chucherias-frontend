@@ -1,0 +1,181 @@
+<!-- ============================================================================
+     recetario.html — GESTIÓN DEL RECETARIO (lógica en recetario.ts)
+     ============================================================================
+     Lista de variantes agrupadas por categoría → producto, con un buscador;
+     tocar una variante abre el editor de su receta. Solo administrador y
+     encargado.
+     ============================================================================ -->
+<div class="recetario-container">
+  <!-- ENCABEZADO: volver, título y cambio de tema. -->
+  <header class="recetario-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      Volver
+    </button>
+    <h1>Recetario</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
+    >
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
+    </button>
+  </header>
+
+  <div class="recetario-cuerpo">
+    @if (!cargando() && variantes().length > 0) {
+      <div class="resumen-recetario">
+        <div class="chip-resumen chip-resumen-adentro">
+          <span class="chip-resumen-numero">{{ totalConReceta() }}</span>
+          <span class="chip-resumen-etiqueta">con receta</span>
+        </div>
+        <div class="chip-resumen" [class.chip-resumen-alerta]="totalSinReceta() > 0">
+          <span class="chip-resumen-numero">{{ totalSinReceta() }}</span>
+          <span class="chip-resumen-etiqueta">sin receta</span>
+        </div>
+      </div>
+    }
+
+    <div class="campo-busqueda">
+      <svg class="icono" aria-hidden="true"><use href="#ic-buscar" /></svg>
+      <input
+        type="text"
+        placeholder="Buscar producto o variante..."
+        [value]="busqueda()"
+        (input)="busqueda.set($any($event.target).value)"
+      />
+    </div>
+
+    @if (error()) {
+      <p class="mensaje-estado mensaje-error">{{ error() }}</p>
+    }
+
+    @if (cargando()) {
+      <p class="mensaje-estado">Cargando recetario...</p>
+    } @else if (grupos().length === 0) {
+      <p class="mensaje-estado">No hay productos que coincidan con la búsqueda.</p>
+    } @else {
+      @for (grupo of grupos(); track grupo.categoria) {
+        <section class="grupo-categoria">
+          <h2 class="titulo-categoria">{{ grupo.categoria }}</h2>
+          @for (producto of grupo.productos; track producto.producto_id) {
+            <div class="tarjeta-producto">
+              <span class="producto-nombre">{{ producto.producto_nombre }}</span>
+              <ul class="lista-variantes">
+                @for (variante of producto.variantes; track variante.variante_id) {
+                  <li class="item-variante" (click)="abrirEditor(variante)">
+                    <div class="variante-info">
+                      <span class="variante-nombre">{{ variante.variante_nombre }}</span>
+                      <span class="variante-precio">{{ variante.precio | currency: 'MXN' }}</span>
+                    </div>
+                    <span class="badge-receta" [class.badge-receta-vacia]="!variante.tiene_receta">
+                      {{
+                        variante.tiene_receta
+                          ? variante.total_insumos +
+                            (variante.total_insumos === 1 ? ' insumo' : ' insumos')
+                          : 'Sin receta'
+                      }}
+                    </span>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        </section>
+      }
+    }
+  </div>
+
+  <!-- VENTANA EMERGENTE: editor de receta de una variante. -->
+  @if (varianteEditando(); as variante) {
+    <div class="overlay">
+      <div class="panel-formulario panel-formulario-ancho">
+        <h2>{{ variante.producto_nombre }}</h2>
+        <p class="subtitulo-formulario">{{ variante.variante_nombre }}</p>
+
+        @if (cargandoReceta()) {
+          <p class="mensaje-estado">Cargando receta...</p>
+        } @else {
+          @if (lineasForm().length === 0) {
+            <p class="mensaje-estado">
+              Todavía no tiene insumos capturados. Agrega el primero abajo.
+            </p>
+          }
+
+          <ul class="lista-lineas-receta">
+            @for (linea of lineasForm(); track $index) {
+              <li class="linea-receta">
+                <select
+                  class="linea-receta-insumo"
+                  [value]="linea.insumo_id ?? ''"
+                  (change)="
+                    actualizarInsumoLinea(
+                      $index,
+                      $any($event.target).value === '' ? null : +$any($event.target).value
+                    )
+                  "
+                >
+                  <option value="">Selecciona un insumo</option>
+                  @for (insumo of insumosDisponiblesPara($index); track insumo.id) {
+                    <option [value]="insumo.id">{{ insumo.nombre }}</option>
+                  }
+                </select>
+                <input
+                  class="linea-receta-cantidad"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Cantidad"
+                  [value]="linea.cantidad ?? ''"
+                  (input)="actualizarCantidadLinea($index, $any($event.target).value)"
+                />
+                <span class="linea-receta-unidad">{{ linea.unidad_medida || '—' }}</span>
+                <button
+                  type="button"
+                  class="boton-quitar-linea"
+                  (click)="quitarLinea($index)"
+                  aria-label="Quitar insumo"
+                >
+                  <svg class="icono" aria-hidden="true"><use href="#ic-cerrar" /></svg>
+                </button>
+              </li>
+            }
+          </ul>
+
+          <button type="button" class="boton-agregar-linea" (click)="agregarLinea()">
+            <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
+            Agregar insumo
+          </button>
+        }
+
+        @if (errorForm()) {
+          <p class="mensaje-error">{{ errorForm() }}</p>
+        }
+
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarEditor()"
+            [disabled]="guardando()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar"
+            [disabled]="!puedeGuardar()"
+            (click)="guardar()"
+          >
+            {{ guardando() ? 'Guardando...' : 'Guardar receta' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -17,6 +17,7 @@
 //   /inventario → administrador, encargado                (módulo de inventario)
 //   /mermas     → administrador, encargado                (reporte consolidado de mermas)
 //   /asistencias → administrador, encargado                (Sprint 3: personal y asistencias)
+//   /recetario  → administrador, encargado                (recetario: insumos por variante)
 //
 // Estas reglas deben coincidir con las del backend (requiereRol en routes/*.js)
 // y con la lista de módulos del dashboard (dashboard/dashboard.ts).
@@ -32,6 +33,7 @@ import { HistorialVentasComponent } from './historial-ventas/historial-ventas';
 import { InventarioComponent } from './inventario/inventario';
 import { MermasComponent } from './mermas/mermas';
 import { AsistenciasComponent } from './asistencias/asistencias';
+import { RecetarioComponent } from './recetario/recetario';
 import { authGuard, rolGuard } from './core/auth-guard';
 
 export const routes: Routes = [
@@ -86,6 +88,12 @@ export const routes: Routes = [
   {
     path: 'asistencias',
     component: AsistenciasComponent,
+    canActivate: [authGuard, rolGuard('administrador', 'encargado')],
+  },
+  // Recetario: insumos que lleva cada variante del menú.
+  {
+    path: 'recetario',
+    component: RecetarioComponent,
     canActivate: [authGuard, rolGuard('administrador', 'encargado')],
   },
   // La raíz del sitio y cualquier URL desconocida llevan al login. (La pantalla

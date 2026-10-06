@@ -1,0 +1,418 @@
+/* =============================================================================
+   recetario.css — GESTIÓN DEL RECETARIO
+   =============================================================================
+   Mismo lenguaje visual que inventario.css/asistencias.css: tarjetas con
+   sombra suave, radios grandes, el naranja de marca como única acción
+   principal. La insignia de "N insumos" usa verde (ya tiene receta
+   capturada); "Sin receta" queda en gris neutro, sin alarmar — es un estado
+   de trabajo pendiente, no un error. */
+
+:host {
+  display: block;
+  min-height: 100vh;
+  background: var(--pos-bg-main);
+  font-family: var(--fuente-texto);
+  color: var(--pos-text-primary);
+}
+
+.recetario-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.recetario-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--pos-bg-card);
+  border-bottom: 1px solid var(--pos-border);
+  position: sticky;
+  top: 0;
+}
+
+.recetario-header h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.boton-volver,
+.boton-tema {
+  min-height: 44px;
+  border: none;
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  border-radius: var(--radio-pastilla);
+  padding: 0 18px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.boton-tema {
+  min-width: 44px;
+  padding: 0;
+  font-size: 1.15rem;
+}
+
+.recetario-cuerpo {
+  flex: 1;
+  padding: 16px;
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.mensaje-estado {
+  color: var(--pos-text-secondary);
+  font-size: 0.9rem;
+}
+
+.mensaje-error {
+  color: var(--peligro-texto);
+}
+
+/* ---- Resumen (con receta / sin receta) ---- */
+.resumen-recetario {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.chip-resumen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 8px;
+  border-radius: var(--radio-lg);
+  background: var(--pos-bg-card);
+  box-shadow: var(--sombra-suave);
+}
+
+.chip-resumen-numero {
+  font-family: var(--fuente-titulo);
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.chip-resumen-etiqueta {
+  font-size: 0.72rem;
+  color: var(--pos-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.chip-resumen-adentro .chip-resumen-numero {
+  color: var(--exito-texto);
+}
+
+.chip-resumen-alerta .chip-resumen-numero {
+  color: var(--pos-text-secondary);
+}
+
+/* ---- Buscador ---- */
+.campo-busqueda {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-bottom: 16px;
+  padding: 0 14px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-card);
+  color: var(--pos-text-secondary);
+}
+
+.campo-busqueda .icono {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.campo-busqueda input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--pos-text-primary);
+  font-size: 0.95rem;
+  min-height: 44px;
+}
+
+.campo-busqueda input:focus {
+  outline: none;
+}
+
+/* ---- Lista agrupada: categoría → producto → variantes ---- */
+.grupo-categoria {
+  margin-bottom: 20px;
+}
+
+.titulo-categoria {
+  font-family: var(--fuente-titulo);
+  font-size: 0.95rem;
+  color: var(--pos-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 10px;
+}
+
+.tarjeta-producto {
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+
+.producto-nombre {
+  display: block;
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+
+.lista-variantes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item-variante {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 4px;
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+}
+
+.item-variante:hover {
+  background: var(--pos-bg-main);
+}
+
+.variante-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.variante-nombre {
+  font-size: 0.85rem;
+}
+
+.variante-precio {
+  font-size: 0.72rem;
+  color: var(--pos-text-secondary);
+}
+
+.badge-receta {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--action-success) 20%, var(--pos-bg-card));
+  color: var(--exito-texto);
+  white-space: nowrap;
+}
+
+.badge-receta-vacia {
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+}
+
+/* ---- Ventana emergente: editor de receta ---- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 20;
+  backdrop-filter: blur(3px);
+  animation: aparecer 0.2s ease;
+  overflow-y: auto;
+}
+
+.panel-formulario {
+  width: 100%;
+  max-width: 380px;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-elevada);
+  padding: 24px;
+  box-sizing: border-box;
+  animation: escalar 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.panel-formulario-ancho {
+  max-width: 480px;
+}
+
+.panel-formulario h2 {
+  margin: 0 0 2px;
+  font-size: 1.3rem;
+}
+
+.subtitulo-formulario {
+  margin: 0 0 16px;
+  font-size: 0.85rem;
+  color: var(--pos-text-secondary);
+}
+
+.lista-lineas-receta {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.linea-receta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.linea-receta-insumo {
+  flex: 1;
+  min-width: 0;
+}
+
+.linea-receta-cantidad {
+  width: 72px;
+  flex-shrink: 0;
+}
+
+.linea-receta-insumo,
+.linea-receta-cantidad {
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 8px;
+  font-size: 0.85rem;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.linea-receta-insumo:focus,
+.linea-receta-cantidad:focus {
+  outline: none;
+  border-color: var(--pos-text-secondary);
+}
+
+.linea-receta-unidad {
+  flex-shrink: 0;
+  width: 28px;
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+  text-align: center;
+}
+
+.boton-quitar-linea {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--peligro-texto);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.boton-quitar-linea .icono {
+  width: 16px;
+  height: 16px;
+}
+
+.boton-agregar-linea {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 14px;
+  border: 1px dashed var(--pos-border);
+  border-radius: var(--radio-md);
+  background: none;
+  color: var(--pos-text-secondary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.boton-agregar-linea:hover {
+  border-color: var(--action-primary);
+  color: var(--action-primary);
+}
+
+.boton-agregar-linea .icono {
+  width: 16px;
+  height: 16px;
+}
+
+.acciones-formulario {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.boton-cancelar,
+.boton-confirmar {
+  flex: 1;
+  min-height: 52px;
+  border-radius: var(--radio-md);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.boton-cancelar {
+  border: 1px solid var(--pos-border);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.boton-confirmar {
+  border: none;
+  background: var(--action-primary);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: var(--sombra-acento);
+}
+
+.boton-confirmar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* En pantallas angostas la línea de receta pasa a dos filas. */
+@media (max-width: 420px) {
+  .linea-receta {
+    flex-wrap: wrap;
+  }
+
+  .linea-receta-insumo {
+    flex: 1 1 100%;
+  }
+}
