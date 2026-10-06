@@ -5,7 +5,11 @@
    sombra suave, radios grandes, el naranja de marca como única acción
    principal. "Marcar salida" usa verde (--action-success) porque cierra el
    turno con éxito, a diferencia de "Marcar entrada" que es la acción
-   primaria de siempre (naranja). */
+   primaria de siempre (naranja). Las 4 secciones ahora son pestañas
+   (.tabs-asistencias) en vez de ir todas apiladas; "Hoy" marca el estado de
+   cada empleado con color (borde + punto) en vez de solo texto, y "Horarios"
+   es una cuadrícula semanal con un interruptor por día en vez de una lista
+   de casillas. */
 
 :host {
   display: block;
@@ -57,6 +61,66 @@
   font-size: 1.15rem;
 }
 
+/* ---- Pestañas (Hoy / Empleados / Horarios / Historial) ---- */
+.tabs-asistencias {
+  display: flex;
+  gap: 6px;
+  padding: 10px 16px;
+  background: var(--pos-bg-card);
+  border-bottom: 1px solid var(--pos-border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tab-asistencias {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.tab-asistencias .icono {
+  width: 18px;
+  height: 18px;
+}
+
+.tab-asistencias-activa {
+  background: var(--action-primary);
+  color: #fff;
+  box-shadow: var(--sombra-acento);
+}
+
+.tab-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-asistencias:not(.tab-asistencias-activa) .tab-badge {
+  background: var(--action-success);
+  color: #fff;
+}
+
 .asistencias-cuerpo {
   flex: 1;
   padding: 16px;
@@ -64,6 +128,43 @@
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
+}
+
+/* ---- Resumen visual de "Hoy" ---- */
+.resumen-hoy {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.chip-resumen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 8px;
+  border-radius: var(--radio-lg);
+  background: var(--pos-bg-card);
+  box-shadow: var(--sombra-suave);
+}
+
+.chip-resumen-numero {
+  font-family: var(--fuente-titulo);
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.chip-resumen-etiqueta {
+  font-size: 0.72rem;
+  color: var(--pos-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.chip-resumen-adentro .chip-resumen-numero {
+  color: var(--exito-texto);
 }
 
 .mensaje-estado {
@@ -150,6 +251,32 @@
   border-radius: var(--radio-lg);
   box-shadow: var(--sombra-suave);
   padding: 14px 16px;
+  border-left: 4px solid var(--pos-border);
+}
+
+.tarjeta-hoy-adentro {
+  border-left-color: var(--action-success);
+}
+
+.tarjeta-hoy-completo {
+  border-left-color: var(--pos-text-secondary);
+}
+
+.hoy-punto {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--pos-border);
+}
+
+.tarjeta-hoy-adentro .hoy-punto {
+  background: var(--action-success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--action-success) 25%, transparent);
+}
+
+.tarjeta-hoy-completo .hoy-punto {
+  background: var(--pos-text-secondary);
 }
 
 .hoy-info {
@@ -360,68 +487,128 @@
   font-size: 0.85rem;
 }
 
-.lista-calendario {
-  list-style: none;
-  margin: 0 0 14px;
-  padding: 0;
+/* Calendario visual de Horarios: una columna por día operativo. */
+.calendario-semana {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.dia-columna {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.item-calendario {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
   gap: 10px;
   background: var(--pos-bg-card);
+  border: 2px solid var(--pos-border);
   border-radius: var(--radio-lg);
-  box-shadow: var(--sombra-suave);
-  padding: 12px 16px;
+  padding: 12px;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
 }
 
-.dia-calendario-check {
+.dia-columna-activa {
+  border-color: var(--action-primary);
+  background: color-mix(in srgb, var(--action-primary) 8%, var(--pos-bg-card));
+}
+
+.dia-columna-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 110px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.dia-calendario-check input[type='checkbox'] {
-  width: 20px;
-  height: 20px;
-  accent-color: var(--action-primary);
-  cursor: pointer;
-}
-
-.dia-calendario-horas {
-  display: flex;
-  align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  flex: 1;
 }
 
-.dia-calendario-horas input[type='time'] {
-  min-height: 40px;
-  padding: 0 8px;
-  font-size: 0.85rem;
+.dia-columna-nombre {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* Interruptor tipo switch (más visual que una casilla suelta). */
+.interruptor-dia {
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.interruptor-dia input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.interruptor-pista {
+  display: block;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--pos-border);
+  position: relative;
+  transition: background-color 0.15s ease;
+}
+
+.interruptor-perilla {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #fff;
+  transition: transform 0.15s ease;
+}
+
+.interruptor-dia input:checked + .interruptor-pista {
+  background: var(--action-primary);
+}
+
+.interruptor-dia input:checked + .interruptor-pista .interruptor-perilla {
+  transform: translateX(16px);
+}
+
+.dia-columna-bloque {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px;
+  border-radius: var(--radio-md);
+  background: color-mix(in srgb, var(--action-primary) 14%, var(--pos-bg-card));
+}
+
+.dia-columna-bloque .icono {
+  width: 16px;
+  height: 16px;
+  color: var(--action-primary);
+}
+
+.dia-columna-bloque input[type='time'] {
+  width: 100%;
+  min-height: 38px;
+  box-sizing: border-box;
+  padding: 0 6px;
+  font-size: 0.82rem;
+  text-align: center;
   border: 2px solid var(--pos-border);
   border-radius: var(--radio-sm);
   background: var(--pos-bg-main);
   color: var(--pos-text-primary);
 }
 
-.dia-calendario-separador {
+.dia-columna-flecha {
   font-size: 0.8rem;
   color: var(--pos-text-secondary);
 }
 
-.dia-calendario-libre {
-  font-size: 0.82rem;
+.dia-columna-libre {
+  text-align: center;
+  padding: 14px 6px;
+  font-size: 0.8rem;
   color: var(--pos-text-secondary);
+  border: 1px dashed var(--pos-border);
+  border-radius: var(--radio-md);
 }
 
 .lista-historial {
@@ -616,7 +803,13 @@
     flex-direction: column;
   }
 
-  .dia-calendario-horas {
-    flex: 1 1 100%;
+  .calendario-semana {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 380px) {
+  .calendario-semana {
+    grid-template-columns: 1fr;
   }
 }

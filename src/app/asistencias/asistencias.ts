@@ -2,7 +2,9 @@
 // asistencias/asistencias.ts — CONTROL DE PERSONAL Y ASISTENCIAS (Sprint 3)
 // =============================================================================
 // Pantalla "Asistencias". Solo administrador y encargado (igual que
-// usuarios/inventario/caja — es información de personal). Cuatro secciones:
+// usuarios/inventario/caja — es información de personal). Cuatro secciones,
+// mostradas como PESTAÑAS (una visible a la vez, vía pestanaActiva) en vez
+// de ir todas apiladas en un solo scroll largo:
 //
 //   1. HOY: una tarjeta por empleado activo con un botón grande para marcar
 //      su entrada o su salida AHORA. El botón decide solo cuál mostrar según
@@ -63,6 +65,11 @@ interface DiaFormHorario {
 type ModoFormularioEmpleado = 'crear' | 'editar' | null;
 type ModoFormularioAsistencia = 'crear' | 'editar' | null;
 
+// Las cuatro secciones ahora son pestañas (una visible a la vez) en vez de
+// ir todas apiladas en un solo scroll largo — mismos datos, solo cambia la
+// navegación.
+type Pestana = 'hoy' | 'empleados' | 'horarios' | 'historial';
+
 @Component({
   selector: 'app-asistencias',
   standalone: true,
@@ -71,6 +78,12 @@ type ModoFormularioAsistencia = 'crear' | 'editar' | null;
   styleUrl: './asistencias.css',
 })
 export class AsistenciasComponent implements OnInit {
+  pestanaActiva = signal<Pestana>('hoy');
+
+  cambiarPestana(pestana: Pestana): void {
+    this.pestanaActiva.set(pestana);
+  }
+
   // ---- Datos base ----
   empleados = signal<Empleado[]>([]);
   cargandoEmpleados = signal(true);
@@ -94,6 +107,16 @@ export class AsistenciasComponent implements OnInit {
     }
     return mapa;
   });
+
+  // Para la tarjeta-resumen visual de "Hoy": cuántos activos están
+  // adentro en este momento vs. cuántos aún no marcan nada.
+  totalAdentroHoy = computed(() => this.abiertaPorEmpleado().size);
+  totalPorLlegarHoy = computed(
+    () =>
+      this.empleadosActivos().filter(
+        (e) => !this.abiertaPorEmpleado().has(e.id) && this.turnosCompletadosHoy(e.id) === 0,
+      ).length,
+  );
 
   // Cuántas veces ya marcó salida HOY ese empleado (para mostrar "ya
   // trabajó un turno hoy" aunque pueda marcar otro).

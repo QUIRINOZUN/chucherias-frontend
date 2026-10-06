@@ -1,9 +1,10 @@
 <!-- ============================================================================
      asistencias.html — CONTROL DE PERSONAL Y ASISTENCIAS (lógica en asistencias.ts)
      ============================================================================
-     Tres secciones: marcar entrada/salida de HOY, gestión de empleados, e
-     historial con filtros y corrección de registros. Solo administrador y
-     encargado.
+     Cuatro secciones (Hoy, Empleados, Horarios, Historial) mostradas como
+     PESTAÑAS — una visible a la vez, controlada por pestanaActiva — para que
+     la pantalla no sea un solo scroll largo con las cuatro apiladas. Solo
+     administrador y encargado.
      ============================================================================ -->
 <div class="asistencias-container">
   <!-- ENCABEZADO: volver, título y cambio de tema. -->
@@ -27,153 +28,242 @@
     </button>
   </header>
 
+  <!-- PESTAÑAS: cambian qué sección se muestra abajo (los datos de las 4 ya
+       están cargados desde ngOnInit; esto solo cambia qué se ve). -->
+  <nav class="tabs-asistencias" role="tablist">
+    <button
+      type="button"
+      role="tab"
+      class="tab-asistencias"
+      [class.tab-asistencias-activa]="pestanaActiva() === 'hoy'"
+      [attr.aria-selected]="pestanaActiva() === 'hoy'"
+      (click)="cambiarPestana('hoy')"
+    >
+      <svg class="icono" aria-hidden="true"><use href="#ic-reloj" /></svg>
+      Hoy
+      @if (totalAdentroHoy() > 0) {
+        <span class="tab-badge">{{ totalAdentroHoy() }}</span>
+      }
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="tab-asistencias"
+      [class.tab-asistencias-activa]="pestanaActiva() === 'empleados'"
+      [attr.aria-selected]="pestanaActiva() === 'empleados'"
+      (click)="cambiarPestana('empleados')"
+    >
+      <svg class="icono" aria-hidden="true"><use href="#ic-usuarios" /></svg>
+      Empleados
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="tab-asistencias"
+      [class.tab-asistencias-activa]="pestanaActiva() === 'horarios'"
+      [attr.aria-selected]="pestanaActiva() === 'horarios'"
+      (click)="cambiarPestana('horarios')"
+    >
+      <svg class="icono" aria-hidden="true"><use href="#ic-calendario" /></svg>
+      Horarios
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="tab-asistencias"
+      [class.tab-asistencias-activa]="pestanaActiva() === 'historial'"
+      [attr.aria-selected]="pestanaActiva() === 'historial'"
+      (click)="cambiarPestana('historial')"
+    >
+      <svg class="icono" aria-hidden="true"><use href="#ic-comanda" /></svg>
+      Historial
+    </button>
+  </nav>
+
   <div class="asistencias-cuerpo">
     <!-- ============================= SECCIÓN: HOY ============================= -->
-    <section class="seccion-asistencias">
-      <h2 class="titulo-seccion">Hoy</h2>
+    @if (pestanaActiva() === 'hoy') {
+      <section class="seccion-asistencias">
+        @if (!cargandoHoy() && !cargandoEmpleados() && empleadosActivos().length > 0) {
+          <div class="resumen-hoy">
+            <div class="chip-resumen chip-resumen-adentro">
+              <span class="chip-resumen-numero">{{ totalAdentroHoy() }}</span>
+              <span class="chip-resumen-etiqueta">adentro ahora</span>
+            </div>
+            <div class="chip-resumen">
+              <span class="chip-resumen-numero">{{ totalPorLlegarHoy() }}</span>
+              <span class="chip-resumen-etiqueta">por llegar</span>
+            </div>
+          </div>
+        }
 
-      @if (errorEmpleados()) {
-        <p class="mensaje-estado mensaje-error">{{ errorEmpleados() }}</p>
-      }
+        @if (errorEmpleados()) {
+          <p class="mensaje-estado mensaje-error">{{ errorEmpleados() }}</p>
+        }
 
-      @if (cargandoHoy() || cargandoEmpleados()) {
-        <p class="mensaje-estado">Cargando...</p>
-      } @else if (empleadosActivos().length === 0) {
-        <p class="mensaje-estado">
-          No hay empleados activos todavía. Da de alta uno en "Empleados" abajo.
-        </p>
-      } @else {
-        <ul class="lista-hoy">
-          @for (empleado of empleadosActivos(); track empleado.id) {
-            <li class="tarjeta-hoy">
-              <div class="hoy-info">
-                <span class="hoy-nombre">{{ empleado.nombre }}</span>
-                <span class="hoy-puesto">{{ empleado.puesto }}</span>
-                @if (abiertaPorEmpleado().get(empleado.id); as abierta) {
-                  <span class="hoy-estado hoy-estado-adentro">
-                    Entró a las {{ abierta.hora_entrada?.slice(0, 5) }}
-                  </span>
-                } @else if (turnosCompletadosHoy(empleado.id) > 0) {
-                  <span class="hoy-estado">
-                    Ya marcó
-                    {{ turnosCompletadosHoy(empleado.id) }}
-                    {{ turnosCompletadosHoy(empleado.id) === 1 ? 'turno' : 'turnos' }} hoy
-                  </span>
-                }
-              </div>
-              <button
-                type="button"
-                class="boton-marcar"
-                [class.boton-marcar-salida]="abiertaPorEmpleado().has(empleado.id)"
-                [disabled]="procesandoEmpleadoId() === empleado.id"
-                (click)="marcarAsistencia(empleado)"
+        @if (cargandoHoy() || cargandoEmpleados()) {
+          <p class="mensaje-estado">Cargando...</p>
+        } @else if (empleadosActivos().length === 0) {
+          <p class="mensaje-estado">
+            No hay empleados activos todavía. Da de alta uno en "Empleados" abajo.
+          </p>
+        } @else {
+          <ul class="lista-hoy">
+            @for (empleado of empleadosActivos(); track empleado.id) {
+              <li
+                class="tarjeta-hoy"
+                [class.tarjeta-hoy-adentro]="abiertaPorEmpleado().has(empleado.id)"
+                [class.tarjeta-hoy-completo]="
+                  !abiertaPorEmpleado().has(empleado.id) && turnosCompletadosHoy(empleado.id) > 0
+                "
               >
-                {{
-                  procesandoEmpleadoId() === empleado.id
-                    ? '...'
-                    : abiertaPorEmpleado().has(empleado.id)
-                      ? 'Marcar salida'
-                      : 'Marcar entrada'
-                }}
-              </button>
-            </li>
-          }
-        </ul>
-      }
-    </section>
+                <span class="hoy-punto" aria-hidden="true"></span>
+                <div class="hoy-info">
+                  <span class="hoy-nombre">{{ empleado.nombre }}</span>
+                  <span class="hoy-puesto">{{ empleado.puesto }}</span>
+                  @if (abiertaPorEmpleado().get(empleado.id); as abierta) {
+                    <span class="hoy-estado hoy-estado-adentro">
+                      Entró a las {{ abierta.hora_entrada?.slice(0, 5) }}
+                    </span>
+                  } @else if (turnosCompletadosHoy(empleado.id) > 0) {
+                    <span class="hoy-estado">
+                      Ya marcó
+                      {{ turnosCompletadosHoy(empleado.id) }}
+                      {{ turnosCompletadosHoy(empleado.id) === 1 ? 'turno' : 'turnos' }} hoy
+                    </span>
+                  } @else {
+                    <span class="hoy-estado">Sin marcar todavía</span>
+                  }
+                </div>
+                <button
+                  type="button"
+                  class="boton-marcar"
+                  [class.boton-marcar-salida]="abiertaPorEmpleado().has(empleado.id)"
+                  [disabled]="procesandoEmpleadoId() === empleado.id"
+                  (click)="marcarAsistencia(empleado)"
+                >
+                  {{
+                    procesandoEmpleadoId() === empleado.id
+                      ? '...'
+                      : abiertaPorEmpleado().has(empleado.id)
+                        ? 'Marcar salida'
+                        : 'Marcar entrada'
+                  }}
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
 
     <!-- ========================= SECCIÓN: EMPLEADOS =========================== -->
-    <section class="seccion-asistencias">
-      <div class="encabezado-seccion">
-        <h2 class="titulo-seccion">Empleados</h2>
-        <button type="button" class="boton-enlace" (click)="alternarMostrarInactivos()">
-          {{ mostrarInactivos() ? 'Ocultar inactivos' : 'Ver inactivos' }}
+    @if (pestanaActiva() === 'empleados') {
+      <section class="seccion-asistencias">
+        <div class="encabezado-seccion">
+          <h2 class="titulo-seccion">Empleados</h2>
+          <button type="button" class="boton-enlace" (click)="alternarMostrarInactivos()">
+            {{ mostrarInactivos() ? 'Ocultar inactivos' : 'Ver inactivos' }}
+          </button>
+        </div>
+
+        <button type="button" class="boton-nuevo" (click)="abrirCreacionEmpleado()">
+          + Nuevo empleado
         </button>
-      </div>
 
-      <button type="button" class="boton-nuevo" (click)="abrirCreacionEmpleado()">
-        + Nuevo empleado
-      </button>
-
-      @if (cargandoEmpleados()) {
-        <p class="mensaje-estado">Cargando empleados...</p>
-      } @else if (empleados().length === 0) {
-        <p class="mensaje-estado">Todavía no hay empleados dados de alta.</p>
-      } @else {
-        <ul class="lista-empleados">
-          @for (empleado of empleados(); track empleado.id) {
-            <li class="tarjeta-empleado">
-              <div class="empleado-info">
-                <span class="empleado-nombre">{{ empleado.nombre }}</span>
-                <span class="empleado-detalle">
-                  {{ empleado.puesto }} · desde {{ empleado.fecha_ingreso | date: 'dd/MM/yyyy' }}
-                  @if (empleado.usuario_login) {
-                    · &#64;{{ empleado.usuario_login }}
-                  }
+        @if (cargandoEmpleados()) {
+          <p class="mensaje-estado">Cargando empleados...</p>
+        } @else if (empleados().length === 0) {
+          <p class="mensaje-estado">Todavía no hay empleados dados de alta.</p>
+        } @else {
+          <ul class="lista-empleados">
+            @for (empleado of empleados(); track empleado.id) {
+              <li class="tarjeta-empleado">
+                <div class="empleado-info">
+                  <span class="empleado-nombre">{{ empleado.nombre }}</span>
+                  <span class="empleado-detalle">
+                    {{ empleado.puesto }} · desde {{ empleado.fecha_ingreso | date: 'dd/MM/yyyy' }}
+                    @if (empleado.usuario_login) {
+                      · &#64;{{ empleado.usuario_login }}
+                    }
+                  </span>
+                </div>
+                <span class="badge-estado" [class.badge-inactivo]="!empleado.activo">
+                  {{ empleado.activo ? 'Activo' : 'Inactivo' }}
                 </span>
-              </div>
-              <span class="badge-estado" [class.badge-inactivo]="!empleado.activo">
-                {{ empleado.activo ? 'Activo' : 'Inactivo' }}
-              </span>
-              <button type="button" class="boton-editar" (click)="abrirEdicionEmpleado(empleado)">
-                Editar
-              </button>
-              <button
-                type="button"
-                class="boton-alternar"
-                [class.boton-alternar-desactivar]="empleado.activo"
-                [disabled]="actualizandoActivoId() === empleado.id"
-                (click)="alternarActivoEmpleado(empleado)"
-              >
-                {{
-                  actualizandoActivoId() === empleado.id
-                    ? '...'
-                    : empleado.activo
-                      ? 'Desactivar'
-                      : 'Activar'
-                }}
-              </button>
-            </li>
-          }
-        </ul>
-      }
-    </section>
+                <button type="button" class="boton-editar" (click)="abrirEdicionEmpleado(empleado)">
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  class="boton-alternar"
+                  [class.boton-alternar-desactivar]="empleado.activo"
+                  [disabled]="actualizandoActivoId() === empleado.id"
+                  (click)="alternarActivoEmpleado(empleado)"
+                >
+                  {{
+                    actualizandoActivoId() === empleado.id
+                      ? '...'
+                      : empleado.activo
+                        ? 'Desactivar'
+                        : 'Activar'
+                  }}
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
 
     <!-- ========================== SECCIÓN: HORARIOS ============================ -->
-    <section class="seccion-asistencias">
-      <h2 class="titulo-seccion">Horarios</h2>
+    @if (pestanaActiva() === 'horarios') {
+      <section class="seccion-asistencias">
+        <div class="campo-filtro campo-filtro-ancho campo-selector-horario">
+          <label for="empleado-horario">Empleado</label>
+          <select
+            id="empleado-horario"
+            [value]="empleadoIdHorario() ?? ''"
+            (change)="seleccionarEmpleadoHorario($any($event.target).value)"
+          >
+            <option value="">Selecciona un empleado</option>
+            @for (empleado of empleadosActivos(); track empleado.id) {
+              <option [value]="empleado.id">{{ empleado.nombre }}</option>
+            }
+          </select>
+        </div>
 
-      <div class="campo-filtro campo-filtro-ancho campo-selector-horario">
-        <label for="empleado-horario">Empleado</label>
-        <select
-          id="empleado-horario"
-          [value]="empleadoIdHorario() ?? ''"
-          (change)="seleccionarEmpleadoHorario($any($event.target).value)"
-        >
-          <option value="">Selecciona un empleado</option>
-          @for (empleado of empleadosActivos(); track empleado.id) {
-            <option [value]="empleado.id">{{ empleado.nombre }}</option>
-          }
-        </select>
-      </div>
-
-      @if (empleadoIdHorario()) {
-        @if (cargandoHorario()) {
+        @if (!empleadoIdHorario()) {
+          <p class="mensaje-estado">Elige un empleado para ver y editar su horario semanal.</p>
+        } @else if (cargandoHorario()) {
           <p class="mensaje-estado">Cargando horario...</p>
         } @else {
-          <ul class="lista-calendario">
+          <!-- Calendario visual: una columna por día operativo (martes a
+             domingo). El interruptor prende/apaga el día; con el día
+             prendido se ve un bloque de color con sus horas, apagado se ve
+             una columna "Libre" apagada. -->
+          <div class="calendario-semana">
             @for (dia of diasOperativos; track dia.valor) {
-              <li class="item-calendario">
-                <label class="dia-calendario-check">
-                  <input
-                    type="checkbox"
-                    [checked]="horarioForm()[dia.valor].trabaja"
-                    (change)="alternarDiaHorario(dia.valor)"
-                  />
-                  {{ dia.etiqueta }}
-                </label>
+              <div
+                class="dia-columna"
+                [class.dia-columna-activa]="horarioForm()[dia.valor].trabaja"
+              >
+                <div class="dia-columna-header">
+                  <span class="dia-columna-nombre">{{ dia.etiqueta }}</span>
+                  <label class="interruptor-dia">
+                    <input
+                      type="checkbox"
+                      [checked]="horarioForm()[dia.valor].trabaja"
+                      (change)="alternarDiaHorario(dia.valor)"
+                    />
+                    <span class="interruptor-pista">
+                      <span class="interruptor-perilla"></span>
+                    </span>
+                  </label>
+                </div>
                 @if (horarioForm()[dia.valor].trabaja) {
-                  <div class="dia-calendario-horas">
+                  <div class="dia-columna-bloque">
+                    <svg class="icono" aria-hidden="true"><use href="#ic-reloj" /></svg>
                     <input
                       type="time"
                       aria-label="Hora de entrada"
@@ -182,7 +272,7 @@
                         actualizarHoraHorario(dia.valor, 'horaEntrada', $any($event.target).value)
                       "
                     />
-                    <span class="dia-calendario-separador">a</span>
+                    <span class="dia-columna-flecha">→</span>
                     <input
                       type="time"
                       aria-label="Hora de salida"
@@ -193,11 +283,11 @@
                     />
                   </div>
                 } @else {
-                  <span class="dia-calendario-libre">Libre</span>
+                  <div class="dia-columna-libre">Libre</div>
                 }
-              </li>
+              </div>
             }
-          </ul>
+          </div>
 
           @if (errorHorario()) {
             <p class="mensaje-error">{{ errorHorario() }}</p>
@@ -215,92 +305,92 @@
             {{ guardandoHorario() ? 'Guardando...' : 'Guardar horario' }}
           </button>
         }
-      }
-    </section>
+      </section>
+    }
 
     <!-- ========================= SECCIÓN: HISTORIAL ============================ -->
-    <section class="seccion-asistencias">
-      <h2 class="titulo-seccion">Historial</h2>
-
-      <button type="button" class="boton-nuevo" (click)="abrirCapturaManual()">
-        + Registrar asistencia manual
-      </button>
-
-      <!-- FILTROS: rango de fechas y empleado. Cada cambio vuelve a consultar. -->
-      <div class="filtros-historial">
-        <div class="campo-filtro">
-          <label for="filtro-desde">Desde</label>
-          <input
-            id="filtro-desde"
-            type="date"
-            [value]="filtroDesde()"
-            (change)="cambiarFiltroDesde($any($event.target).value)"
-          />
-        </div>
-        <div class="campo-filtro">
-          <label for="filtro-hasta">Hasta</label>
-          <input
-            id="filtro-hasta"
-            type="date"
-            [value]="filtroHasta()"
-            (change)="cambiarFiltroHasta($any($event.target).value)"
-          />
-        </div>
-        <div class="campo-filtro campo-filtro-ancho">
-          <label for="filtro-empleado">Empleado</label>
-          <select
-            id="filtro-empleado"
-            [value]="filtroEmpleadoId() ?? ''"
-            (change)="cambiarFiltroEmpleado($any($event.target).value)"
-          >
-            <option value="">Todos</option>
-            @for (empleado of empleados(); track empleado.id) {
-              <option [value]="empleado.id">{{ empleado.nombre }}</option>
-            }
-          </select>
-        </div>
-      </div>
-
-      @if (hayFiltrosHistorial()) {
-        <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltrosHistorial()">
-          Limpiar filtros
+    @if (pestanaActiva() === 'historial') {
+      <section class="seccion-asistencias">
+        <button type="button" class="boton-nuevo" (click)="abrirCapturaManual()">
+          + Registrar asistencia manual
         </button>
-      }
 
-      @if (errorHistorial()) {
-        <p class="mensaje-estado mensaje-error">{{ errorHistorial() }}</p>
-      } @else if (cargandoHistorial()) {
-        <p class="mensaje-estado">Consultando historial...</p>
-      } @else if (asistencias().length === 0) {
-        <p class="mensaje-estado">No hay asistencias con esos filtros.</p>
-      } @else {
-        <ul class="lista-historial">
-          @for (a of asistencias(); track a.id) {
-            <li class="item-historial">
-              <div class="item-historial-encabezado">
-                <span class="item-historial-nombre">{{ a.empleado_nombre }}</span>
-                <span class="item-historial-fecha">{{ a.fecha | date: 'dd/MM/yyyy' }}</span>
-              </div>
-              <div class="item-historial-horas">
-                Entrada: {{ a.hora_entrada?.slice(0, 5) ?? '—' }} · Salida:
-                {{ a.hora_salida?.slice(0, 5) ?? '—' }}
-              </div>
-              @if (a.observaciones) {
-                <div class="item-historial-observaciones">{{ a.observaciones }}</div>
+        <!-- FILTROS: rango de fechas y empleado. Cada cambio vuelve a consultar. -->
+        <div class="filtros-historial">
+          <div class="campo-filtro">
+            <label for="filtro-desde">Desde</label>
+            <input
+              id="filtro-desde"
+              type="date"
+              [value]="filtroDesde()"
+              (change)="cambiarFiltroDesde($any($event.target).value)"
+            />
+          </div>
+          <div class="campo-filtro">
+            <label for="filtro-hasta">Hasta</label>
+            <input
+              id="filtro-hasta"
+              type="date"
+              [value]="filtroHasta()"
+              (change)="cambiarFiltroHasta($any($event.target).value)"
+            />
+          </div>
+          <div class="campo-filtro campo-filtro-ancho">
+            <label for="filtro-empleado">Empleado</label>
+            <select
+              id="filtro-empleado"
+              [value]="filtroEmpleadoId() ?? ''"
+              (change)="cambiarFiltroEmpleado($any($event.target).value)"
+            >
+              <option value="">Todos</option>
+              @for (empleado of empleados(); track empleado.id) {
+                <option [value]="empleado.id">{{ empleado.nombre }}</option>
               }
-              <div class="item-historial-pie">
-                <span class="item-historial-registrado-por">
-                  Registrado por {{ a.registrado_por_nombre ?? '—' }}
-                </span>
-                <button type="button" class="boton-enlace" (click)="abrirCorreccion(a)">
-                  Corregir
-                </button>
-              </div>
-            </li>
-          }
-        </ul>
-      }
-    </section>
+            </select>
+          </div>
+        </div>
+
+        @if (hayFiltrosHistorial()) {
+          <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltrosHistorial()">
+            Limpiar filtros
+          </button>
+        }
+
+        @if (errorHistorial()) {
+          <p class="mensaje-estado mensaje-error">{{ errorHistorial() }}</p>
+        } @else if (cargandoHistorial()) {
+          <p class="mensaje-estado">Consultando historial...</p>
+        } @else if (asistencias().length === 0) {
+          <p class="mensaje-estado">No hay asistencias con esos filtros.</p>
+        } @else {
+          <ul class="lista-historial">
+            @for (a of asistencias(); track a.id) {
+              <li class="item-historial">
+                <div class="item-historial-encabezado">
+                  <span class="item-historial-nombre">{{ a.empleado_nombre }}</span>
+                  <span class="item-historial-fecha">{{ a.fecha | date: 'dd/MM/yyyy' }}</span>
+                </div>
+                <div class="item-historial-horas">
+                  Entrada: {{ a.hora_entrada?.slice(0, 5) ?? '—' }} · Salida:
+                  {{ a.hora_salida?.slice(0, 5) ?? '—' }}
+                </div>
+                @if (a.observaciones) {
+                  <div class="item-historial-observaciones">{{ a.observaciones }}</div>
+                }
+                <div class="item-historial-pie">
+                  <span class="item-historial-registrado-por">
+                    Registrado por {{ a.registrado_por_nombre ?? '—' }}
+                  </span>
+                  <button type="button" class="boton-enlace" (click)="abrirCorreccion(a)">
+                    Corregir
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
   </div>
 
   <!-- VENTANA EMERGENTE: alta/edición de empleado. -->
