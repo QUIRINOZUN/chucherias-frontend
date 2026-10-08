@@ -271,9 +271,11 @@
                       </button>
                     }
                     <!-- ELECCIÓN (Fase 2 del recetario): salsa/topping/dip que el
-                         cliente elige de una lista — a diferencia de "Quitar", si
-                         la variante tiene un grupo de elección hay que completarlo
-                         antes de poder cobrar (ver puedeConfirmar() en pos.ts). -->
+                         cliente elige de una lista. Si el grupo exige un mínimo
+                         (la mayoría) hay que completarlo antes de poder cobrar
+                         (ver puedeConfirmar() en pos.ts); los grupos de elección
+                         libre (toppings de crepa/waffle, minimoSelecciones: 0)
+                         nunca bloquean el cobro. -->
                     @if (grupoEleccion(item.varianteId); as grupo) {
                       <button
                         type="button"
@@ -283,7 +285,9 @@
                         (click)="alternarPickerEleccion(item)"
                       >
                         {{ grupo.etiqueta }}
-                        @if (personalizacionCompleta(item)) {
+                        @if (grupo.permiteRepetidos) {
+                          ({{ totalElegidoGrupo(item, grupo) }}/{{ grupo.seleccionesPermitidas }})
+                        } @else if (personalizacionCompleta(item)) {
                           ✓
                         } @else {
                           (falta)
@@ -328,21 +332,59 @@
                   as grupo
                 ) {
                   <div class="lista-ingredientes-quitar">
-                    @if (grupo.seleccionesPermitidas > 1) {
+                    @if (grupo.permiteRepetidos) {
+                      <!-- Elección libre con repetidos (toppings de crepa/waffle):
+                           contador +/- por sabor en vez de casilla única, sin
+                           obligar a llegar al máximo. -->
                       <p class="aviso-eleccion-multiple">
-                        Elige {{ grupo.seleccionesPermitidas }} — llevas
-                        {{ item.eleccionesSeleccionadas.length }}
+                        Hasta {{ grupo.seleccionesPermitidas }} — llevas
+                        {{ totalElegidoGrupo(item, grupo) }}
                       </p>
-                    }
-                    @for (opcion of grupo.opciones; track opcion.insumo) {
-                      <label class="opcion-ingrediente">
-                        <input
-                          type="checkbox"
-                          [checked]="estaElegido(item, opcion)"
-                          (change)="alternarEleccion(item, grupo, opcion)"
-                        />
-                        {{ opcion.display }}
-                      </label>
+                      @for (opcion of grupo.opciones; track opcion.insumo) {
+                        <div class="opcion-contador">
+                          <span class="opcion-contador-nombre">{{ opcion.display }}</span>
+                          <div class="opcion-contador-controles">
+                            <button
+                              type="button"
+                              (click)="decrementarEleccionRepetible(item, grupo, opcion)"
+                              [disabled]="cantidadElegida(item, opcion) === 0"
+                              aria-label="Quitar uno"
+                            >
+                              <svg class="icono" aria-hidden="true"><use href="#ic-menos" /></svg>
+                            </button>
+                            <span class="opcion-contador-cantidad">{{
+                              cantidadElegida(item, opcion)
+                            }}</span>
+                            <button
+                              type="button"
+                              (click)="incrementarEleccionRepetible(item, grupo, opcion)"
+                              [disabled]="
+                                totalElegidoGrupo(item, grupo) >= grupo.seleccionesPermitidas
+                              "
+                              aria-label="Agregar uno"
+                            >
+                              <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
+                            </button>
+                          </div>
+                        </div>
+                      }
+                    } @else {
+                      @if (grupo.seleccionesPermitidas > 1) {
+                        <p class="aviso-eleccion-multiple">
+                          Elige {{ grupo.seleccionesPermitidas }} — llevas
+                          {{ item.eleccionesSeleccionadas.length }}
+                        </p>
+                      }
+                      @for (opcion of grupo.opciones; track opcion.insumo) {
+                        <label class="opcion-ingrediente">
+                          <input
+                            type="checkbox"
+                            [checked]="estaElegido(item, opcion)"
+                            (change)="alternarEleccion(item, grupo, opcion)"
+                          />
+                          {{ opcion.display }}
+                        </label>
+                      }
                     }
                   </div>
                 }

@@ -934,6 +934,71 @@
   cursor: pointer;
 }
 
+/* Contador +/- por sabor, para los grupos de elección que permiten repetir
+   (toppings de crepa/waffle, ej. "doble Nutella") — una fila completa en
+   vez de una casilla, para dejar espacio a los dos botones. */
+.opcion-contador {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 1 1 100%;
+  min-height: 44px;
+}
+
+.opcion-contador-nombre {
+  font-size: 0.85rem;
+  color: var(--pos-text-primary);
+}
+
+.opcion-contador-controles {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.opcion-contador-controles button {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--pos-bg-card);
+  color: var(--pos-text-primary);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.opcion-contador-controles button .icono {
+  width: 14px;
+  height: 14px;
+}
+
+.opcion-contador-controles button:hover:not(:disabled) {
+  background: var(--acento-suave);
+}
+
+.opcion-contador-controles button:active:not(:disabled) {
+  transform: scale(0.9);
+}
+
+.opcion-contador-controles button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.opcion-contador-cantidad {
+  min-width: 18px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--pos-text-primary);
+}
+
 .item-nombre {
   font-size: 0.95rem;
   font-weight: 700;

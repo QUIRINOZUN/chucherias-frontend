@@ -492,10 +492,67 @@ export class PosComponent implements OnInit, OnDestroy {
     return item.eleccionesSeleccionadas.some((e) => e.insumo === opcion.insumo);
   }
 
-  // Marca/desmarca una opción. Si el grupo solo permite 1 (la mayoría), elegir
-  // una opción nueva reemplaza cualquier otra del mismo grupo (comportamiento
-  // de radio). Si permite varias (toppings de crepa especial: 3), se acumulan
-  // hasta el máximo; un toque de más simplemente no hace nada.
+  // Cuántas veces está elegida ESTA opción en particular (para el contador
+  // +/- de los grupos que permiten repetir, ej. "doble Nutella").
+  cantidadElegida(item: ItemCarrito, opcion: OpcionEleccion): number {
+    return item.eleccionesSeleccionadas.filter((e) => e.insumo === opcion.insumo).length;
+  }
+
+  // Cuántas selecciones lleva el grupo en total (sumando repetidos) — para
+  // saber si ya llegó al máximo y para el aviso "llevas X de Y".
+  totalElegidoGrupo(item: ItemCarrito, grupo: GrupoEleccion): number {
+    const insumosDelGrupo = new Set(grupo.opciones.map((o) => o.insumo));
+    return item.eleccionesSeleccionadas.filter((e) => insumosDelGrupo.has(e.insumo)).length;
+  }
+
+  // Suma una unidad más de esta opción (grupos con permiteRepetidos, ej.
+  // toppings de crepa/waffle) — no hace nada si el grupo ya está en su
+  // máximo, sin importar de qué opción venga ese máximo.
+  incrementarEleccionRepetible(
+    item: ItemCarrito,
+    grupo: GrupoEleccion,
+    opcion: OpcionEleccion,
+  ): void {
+    this.carrito.update((items) =>
+      items.map((i) => {
+        if (i.id !== item.id || this.totalElegidoGrupo(i, grupo) >= grupo.seleccionesPermitidas) {
+          return i;
+        }
+        return { ...i, eleccionesSeleccionadas: [...i.eleccionesSeleccionadas, opcion] };
+      }),
+    );
+  }
+
+  // Quita una unidad de esta opción (la primera que encuentre) — no hace
+  // nada si no hay ninguna de esa opción elegida todavía.
+  decrementarEleccionRepetible(
+    item: ItemCarrito,
+    grupo: GrupoEleccion,
+    opcion: OpcionEleccion,
+  ): void {
+    this.carrito.update((items) =>
+      items.map((i) => {
+        if (i.id !== item.id) {
+          return i;
+        }
+        const indice = i.eleccionesSeleccionadas.findIndex((e) => e.insumo === opcion.insumo);
+        if (indice === -1) {
+          return i;
+        }
+        const copia = [...i.eleccionesSeleccionadas];
+        copia.splice(indice, 1);
+        return { ...i, eleccionesSeleccionadas: copia };
+      }),
+    );
+  }
+
+  // Marca/desmarca una opción — solo para grupos SIN `permiteRepetidos`
+  // (salsa, dip, ingrediente gratis, cacahuate: cada opción máximo una
+  // vez). Si el grupo solo permite 1 (la mayoría), elegir una opción nueva
+  // reemplaza cualquier otra del mismo grupo (comportamiento de radio). Si
+  // permite varias sin repetir (ej. 2-3 sabores de salsa en un paquete
+  // grande), se acumulan hasta el máximo; un toque de más simplemente no
+  // hace nada.
   alternarEleccion(item: ItemCarrito, grupo: GrupoEleccion, opcion: OpcionEleccion): void {
     this.carrito.update((items) =>
       items.map((i) => {
@@ -533,17 +590,18 @@ export class PosComponent implements OnInit, OnDestroy {
     );
   }
 
-  // true si la línea ya tiene todas las elecciones que su variante requiere
-  // (o si no requiere ninguna). Se usa para no dejar confirmar una venta con
-  // una elección a medias (ej. alitas sin salsa elegida).
+  // true si la línea ya tiene al menos el mínimo de elecciones que su
+  // variante requiere (o si no requiere ninguna, o si el grupo es de
+  // elección libre con minimoSelecciones: 0 — toppings de crepa/waffle,
+  // que nunca bloquean el cobro). Se usa para no dejar confirmar una venta
+  // con una elección a medias (ej. alitas sin salsa elegida).
   personalizacionCompleta(item: ItemCarrito): boolean {
     const grupo = this.grupoEleccion(item.varianteId);
     if (!grupo) {
       return true;
     }
-    const insumosDelGrupo = new Set(grupo.opciones.map((o) => o.insumo));
-    const elegidas = item.eleccionesSeleccionadas.filter((e) => insumosDelGrupo.has(e.insumo));
-    return elegidas.length === grupo.seleccionesPermitidas;
+    const minimo = grupo.minimoSelecciones ?? grupo.seleccionesPermitidas;
+    return this.totalElegidoGrupo(item, grupo) >= minimo;
   }
 
   // Guarda lo que se escribe en "Otras indicaciones" de esa línea.
@@ -564,7 +622,21 @@ export class PosComponent implements OnInit, OnDestroy {
       partes.push('Sin: ' + item.ingredientesQuitados.map((i) => i.display).join(', '));
     }
     if (item.eleccionesSeleccionadas.length > 0) {
-      partes.push('Con: ' + item.eleccionesSeleccionadas.map((e) => e.display).join(', '));
+      // Se agrupan por insumo para que un sabor elegido más de una vez
+      // (ej. "doble Nutella") salga como "Nutella ×2" y no repetido.
+      const conteos = new Map<string, { display: string; cantidad: number }>();
+      for (const eleccion of item.eleccionesSeleccionadas) {
+        const actual = conteos.get(eleccion.insumo);
+        if (actual) {
+          actual.cantidad += 1;
+        } else {
+          conteos.set(eleccion.insumo, { display: eleccion.display, cantidad: 1 });
+        }
+      }
+      const texto = [...conteos.values()]
+        .map((c) => (c.cantidad > 1 ? `${c.display} ×${c.cantidad}` : c.display))
+        .join(', ');
+      partes.push('Con: ' + texto);
     }
     if (item.notasLibres.trim()) {
       partes.push(item.notasLibres.trim());

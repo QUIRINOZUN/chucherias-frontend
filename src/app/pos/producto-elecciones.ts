@@ -32,10 +32,23 @@ export interface OpcionEleccion {
 export interface GrupoEleccion {
   // Texto que ve el cajero ("Salsa", "Topping (elige 1)", "Topping (elige 3)").
   etiqueta: string;
-  // Cuántas opciones de ESTE grupo debe elegir el cliente (casi siempre 1;
-  // las crepas/waffles "especiales" son 3, y los paquetes grandes de
-  // Alitas/Boneless reparten la salsa en 2 o 3 sabores — ver grupoSalsa).
+  // Cuántas opciones de ESTE grupo puede elegir el cliente COMO MÁXIMO (casi
+  // siempre 1; las crepas/waffles "especiales" hasta 3, y los paquetes
+  // grandes de Alitas/Boneless reparten la salsa en 2 o 3 sabores — ver
+  // grupoSalsa).
   seleccionesPermitidas: number;
+  // Mínimo de selecciones para considerar la línea completa (bloquea el
+  // cobro mientras no se alcance — ver personalizacionCompleta() en
+  // pos.ts). Por default = seleccionesPermitidas (exige llegar al exacto,
+  // el comportamiento histórico: salsa, dip, ingrediente gratis,
+  // cacahuate). 0 = elección totalmente libre/opcional (toppings de
+  // crepa/waffle: el cliente pide los que quiera hasta el máximo, sin
+  // obligación de completarlo).
+  minimoSelecciones?: number;
+  // true si se puede elegir la MISMA opción más de una vez (ej. "doble
+  // Nutella") — el selector pasa de casillas a un contador +/- por opción.
+  // Por default false (checkbox único: cada opción solo una vez).
+  permiteRepetidos?: boolean;
   opciones: OpcionEleccion[];
 }
 
@@ -99,10 +112,17 @@ const TOPPINGS_CREPAS_WAFFLES: Omit<OpcionEleccion, 'cantidad' | 'unidad'>[] = [
   { display: 'Lunetas', insumo: 'Lunetas' },
 ];
 
-function grupoTopping(seleccionesPermitidas: number, cantidadCadaUno: number): GrupoEleccion {
+// 2026-10-08: el usuario pidió que la elección de toppings fuera "más
+// libre" en vez de exigir un número exacto — ahora `maximo` es un tope, no
+// una obligación (minimoSelecciones: 0, se puede pedir desde 0 toppings),
+// y cada sabor se puede repetir (permiteRepetidos) para pedir, por
+// ejemplo, "doble Nutella".
+function grupoTopping(maximo: number, cantidadCadaUno: number): GrupoEleccion {
   return {
-    etiqueta: seleccionesPermitidas === 1 ? 'Topping' : `Toppings (elige ${seleccionesPermitidas})`,
-    seleccionesPermitidas,
+    etiqueta: maximo === 1 ? 'Topping (opcional)' : `Toppings (hasta ${maximo})`,
+    seleccionesPermitidas: maximo,
+    minimoSelecciones: 0,
+    permiteRepetidos: true,
     opciones: TOPPINGS_CREPAS_WAFFLES.map((t) => ({
       ...t,
       cantidad: cantidadCadaUno,
@@ -202,10 +222,12 @@ const ELECCIONES_POR_VARIANTE: Record<number, GrupoEleccion[]> = {
   // (mejor no inventar opciones que el negocio no confirmó).
   63: [grupoDipRanchCatsup(15)],
 
-  // Crepa/Waffle Sencillo: 1 topping de 30 g.
+  // Crepa/Waffle Sencillo: hasta 1 topping de 30 g (opcional, se puede
+  // pedir sin ninguno).
   68: [grupoTopping(1, 30)],
   69: [grupoTopping(1, 30)],
-  // Crepa/Waffle Especial: 3 toppings de 30 g cada uno.
+  // Crepa/Waffle Especial: hasta 3 toppings de 30 g cada uno (opcional;
+  // se puede repetir el mismo sabor, ej. "doble Nutella").
   72: [grupoTopping(3, 30)],
   73: [grupoTopping(3, 30)],
 };
