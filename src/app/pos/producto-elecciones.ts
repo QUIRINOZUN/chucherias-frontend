@@ -144,6 +144,21 @@ function grupoDipRanchCatsup(cantidad: number): GrupoEleccion {
   };
 }
 
+// Tipo de cacahuate a elección (Pepihuates, Picamix, Miche-Papas y
+// Clamato Preparado usan la cantidad fija genérica en vez de este grupo —
+// solo Pepihuates/Picamix lo ofrecen como elección real).
+function grupoCacahuateTipo(cantidad: number): GrupoEleccion {
+  return {
+    etiqueta: 'Cacahuate',
+    seleccionesPermitidas: 1,
+    opciones: [
+      { display: 'Japonés', insumo: 'Cacahuate japonés', cantidad, unidad: 'g' },
+      { display: 'Salado', insumo: 'Cacahuate salado', cantidad, unidad: 'g' },
+      { display: 'Enchilado', insumo: 'Cacahuate enchilado', cantidad, unidad: 'g' },
+    ],
+  };
+}
+
 // Sabor de helado a elección (Fresas con Crema Ice Cream, Crepa/Waffle
 // Especial — confirmado 2026-10-08). Los 3 sabores nuevos (fresa, oreo,
 // chocolate) se dieron de alta como insumo en Inventario junto con esta
@@ -293,29 +308,17 @@ const ELECCIONES_POR_VARIANTE: Record<number, GrupoEleccion[]> = {
   43: [grupoDipRanchCatsup(10)],
   44: [grupoDipRanchCatsup(20)],
 
-  // Pepihuates: tipo de cacahuate.
-  45: [
-    {
-      etiqueta: 'Cacahuate',
-      seleccionesPermitidas: 1,
-      opciones: [
-        { display: 'Japonés', insumo: 'Cacahuate japonés', cantidad: 100, unidad: 'g' },
-        { display: 'Salado', insumo: 'Cacahuate salado', cantidad: 100, unidad: 'g' },
-        { display: 'Enchilado', insumo: 'Cacahuate enchilado', cantidad: 100, unidad: 'g' },
-      ],
-    },
-  ],
-  46: [
-    {
-      etiqueta: 'Cacahuate',
-      seleccionesPermitidas: 1,
-      opciones: [
-        { display: 'Japonés', insumo: 'Cacahuate japonés', cantidad: 150, unidad: 'g' },
-        { display: 'Salado', insumo: 'Cacahuate salado', cantidad: 150, unidad: 'g' },
-        { display: 'Enchilado', insumo: 'Cacahuate enchilado', cantidad: 150, unidad: 'g' },
-      ],
-    },
-  ],
+  // Pepihuates y Picamix: tipo de cacahuate (el menú real dice "cacahuate
+  // japonés" como base de Pepihuates y "cacahuate de tu elección" en
+  // Picamix — se trata igual en ambos). NOTA DE PRECIO pendiente, sin
+  // tocar: el menú marca "cacahuate diferente" con un recargo de +$5 que
+  // el sistema hoy no soporta por elección — esta elección queda sin
+  // diferencia de precio entre sabores hasta que eso se resuelva con
+  // Ximena (ver CLAUDE.md).
+  45: [grupoCacahuateTipo(100)], // Pepihuates Chico
+  46: [grupoCacahuateTipo(150)], // Pepihuates Mediano
+  47: [grupoCacahuateTipo(100)], // Picamix Chico
+  48: [grupoCacahuateTipo(150)], // Picamix Mediano
 
   // Tornado (2026-10-08): el menú real NO es una papa — es un cóctel de
   // frutas (corregido en receta_insumos de la variante 63: antes tenía
