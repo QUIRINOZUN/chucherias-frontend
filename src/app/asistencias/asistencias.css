@@ -478,6 +478,266 @@
 }
 
 /* ---- Sección Horarios (calendario semanal) ---- */
+
+/* Sub-pestañas DENTRO de Horarios (2026-10-08): más chicas que las
+   principales (.tabs-asistencias) para que se note que son un nivel de
+   navegación secundario, mismo lenguaje visual (pastilla, naranja activo). */
+.subtabs-horario {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--pos-border);
+  overflow-x: auto;
+}
+
+.subtab-horario {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.subtab-horario-activa {
+  background: var(--action-primary);
+  color: #fff;
+}
+
+/* Navegación de periodo (mes/semana), compartida entre las sub-vistas Mes y
+   Horas trabajadas. */
+.nav-periodo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.boton-nav-periodo {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--pos-bg-card);
+  box-shadow: var(--sombra-suave);
+  color: var(--pos-text-primary);
+  cursor: pointer;
+}
+
+.boton-nav-periodo .icono {
+  width: 16px;
+  height: 16px;
+  transform: rotate(90deg);
+}
+
+.boton-nav-periodo-siguiente .icono {
+  transform: rotate(-90deg);
+}
+
+.nav-periodo-titulo {
+  min-width: 140px;
+  text-align: center;
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: capitalize;
+}
+
+/* Calendario del mes: tabla con la columna de empleado fija y los días con
+   scroll horizontal (hasta 31 columnas no caben en ninguna pantalla). */
+.tabla-mes-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-md);
+  margin-bottom: 14px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabla-mes {
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.tabla-mes th,
+.tabla-mes td {
+  width: 28px;
+  height: 36px;
+  border: 1px solid var(--pos-border);
+  font-size: 0.68rem;
+  color: var(--pos-text-secondary);
+  text-align: center;
+  padding: 0;
+}
+
+.tabla-mes thead th {
+  position: sticky;
+  top: 0;
+  background: var(--pos-bg-card);
+  font-weight: 700;
+  z-index: 2;
+}
+
+.columna-empleado-fija {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  width: 120px !important;
+  min-width: 120px;
+  background: var(--pos-bg-card);
+  padding: 0 10px !important;
+  text-align: left !important;
+  font-size: 0.78rem !important;
+  font-weight: 600;
+  color: var(--pos-text-primary) !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+thead .columna-empleado-fija {
+  z-index: 4;
+}
+
+.columna-hoy {
+  background: color-mix(in srgb, var(--action-primary) 12%, var(--pos-bg-card));
+}
+
+.columna-cerrada {
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+}
+
+.celda-trabaja {
+  background: color-mix(in srgb, var(--action-success) 55%, var(--pos-bg-card));
+}
+
+td.celda-cerrada {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--pos-bg-main),
+    var(--pos-bg-main) 4px,
+    var(--pos-border) 4px,
+    var(--pos-border) 5px
+  );
+}
+
+.leyenda-mes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 14px;
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+}
+
+.leyenda-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.leyenda-punto {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.leyenda-trabaja {
+  background: color-mix(in srgb, var(--action-success) 55%, var(--pos-bg-card));
+}
+
+.leyenda-descanso {
+  background: var(--pos-bg-card);
+  border: 1px solid var(--pos-border);
+}
+
+.leyenda-cerrado {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--pos-bg-main),
+    var(--pos-bg-main) 3px,
+    var(--pos-border) 3px,
+    var(--pos-border) 4px
+  );
+}
+
+/* Resumen de horas trabajadas por semana. */
+.resumen-horas-total {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: var(--radio-lg);
+  background: var(--pos-bg-card);
+  box-shadow: var(--sombra-suave);
+}
+
+.resumen-horas-total-numero {
+  font-family: var(--fuente-titulo);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--pos-text-primary);
+}
+
+.resumen-horas-total-etiqueta {
+  font-size: 0.82rem;
+  color: var(--pos-text-secondary);
+}
+
+.lista-resumen-horas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item-resumen-horas {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: 12px 16px;
+}
+
+.resumen-nombre {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.resumen-horas-numero {
+  font-family: var(--fuente-titulo);
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--pos-text-primary);
+  text-align: right;
+}
+
+.resumen-detalle {
+  grid-column: 1 / -1;
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+}
+
 .campo-selector-horario {
   margin-bottom: 14px;
 }

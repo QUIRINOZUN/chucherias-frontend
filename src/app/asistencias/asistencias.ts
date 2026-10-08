@@ -11,10 +11,18 @@
 //      si ese empleado ya tiene un registro abierto hoy (asistenciasHoy).
 //   2. EMPLEADOS: alta, edición y activar/desactivar — mismo patrón de
 //      formulario único crear/editar que ya usa usuarios/usuarios.ts.
-//   3. HORARIOS: calendario SEMANAL recurrente (sin fecha propia, se repite
-//      cada semana) — se elige un empleado y se marca qué días trabaja con
-//      sus horas; "Guardar" reemplaza TODO su horario de una vez (ver
-//      routes/horarios.js). Es informativo por ahora, no calcula retardos.
+//   3. HORARIOS: tres sub-vistas (2026-10-08) —
+//      (a) Editar: horario SEMANAL recurrente de UN empleado (sin fecha
+//          propia, se repite cada semana); "Guardar" reemplaza TODO su
+//          horario de una vez (ver routes/horarios.js).
+//      (b) Mes: calendario del mes con TODOS los empleados activos a la
+//          vez — quién trabaja cada día, armado en el cliente cruzando el
+//          día de la semana de cada fecha contra el horario de cada
+//          empleado (no hace falta un endpoint nuevo).
+//      (c) Horas: resumen de horas trabajadas REALES por semana (de
+//          `asistencias`, no de lo planeado), también todos los empleados
+//          juntos. Sigue sin calcular retardos (horario vs. hora real de
+//          entrada) — eso queda pendiente, ver CLAUDE.md.
 //   4. HISTORIAL: filtros de fecha/empleado + un formulario (el mismo que la
 //      captura manual) para corregir un registro ya existente.
 //
@@ -27,7 +35,7 @@
 // corregir cualquier registro (automático o manual) que haya quedado mal.
 // =============================================================================
 import { Component, OnInit, computed, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
@@ -40,7 +48,7 @@ import {
 } from '../core/asistencias';
 import { DatosEmpleado, Empleado, EmpleadosService } from '../core/empleados';
 import { Usuario, UsuariosService } from '../core/usuarios';
-import { DiaHorario, DiaSemana, HorariosService } from '../core/horarios';
+import { DiaHorario, DiaSemana, Horario, HorariosService } from '../core/horarios';
 import { ThemeService } from '../core/theme';
 
 // Días que opera el negocio (martes a domingo, cerrado lunes — ver
@@ -62,6 +70,93 @@ interface DiaFormHorario {
   horaSalida: string;
 }
 
+// ---- Calendario del mes (2026-10-08) --------------------------------------
+// Índice de JS Date.getDay() (0 = domingo … 6 = sábado) al día de la semana
+// del modelo; null en el índice 1 (lunes) porque el negocio no opera ese
+// día — el calendario del mes lo muestra como "Cerrado", nunca como
+// "Descanso" (son cosas distintas: cerrado es de TODO el negocio, descanso
+// es de un empleado en particular un día que sí se opera).
+const DIA_SEMANA_POR_INDICE: (DiaSemana | null)[] = [
+  'domingo',
+  null,
+  'martes',
+  'miercoles',
+  'jueves',
+  'viernes',
+  'sabado',
+];
+
+const NOMBRES_MES = [
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+];
+
+const NOMBRES_MES_CORTO = [
+  'ene',
+  'feb',
+  'mar',
+  'abr',
+  'may',
+  'jun',
+  'jul',
+  'ago',
+  'sep',
+  'oct',
+  'nov',
+  'dic',
+];
+
+// Una columna del calendario del mes.
+interface DiaCalendarioMes {
+  numero: number;
+  diaSemana: DiaSemana | null;
+  esHoy: boolean;
+}
+
+// ---- Horas trabajadas por semana (2026-10-08) ------------------------------
+// Total de un empleado en la semana visible, calculado sobre asistencias
+// REALES (no sobre lo planeado en `horarios`).
+interface ResumenHorasEmpleado {
+  empleado_id: number;
+  nombre: string;
+  horas: number;
+  turnos: number;
+  // Turnos con hora_entrada pero sin hora_salida todavía (no se suman a
+  // `horas`, pero importa que no se pierdan de vista: alguien olvidó
+  // cerrar, o sigue trabajando ahora mismo).
+  turnosAbiertos: number;
+}
+
+// Diferencia en horas entre dos horas "HH:MM" o "HH:MM:SS" del MISMO día
+// (el negocio no tiene turnos que crucen la medianoche).
+function horasEntreHoras(horaInicio: string, horaFin: string): number {
+  const minutos = (h: string) => {
+    const [hh, mm] = h.split(':').map(Number);
+    return hh * 60 + mm;
+  };
+  return (minutos(horaFin) - minutos(horaInicio)) / 60;
+}
+
+// "AAAA-MM-DD" en hora LOCAL — nunca toISOString(), que corre la fecha un
+// día con el offset negativo de México (mismo criterio que ya usa todo el
+// backend, ver utils/fecha.js).
+function formatoFechaLocal(fecha: Date): string {
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${anio}-${mes}-${dia}`;
+}
+
 type ModoFormularioEmpleado = 'crear' | 'editar' | null;
 type ModoFormularioAsistencia = 'crear' | 'editar' | null;
 
@@ -73,7 +168,7 @@ type Pestana = 'hoy' | 'empleados' | 'horarios' | 'historial';
 @Component({
   selector: 'app-asistencias',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, DecimalPipe],
   templateUrl: './asistencias.html',
   styleUrl: './asistencias.css',
 })
@@ -142,6 +237,8 @@ export class AsistenciasComponent implements OnInit {
     this.cargarHoy();
     this.cargarHistorial();
     this.cargarUsuariosDisponibles();
+    this.cargarTodosLosHorarios();
+    this.cargarHorasSemana();
   }
 
   // Cuentas que se pueden ligar a un empleado en el formulario de alta/
@@ -317,6 +414,17 @@ export class AsistenciasComponent implements OnInit {
   // =====================================================================
   diasOperativos = DIAS_OPERATIVOS;
 
+  // Sub-navegación DENTRO de la pestaña Horarios (2026-10-08): editar el
+  // horario de un empleado (lo que ya existía), ver el calendario del mes
+  // con todos los empleados juntos, o el resumen de horas trabajadas por
+  // semana — mismo criterio de pestañas que el resto de la pantalla, para
+  // no apilar las tres vistas en un solo scroll.
+  subVistaHorario = signal<'editar' | 'mes' | 'horas'>('editar');
+
+  cambiarSubVistaHorario(vista: 'editar' | 'mes' | 'horas'): void {
+    this.subVistaHorario.set(vista);
+  }
+
   empleadoIdHorario = signal<number | null>(null);
   // Un registro por día operativo; se inicializa vacío y se llena al elegir
   // un empleado (cargarHorario). record en vez de Map para que la plantilla
@@ -429,6 +537,177 @@ export class AsistenciasComponent implements OnInit {
         this.errorHorario.set(error.error?.error || 'No se pudo guardar el horario.');
       },
     });
+  }
+
+  // =====================================================================
+  // HORARIOS — CALENDARIO DEL MES (todos los empleados, 2026-10-08)
+  // =====================================================================
+  // A diferencia del editor de arriba (un empleado a la vez), aquí se ve
+  // quién trabaja cada día del mes, para TODOS los empleados activos al
+  // mismo tiempo — útil para planear turnos de un vistazo. Se arma
+  // enteramente en el cliente a partir de `horarios` (recurrente, sin
+  // fecha propia): para cada día del mes se calcula su día de la semana y
+  // se cruza contra el horario de cada empleado — no hace falta ningún
+  // endpoint nuevo, GET /api/horarios sin empleado_id ya trae todo.
+  todosLosHorarios = signal<Horario[]>([]);
+  mesVisible = signal(this.inicioDeMes(new Date()));
+
+  private inicioDeMes(fecha: Date): { anio: number; mes: number } {
+    return { anio: fecha.getFullYear(), mes: fecha.getMonth() };
+  }
+
+  nombreMesVisible = computed(() => {
+    const { anio, mes } = this.mesVisible();
+    return `${NOMBRES_MES[mes]} ${anio}`;
+  });
+
+  diasDelMesVisible = computed<DiaCalendarioMes[]>(() => {
+    const { anio, mes } = this.mesVisible();
+    const totalDias = new Date(anio, mes + 1, 0).getDate();
+    const hoy = new Date();
+    const dias: DiaCalendarioMes[] = [];
+    for (let numero = 1; numero <= totalDias; numero++) {
+      const fecha = new Date(anio, mes, numero);
+      dias.push({
+        numero,
+        diaSemana: DIA_SEMANA_POR_INDICE[fecha.getDay()],
+        esHoy:
+          fecha.getFullYear() === hoy.getFullYear() &&
+          fecha.getMonth() === hoy.getMonth() &&
+          fecha.getDate() === hoy.getDate(),
+      });
+    }
+    return dias;
+  });
+
+  // Mapa `empleadoId-diaSemana` → su horario, para no recorrer
+  // todosLosHorarios() una vez por cada celda de la tabla (empleados × días
+  // del mes puede ser varios cientos de celdas).
+  private horariosPorEmpleadoYDia = computed(() => {
+    const mapa = new Map<string, Horario>();
+    for (const h of this.todosLosHorarios()) {
+      mapa.set(`${h.empleado_id}-${h.dia_semana}`, h);
+    }
+    return mapa;
+  });
+
+  horarioDeEseDia(empleadoId: number, diaSemana: DiaSemana | null): Horario | null {
+    if (!diaSemana) {
+      return null;
+    }
+    return this.horariosPorEmpleadoYDia().get(`${empleadoId}-${diaSemana}`) ?? null;
+  }
+
+  mesAnterior(): void {
+    const { anio, mes } = this.mesVisible();
+    this.mesVisible.set(this.inicioDeMes(new Date(anio, mes - 1, 1)));
+  }
+
+  mesSiguiente(): void {
+    const { anio, mes } = this.mesVisible();
+    this.mesVisible.set(this.inicioDeMes(new Date(anio, mes + 1, 1)));
+  }
+
+  private cargarTodosLosHorarios(): void {
+    this.horariosService.listar().subscribe({
+      next: (horarios) => this.todosLosHorarios.set(horarios),
+      error: () => {
+        // El calendario del mes simplemente sale vacío; el resto de la
+        // pantalla sigue funcionando.
+      },
+    });
+  }
+
+  // =====================================================================
+  // HORARIOS — HORAS TRABAJADAS POR SEMANA (todos los empleados, real,
+  // 2026-10-08)
+  // =====================================================================
+  // A diferencia del calendario (lo PLANEADO), esto suma asistencias REALES
+  // de la semana visible (hora_entrada/hora_salida ya registradas). Un
+  // turno sin hora_salida todavía no se suma a las horas — se cuenta aparte
+  // como "sin cerrar" para que no se pierda de vista (alguien olvidó cerrar
+  // sesión, o sigue trabajando en este momento).
+  semanaVisibleInicio = signal(this.lunesDeLaSemana(new Date()));
+  asistenciasSemana = signal<Asistencia[]>([]);
+  cargandoHorasSemana = signal(false);
+
+  private lunesDeLaSemana(fecha: Date): Date {
+    const d = new Date(fecha);
+    const dia = d.getDay(); // 0 = domingo … 6 = sábado
+    const diferencia = dia === 0 ? -6 : 1 - dia;
+    d.setDate(d.getDate() + diferencia);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  rangoSemanaVisible = computed(() => {
+    const inicio = this.semanaVisibleInicio();
+    const fin = new Date(inicio);
+    fin.setDate(fin.getDate() + 6);
+    return { inicio, fin };
+  });
+
+  textoRangoSemanaVisible = computed(() => {
+    const { inicio, fin } = this.rangoSemanaVisible();
+    const formato = (f: Date) => `${f.getDate()} ${NOMBRES_MES_CORTO[f.getMonth()]}`;
+    return `${formato(inicio)} – ${formato(fin)}`;
+  });
+
+  resumenHorasSemana = computed<ResumenHorasEmpleado[]>(() => {
+    const mapa = new Map<number, ResumenHorasEmpleado>();
+    for (const a of this.asistenciasSemana()) {
+      if (!mapa.has(a.empleado_id)) {
+        mapa.set(a.empleado_id, {
+          empleado_id: a.empleado_id,
+          nombre: a.empleado_nombre,
+          horas: 0,
+          turnos: 0,
+          turnosAbiertos: 0,
+        });
+      }
+      const resumen = mapa.get(a.empleado_id)!;
+      if (a.hora_entrada && a.hora_salida) {
+        resumen.horas += horasEntreHoras(a.hora_entrada, a.hora_salida);
+        resumen.turnos += 1;
+      } else if (a.hora_entrada && !a.hora_salida) {
+        resumen.turnosAbiertos += 1;
+      }
+    }
+    return [...mapa.values()].sort((a, b) => a.nombre.localeCompare(b.nombre));
+  });
+
+  totalHorasSemana = computed(() =>
+    this.resumenHorasSemana().reduce((total, r) => total + r.horas, 0),
+  );
+
+  semanaAnterior(): void {
+    const inicio = new Date(this.semanaVisibleInicio());
+    inicio.setDate(inicio.getDate() - 7);
+    this.semanaVisibleInicio.set(inicio);
+    this.cargarHorasSemana();
+  }
+
+  semanaSiguiente(): void {
+    const inicio = new Date(this.semanaVisibleInicio());
+    inicio.setDate(inicio.getDate() + 7);
+    this.semanaVisibleInicio.set(inicio);
+    this.cargarHorasSemana();
+  }
+
+  cargarHorasSemana(): void {
+    this.cargandoHorasSemana.set(true);
+    const { inicio, fin } = this.rangoSemanaVisible();
+    this.asistenciasService
+      .listar({ desde: formatoFechaLocal(inicio), hasta: formatoFechaLocal(fin) })
+      .subscribe({
+        next: (asistencias) => {
+          this.asistenciasSemana.set(asistencias);
+          this.cargandoHorasSemana.set(false);
+        },
+        error: () => {
+          this.cargandoHorasSemana.set(false);
+        },
+      });
   }
 
   // =====================================================================

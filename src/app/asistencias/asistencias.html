@@ -219,91 +219,259 @@
     <!-- ========================== SECCIÓN: HORARIOS ============================ -->
     @if (pestanaActiva() === 'horarios') {
       <section class="seccion-asistencias">
-        <div class="campo-filtro campo-filtro-ancho campo-selector-horario">
-          <label for="empleado-horario">Empleado</label>
-          <select
-            id="empleado-horario"
-            [value]="empleadoIdHorario() ?? ''"
-            (change)="seleccionarEmpleadoHorario($any($event.target).value)"
-          >
-            <option value="">Selecciona un empleado</option>
-            @for (empleado of empleadosActivos(); track empleado.id) {
-              <option [value]="empleado.id">{{ empleado.nombre }}</option>
-            }
-          </select>
-        </div>
-
-        @if (!empleadoIdHorario()) {
-          <p class="mensaje-estado">Elige un empleado para ver y editar su horario semanal.</p>
-        } @else if (cargandoHorario()) {
-          <p class="mensaje-estado">Cargando horario...</p>
-        } @else {
-          <!-- Calendario visual: una columna por día operativo (martes a
-             domingo). El interruptor prende/apaga el día; con el día
-             prendido se ve un bloque de color con sus horas, apagado se ve
-             una columna "Libre" apagada. -->
-          <div class="calendario-semana">
-            @for (dia of diasOperativos; track dia.valor) {
-              <div
-                class="dia-columna"
-                [class.dia-columna-activa]="horarioForm()[dia.valor].trabaja"
-              >
-                <div class="dia-columna-header">
-                  <span class="dia-columna-nombre">{{ dia.etiqueta }}</span>
-                  <label class="interruptor-dia">
-                    <input
-                      type="checkbox"
-                      [checked]="horarioForm()[dia.valor].trabaja"
-                      (change)="alternarDiaHorario(dia.valor)"
-                    />
-                    <span class="interruptor-pista">
-                      <span class="interruptor-perilla"></span>
-                    </span>
-                  </label>
-                </div>
-                @if (horarioForm()[dia.valor].trabaja) {
-                  <div class="dia-columna-bloque">
-                    <svg class="icono" aria-hidden="true"><use href="#ic-reloj" /></svg>
-                    <input
-                      type="time"
-                      aria-label="Hora de entrada"
-                      [value]="horarioForm()[dia.valor].horaEntrada"
-                      (input)="
-                        actualizarHoraHorario(dia.valor, 'horaEntrada', $any($event.target).value)
-                      "
-                    />
-                    <span class="dia-columna-flecha">→</span>
-                    <input
-                      type="time"
-                      aria-label="Hora de salida"
-                      [value]="horarioForm()[dia.valor].horaSalida"
-                      (input)="
-                        actualizarHoraHorario(dia.valor, 'horaSalida', $any($event.target).value)
-                      "
-                    />
-                  </div>
-                } @else {
-                  <div class="dia-columna-libre">Libre</div>
-                }
-              </div>
-            }
-          </div>
-
-          @if (errorHorario()) {
-            <p class="mensaje-error">{{ errorHorario() }}</p>
-          }
-          @if (exitoHorario()) {
-            <p class="mensaje-exito">{{ exitoHorario() }}</p>
-          }
-
+        <!-- SUB-PESTAÑAS (2026-10-08): editar el horario de un empleado, ver el
+             calendario del mes con todos juntos, o el resumen de horas reales
+             trabajadas por semana. -->
+        <nav class="subtabs-horario" role="tablist">
           <button
             type="button"
-            class="boton-nuevo"
-            [disabled]="!puedeGuardarHorario()"
-            (click)="guardarHorario()"
+            class="subtab-horario"
+            [class.subtab-horario-activa]="subVistaHorario() === 'editar'"
+            (click)="cambiarSubVistaHorario('editar')"
           >
-            {{ guardandoHorario() ? 'Guardando...' : 'Guardar horario' }}
+            Editar
           </button>
+          <button
+            type="button"
+            class="subtab-horario"
+            [class.subtab-horario-activa]="subVistaHorario() === 'mes'"
+            (click)="cambiarSubVistaHorario('mes')"
+          >
+            Mes
+          </button>
+          <button
+            type="button"
+            class="subtab-horario"
+            [class.subtab-horario-activa]="subVistaHorario() === 'horas'"
+            (click)="cambiarSubVistaHorario('horas')"
+          >
+            Horas trabajadas
+          </button>
+        </nav>
+
+        <!-- ---- Sub-vista: EDITAR (un empleado a la vez, ya existía) ---- -->
+        @if (subVistaHorario() === 'editar') {
+          <div class="campo-filtro campo-filtro-ancho campo-selector-horario">
+            <label for="empleado-horario">Empleado</label>
+            <select
+              id="empleado-horario"
+              [value]="empleadoIdHorario() ?? ''"
+              (change)="seleccionarEmpleadoHorario($any($event.target).value)"
+            >
+              <option value="">Selecciona un empleado</option>
+              @for (empleado of empleadosActivos(); track empleado.id) {
+                <option [value]="empleado.id">{{ empleado.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          @if (!empleadoIdHorario()) {
+            <p class="mensaje-estado">Elige un empleado para ver y editar su horario semanal.</p>
+          } @else if (cargandoHorario()) {
+            <p class="mensaje-estado">Cargando horario...</p>
+          } @else {
+            <!-- Calendario visual: una columna por día operativo (martes a
+               domingo). El interruptor prende/apaga el día; con el día
+               prendido se ve un bloque de color con sus horas, apagado se ve
+               una columna "Descanso" apagada. -->
+            <div class="calendario-semana">
+              @for (dia of diasOperativos; track dia.valor) {
+                <div
+                  class="dia-columna"
+                  [class.dia-columna-activa]="horarioForm()[dia.valor].trabaja"
+                >
+                  <div class="dia-columna-header">
+                    <span class="dia-columna-nombre">{{ dia.etiqueta }}</span>
+                    <label class="interruptor-dia">
+                      <input
+                        type="checkbox"
+                        [checked]="horarioForm()[dia.valor].trabaja"
+                        (change)="alternarDiaHorario(dia.valor)"
+                      />
+                      <span class="interruptor-pista">
+                        <span class="interruptor-perilla"></span>
+                      </span>
+                    </label>
+                  </div>
+                  @if (horarioForm()[dia.valor].trabaja) {
+                    <div class="dia-columna-bloque">
+                      <svg class="icono" aria-hidden="true"><use href="#ic-reloj" /></svg>
+                      <input
+                        type="time"
+                        aria-label="Hora de entrada"
+                        [value]="horarioForm()[dia.valor].horaEntrada"
+                        (input)="
+                          actualizarHoraHorario(dia.valor, 'horaEntrada', $any($event.target).value)
+                        "
+                      />
+                      <span class="dia-columna-flecha">→</span>
+                      <input
+                        type="time"
+                        aria-label="Hora de salida"
+                        [value]="horarioForm()[dia.valor].horaSalida"
+                        (input)="
+                          actualizarHoraHorario(dia.valor, 'horaSalida', $any($event.target).value)
+                        "
+                      />
+                    </div>
+                  } @else {
+                    <div class="dia-columna-libre">Descanso</div>
+                  }
+                </div>
+              }
+            </div>
+
+            @if (errorHorario()) {
+              <p class="mensaje-error">{{ errorHorario() }}</p>
+            }
+            @if (exitoHorario()) {
+              <p class="mensaje-exito">{{ exitoHorario() }}</p>
+            }
+
+            <button
+              type="button"
+              class="boton-nuevo"
+              [disabled]="!puedeGuardarHorario()"
+              (click)="guardarHorario()"
+            >
+              {{ guardandoHorario() ? 'Guardando...' : 'Guardar horario' }}
+            </button>
+          }
+        }
+
+        <!-- ---- Sub-vista: MES (todos los empleados juntos) ---- -->
+        @if (subVistaHorario() === 'mes') {
+          <div class="nav-periodo">
+            <button
+              type="button"
+              class="boton-nav-periodo"
+              (click)="mesAnterior()"
+              aria-label="Mes anterior"
+            >
+              <svg class="icono" aria-hidden="true"><use href="#ic-chevron" /></svg>
+            </button>
+            <span class="nav-periodo-titulo">{{ nombreMesVisible() }}</span>
+            <button
+              type="button"
+              class="boton-nav-periodo boton-nav-periodo-siguiente"
+              (click)="mesSiguiente()"
+              aria-label="Mes siguiente"
+            >
+              <svg class="icono" aria-hidden="true"><use href="#ic-chevron" /></svg>
+            </button>
+          </div>
+
+          @if (empleadosActivos().length === 0) {
+            <p class="mensaje-estado">No hay empleados activos todavía.</p>
+          } @else {
+            <div class="tabla-mes-scroll">
+              <table class="tabla-mes">
+                <thead>
+                  <tr>
+                    <th class="columna-empleado-fija">Empleado</th>
+                    @for (dia of diasDelMesVisible(); track dia.numero) {
+                      <th [class.columna-hoy]="dia.esHoy" [class.columna-cerrada]="!dia.diaSemana">
+                        {{ dia.numero }}
+                      </th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (empleado of empleadosActivos(); track empleado.id) {
+                    <tr>
+                      <td class="columna-empleado-fija">{{ empleado.nombre }}</td>
+                      @for (dia of diasDelMesVisible(); track dia.numero) {
+                        @if (horarioDeEseDia(empleado.id, dia.diaSemana); as horario) {
+                          <td
+                            class="celda-trabaja"
+                            [class.columna-hoy]="dia.esHoy"
+                            [title]="
+                              empleado.nombre +
+                              ': ' +
+                              horario.hora_entrada.slice(0, 5) +
+                              ' - ' +
+                              horario.hora_salida.slice(0, 5)
+                            "
+                          ></td>
+                        } @else {
+                          <td
+                            [class.celda-cerrada]="!dia.diaSemana"
+                            [class.columna-hoy]="dia.esHoy"
+                            [title]="
+                              empleado.nombre +
+                              ': ' +
+                              (dia.diaSemana ? 'Descanso' : 'Negocio cerrado')
+                            "
+                          ></td>
+                        }
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <div class="leyenda-mes">
+              <span class="leyenda-item"
+                ><span class="leyenda-punto leyenda-trabaja"></span>Trabaja</span
+              >
+              <span class="leyenda-item"
+                ><span class="leyenda-punto leyenda-descanso"></span>Descanso</span
+              >
+              <span class="leyenda-item"
+                ><span class="leyenda-punto leyenda-cerrado"></span>Negocio cerrado</span
+              >
+            </div>
+          }
+        }
+
+        <!-- ---- Sub-vista: HORAS TRABAJADAS (todos los empleados, semana real) ---- -->
+        @if (subVistaHorario() === 'horas') {
+          <div class="nav-periodo">
+            <button
+              type="button"
+              class="boton-nav-periodo"
+              (click)="semanaAnterior()"
+              aria-label="Semana anterior"
+            >
+              <svg class="icono" aria-hidden="true"><use href="#ic-chevron" /></svg>
+            </button>
+            <span class="nav-periodo-titulo">{{ textoRangoSemanaVisible() }}</span>
+            <button
+              type="button"
+              class="boton-nav-periodo boton-nav-periodo-siguiente"
+              (click)="semanaSiguiente()"
+              aria-label="Semana siguiente"
+            >
+              <svg class="icono" aria-hidden="true"><use href="#ic-chevron" /></svg>
+            </button>
+          </div>
+
+          @if (cargandoHorasSemana()) {
+            <p class="mensaje-estado">Cargando...</p>
+          } @else if (resumenHorasSemana().length === 0) {
+            <p class="mensaje-estado">Nadie registró asistencia en esta semana.</p>
+          } @else {
+            <div class="resumen-horas-total">
+              <span class="resumen-horas-total-numero">{{
+                totalHorasSemana() | number: '1.1-1'
+              }}</span>
+              <span class="resumen-horas-total-etiqueta">horas en total esta semana</span>
+            </div>
+            <ul class="lista-resumen-horas">
+              @for (r of resumenHorasSemana(); track r.empleado_id) {
+                <li class="item-resumen-horas">
+                  <span class="resumen-nombre">{{ r.nombre }}</span>
+                  <span class="resumen-horas-numero">{{ r.horas | number: '1.1-1' }} h</span>
+                  <span class="resumen-detalle">
+                    {{ r.turnos }} turno{{ r.turnos === 1 ? '' : 's' }}
+                    @if (r.turnosAbiertos > 0) {
+                      · {{ r.turnosAbiertos }} sin cerrar
+                    }
+                  </span>
+                </li>
+              }
+            </ul>
+          }
         }
       </section>
     }
