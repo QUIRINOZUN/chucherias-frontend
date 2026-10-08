@@ -28,7 +28,8 @@ export interface OpcionEleccion {
 }
 
 // Un grupo de elección de un producto (ej. "Salsa", "Topping", "Dip"). Un
-// producto puede tener más de un grupo (Tornado: dip Y sazonador).
+// producto puede tener más de un grupo (Tornado: cacahuate Y base
+// líquida; Crepa/Waffle Especial: helado Y topping).
 export interface GrupoEleccion {
   // Texto que ve el cajero ("Salsa", "Topping (elige 1)", "Topping (elige 3)").
   etiqueta: string;
@@ -139,6 +140,24 @@ function grupoDipRanchCatsup(cantidad: number): GrupoEleccion {
     opciones: [
       { display: 'Aderezo ranch', insumo: 'Aderezo ranch', cantidad, unidad: 'g' },
       { display: 'Salsa cátsup', insumo: 'Salsa cátsup', cantidad, unidad: 'g' },
+    ],
+  };
+}
+
+// Sabor de helado a elección (Fresas con Crema Ice Cream, Crepa/Waffle
+// Especial — confirmado 2026-10-08). Los 3 sabores nuevos (fresa, oreo,
+// chocolate) se dieron de alta como insumo en Inventario junto con esta
+// corrección; "vainilla" ya existía (era el único sabor que se descontaba
+// antes, sin importar cuál pidiera el cliente).
+function grupoHeladoSabor(cantidad: number): GrupoEleccion {
+  return {
+    etiqueta: 'Helado',
+    seleccionesPermitidas: 1,
+    opciones: [
+      { display: 'Fresa', insumo: 'Helado de fresa', cantidad, unidad: 'g' },
+      { display: 'Vainilla', insumo: 'Helado de vainilla', cantidad, unidad: 'g' },
+      { display: 'Oreo', insumo: 'Helado de oreo', cantidad, unidad: 'g' },
+      { display: 'Chocolate', insumo: 'Helado de chocolate', cantidad, unidad: 'g' },
     ],
   };
 }
@@ -301,13 +320,11 @@ const ELECCIONES_POR_VARIANTE: Record<number, GrupoEleccion[]> = {
   // Tornado (2026-10-08): el menú real NO es una papa — es un cóctel de
   // frutas (corregido en receta_insumos de la variante 63: antes tenía
   // por error "Papa tornado" y un dip de ranch/cátsup que tampoco
-  // correspondía). Aquí solo el cacahuate queda estructurado como
-  // elección (mismo patrón que Pepihuates, cantidad aproximada — el menú
-  // no da gramaje). Lo que SIGUE sin poder cargarse por faltar insumos o
-  // una lista cerrada (ver CLAUDE.md): "huesitos de tamarindo" (insumo
-  // inexistente) y la base líquida a elegir (clamato / agua mineral /
-  // refresco de toronja — "agua mineral" y "refresco de toronja" no
-  // existen como insumo fraccionable, hoy solo como botella completa).
+  // correspondía). El cacahuate y la base líquida quedan como elección;
+  // chamoy, chile en polvo y huesitos de tamarindo ya quedaron fijos en
+  // la receta. "Agua mineral" se reutiliza en fracción de botella (0.25 u
+  // de la de 600 ml) y "Refresco de toronja" se dio de alta como insumo
+  // nuevo — ninguno de los dos tenía antes una presentación chica.
   63: [
     {
       etiqueta: 'Cacahuate',
@@ -318,16 +335,101 @@ const ELECCIONES_POR_VARIANTE: Record<number, GrupoEleccion[]> = {
         { display: 'Enchilado', insumo: 'Cacahuate enchilado', cantidad: 30, unidad: 'g' },
       ],
     },
+    {
+      etiqueta: 'Base líquida',
+      seleccionesPermitidas: 1,
+      opciones: [
+        { display: 'Clamato', insumo: 'Clamato (base)', cantidad: 150, unidad: 'ml' },
+        {
+          display: 'Agua mineral',
+          insumo: 'Agua Mineral 600 ml (botella)',
+          cantidad: 0.25,
+          unidad: 'u',
+        },
+        {
+          display: 'Refresco de toronja',
+          insumo: 'Refresco de toronja',
+          cantidad: 150,
+          unidad: 'ml',
+        },
+      ],
+    },
   ],
+
+  // Pichachitos Preparados (2026-10-08): 3 de 6 ingredientes a elección,
+  // confirmado contra RECETARIO_COMPLETO.txt. Cantidad aproximada (15 g
+  // cada uno) — el menú no da gramaje. "Pepino" y "Cueros/cueritos" se
+  // dieron de alta como insumo nuevo junto con esta corrección.
+  49: [
+    {
+      etiqueta: 'Ingredientes (elige 3)',
+      seleccionesPermitidas: 3,
+      opciones: [
+        { display: 'Mayonesa', insumo: 'Mayonesa', cantidad: 15, unidad: 'g' },
+        { display: 'Queso amarillo', insumo: 'Queso amarillo', cantidad: 15, unidad: 'g' },
+        { display: 'Elote', insumo: 'Elote desgranado', cantidad: 15, unidad: 'g' },
+        { display: 'Pepino', insumo: 'Pepino', cantidad: 15, unidad: 'g' },
+        { display: 'Cueros', insumo: 'Cueritos', cantidad: 15, unidad: 'g' },
+        {
+          display: 'Cacahuate',
+          insumo: 'Cacahuate (japonés/salado/enchilado)',
+          cantidad: 15,
+          unidad: 'g',
+        },
+      ],
+    },
+  ],
+
+  // Tostitos con Camarón (54 g, variante 55): tipo de camarón a elegir —
+  // se quitó "Camarón cóctel (cocido)" de la receta fija (ahora es una de
+  // las 2 opciones, no automático). "Camarón aguachile" es insumo nuevo.
+  55: [
+    {
+      etiqueta: 'Tipo de camarón',
+      seleccionesPermitidas: 1,
+      opciones: [
+        { display: 'Cocido', insumo: 'Camarón cóctel (cocido, pelado)', cantidad: 80, unidad: 'g' },
+        { display: 'Aguachile', insumo: 'Camarón aguachile', cantidad: 80, unidad: 'g' },
+      ],
+    },
+  ],
+
+  // Manzana Loca (variante 61): cacahuate o gomitas — se quitó "Dulce
+  // enchilado" de la receta fija (no correspondía a ninguna de las 2
+  // opciones reales). "Gomitas" es insumo nuevo.
+  61: [
+    {
+      etiqueta: 'Cacahuate o gomitas',
+      seleccionesPermitidas: 1,
+      opciones: [
+        {
+          display: 'Cacahuate',
+          insumo: 'Cacahuate (japonés/salado/enchilado)',
+          cantidad: 20,
+          unidad: 'g',
+        },
+        { display: 'Gomitas', insumo: 'Gomitas', cantidad: 20, unidad: 'g' },
+      ],
+    },
+  ],
+
+  // Fresas con Crema Ice Cream (variante 67): sabor de helado — se quitó
+  // "Helado de vainilla" fijo de la receta (ahora es una de las 4
+  // opciones, no automático sin importar lo que pida el cliente).
+  67: [grupoHeladoSabor(100)],
 
   // Crepa/Waffle Sencillo: hasta 1 topping de 30 g (opcional, se puede
   // pedir sin ninguno).
   68: [grupoTopping(1, 30)],
   69: [grupoTopping(1, 30)],
   // Crepa/Waffle Especial: hasta 3 toppings de 30 g cada uno (opcional;
-  // se puede repetir el mismo sabor, ej. "doble Nutella").
-  72: [grupoTopping(3, 30)],
-  73: [grupoTopping(3, 30)],
+  // se puede repetir el mismo sabor, ej. "doble Nutella") MÁS sabor de
+  // helado a elegir (se quitó "Helado de vainilla" fijo de la receta,
+  // mismo motivo que Fresas con Crema Ice Cream) — dos grupos en la misma
+  // variante, igual patrón que ya soporta el array (Tornado: cacahuate +
+  // base líquida).
+  72: [grupoHeladoSabor(50), grupoTopping(3, 30)],
+  73: [grupoHeladoSabor(50), grupoTopping(3, 30)],
 
   // Chuchi-Elote y Elote Chorreado: botana triturada a elección (2026-10-08,
   // confirmado contra RECETARIO_COMPLETO.txt sección 7 — "Nuestras

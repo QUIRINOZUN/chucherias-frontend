@@ -182,17 +182,24 @@ const INGREDIENTES_POR_PRODUCTO: Record<string, IngredienteRemovible[]> = {
   ],
   // 2026-10-08: tenía "Tocino" en la lista, pero la receta real cargada
   // (variante 60) nunca lo incluyó — no era un ingrediente de este
-  // platillo, se quita del checklist.
+  // platillo, se quita del checklist. Se agregan "Mantequilla" y "Queso
+  // rallado", que sí se agregaron a la receta real en esta misma fecha
+  // (el menú los menciona y no estaban cargados).
   'Elote Chorreado': [
     { display: 'Queso fundido', insumo: 'Queso amarillo' },
     { display: 'Mayonesa', insumo: 'Mayonesa' },
+    { display: 'Mantequilla', insumo: 'Mantequilla' },
+    { display: 'Queso rallado', insumo: 'Queso cotija/parmesano' },
   ],
 
   // ---- Frutas locas y especiales ----
+  // 2026-10-08: tenía "Dulce enchilado" en la lista — era el ingrediente
+  // de una receta vieja que no correspondía a este platillo (ver
+  // corrección de receta_insumos, variante 61: ahora cacahuate/gomitas
+  // son elección, no un ingrediente fijo que se pueda "quitar").
   'Manzana Loca': [
     { display: 'Chamoy', insumo: 'Chamoy' },
     { display: 'Chile en polvo', insumo: 'Chile en polvo/piquín' },
-    { display: 'Dulce enchilado', insumo: 'Dulce enchilado' },
   ],
   'Piña Loca': [
     { display: 'Chamoy', insumo: 'Chamoy' },
