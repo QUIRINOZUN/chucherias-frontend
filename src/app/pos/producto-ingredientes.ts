@@ -164,10 +164,15 @@ const INGREDIENTES_POR_PRODUCTO: Record<string, IngredienteRemovible[]> = {
     { display: 'Queso cotija', insumo: 'Queso cotija/parmesano' },
     { display: 'Chile en polvo', insumo: 'Chile en polvo/piquín' },
   ],
+  // 2026-10-08: tenía Mayonesa/Queso cotija/Salsa picante — eran los
+  // ingredientes de una receta vieja que no correspondía a este platillo
+  // (ver corrección de receta_insumos, variante 58, en CLAUDE.md). La
+  // receta real son cheetos flamin hot, doritos dinamita, elote y queso
+  // amarillo (bañado) — se corrige el checklist para que coincida.
   'Elote Hot': [
-    { display: 'Mayonesa', insumo: 'Mayonesa' },
-    { display: 'Queso cotija', insumo: 'Queso cotija/parmesano' },
-    { display: 'Salsa picante', insumo: 'Salsa picante' },
+    { display: 'Cheetos flamin hot', insumo: 'Cheetos Flamin Hot (sobre)' },
+    { display: 'Doritos dinamita', insumo: 'Doritos Dinamita (sobre)' },
+    { display: 'Queso amarillo', insumo: 'Queso amarillo' },
   ],
   'Chuchi-Elote': [
     { display: 'Mayonesa', insumo: 'Mayonesa' },
@@ -175,10 +180,12 @@ const INGREDIENTES_POR_PRODUCTO: Record<string, IngredienteRemovible[]> = {
     { display: 'Chamoy', insumo: 'Chamoy' },
     { display: 'Chile en polvo', insumo: 'Chile en polvo/piquín' },
   ],
+  // 2026-10-08: tenía "Tocino" en la lista, pero la receta real cargada
+  // (variante 60) nunca lo incluyó — no era un ingrediente de este
+  // platillo, se quita del checklist.
   'Elote Chorreado': [
     { display: 'Queso fundido', insumo: 'Queso amarillo' },
     { display: 'Mayonesa', insumo: 'Mayonesa' },
-    { display: 'Tocino', insumo: 'Tocino' },
   ],
 
   // ---- Frutas locas y especiales ----

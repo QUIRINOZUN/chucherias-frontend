@@ -143,6 +143,63 @@ function grupoDipRanchCatsup(cantidad: number): GrupoEleccion {
   };
 }
 
+// Botana triturada a elección entre las 6 marcas de "Nuestras Botanas" del
+// menú real (Chuchi-Elote, Elote Chorreado — confirmado 2026-10-08 contra
+// RECETARIO_COMPLETO.txt). 5 de las 6 marcas solo existen como insumo de
+// bolsa/sobre COMPLETA (unidad "u" — son las mismas que se venden enteras
+// como "Botanas de Sobre"); todavía no hay un insumo en gramos para
+// "topping triturado" de cada una, así que aquí se usan en una FRACCIÓN de
+// bolsa (0.3 u, aproximado — pendiente de validar con quien cocina, igual
+// que el resto de las cantidades de este recetario). Tostitos es la
+// excepción: ya tiene su propio insumo en gramos (el mismo que usaban
+// estos platillos antes de que esto fuera una elección), así que ese se
+// deja en la cantidad real de cada variante.
+function grupoBotanaTriturada(cantidadTostitosGramos: number): GrupoEleccion {
+  const FRACCION_BOLSA = 0.3;
+  return {
+    etiqueta: 'Botana',
+    seleccionesPermitidas: 1,
+    opciones: [
+      {
+        display: 'Tostitos',
+        insumo: 'Tostitos (bolsa, para preparar)',
+        cantidad: cantidadTostitosGramos,
+        unidad: 'g',
+      },
+      {
+        display: 'Doritos',
+        insumo: 'Doritos Nacho (sobre)',
+        cantidad: FRACCION_BOLSA,
+        unidad: 'u',
+      },
+      {
+        display: 'Doritos Dinamita',
+        insumo: 'Doritos Dinamita (sobre)',
+        cantidad: FRACCION_BOLSA,
+        unidad: 'u',
+      },
+      {
+        display: 'Cheetos',
+        insumo: 'Cheetos Flamin Hot (sobre)',
+        cantidad: FRACCION_BOLSA,
+        unidad: 'u',
+      },
+      {
+        display: 'Ruffles',
+        insumo: 'Ruffles Queso (sobre)',
+        cantidad: FRACCION_BOLSA,
+        unidad: 'u',
+      },
+      {
+        display: 'Sabritas Crujiente',
+        insumo: 'Sabritas Crujiente (sobre)',
+        cantidad: FRACCION_BOLSA,
+        unidad: 'u',
+      },
+    ],
+  };
+}
+
 // ---- Mapa por variante ---------------------------------------------------
 // Las cantidades salen de recetario_insumos_por_platillo.txt (mismo borrador
 // usado en scripts/seed-recetas.js) — sin validar por Ximena todavía.
@@ -241,14 +298,27 @@ const ELECCIONES_POR_VARIANTE: Record<number, GrupoEleccion[]> = {
     },
   ],
 
-  // Tornado: SIN grupo de elección a propósito. Se había puesto aquí un
-  // dip de ranch/cátsup (grupoDipRanchCatsup) por error — ni el menú real
-  // ni la receta cargada (receta_insumos de la variante 63, solo "Papa
-  // tornado") mencionan ningún dip; lo que el Tornado sí tiene es un
-  // "sazonador a elección" sin lista de sabores confirmada todavía
-  // (2026-10-08, ver ELECCIONES_TOPPINGS_DIPS_SALSAS.txt) — mejor no
-  // elección ninguna que una equivocada. No agregar nada aquí hasta tener
-  // la lista real de sabores de Ximena.
+  // Tornado (2026-10-08): el menú real NO es una papa — es un cóctel de
+  // frutas (corregido en receta_insumos de la variante 63: antes tenía
+  // por error "Papa tornado" y un dip de ranch/cátsup que tampoco
+  // correspondía). Aquí solo el cacahuate queda estructurado como
+  // elección (mismo patrón que Pepihuates, cantidad aproximada — el menú
+  // no da gramaje). Lo que SIGUE sin poder cargarse por faltar insumos o
+  // una lista cerrada (ver CLAUDE.md): "huesitos de tamarindo" (insumo
+  // inexistente) y la base líquida a elegir (clamato / agua mineral /
+  // refresco de toronja — "agua mineral" y "refresco de toronja" no
+  // existen como insumo fraccionable, hoy solo como botella completa).
+  63: [
+    {
+      etiqueta: 'Cacahuate',
+      seleccionesPermitidas: 1,
+      opciones: [
+        { display: 'Japonés', insumo: 'Cacahuate japonés', cantidad: 30, unidad: 'g' },
+        { display: 'Salado', insumo: 'Cacahuate salado', cantidad: 30, unidad: 'g' },
+        { display: 'Enchilado', insumo: 'Cacahuate enchilado', cantidad: 30, unidad: 'g' },
+      ],
+    },
+  ],
 
   // Crepa/Waffle Sencillo: hasta 1 topping de 30 g (opcional, se puede
   // pedir sin ninguno).
@@ -258,6 +328,14 @@ const ELECCIONES_POR_VARIANTE: Record<number, GrupoEleccion[]> = {
   // se puede repetir el mismo sabor, ej. "doble Nutella").
   72: [grupoTopping(3, 30)],
   73: [grupoTopping(3, 30)],
+
+  // Chuchi-Elote y Elote Chorreado: botana triturada a elección (2026-10-08,
+  // confirmado contra RECETARIO_COMPLETO.txt sección 7 — "Nuestras
+  // Botanas"). En Chuchi-Elote se quitó la línea fija de Tostitos de su
+  // receta_insumos (variante 59) porque ahora es una de las 6 opciones de
+  // este grupo, no un ingrediente automático.
+  59: [grupoBotanaTriturada(20)], // Chuchi-Elote
+  60: [grupoBotanaTriturada(40)], // Elote Chorreado
 };
 
 // Devuelve los grupos de elección de una variante, o vacío si no tiene
