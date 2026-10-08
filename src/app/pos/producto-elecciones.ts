@@ -33,7 +33,8 @@ export interface GrupoEleccion {
   // Texto que ve el cajero ("Salsa", "Topping (elige 1)", "Topping (elige 3)").
   etiqueta: string;
   // Cuántas opciones de ESTE grupo debe elegir el cliente (casi siempre 1;
-  // las crepas/waffles "especiales" son 3).
+  // las crepas/waffles "especiales" son 3, y los paquetes grandes de
+  // Alitas/Boneless reparten la salsa en 2 o 3 sabores — ver grupoSalsa).
   seleccionesPermitidas: number;
   opciones: OpcionEleccion[];
 }
@@ -53,13 +54,22 @@ const SALSAS_ALITAS_BONELESS: Omit<OpcionEleccion, 'cantidad' | 'unidad'>[] = [
   { display: 'Buffalo Hot', insumo: 'Salsa Buffalo Hot' },
 ];
 
-// Arma el grupo "Salsa" para una variante de alitas/boneless con SU cantidad
-// (cada paquete lleva una cantidad de salsa distinta).
-function grupoSalsa(cantidad: number): GrupoEleccion {
+// Arma el grupo "Salsa" para una variante de alitas/boneless. `cantidadTotal`
+// es el total de salsa de ESE paquete (recetario_insumos_por_platillo.txt);
+// con `seleccionesPermitidas` > 1 (paquetes grandes, confirmado por Ximena:
+// Alitas Paquete #3/#4 y Boneless Paquete #2/#3) se reparte entre los
+// sabores elegidos — se guarda cantidadTotal / seleccionesPermitidas por
+// sabor para que la suma de lo elegido siga dando el total de la receta,
+// sin importar en cuántos sabores se divida.
+function grupoSalsa(cantidadTotal: number, seleccionesPermitidas = 1): GrupoEleccion {
   return {
-    etiqueta: 'Salsa',
-    seleccionesPermitidas: 1,
-    opciones: SALSAS_ALITAS_BONELESS.map((s) => ({ ...s, cantidad, unidad: 'ml' })),
+    etiqueta: seleccionesPermitidas === 1 ? 'Salsa' : `Salsas (elige ${seleccionesPermitidas})`,
+    seleccionesPermitidas,
+    opciones: SALSAS_ALITAS_BONELESS.map((s) => ({
+      ...s,
+      cantidad: cantidadTotal / seleccionesPermitidas,
+      unidad: 'ml',
+    })),
   };
 }
 
@@ -93,7 +103,11 @@ function grupoTopping(seleccionesPermitidas: number, cantidadCadaUno: number): G
   return {
     etiqueta: seleccionesPermitidas === 1 ? 'Topping' : `Toppings (elige ${seleccionesPermitidas})`,
     seleccionesPermitidas,
-    opciones: TOPPINGS_CREPAS_WAFFLES.map((t) => ({ ...t, cantidad: cantidadCadaUno, unidad: 'g' })),
+    opciones: TOPPINGS_CREPAS_WAFFLES.map((t) => ({
+      ...t,
+      cantidad: cantidadCadaUno,
+      unidad: 'g',
+    })),
   };
 }
 
@@ -113,18 +127,20 @@ function grupoDipRanchCatsup(cantidad: number): GrupoEleccion {
 // Las cantidades salen de recetario_insumos_por_platillo.txt (mismo borrador
 // usado en scripts/seed-recetas.js) — sin validar por Ximena todavía.
 const ELECCIONES_POR_VARIANTE: Record<number, GrupoEleccion[]> = {
-  // Alitas
-  31: [grupoSalsa(60)], // 12 piezas
-  32: [grupoSalsa(40)], // Paquete #1
-  33: [grupoSalsa(60)], // Paquete #2
-  34: [grupoSalsa(120)], // Paquete #3
-  35: [grupoSalsa(180)], // Paquete #4
+  // Alitas (2026-10-08: paquetes grandes reparten la salsa en varios
+  // sabores, igual que ya escala el dip de aderezo ranch en el menú real).
+  31: [grupoSalsa(60)], // 12 piezas — 1 salsa
+  32: [grupoSalsa(40)], // Paquete #1 (8 pz) — 1 salsa
+  33: [grupoSalsa(60)], // Paquete #2 (12 pz) — 1 salsa
+  34: [grupoSalsa(120, 2)], // Paquete #3 (24 pz) — 2 salsas, 60 ml c/u
+  35: [grupoSalsa(180, 3)], // Paquete #4 (36 pz) — 3 salsas, 60 ml c/u
 
-  // Boneless
-  36: [grupoSalsa(60)], // 250 g solo
-  37: [grupoSalsa(40)], // Paquete #1
-  38: [grupoSalsa(60)], // Paquete #2
-  39: [grupoSalsa(60)], // Paquete #3
+  // Boneless (solo los paquetes de 250 g reparten en 2 salsas; el de 125 g
+  // y la orden sola se quedan en 1, igual que su dip de ranch nunca escala).
+  36: [grupoSalsa(60)], // 250 g solo — 1 salsa
+  37: [grupoSalsa(40)], // Paquete #1 (125 g) — 1 salsa
+  38: [grupoSalsa(60, 2)], // Paquete #2 (250 g) — 2 salsas, 30 ml c/u
+  39: [grupoSalsa(60, 2)], // Paquete #3 (250 g) — 2 salsas, 30 ml c/u
 
   // Papas a la Francesa: 1 ingrediente gratis (cantidad distinta por opción).
   40: [
