@@ -35,13 +35,18 @@
   <!-- BARRA DE CAJA: "Saldo inicial" e "Ingresar efectivo" los registra quien está en el POS;
        un retiro SOLO lo emite el administrador desde la pantalla de Caja — aquí no hay botón para eso. -->
   <div class="pos-caja-barra">
-    <button type="button" class="boton-caja" (click)="abrirMovimientoCaja('apertura')">
-      <svg class="icono" aria-hidden="true"><use href="#ic-billetes" /></svg>
-      Saldo inicial
+    <button type="button" class="accion-caja" (click)="abrirMovimientoCaja('apertura')">
+      <span class="accion-caja-icono accion-caja-icono-neutral">
+        <svg class="icono" aria-hidden="true"><use href="#ic-billetes" /></svg>
+      </span>
+      <span class="accion-caja-texto">Saldo inicial</span>
     </button>
-    <button type="button" class="boton-caja" (click)="abrirMovimientoCaja('ingreso')">
-      <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
-      Ingresar efectivo
+    <span class="accion-caja-separador" aria-hidden="true"></span>
+    <button type="button" class="accion-caja" (click)="abrirMovimientoCaja('ingreso')">
+      <span class="accion-caja-icono accion-caja-icono-exito">
+        <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
+      </span>
+      <span class="accion-caja-texto">Ingresar efectivo</span>
     </button>
   </div>
 
@@ -104,18 +109,18 @@
           <!-- REJILLA DE PRODUCTOS: una tarjeta por producto filtrado. -->
           <div class="grid-productos">
             @for (producto of productosFiltrados(); track producto.id) {
-              <!-- TARJETA DE PRODUCTO. Colapsada: imagen (o bloque de color con ícono si no hay foto), categoría, nombre y precio "desde".
-                   Al tocarla se expande y muestra sus variantes (tamaños/paquetes); tocar una variante la agrega al carrito. -->
+              <!-- TARJETA DE PRODUCTO: imagen (o bloque de color con ícono si no hay foto), categoría, nombre y precio "desde".
+                   Al tocarla se abre una ventana con sus variantes (tamaños/paquetes); tocar una variante la agrega al carrito. -->
               <article
                 class="tarjeta-producto"
-                [class.tarjeta-expandida]="estaExpandido(producto.id)"
+                [class.tarjeta-expandida]="estaAbierto(producto.id)"
                 [style.--color-categoria]="estiloCategoria(producto.categoria).color"
               >
                 <button
                   type="button"
                   class="cabecera-producto"
-                  (click)="alternarExpansion(producto.id)"
-                  [attr.aria-expanded]="estaExpandido(producto.id)"
+                  (click)="abrirDetalleProducto(producto)"
+                  aria-haspopup="dialog"
                 >
                   @if (producto.imagen_url) {
                     <img
@@ -151,29 +156,6 @@
                     </div>
                   </div>
                 </button>
-
-                <!-- DETALLE EXPANDIDO: descripción y un botón por variante con su precio. -->
-                @if (estaExpandido(producto.id)) {
-                  <div class="detalle-producto">
-                    @if (producto.descripcion) {
-                      <p class="descripcion-producto">{{ producto.descripcion }}</p>
-                    }
-                    <div class="variantes">
-                      @for (variante of producto.variantes; track variante.id) {
-                        <button
-                          type="button"
-                          class="boton-variante"
-                          (click)="agregarAlCarrito(producto, variante)"
-                        >
-                          <span>{{ variante.nombre }}</span>
-                          <span class="precio-variante">{{
-                            variante.precio | currency: 'MXN'
-                          }}</span>
-                        </button>
-                      }
-                    </div>
-                  </div>
-                }
               </article>
             }
           </div>
@@ -369,21 +351,26 @@
           }
         </ul>
 
-        <!-- TOTAL del carrito y botón COBRAR (abre la ventana de cobro). -->
-        <div class="resumen-carrito">
-          <span
-            >Total ({{ cantidadItems() }}
-            {{ cantidadItems() === 1 ? 'artículo' : 'artículos' }})</span
-          >
-          @for (total of [totalCarrito()]; track total) {
-            <span class="total-monto">{{ total | currency: 'MXN' }}</span>
-          }
-        </div>
+        <!-- PIE fijo: total y botón COBRAR. Queda fuera del área que hace
+             scroll (.lista-carrito arriba) para que nunca haya que llegar
+             hasta el final de la lista para cobrar, sin importar cuántos
+             productos tenga el carrito. -->
+        <div class="carrito-pie">
+          <div class="resumen-carrito">
+            <span
+              >Total ({{ cantidadItems() }}
+              {{ cantidadItems() === 1 ? 'artículo' : 'artículos' }})</span
+            >
+            @for (total of [totalCarrito()]; track total) {
+              <span class="total-monto">{{ total | currency: 'MXN' }}</span>
+            }
+          </div>
 
-        <button type="button" class="boton-cobrar" (click)="abrirCobro()">
-          Cobrar
-          <svg class="icono" aria-hidden="true"><use href="#ic-siguiente" /></svg>
-        </button>
+          <button type="button" class="boton-cobrar" (click)="abrirCobro()">
+            Cobrar
+            <svg class="icono" aria-hidden="true"><use href="#ic-siguiente" /></svg>
+          </button>
+        </div>
       }
     </aside>
 
@@ -406,6 +393,69 @@
       <span class="fab-texto">Ver carrito</span>
       <span class="fab-total">{{ totalCarrito() | currency: 'MXN' }}</span>
     </button>
+  }
+
+  <!-- VENTANA: detalle de un producto con más de una opción. Se abre al tocar
+       su tarjeta en vez de desplegarse dentro de la rejilla — así no reacomoda
+       a las tarjetas vecinas y da más espacio para ver todas las variantes. -->
+  @if (productoAbierto(); as producto) {
+    <div class="overlay">
+      <div
+        class="panel-detalle-producto"
+        [style.--color-categoria]="estiloCategoria(producto.categoria).color"
+      >
+        <button
+          type="button"
+          class="boton-cerrar-detalle"
+          (click)="cerrarDetalleProducto()"
+          aria-label="Cerrar"
+        >
+          <svg class="icono" aria-hidden="true"><use href="#ic-cerrar" /></svg>
+        </button>
+
+        @if (producto.imagen_url) {
+          <img
+            [src]="producto.imagen_url"
+            [alt]="producto.nombre"
+            class="imagen-detalle-producto"
+          />
+        } @else {
+          <div class="imagen-marcador imagen-marcador-detalle">
+            <span class="imagen-marcador-icono">
+              <svg class="icono" aria-hidden="true">
+                <use [attr.href]="'#ic-' + estiloCategoria(producto.categoria).icono" />
+              </svg>
+            </span>
+          </div>
+        }
+
+        <div class="detalle-producto-cuerpo">
+          <span class="insignia-categoria">
+            <svg class="icono" aria-hidden="true">
+              <use [attr.href]="'#ic-' + estiloCategoria(producto.categoria).icono" />
+            </svg>
+            {{ producto.categoria }}
+          </span>
+          <h2 class="detalle-producto-nombre">{{ producto.nombre }}</h2>
+          @if (producto.descripcion) {
+            <p class="descripcion-producto">{{ producto.descripcion }}</p>
+          }
+
+          <div class="variantes">
+            @for (variante of producto.variantes; track variante.id) {
+              <button
+                type="button"
+                class="boton-variante"
+                (click)="agregarAlCarrito(producto, variante)"
+              >
+                <span>{{ variante.nombre }}</span>
+                <span class="precio-variante">{{ variante.precio | currency: 'MXN' }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
   }
 
   <!-- VENTANA DE COBRO / COMPROBANTE: un mismo panel muestra primero el formulario de cobro y,

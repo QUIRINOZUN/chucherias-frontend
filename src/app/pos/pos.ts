@@ -113,8 +113,12 @@ export class PosComponent implements OnInit, OnDestroy {
   // null = "Todas las categorías".
   categoriaSeleccionada = signal<number | null>(null);
   busqueda = signal('');
-  // Conjunto de ids de productos cuya tarjeta está expandida (mostrando variantes).
-  productosExpandidos = signal<ReadonlySet<number>>(new Set());
+  // Producto cuyo detalle (variantes/tamaños) está abierto en la ventana
+  // emergente; null = ninguna abierta. Antes esto se desplegaba dentro de
+  // la propia tarjeta en la rejilla, pero con varias variantes se veía
+  // saturado y descolocaba a las tarjetas vecinas — ahora se abre en una
+  // ventana aparte, con más espacio y sin mover el resto del menú.
+  productoAbierto = signal<Producto | null>(null);
 
   // ---------------------------------------------------------------------------
   // Estado del CARRITO
@@ -303,23 +307,17 @@ export class PosComponent implements OnInit, OnDestroy {
     return 'Ocurrió un error inesperado. Intenta de nuevo en unos momentos.';
   }
 
-  // ¿La tarjeta de este producto está desplegada?
-  estaExpandido(productoId: number): boolean {
-    return this.productosExpandidos().has(productoId);
+  // ¿Es este el producto cuya ventana de detalle está abierta?
+  estaAbierto(productoId: number): boolean {
+    return this.productoAbierto()?.id === productoId;
   }
 
-  // Expande o colapsa una tarjeta. Se crea un Set NUEVO en cada cambio porque
-  // las signals detectan cambios por referencia, no por contenido.
-  alternarExpansion(productoId: number): void {
-    this.productosExpandidos.update((actuales) => {
-      const nuevo = new Set(actuales);
-      if (nuevo.has(productoId)) {
-        nuevo.delete(productoId);
-      } else {
-        nuevo.add(productoId);
-      }
-      return nuevo;
-    });
+  abrirDetalleProducto(producto: Producto): void {
+    this.productoAbierto.set(producto);
+  }
+
+  cerrarDetalleProducto(): void {
+    this.productoAbierto.set(null);
   }
 
   // Precio mostrado en la tarjeta colapsada: el de la variante más barata
@@ -338,8 +336,8 @@ export class PosComponent implements OnInit, OnDestroy {
     return `item-${this.contadorIdItem}`;
   }
 
-  // Agrega UNA unidad de una variante al carrito (al tocar una variante en la
-  // tarjeta expandida).
+  // Agrega UNA unidad de una variante al carrito (al tocar una variante en
+  // la ventana de detalle del producto).
   agregarAlCarrito(producto: Producto, variante: Variante): void {
     this.carrito.update((items) => {
       // Solo se apila cantidad sobre una línea ya existente si esa línea
@@ -376,16 +374,9 @@ export class PosComponent implements OnInit, OnDestroy {
       ];
     });
 
-    // La tarjeta se cierra sola tras agregar: confirma la acción de un
-    // vistazo y libera espacio para seguir viendo el resto del menú.
-    this.productosExpandidos.update((actuales) => {
-      if (!actuales.has(producto.id)) {
-        return actuales;
-      }
-      const nuevo = new Set(actuales);
-      nuevo.delete(producto.id);
-      return nuevo;
-    });
+    // La ventana se cierra sola tras agregar: confirma la acción de un
+    // vistazo y regresa al menú para seguir eligiendo.
+    this.cerrarDetalleProducto();
   }
 
   // La personalización (Quitar / notas) solo se ofrece en líneas de una

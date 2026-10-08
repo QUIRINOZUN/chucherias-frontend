@@ -76,46 +76,84 @@
 
 /* Barra de caja: "Saldo inicial" / "Ingresar efectivo", siempre visibles
    (un retiro solo lo emite el administrador desde la pantalla de Caja, así
-   que no tiene botón aquí). */
+   que no tiene botón aquí). Una sola tarjeta-herramienta con dos acciones,
+   separadas por un divisor, en vez de dos píldoras sueltas flotando sobre
+   el fondo — cada una con su ícono en una insignia circular de color para
+   diferenciarlas de un vistazo (neutro = informativo, verde = entra dinero,
+   mismo significado que el resto de la app). */
 .pos-caja-barra {
   display: flex;
-  gap: 10px;
-  padding: 0 16px 14px;
-  overflow-x: auto;
+  align-items: stretch;
+  margin: 0 16px 16px;
+  padding: 6px;
+  border-radius: var(--radio-lg);
+  background: var(--pos-bg-card);
+  box-shadow: var(--sombra-suave);
 }
 
-.boton-caja {
-  flex-shrink: 0;
+.accion-caja {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 16px;
-  border: 1px solid var(--pos-border);
-  border-radius: var(--radio-pastilla);
-  background: var(--pos-bg-card);
+  gap: 10px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: var(--radio-md);
+  background: none;
   color: var(--pos-text-primary);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  white-space: nowrap;
+  text-align: left;
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
+    background-color 0.15s ease,
     transform 0.1s ease;
 }
 
-.boton-caja .icono {
+.accion-caja:hover {
+  background: var(--pos-bg-main);
+}
+
+.accion-caja:active {
+  transform: scale(0.98);
+}
+
+.accion-caja-icono {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.accion-caja-icono .icono {
   width: 18px;
   height: 18px;
+}
+
+.accion-caja-icono-neutral {
+  background: color-mix(in srgb, var(--action-primary) 18%, var(--pos-bg-card));
   color: var(--acento-texto);
 }
 
-.boton-caja:hover {
-  border-color: var(--pos-text-secondary);
+.accion-caja-icono-exito {
+  background: color-mix(in srgb, var(--action-success) 20%, var(--pos-bg-card));
+  color: var(--exito-texto);
 }
 
-.boton-caja:active {
-  transform: scale(0.97);
+.accion-caja-texto {
+  min-width: 0;
+}
+
+.accion-caja-separador {
+  flex-shrink: 0;
+  width: 1px;
+  margin: 8px 2px;
+  background: var(--pos-border);
 }
 
 /* Cuerpo: en móvil una columna con espacio inferior para el botón flotante; en ≥860 px, dos columnas (ver abajo). */
@@ -400,11 +438,6 @@
   transform: rotate(180deg);
 }
 
-.detalle-producto {
-  padding: 0 16px 16px;
-  animation: aparecer 0.2s ease;
-}
-
 .descripcion-producto {
   margin: 0;
   font-size: 0.82rem;
@@ -453,20 +486,97 @@
   color: var(--pos-text-primary);
 }
 
+/* ===================== Ventana de detalle de producto =====================
+   Se abre al tocar una tarjeta con más de una variante: antes esa lista se
+   desplegaba dentro de la propia rejilla y, con varios tamaños/paquetes,
+   se veía saturada y desacomodaba las tarjetas vecinas. Reutiliza el mismo
+   patrón de ventana que el cobro (.overlay: hoja deslizable en móvil,
+   diálogo centrado en pantallas anchas — ver el breakpoint más abajo), con
+   su propio panel para poder mostrar la imagen/color de categoría a todo
+   lo ancho arriba. */
+.panel-detalle-producto {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
+  background: var(--pos-bg-card);
+  border-radius: 28px 28px 0 0;
+  box-shadow: var(--sombra-elevada);
+  animation: subir 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.boton-cerrar-detalle {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.imagen-detalle-producto {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+  border-radius: 28px 28px 0 0;
+}
+
+.imagen-marcador-detalle {
+  height: 220px;
+  border-radius: 28px 28px 0 0;
+}
+
+.detalle-producto-cuerpo {
+  padding: 18px 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detalle-producto-nombre {
+  margin: 4px 0 0;
+  font-size: 1.4rem;
+  line-height: 1.25;
+  color: var(--pos-text-primary);
+}
+
+.detalle-producto-cuerpo .descripcion-producto {
+  margin-top: 4px;
+}
+
+.detalle-producto-cuerpo .variantes {
+  margin-top: 14px;
+}
+
 /* ===================== Carrito =====================
    Mobile-first: panel deslizable desde abajo, oculto por defecto y
    controlado por .carrito-abierto-movil. El breakpoint ancho más abajo
-   lo convierte de vuelta en la barra lateral fija de siempre. */
+   lo convierte de vuelta en la barra lateral fija de siempre.
+   Columna flex (encabezado / lista flexible / pie fijo) en vez de un solo
+   bloque con scroll: así el total y "Cobrar" (.carrito-pie) quedan siempre
+   visibles sin importar cuántos productos tenga el carrito — solo
+   .lista-carrito hace scroll, no la tarjeta completa. */
 .pos-carrito {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   max-height: 88vh;
+  display: flex;
+  flex-direction: column;
   background: var(--pos-bg-sidebar);
   border-radius: 28px 28px 0 0;
   padding: 22px 18px;
-  overflow-y: auto;
+  overflow: hidden;
   transform: translateY(110%);
   transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
   z-index: 30;
@@ -478,6 +588,7 @@
 }
 
 .carrito-encabezado {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -589,13 +700,18 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  max-height: 42vh;
+  gap: 10px;
+  /* Ocupa el espacio que deje el encabezado y el pie fijo (.carrito-pie) —
+     ver la nota en .pos-carrito. min-height:0 es necesario para que un hijo
+     flex pueda encogerse por debajo de su contenido y así active su propio
+     scroll en vez de empujar al contenedor. */
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 
 .item-carrito {
-  padding-bottom: 14px;
+  padding-bottom: 10px;
   border-bottom: 1px dashed var(--pos-border);
 }
 
@@ -889,6 +1005,12 @@
 .boton-quitar:hover {
   color: var(--peligro-texto);
   background: color-mix(in srgb, var(--action-danger) 14%, transparent);
+}
+
+/* Pie fijo del carrito: nunca se encoge ni hace scroll (ver nota en
+   .pos-carrito) — el total y "Cobrar" quedan siempre a la vista. */
+.carrito-pie {
+  flex-shrink: 0;
 }
 
 .resumen-carrito {
@@ -1362,6 +1484,17 @@
     max-width: 420px;
     border-radius: var(--radio-lg);
     animation: escalar 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .panel-detalle-producto {
+    max-width: 420px;
+    border-radius: var(--radio-lg);
+    animation: escalar 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .imagen-detalle-producto,
+  .imagen-marcador-detalle {
+    border-radius: var(--radio-lg) var(--radio-lg) 0 0;
   }
 }
 
