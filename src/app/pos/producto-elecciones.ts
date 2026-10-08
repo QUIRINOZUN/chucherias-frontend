@@ -152,7 +152,31 @@ const ELECCIONES_POR_VARIANTE: Record<number, GrupoEleccion[]> = {
   31: [grupoSalsa(60)], // 12 piezas — 1 salsa
   32: [grupoSalsa(40)], // Paquete #1 (8 pz) — 1 salsa
   33: [grupoSalsa(60)], // Paquete #2 (12 pz) — 1 salsa
-  34: [grupoSalsa(120, 2)], // Paquete #3 (24 pz) — 2 salsas, 60 ml c/u
+  // Paquete #3 (24 pz): 2 salsas + elige papas o aros de cebolla (150 g) —
+  // confirmado 2026-10-08 contra ELECCIONES_TOPPINGS_DIPS_SALSAS.txt. El
+  // Paquete #4 NO tiene esta elección: su receta ya incluye papas Y aros
+  // fijos (ver receta_insumos de la variante 35), no es una u otra.
+  34: [
+    grupoSalsa(120, 2),
+    {
+      etiqueta: 'Papas o aros de cebolla',
+      seleccionesPermitidas: 1,
+      opciones: [
+        {
+          display: 'Papas a la francesa',
+          insumo: 'Papas a la francesa',
+          cantidad: 150,
+          unidad: 'g',
+        },
+        {
+          display: 'Aros de cebolla',
+          insumo: 'Aros de cebolla empanizados',
+          cantidad: 150,
+          unidad: 'g',
+        },
+      ],
+    },
+  ],
   35: [grupoSalsa(180, 3)], // Paquete #4 (36 pz) — 3 salsas, 60 ml c/u
 
   // Boneless (solo los paquetes de 250 g reparten en 2 salsas; el de 125 g
@@ -217,10 +241,14 @@ const ELECCIONES_POR_VARIANTE: Record<number, GrupoEleccion[]> = {
     },
   ],
 
-  // Tornado: solo el dip queda estructurado — el "sazonador a elección" del
-  // recetario no trae una lista de sabores concreta, así que se deja fuera
-  // (mejor no inventar opciones que el negocio no confirmó).
-  63: [grupoDipRanchCatsup(15)],
+  // Tornado: SIN grupo de elección a propósito. Se había puesto aquí un
+  // dip de ranch/cátsup (grupoDipRanchCatsup) por error — ni el menú real
+  // ni la receta cargada (receta_insumos de la variante 63, solo "Papa
+  // tornado") mencionan ningún dip; lo que el Tornado sí tiene es un
+  // "sazonador a elección" sin lista de sabores confirmada todavía
+  // (2026-10-08, ver ELECCIONES_TOPPINGS_DIPS_SALSAS.txt) — mejor no
+  // elección ninguna que una equivocada. No agregar nada aquí hasta tener
+  // la lista real de sabores de Ximena.
 
   // Crepa/Waffle Sencillo: hasta 1 topping de 30 g (opcional, se puede
   // pedir sin ninguno).
