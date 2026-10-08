@@ -169,6 +169,30 @@
   cursor: not-allowed;
 }
 
+/* Eliminar: siempre en tono de peligro (a diferencia de Desactivar, que
+   solo se pone rojo al pasar el mouse) — es la única acción irreversible
+   de esta pantalla. */
+.boton-eliminar {
+  min-height: 40px;
+  border: 1px solid var(--peligro-texto);
+  background: var(--pos-bg-main);
+  color: var(--peligro-texto);
+  border-radius: var(--pos-radio);
+  padding: 0 12px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.boton-eliminar:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--action-danger) 14%, var(--pos-bg-main));
+}
+
+.boton-eliminar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Fondo oscuro que cubre la pantalla detrás de la ventana emergente. */
 .overlay {
   position: fixed;
@@ -259,6 +283,30 @@
   cursor: not-allowed;
 }
 
+.texto-confirmacion {
+  margin: 0 0 16px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--pos-text-primary);
+}
+
+.boton-confirmar-eliminar {
+  flex: 1;
+  min-height: 52px;
+  border: none;
+  background: var(--action-danger);
+  color: #fff;
+  border-radius: var(--radio-md);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.boton-confirmar-eliminar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ===== Rediseño: botones de encabezado y jerarquía ===== */
 .boton-volver,
 .boton-tema {
@@ -281,7 +329,9 @@
   border-radius: var(--radio-md);
   font-size: 1rem;
   box-shadow: var(--sombra-acento);
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
 }
 
 .boton-nuevo-usuario:active {

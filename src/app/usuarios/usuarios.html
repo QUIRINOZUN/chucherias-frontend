@@ -7,7 +7,8 @@
 <div class="usuarios-container">
   <!-- ENCABEZADO: volver, título y cambio de tema. -->
   <header class="usuarios-header">
-    <button type="button" class="boton-volver" (click)="volverAlDashboard()"><svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
       Volver
     </button>
     <h1>Usuarios</h1>
@@ -15,7 +16,9 @@
       type="button"
       class="boton-tema"
       (click)="themeService.alternarTema()"
-      [attr.aria-label]="themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
     >
       <svg class="icono" aria-hidden="true">
         <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
@@ -34,7 +37,9 @@
 
       @if (esAdministrador()) {
         <!-- Alta de cuenta: solo administrador. -->
-        <button type="button" class="boton-nuevo-usuario" (click)="abrirCreacion()">+ Nuevo usuario</button>
+        <button type="button" class="boton-nuevo-usuario" (click)="abrirCreacion()">
+          + Nuevo usuario
+        </button>
       }
 
       <!-- LISTA: una tarjeta por cuenta con nombre, usuario, rol, fecha de alta y estado (Activo/Inactivo). -->
@@ -44,25 +49,53 @@
             <div class="usuario-info">
               <span class="usuario-nombre">{{ usuario.nombre }}</span>
               <span class="usuario-detalle">
-                &#64;{{ usuario.usuario }} · {{ usuario.rol }} · desde {{ usuario.fecha_creacion | date: 'dd/MM/yyyy' }}
+                &#64;{{ usuario.usuario }} · {{ usuario.rol }} · desde
+                {{ usuario.fecha_creacion | date: 'dd/MM/yyyy' }}
               </span>
             </div>
             <span class="badge-estado" [class.badge-inactivo]="!usuario.activo">
               {{ usuario.activo ? 'Activo' : 'Inactivo' }}
             </span>
             @if (esAdministrador()) {
-              <!-- Controles de administrador: editar y activar/desactivar. Un administrador NO puede desactivar su propia cuenta
-                   (el botón se deshabilita) para no quedarse sin acceso. -->
-              <button type="button" class="boton-editar" (click)="abrirEdicion(usuario)">Editar</button>
+              <!-- Controles de administrador: editar, activar/desactivar y eliminar. Un administrador NO puede desactivar ni
+                   eliminar su propia cuenta (los botones se deshabilitan) para no quedarse sin acceso. -->
+              <button type="button" class="boton-editar" (click)="abrirEdicion(usuario)">
+                Editar
+              </button>
               <button
                 type="button"
                 class="boton-alternar"
                 [class.boton-alternar-desactivar]="usuario.activo"
-                [disabled]="actualizandoId() === usuario.id || usuario.id === authService.usuarioActual()?.id"
-                [title]="usuario.id === authService.usuarioActual()?.id ? 'No puedes desactivar tu propia cuenta' : ''"
+                [disabled]="
+                  actualizandoId() === usuario.id || usuario.id === authService.usuarioActual()?.id
+                "
+                [title]="
+                  usuario.id === authService.usuarioActual()?.id
+                    ? 'No puedes desactivar tu propia cuenta'
+                    : ''
+                "
                 (click)="alternarActivo(usuario)"
               >
-                {{ actualizandoId() === usuario.id ? '...' : usuario.activo ? 'Desactivar' : 'Activar' }}
+                {{
+                  actualizandoId() === usuario.id
+                    ? '...'
+                    : usuario.activo
+                      ? 'Desactivar'
+                      : 'Activar'
+                }}
+              </button>
+              <button
+                type="button"
+                class="boton-eliminar"
+                [disabled]="usuario.id === authService.usuarioActual()?.id"
+                [title]="
+                  usuario.id === authService.usuarioActual()?.id
+                    ? 'No puedes eliminar tu propia cuenta'
+                    : 'Eliminar'
+                "
+                (click)="abrirConfirmarEliminar(usuario)"
+              >
+                Eliminar
               </button>
             }
           </li>
@@ -129,11 +162,66 @@
 
         <!-- ACCIONES: cancelar o guardar (se habilita solo si el formulario es válido, ver puedeGuardar() en usuarios.ts). -->
         <div class="acciones-formulario">
-          <button type="button" class="boton-cancelar" (click)="cerrarFormulario()" [disabled]="procesandoForm()">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarFormulario()"
+            [disabled]="procesandoForm()"
+          >
             Cancelar
           </button>
-          <button type="button" class="boton-confirmar" (click)="guardarFormulario()" [disabled]="!puedeGuardar()">
-            {{ procesandoForm() ? 'Guardando...' : modo === 'crear' ? 'Crear usuario' : 'Guardar cambios' }}
+          <button
+            type="button"
+            class="boton-confirmar"
+            (click)="guardarFormulario()"
+            [disabled]="!puedeGuardar()"
+          >
+            {{
+              procesandoForm()
+                ? 'Guardando...'
+                : modo === 'crear'
+                  ? 'Crear usuario'
+                  : 'Guardar cambios'
+            }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- VENTANA EMERGENTE de confirmación: eliminar es la única acción
+       irreversible de esta pantalla. Si el servidor rechaza el borrado
+       porque la cuenta ya tiene historial, el mensaje aparece aquí mismo
+       en vez de cerrar la ventana. -->
+  @if (usuarioAEliminar(); as usuario) {
+    <div class="overlay">
+      <div class="panel-formulario">
+        <h2>Eliminar usuario</h2>
+        <p class="texto-confirmacion">
+          ¿Eliminar la cuenta de <strong>{{ usuario.nombre }}</strong> (&#64;{{ usuario.usuario }})?
+          Esta acción no se puede deshacer.
+        </p>
+
+        @if (errorEliminar()) {
+          <p class="mensaje-error">{{ errorEliminar() }}</p>
+        }
+
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarConfirmarEliminar()"
+            [disabled]="eliminando()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar-eliminar"
+            (click)="confirmarEliminar()"
+            [disabled]="eliminando()"
+          >
+            {{ eliminando() ? 'Eliminando...' : 'Sí, eliminar' }}
           </button>
         </div>
       </div>

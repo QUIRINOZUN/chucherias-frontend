@@ -10,6 +10,10 @@
 //     el "modo" decide a qué endpoint se manda y si la contraseña es
 //     obligatoria (crear) u opcional (editar: en blanco = no cambiarla).
 //   - Activar/desactivar una cuenta: no borra nada, solo impide iniciar sesión.
+//   - Eliminar una cuenta (2026-10-08): borrado real, con ventana de
+//     confirmación. Solo funciona si la cuenta nunca se usó — el servidor
+//     rechaza el borrado (409) si ya tiene historial, y ese mensaje se
+//     muestra en la misma ventana en vez de cerrarla.
 //
 // El formulario usa señales sueltas (nombreForm, usuarioForm…) en vez de un
 // FormGroup: la validación es corta y se resume en puedeGuardar().
@@ -53,6 +57,14 @@ export class UsuariosComponent implements OnInit {
   // id de la cuenta a la que se está cambiando el estado activo (deshabilita
   // su botón mientras el servidor responde).
   actualizandoId = signal<number | null>(null);
+
+  // Ventana de confirmación de "Eliminar": null = cerrada. Es la única
+  // acción irreversible de esta pantalla (desactivar se puede revertir), así
+  // que pide confirmar antes de mandar el DELETE — el servidor de todos
+  // modos la rechaza si la cuenta ya tiene historial (ver core/usuarios.ts).
+  usuarioAEliminar = signal<Usuario | null>(null);
+  eliminando = signal(false);
+  errorEliminar = signal('');
 
   // Solo el administrador da de alta, edita o activa/desactiva cuentas
   // (RF-24); encargado ve la lista, sin estos controles.
@@ -139,7 +151,11 @@ export class UsuariosComponent implements OnInit {
     if (this.modoFormulario() === 'crear' && this.contrasenaForm().length < 6) {
       return false;
     }
-    if (this.modoFormulario() === 'editar' && this.contrasenaForm().length > 0 && this.contrasenaForm().length < 6) {
+    if (
+      this.modoFormulario() === 'editar' &&
+      this.contrasenaForm().length > 0 &&
+      this.contrasenaForm().length < 6
+    ) {
       return false;
     }
     return true;
@@ -211,6 +227,42 @@ export class UsuariosComponent implements OnInit {
       error: () => {
         this.actualizandoId.set(null);
         this.error.set('No se pudo actualizar el estado del usuario.');
+      },
+    });
+  }
+
+  abrirConfirmarEliminar(usuario: Usuario): void {
+    this.usuarioAEliminar.set(usuario);
+    this.errorEliminar.set('');
+  }
+
+  cerrarConfirmarEliminar(): void {
+    if (this.eliminando()) {
+      return;
+    }
+    this.usuarioAEliminar.set(null);
+  }
+
+  // Manda el DELETE. Si el servidor responde 409 (la cuenta ya tiene
+  // historial), el mensaje se muestra dentro de esta misma ventana en vez de
+  // cerrarla — así el administrador ve de inmediato por qué no se pudo y que
+  // debe desactivarla en su lugar.
+  confirmarEliminar(): void {
+    const usuario = this.usuarioAEliminar();
+    if (!usuario || this.eliminando()) {
+      return;
+    }
+    this.eliminando.set(true);
+    this.errorEliminar.set('');
+    this.usuariosService.eliminar(usuario.id).subscribe({
+      next: () => {
+        this.eliminando.set(false);
+        this.usuarioAEliminar.set(null);
+        this.usuarios.update((lista) => lista.filter((u) => u.id !== usuario.id));
+      },
+      error: (error: HttpErrorResponse) => {
+        this.eliminando.set(false);
+        this.errorEliminar.set(error.error?.error || 'No se pudo eliminar el usuario.');
       },
     });
   }

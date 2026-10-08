@@ -7,7 +7,12 @@
 //
 // Permisos (los aplica el servidor):
 //   listar → administrador y encargado.
-//   listarRoles, crear, editar, cambiarActivo → solo administrador.
+//   listarRoles, crear, editar, cambiarActivo, eliminar → solo administrador.
+//
+// `eliminar` solo funciona si la cuenta nunca se usó (sin ventas, cortes,
+// asistencias, etc.) — el servidor responde 409 con un mensaje claro si
+// tiene historial; el camino normal para "retirar" una cuenta sigue siendo
+// cambiarActivo(id, false).
 // =============================================================================
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -78,5 +83,10 @@ export class UsuariosService {
   // deja de poder iniciar sesión.
   cambiarActivo(id: number, activo: boolean): Observable<Usuario> {
     return this.http.patch<Usuario>(`${this.apiUrl}/usuarios/${id}/activo`, { activo });
+  }
+
+  // DELETE /api/usuarios/:id — borrado real, solo si la cuenta nunca se usó.
+  eliminar(id: number): Observable<{ id: number; eliminado: boolean }> {
+    return this.http.delete<{ id: number; eliminado: boolean }>(`${this.apiUrl}/usuarios/${id}`);
   }
 }
