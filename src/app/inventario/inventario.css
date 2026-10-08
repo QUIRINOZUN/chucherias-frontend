@@ -164,6 +164,18 @@
   outline: none;
 }
 
+/* Etiqueta pequeña sobre cada fila de chips (Categoría / Nivel de stock /
+   Proveedor) — con 3 filtros ya no basta con el texto del primer chip
+   ("Todas", "Todo el stock") para saber de qué trata cada fila. */
+.etiqueta-filtro {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pos-text-secondary);
+}
+
 /* Chips de categoría: fila desplazable horizontalmente, "Todas" primero. */
 .fila-chips {
   display: flex;
@@ -369,12 +381,40 @@
   color: var(--peligro-texto);
 }
 
-.stat-unidad {
+.stat-unidad-fila {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   margin-top: 2px;
+}
+
+.stat-unidad {
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--pos-text-secondary);
   text-transform: uppercase;
+}
+
+/* Punto de color con el nivel de stock del insumo (bajo/medio/alto) — mismos
+   colores que sus chips de filtro equivalentes (.chip-nivel-*), para que la
+   tarjeta se reconozca de un vistazo sin tener que leer el número. */
+.indicador-nivel {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.indicador-nivel-bajo {
+  background: var(--peligro-texto);
+}
+
+.indicador-nivel-medio {
+  background: var(--acento-texto);
+}
+
+.indicador-nivel-alto {
+  background: var(--exito-texto);
 }
 
 .insumo-detalle-secundario {

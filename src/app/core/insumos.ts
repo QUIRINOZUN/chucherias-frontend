@@ -71,6 +71,11 @@ export class InsumosService {
     return this.http.get<CategoriaInsumo[]>(`${this.apiUrl}/insumos/categorias`);
   }
 
+  // POST /api/insumos/categorias — da de alta una categoría nueva.
+  crearCategoria(nombre: string): Observable<CategoriaInsumo> {
+    return this.http.post<CategoriaInsumo>(`${this.apiUrl}/insumos/categorias`, { nombre });
+  }
+
   // GET /api/insumos/:id/movimientos
   listarMovimientos(id: number): Observable<MovimientoInventario[]> {
     return this.http.get<MovimientoInventario[]>(`${this.apiUrl}/insumos/${id}/movimientos`);

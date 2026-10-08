@@ -20,7 +20,14 @@
 //     a la derecha. En móvil se apilan en el mismo orden.
 //   - Un formulario (ventana emergente) sirve para CREAR y EDITAR insumos,
 //     igual que el patrón de usuarios/usuarios.ts (modoFormulario decide el
-//     endpoint). Incluye un alta rápida de proveedor sin salir del formulario.
+//     endpoint). Incluye alta rápida de proveedor Y de categoría sin salir
+//     del formulario (2026-10-08).
+//   - Filtro de proveedor en chips (2026-10-08), eje independiente igual que
+//     el de nivel de stock: se combina con búsqueda/categoría/nivel en vez
+//     de limpiarlos.
+//   - Cada tarjeta muestra un indicador de color de su nivel de stock
+//     (bajo/medio/alto) junto a la existencia — mismos colores que sus
+//     chips de filtro, para reconocerlo de un vistazo sin leer el número.
 //   - Otra ventana emergente registra un movimiento manual: "Entrada"
 //     (mercancía recibida) o "Ajuste" (corrección de conteo, con motivo
 //     obligatorio). La "salida" es automática: la genera routes/ordenes.js al
@@ -53,6 +60,8 @@ type NivelStock = 'bajo' | 'medio' | 'alto';
 // Clave de agrupación para insumos sin categoria_id (NULL en la base): un id
 // real nunca es negativo, así que -1 no puede chocar con ninguna categoría.
 const SIN_CATEGORIA_ID = -1;
+// Mismo truco para el filtro de proveedor: -1 representa "sin proveedor".
+const SIN_PROVEEDOR_ID = -1;
 
 // Clasifica la existencia de un insumo relativa a su propio mínimo (no hay
 // un "máximo" capturado en ningún lado, así que se usa el mínimo como única
@@ -139,6 +148,13 @@ export class InventarioComponent implements OnInit {
   // están bajos?") que tiene sentido dentro de cualquier categoría o búsqueda.
   nivelStockFiltro = signal<NivelStock | null>(null);
 
+  // Proveedor elegido en sus propios chips (2026-10-08) — igual que el nivel
+  // de stock, es un eje INDEPENDIENTE: se combina con la búsqueda, la
+  // categoría o el nivel en vez de limpiarlos ("¿qué tengo de este
+  // proveedor en la categoría X?" es una pregunta válida). SIN_PROVEEDOR_ID
+  // filtra los insumos sin proveedor asignado.
+  proveedorFiltroId = signal<number | null>(null);
+
   // Categorías colapsadas (por id; SIN_CATEGORIA_ID para el grupo "Sin
   // categoría"). Ninguna colapsada por default: todo visible al entrar.
   categoriasColapsadas = signal<Set<number>>(new Set());
@@ -159,8 +175,20 @@ export class InventarioComponent implements OnInit {
     if (nivel) {
       lista = lista.filter((i) => nivelStock(i) === nivel);
     }
+    const proveedorId = this.proveedorFiltroId();
+    if (proveedorId != null) {
+      lista = lista.filter((i) => (i.proveedor_id ?? SIN_PROVEEDOR_ID) === proveedorId);
+    }
     return [...lista].sort((a, b) => Number(b.alerta) - Number(a.alerta));
   });
+
+  // Nivel de stock de un insumo, expuesto para la plantilla (el indicador de
+  // color en cada tarjeta) — reutiliza la misma clasificación que ya usan
+  // los chips de nivel, así el color de la tarjeta siempre coincide con el
+  // chip que la filtraría.
+  nivelDe(insumo: Insumo): NivelStock {
+    return nivelStock(insumo);
+  }
 
   // La lista, ya agrupada por categoría en el mismo orden en que existen las
   // categorías (de cocina a mostrador); "Sin categoría" queda al final.
@@ -233,6 +261,27 @@ export class InventarioComponent implements OnInit {
     this.nivelStockFiltro.set(this.nivelStockFiltro() === nivel ? null : nivel);
   }
 
+  // Cuántos insumos tiene cada proveedor en total (sin filtrar), mismo
+  // criterio que conteoPorCategoria/conteoPorNivel.
+  private conteoPorProveedor = computed(() => {
+    const mapa = new Map<number, number>();
+    for (const insumo of this.insumos()) {
+      const clave = insumo.proveedor_id ?? SIN_PROVEEDOR_ID;
+      mapa.set(clave, (mapa.get(clave) ?? 0) + 1);
+    }
+    return mapa;
+  });
+
+  contarProveedor(id: number | null): number {
+    return id === null ? this.insumos().length : (this.conteoPorProveedor().get(id) ?? 0);
+  }
+
+  // Eje independiente, igual que seleccionarNivel: elegir el mismo
+  // proveedor otra vez lo apaga.
+  seleccionarProveedor(id: number | null): void {
+    this.proveedorFiltroId.set(this.proveedorFiltroId() === id ? null : id);
+  }
+
   estaColapsada(id: number): boolean {
     return this.categoriasColapsadas().has(id);
   }
@@ -264,6 +313,12 @@ export class InventarioComponent implements OnInit {
   mostrarNuevoProveedor = signal(false);
   nombreProveedorForm = signal('');
   procesandoProveedor = signal(false);
+
+  // Alta rápida de categoría dentro del mismo formulario (2026-10-08) —
+  // mismo patrón que el proveedor de arriba.
+  mostrarNuevaCategoria = signal(false);
+  nombreCategoriaForm = signal('');
+  procesandoCategoria = signal(false);
 
   // ---- Ventana de movimiento (entrada / ajuste) ----
   tipoMovimiento = signal<TipoMovimiento>(null);
@@ -370,6 +425,8 @@ export class InventarioComponent implements OnInit {
     this.categoriaIdForm.set(this.categoriaFiltroId());
     this.mostrarNuevoProveedor.set(false);
     this.nombreProveedorForm.set('');
+    this.mostrarNuevaCategoria.set(false);
+    this.nombreCategoriaForm.set('');
     this.errorFormulario.set('');
   }
 
@@ -383,6 +440,8 @@ export class InventarioComponent implements OnInit {
     this.categoriaIdForm.set(insumo.categoria_id);
     this.mostrarNuevoProveedor.set(false);
     this.nombreProveedorForm.set('');
+    this.mostrarNuevaCategoria.set(false);
+    this.nombreCategoriaForm.set('');
     this.errorFormulario.set('');
   }
 
@@ -455,6 +514,30 @@ export class InventarioComponent implements OnInit {
       error: (error: HttpErrorResponse) => {
         this.procesandoProveedor.set(false);
         this.errorFormulario.set(error.error?.error || 'No se pudo crear el proveedor.');
+      },
+    });
+  }
+
+  // Alta rápida de categoría sin salir del formulario de insumo — mismo
+  // patrón que crearProveedorRapido(): la agrega al catálogo y la deja
+  // preseleccionada.
+  crearCategoriaRapida(): void {
+    const nombre = this.nombreCategoriaForm().trim();
+    if (!nombre || this.procesandoCategoria()) {
+      return;
+    }
+    this.procesandoCategoria.set(true);
+    this.insumosService.crearCategoria(nombre).subscribe({
+      next: (categoria) => {
+        this.procesandoCategoria.set(false);
+        this.categorias.update((lista) => [...lista, categoria].sort((a, b) => a.id - b.id));
+        this.categoriaIdForm.set(categoria.id);
+        this.mostrarNuevaCategoria.set(false);
+        this.nombreCategoriaForm.set('');
+      },
+      error: (error: HttpErrorResponse) => {
+        this.procesandoCategoria.set(false);
+        this.errorFormulario.set(error.error?.error || 'No se pudo crear la categoría.');
       },
     });
   }

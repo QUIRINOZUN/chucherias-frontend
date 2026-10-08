@@ -64,6 +64,7 @@
 
           <!-- CHIPS DE CATEGORÍA: filtran la lista; "Todas" es el default.
                Elegir un chip limpia la búsqueda (mismo criterio que el POS). -->
+          <p class="etiqueta-filtro">Categoría</p>
           <div class="fila-chips">
             <button
               type="button"
@@ -89,6 +90,7 @@
           <!-- CHIPS DE NIVEL DE STOCK: eje independiente de la categoría, se
                combina con ella y con la búsqueda en vez de limpiarlas
                (ver seleccionarNivel en inventario.ts). -->
+          <p class="etiqueta-filtro">Nivel de stock</p>
           <div class="fila-chips">
             <button
               type="button"
@@ -123,6 +125,34 @@
               Alto <span class="chip-conteo">{{ contarNivel('alto') }}</span>
             </button>
           </div>
+
+          <!-- CHIPS DE PROVEEDOR (2026-10-08): mismo eje independiente que el
+               nivel de stock. Solo se muestra si ya hay proveedores dados de
+               alta — con el catálogo vacío no tiene nada que filtrar. -->
+          @if (proveedores().length > 0) {
+            <p class="etiqueta-filtro">Proveedor</p>
+            <div class="fila-chips">
+              <button
+                type="button"
+                class="chip-categoria"
+                [class.chip-activa]="proveedorFiltroId() === null"
+                (click)="seleccionarProveedor(null)"
+              >
+                Todos <span class="chip-conteo">{{ contarProveedor(null) }}</span>
+              </button>
+              @for (proveedor of proveedores(); track proveedor.id) {
+                <button
+                  type="button"
+                  class="chip-categoria"
+                  [class.chip-activa]="proveedorFiltroId() === proveedor.id"
+                  (click)="seleccionarProveedor(proveedor.id)"
+                >
+                  {{ proveedor.nombre }}
+                  <span class="chip-conteo">{{ contarProveedor(proveedor.id) }}</span>
+                </button>
+              }
+            </div>
+          }
         </aside>
 
         <!-- LISTA agrupada por categoría; cada sección se puede colapsar. -->
@@ -166,7 +196,14 @@
                           <span class="stat-numero" [class.stat-numero-alerta]="insumo.alerta">{{
                             insumo.existencia
                           }}</span>
-                          <span class="stat-unidad">{{ insumo.unidad_medida }}</span>
+                          <span class="stat-unidad-fila">
+                            <span
+                              class="indicador-nivel"
+                              [class]="'indicador-nivel-' + nivelDe(insumo)"
+                              aria-hidden="true"
+                            ></span>
+                            <span class="stat-unidad">{{ insumo.unidad_medida }}</span>
+                          </span>
                         </div>
                       </div>
 
@@ -295,6 +332,28 @@
               <option [value]="categoria.id">{{ categoria.nombre }}</option>
             }
           </select>
+          @if (!mostrarNuevaCategoria()) {
+            <button type="button" class="boton-enlace" (click)="mostrarNuevaCategoria.set(true)">
+              + Nueva categoría
+            </button>
+          } @else {
+            <div class="fila-proveedor-rapido">
+              <input
+                type="text"
+                placeholder="Nombre de la categoría"
+                [value]="nombreCategoriaForm()"
+                (input)="nombreCategoriaForm.set($any($event.target).value)"
+              />
+              <button
+                type="button"
+                class="boton-accion"
+                [disabled]="!nombreCategoriaForm().trim() || procesandoCategoria()"
+                (click)="crearCategoriaRapida()"
+              >
+                {{ procesandoCategoria() ? '...' : 'Agregar' }}
+              </button>
+            </div>
+          }
         </div>
 
         <div class="campo">
