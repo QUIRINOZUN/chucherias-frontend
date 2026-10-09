@@ -556,75 +556,90 @@
   text-transform: capitalize;
 }
 
-/* Calendario del mes: tabla con la columna de empleado fija y los días con
-   scroll horizontal (hasta 31 columnas no caben en ninguna pantalla). */
-.tabla-mes-scroll {
-  overflow-x: auto;
+/* Calendario del mes: cuadrícula real (domingo a sábado, semanas completas)
+   de UN empleado a la vez, editable — tocar un día abre la ventana para
+   asignarle trabaja/descanso/cerrado ese día en particular. */
+.calendario-mes-grid {
+  margin-bottom: 14px;
   border: 1px solid var(--pos-border);
   border-radius: var(--radio-md);
-  margin-bottom: 14px;
-  -webkit-overflow-scrolling: touch;
-}
-
-.tabla-mes {
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
-.tabla-mes th,
-.tabla-mes td {
-  width: 28px;
-  height: 36px;
-  border: 1px solid var(--pos-border);
-  font-size: 0.68rem;
-  color: var(--pos-text-secondary);
-  text-align: center;
-  padding: 0;
-}
-
-.tabla-mes thead th {
-  position: sticky;
-  top: 0;
-  background: var(--pos-bg-card);
-  font-weight: 700;
-  z-index: 2;
-}
-
-.columna-empleado-fija {
-  position: sticky;
-  left: 0;
-  z-index: 3;
-  width: 120px !important;
-  min-width: 120px;
-  background: var(--pos-bg-card);
-  padding: 0 10px !important;
-  text-align: left !important;
-  font-size: 0.78rem !important;
-  font-weight: 600;
-  color: var(--pos-text-primary) !important;
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-thead .columna-empleado-fija {
-  z-index: 4;
+.fila-dias-semana,
+.fila-semana-mes {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
 }
 
-.columna-hoy {
-  background: color-mix(in srgb, var(--action-primary) 12%, var(--pos-bg-card));
-}
-
-.columna-cerrada {
-  background: var(--pos-bg-main);
+.dia-semana-cabecera {
+  padding: 8px 2px;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
   color: var(--pos-text-secondary);
+  background: var(--pos-bg-main);
+  border-bottom: 1px solid var(--pos-border);
 }
 
-.celda-trabaja {
-  background: color-mix(in srgb, var(--action-success) 55%, var(--pos-bg-card));
+.celda-mes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+  min-height: 52px;
+  padding: 6px 2px;
+  border: none;
+  border-right: 1px solid var(--pos-border);
+  border-bottom: 1px solid var(--pos-border);
+  background: var(--pos-bg-card);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
 }
 
-td.celda-cerrada {
+.fila-semana-mes .celda-mes:last-child {
+  border-right: none;
+}
+
+.celda-mes:hover {
+  background: var(--pos-bg-main);
+}
+
+.celda-mes-fuera {
+  opacity: 0.4;
+}
+
+.celda-mes-numero {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--pos-text-primary);
+}
+
+.celda-mes-numero.celda-mes-hoy {
+  background: var(--action-primary);
+  color: #fff;
+  font-weight: 700;
+}
+
+.celda-mes-horas {
+  font-size: 0.62rem;
+  color: var(--pos-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Color de fondo según el estado efectivo del día (ver estadoDelDia() en
+   asistencias.ts) — mismos colores que su punto en la leyenda de abajo. */
+.celda-mes-trabaja {
+  background: color-mix(in srgb, var(--action-success) 18%, var(--pos-bg-card));
+}
+
+.celda-mes-cerrado {
   background: repeating-linear-gradient(
     45deg,
     var(--pos-bg-main),
@@ -632,6 +647,12 @@ td.celda-cerrada {
     var(--pos-border) 4px,
     var(--pos-border) 5px
   );
+}
+
+/* Un día con excepción propia (no el horario normal) lleva un borde de
+   acento para distinguirse de un vistazo — "esto es distinto de lo usual". */
+.celda-mes-excepcion {
+  box-shadow: inset 0 0 0 2px var(--action-primary);
 }
 
 .leyenda-mes {
@@ -987,6 +1008,38 @@ td.celda-cerrada {
   margin: 6px 0 0;
   font-size: 0.75rem;
   color: var(--pos-text-secondary);
+}
+
+/* Selector de tipo de día (ventana de excepción del calendario del mes):
+   3 opciones excluyentes, mismo lenguaje de pastilla que el resto de la
+   app, más grande que un chip normal porque es la decisión principal de
+   esta ventana. */
+.selector-tipo-dia {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.pastilla-tipo-dia {
+  flex: 1;
+  min-height: 48px;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.pastilla-tipo-dia-activa {
+  border-color: var(--action-primary);
+  background: var(--action-primary);
+  color: #fff;
 }
 
 .campo input,
