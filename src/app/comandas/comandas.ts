@@ -36,7 +36,8 @@ import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth';
-import { EstadoOrden, Orden, OrdenesService } from '../core/ordenes';
+import { EstadoOrden, ItemOrden, Orden, OrdenesService } from '../core/ordenes';
+import { PasoTutorial, RecetasService } from '../core/recetas';
 import { ThemeService } from '../core/theme';
 
 // Cada cuántos milisegundos se vuelve a pedir el tablero al servidor (15 s).
@@ -140,8 +141,17 @@ export class ComandasComponent implements OnInit, OnDestroy {
   // puede quedar "suspended" por la política de autoplay del navegador.
   private contextoAudio?: AudioContext;
 
+  // TUTORIAL DE ELABORACIÓN (2026-10-09): el item que se está consultando
+  // (null = ventana cerrada), los pasos que trajo el servidor (vacío
+  // mientras carga o si esa variante no tiene tutorial capturado todavía) y
+  // el estado de la petición.
+  itemTutorial = signal<ItemOrden | null>(null);
+  pasosTutorial = signal<PasoTutorial[]>([]);
+  cargandoTutorial = signal(false);
+
   constructor(
     private ordenesService: OrdenesService,
+    private recetasService: RecetasService,
     private authService: AuthService,
     public themeService: ThemeService,
     private router: Router,
@@ -293,5 +303,29 @@ export class ComandasComponent implements OnInit, OnDestroy {
 
   volverAlDashboard(): void {
     this.router.navigate(['/dashboard']);
+  }
+
+  // Botón "Tutorial" de cada producto de la orden: abre una ventana con sus
+  // pasos de elaboración (RF nuevo, Recetario → tutorial). Cualquier rol que
+  // ve el tablero puede consultarlo (el endpoint es de lectura abierta, ver
+  // routes/recetas.js) — es justo lo que necesita cocina al llegar una orden
+  // nueva, no información de gestión.
+  verTutorial(item: ItemOrden): void {
+    this.itemTutorial.set(item);
+    this.pasosTutorial.set([]);
+    this.cargandoTutorial.set(true);
+    this.recetasService.obtenerTutorial(item.variante_id).subscribe({
+      next: (pasos) => {
+        this.pasosTutorial.set(pasos);
+        this.cargandoTutorial.set(false);
+      },
+      error: () => {
+        this.cargandoTutorial.set(false);
+      },
+    });
+  }
+
+  cerrarTutorial(): void {
+    this.itemTutorial.set(null);
   }
 }

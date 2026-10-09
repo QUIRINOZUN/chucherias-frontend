@@ -148,7 +148,9 @@
 /* Una comanda que lleva mucho esperando se marca; el aviso no depende solo
    del color: el tiempo también se lee en texto. */
 .tarjeta-urgente {
-  box-shadow: 0 0 0 2px var(--action-danger), var(--sombra-suave);
+  box-shadow:
+    0 0 0 2px var(--action-danger),
+    var(--sombra-suave);
 }
 
 .tarjeta-urgente .tiempo-transcurrido {
@@ -203,6 +205,137 @@
   font-weight: 600;
 }
 
+.item-orden-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Botón "Tutorial" (2026-10-09): abre los pasos de elaboración de ESE
+   producto (la receta es por variante, no por orden completa). */
+.boton-tutorial {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.boton-tutorial:hover {
+  border-color: var(--action-primary);
+  color: var(--action-primary);
+}
+
+.boton-tutorial .icono {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---- Ventana emergente: tutorial de elaboración ---- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 20;
+  backdrop-filter: blur(3px);
+  animation: aparecer 0.2s ease;
+  overflow-y: auto;
+}
+
+.panel-tutorial {
+  width: 100%;
+  max-width: 420px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-elevada);
+  padding: 24px;
+  box-sizing: border-box;
+  animation: escalar 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.panel-tutorial-encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.panel-tutorial-encabezado h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.boton-cerrar-tutorial {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.boton-cerrar-tutorial .icono {
+  width: 16px;
+  height: 16px;
+}
+
+.subtitulo-tutorial {
+  margin: 2px 0 16px;
+  font-size: 0.85rem;
+  color: var(--pos-text-secondary);
+}
+
+.lista-pasos-tutorial-comandas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lista-pasos-tutorial-comandas li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.paso-numero-comandas {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radio-pastilla);
+  background: var(--action-primary);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 /* Notas de personalización del cliente: resaltadas para que la cocina no las pase por alto. */
 .notas-item {
   margin: 4px 0 0;
@@ -225,7 +358,9 @@
   font-weight: 800;
   cursor: pointer;
   box-shadow: var(--sombra-acento);
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
 }
 
 .boton-avanzar:hover:not(:disabled) {

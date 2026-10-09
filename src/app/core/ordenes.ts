@@ -22,6 +22,9 @@ export type EstadoOrden =
 export interface ItemOrden {
   producto: string;
   variante: string;
+  // Id de la variante (no de la línea): permite pedir su tutorial de
+  // elaboración (RecetasService.obtenerTutorial) desde el tablero de Comandas.
+  variante_id: number;
   cantidad: number;
   notas: string | null;
 }

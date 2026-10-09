@@ -16,7 +16,9 @@
       type="button"
       class="boton-tema"
       (click)="themeService.alternarTema()"
-      [attr.aria-label]="themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
     >
       <svg class="icono" aria-hidden="true">
         <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
@@ -33,7 +35,9 @@
 
     <!-- MODO CONSULTA: el cajero ve el tablero pero no puede avanzar comandas. -->
     @if (!puedeAvanzar()) {
-      <p class="aviso-solo-lectura">Estás en modo consulta: solo cocina y encargados avanzan las comandas.</p>
+      <p class="aviso-solo-lectura">
+        Estás en modo consulta: solo cocina y encargados avanzan las comandas.
+      </p>
     }
 
     <!-- TABLERO: una columna por estado, con su contador de órdenes. -->
@@ -42,10 +46,14 @@
         <section class="columna">
           <h2 class="columna-titulo">
             <span class="columna-icono">
-              <svg class="icono" aria-hidden="true"><use [attr.href]="'#ic-' + columna.icono" /></svg>
+              <svg class="icono" aria-hidden="true">
+                <use [attr.href]="'#ic-' + columna.icono" />
+              </svg>
             </span>
             {{ columna.titulo }}
-            <span class="columna-contador">{{ (ordenesPorEstado()[columna.estado] ?? []).length }}</span>
+            <span class="columna-contador">{{
+              (ordenesPorEstado()[columna.estado] ?? []).length
+            }}</span>
           </h2>
 
           @if ((ordenesPorEstado()[columna.estado] ?? []).length === 0) {
@@ -57,17 +65,28 @@
             <article class="tarjeta-orden" [class.tarjeta-urgente]="esUrgente(orden)">
               <div class="tarjeta-orden-encabezado">
                 <span class="numero-orden">{{ orden.numero_orden }}</span>
-                <span class="tiempo-transcurrido">{{ tiempoTranscurrido(orden.fecha_creacion) }}</span>
+                <span class="tiempo-transcurrido">{{
+                  tiempoTranscurrido(orden.fecha_creacion)
+                }}</span>
               </div>
 
-              <span class="etiqueta-entrega" [class.etiqueta-domicilio]="orden.tipo_entrega === 'domicilio'">
+              <span
+                class="etiqueta-entrega"
+                [class.etiqueta-domicilio]="orden.tipo_entrega === 'domicilio'"
+              >
                 {{ orden.tipo_entrega === 'domicilio' ? 'A domicilio' : 'Presencial' }}
               </span>
 
               <ul class="lista-items-orden">
                 @for (item of orden.items; track $index) {
                   <li>
-                    <span>{{ item.cantidad }}× {{ item.producto }} ({{ item.variante }})</span>
+                    <div class="item-orden-fila">
+                      <span>{{ item.cantidad }}× {{ item.producto }} ({{ item.variante }})</span>
+                      <button type="button" class="boton-tutorial" (click)="verTutorial(item)">
+                        <svg class="icono" aria-hidden="true"><use href="#ic-cocinar" /></svg>
+                        Tutorial
+                      </button>
+                    </div>
                     @if (item.notas) {
                       <p class="notas-item">{{ item.notas }}</p>
                     }
@@ -85,13 +104,54 @@
                   (click)="avanzar(orden)"
                   [disabled]="actualizandoOrdenId() === orden.id"
                 >
-                  {{ actualizandoOrdenId() === orden.id ? 'Actualizando...' : etiquetaAccion[orden.estado] }}
+                  {{
+                    actualizandoOrdenId() === orden.id
+                      ? 'Actualizando...'
+                      : etiquetaAccion[orden.estado]
+                  }}
                 </button>
               }
             </article>
           }
         </section>
       }
+    </div>
+  }
+
+  <!-- VENTANA: tutorial de elaboración de un producto de la orden. -->
+  @if (itemTutorial(); as item) {
+    <div class="overlay" (click)="cerrarTutorial()">
+      <div class="panel-tutorial" (click)="$event.stopPropagation()">
+        <div class="panel-tutorial-encabezado">
+          <h2>{{ item.producto }}</h2>
+          <button
+            type="button"
+            class="boton-cerrar-tutorial"
+            (click)="cerrarTutorial()"
+            aria-label="Cerrar"
+          >
+            <svg class="icono" aria-hidden="true"><use href="#ic-cerrar" /></svg>
+          </button>
+        </div>
+        <p class="subtitulo-tutorial">{{ item.variante }}</p>
+
+        @if (cargandoTutorial()) {
+          <p class="mensaje-estado">Cargando tutorial...</p>
+        } @else if (pasosTutorial().length === 0) {
+          <p class="mensaje-estado">
+            Este platillo todavía no tiene tutorial capturado — agrégalo desde Recetario.
+          </p>
+        } @else {
+          <ol class="lista-pasos-tutorial-comandas">
+            @for (paso of pasosTutorial(); track paso.id) {
+              <li>
+                <span class="paso-numero-comandas">{{ paso.numero_paso }}</span>
+                <span>{{ paso.descripcion }}</span>
+              </li>
+            }
+          </ol>
+        }
+      </div>
     </div>
   }
 </div>
