@@ -55,6 +55,21 @@ import { GrupoEleccion, OpcionEleccion, obtenerEleccionesDeVariante } from './pr
 // confirmar (mismo intervalo que usa el tablero de comandas).
 const INTERVALO_RETIROS_MS = 15000;
 
+// "Ingrediente Extra para Pizza" (2026-10-09): el usuario notó que
+// aparecía como un platillo más dentro de "Pizzas" (podía tocarse y
+// agregarse solo, como si fuera una cuarta pizza) y pidió que en vez de
+// eso se ofreciera DENTRO de personalizar cualquier pizza. Sigue siendo
+// un producto real de catálogo (con sus propias variantes, precio y
+// receta/inventario) — solo se oculta de la cuadrícula/búsqueda del menú
+// (ver productosFiltrados) y se ofrece desde el panel de "Personalizar"
+// de cualquier línea de pizza (ver esPizza/agregarIngredienteExtraPizza).
+// Agregarlo sigue siendo, técnicamente, una línea de carrito aparte con
+// su propio precio — exactamente como si el cajero lo hubiera agregado a
+// mano desde el menú de antes — así el servidor sigue sin necesitar
+// ningún concepto nuevo de "precio por elección" (ver nota de diseño al
+// inicio del archivo: nunca se envían precios al servidor).
+const NOMBRE_INGREDIENTE_EXTRA_PIZZA = 'Ingrediente Extra para Pizza';
+
 // Una LÍNEA del carrito (no un producto: ver el campo `id`).
 interface ItemCarrito {
   // Identifica la LÍNEA del carrito, no el producto: dos hamburguesas BBQ
@@ -192,8 +207,11 @@ export class PosComponent implements OnInit, OnDestroy {
   // ---------------------------------------------------------------------------
 
   // Productos que se muestran en el catálogo según búsqueda y categoría.
+  // "Ingrediente Extra para Pizza" queda fuera a propósito (ver
+  // NOMBRE_INGREDIENTE_EXTRA_PIZZA) — ya no se busca ni se toca como un
+  // platillo aparte, se ofrece desde personalizar una pizza.
   productosFiltrados = computed(() => {
-    const productos = this.productos();
+    const productos = this.productos().filter((p) => p.nombre !== NOMBRE_INGREDIENTE_EXTRA_PIZZA);
     const texto = this.busqueda().trim().toLowerCase();
 
     // Buscar por nombre ignora la categoría seleccionada a propósito: no
@@ -377,6 +395,37 @@ export class PosComponent implements OnInit, OnDestroy {
     // La ventana se cierra sola tras agregar: confirma la acción de un
     // vistazo y regresa al menú para seguir eligiendo.
     this.cerrarDetalleProducto();
+  }
+
+  // ---- "Ingrediente extra" dentro de personalizar una pizza (2026-10-09) ----
+  // Ver NOMBRE_INGREDIENTE_EXTRA_PIZZA arriba: el producto real sigue
+  // existiendo en el catálogo (con sus variantes Champiñones/Salchicha y
+  // su precio/receta), solo se oculta de la cuadrícula; aquí se busca ese
+  // mismo producto dentro de lo que el POS ya cargó, para ofrecer sus
+  // variantes como botones de "agregar" dentro del panel de Personalizar
+  // de cualquier línea de pizza.
+  productoIngredienteExtraPizza = computed<Producto | null>(
+    () => this.productos().find((p) => p.nombre === NOMBRE_INGREDIENTE_EXTRA_PIZZA) ?? null,
+  );
+
+  // Cualquier producto "Pizza X" ofrece el ingrediente extra — funciona
+  // para pizzas futuras con el mismo prefijo sin tener que tocar código.
+  esPizza(item: ItemCarrito): boolean {
+    return item.productoNombre.startsWith('Pizza ');
+  }
+
+  // Agregar un ingrediente extra es, técnicamente, agregar OTRO producto
+  // al carrito (reutiliza agregarAlCarrito tal cual) — no una propiedad de
+  // la línea de la pizza. Queda como su propia línea con su propio precio
+  // real (el servidor lo cobra exactamente igual que cualquier otra
+  // variante); tocar el mismo ingrediente otra vez solo sube su cantidad
+  // (mismo comportamiento de "apilar" que ya tiene agregarAlCarrito).
+  agregarIngredienteExtraPizza(variante: Variante): void {
+    const producto = this.productoIngredienteExtraPizza();
+    if (!producto) {
+      return;
+    }
+    this.agregarAlCarrito(producto, variante);
   }
 
   // La personalización (Quitar / notas) solo se ofrece en líneas de una

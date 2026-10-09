@@ -294,6 +294,29 @@
                         }
                       </button>
                     }
+                    <!-- INGREDIENTE EXTRA DE PIZZA (2026-10-09): ya no es un
+                         platillo aparte en el menú — se ofrece aquí mismo al
+                         personalizar cualquier pizza. Tocar un botón agrega
+                         ESE ingrediente como su propia línea del carrito (con
+                         su propio precio real, que cobra el servidor igual
+                         que cualquier otra variante) — técnicamente es otro
+                         producto, no una propiedad de esta línea. -->
+                    @if (esPizza(item) && productoIngredienteExtraPizza(); as extra) {
+                      <div class="extras-pizza">
+                        <span class="extras-pizza-titulo">Ingrediente extra (se cobra aparte)</span>
+                        <div class="extras-pizza-opciones">
+                          @for (variante of extra.variantes; track variante.id) {
+                            <button
+                              type="button"
+                              class="boton-extra-pizza"
+                              (click)="agregarIngredienteExtraPizza(variante)"
+                            >
+                              + {{ variante.nombre }} ({{ variante.precio | currency: 'MXN' }})
+                            </button>
+                          }
+                        </div>
+                      </div>
+                    }
                     <input
                       type="text"
                       class="item-notas"

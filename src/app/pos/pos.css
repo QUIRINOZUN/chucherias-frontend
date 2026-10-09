@@ -856,6 +856,7 @@
 
 .item-personalizacion {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 8px;
 }
@@ -883,6 +884,52 @@
   border-color: var(--peligro-texto);
   color: var(--peligro-texto);
   background: color-mix(in srgb, var(--action-danger) 14%, var(--pos-bg-main));
+}
+
+/* "Ingrediente extra" de pizza (2026-10-09): siempre su propia fila
+   (flex-basis: 100%) dentro de .item-personalizacion, debajo de Quitar/
+   Elección — son botones de AGREGAR (cada toque crea o suma una línea de
+   carrito nueva, con su propio precio), no un selector con estado
+   completo/incompleto como los de arriba, así que llevan su propio
+   lenguaje visual: naranja de marca en vez de rojo/verde. */
+.extras-pizza {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.extras-pizza-titulo {
+  font-size: 0.72rem;
+  color: var(--pos-text-secondary);
+}
+
+.extras-pizza-opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.boton-extra-pizza {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1.5px dashed var(--action-primary);
+  border-radius: var(--radio-sm);
+  background: color-mix(in srgb, var(--action-primary) 8%, var(--pos-bg-main));
+  color: var(--action-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    border-style 0.15s ease;
+}
+
+.boton-extra-pizza:hover {
+  border-style: solid;
+  background: color-mix(in srgb, var(--action-primary) 16%, var(--pos-bg-main));
 }
 
 /* Botón de "elección" (salsa/topping/dip) — Fase 2 del recetario: rojo
