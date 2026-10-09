@@ -27,67 +27,257 @@
     </button>
   </header>
 
+  <!-- PESTAÑAS: Recetas (insumos por variante) y Menú (categorías/
+       productos/variantes — 2026-10-09). -->
+  <nav class="tabs-recetario" role="tablist">
+    <button
+      type="button"
+      role="tab"
+      class="tab-recetario"
+      [class.tab-recetario-activa]="pestanaActiva() === 'recetas'"
+      [attr.aria-selected]="pestanaActiva() === 'recetas'"
+      (click)="cambiarPestana('recetas')"
+    >
+      Recetas
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="tab-recetario"
+      [class.tab-recetario-activa]="pestanaActiva() === 'menu'"
+      [attr.aria-selected]="pestanaActiva() === 'menu'"
+      (click)="cambiarPestana('menu')"
+    >
+      Menú
+    </button>
+  </nav>
+
   <div class="recetario-cuerpo">
-    @if (!cargando() && variantes().length > 0) {
-      <div class="resumen-recetario">
-        <div class="chip-resumen chip-resumen-adentro">
-          <span class="chip-resumen-numero">{{ totalConReceta() }}</span>
-          <span class="chip-resumen-etiqueta">con receta</span>
+    @if (pestanaActiva() === 'recetas') {
+      @if (!cargando() && variantes().length > 0) {
+        <div class="resumen-recetario">
+          <div class="chip-resumen chip-resumen-adentro">
+            <span class="chip-resumen-numero">{{ totalConReceta() }}</span>
+            <span class="chip-resumen-etiqueta">con receta</span>
+          </div>
+          <div class="chip-resumen" [class.chip-resumen-alerta]="totalSinReceta() > 0">
+            <span class="chip-resumen-numero">{{ totalSinReceta() }}</span>
+            <span class="chip-resumen-etiqueta">sin receta</span>
+          </div>
         </div>
-        <div class="chip-resumen" [class.chip-resumen-alerta]="totalSinReceta() > 0">
-          <span class="chip-resumen-numero">{{ totalSinReceta() }}</span>
-          <span class="chip-resumen-etiqueta">sin receta</span>
-        </div>
-      </div>
-    }
-
-    <div class="campo-busqueda">
-      <svg class="icono" aria-hidden="true"><use href="#ic-buscar" /></svg>
-      <input
-        type="text"
-        placeholder="Buscar producto o variante..."
-        [value]="busqueda()"
-        (input)="busqueda.set($any($event.target).value)"
-      />
-    </div>
-
-    @if (error()) {
-      <p class="mensaje-estado mensaje-error">{{ error() }}</p>
-    }
-
-    @if (cargando()) {
-      <p class="mensaje-estado">Cargando recetario...</p>
-    } @else if (grupos().length === 0) {
-      <p class="mensaje-estado">No hay productos que coincidan con la búsqueda.</p>
-    } @else {
-      @for (grupo of grupos(); track grupo.categoria) {
-        <section class="grupo-categoria">
-          <h2 class="titulo-categoria">{{ grupo.categoria }}</h2>
-          @for (producto of grupo.productos; track producto.producto_id) {
-            <div class="tarjeta-producto">
-              <span class="producto-nombre">{{ producto.producto_nombre }}</span>
-              <ul class="lista-variantes">
-                @for (variante of producto.variantes; track variante.variante_id) {
-                  <li class="item-variante" (click)="abrirEditor(variante)">
-                    <div class="variante-info">
-                      <span class="variante-nombre">{{ variante.variante_nombre }}</span>
-                      <span class="variante-precio">{{ variante.precio | currency: 'MXN' }}</span>
-                    </div>
-                    <span class="badge-receta" [class.badge-receta-vacia]="!variante.tiene_receta">
-                      {{
-                        variante.tiene_receta
-                          ? variante.total_insumos +
-                            (variante.total_insumos === 1 ? ' insumo' : ' insumos')
-                          : 'Sin receta'
-                      }}
-                    </span>
-                  </li>
-                }
-              </ul>
-            </div>
-          }
-        </section>
       }
+
+      <div class="campo-busqueda">
+        <svg class="icono" aria-hidden="true"><use href="#ic-buscar" /></svg>
+        <input
+          type="text"
+          placeholder="Buscar producto o variante..."
+          [value]="busqueda()"
+          (input)="busqueda.set($any($event.target).value)"
+        />
+      </div>
+
+      @if (error()) {
+        <p class="mensaje-estado mensaje-error">{{ error() }}</p>
+      }
+
+      @if (cargando()) {
+        <p class="mensaje-estado">Cargando recetario...</p>
+      } @else if (grupos().length === 0) {
+        <p class="mensaje-estado">No hay productos que coincidan con la búsqueda.</p>
+      } @else {
+        @for (grupo of grupos(); track grupo.categoria) {
+          <section class="grupo-categoria">
+            <h2 class="titulo-categoria">{{ grupo.categoria }}</h2>
+            @if (grupo.productos.length === 0) {
+              <p class="mensaje-estado mensaje-estado-chico">
+                Sin productos todavía — créalos desde la pestaña "Menú".
+              </p>
+            }
+            @for (producto of grupo.productos; track producto.producto_id) {
+              <div class="tarjeta-producto">
+                <span class="producto-nombre">{{ producto.producto_nombre }}</span>
+                @if (producto.variantes.length === 0) {
+                  <p class="mensaje-estado mensaje-estado-chico">
+                    Sin variantes todavía — agrégale una desde la pestaña "Menú".
+                  </p>
+                } @else {
+                  <ul class="lista-variantes">
+                    @for (variante of producto.variantes; track variante.variante_id) {
+                      <li class="item-variante" (click)="abrirEditor(variante)">
+                        <div class="variante-info">
+                          <span class="variante-nombre">{{ variante.variante_nombre }}</span>
+                          <span class="variante-precio">{{
+                            variante.precio | currency: 'MXN'
+                          }}</span>
+                        </div>
+                        <span
+                          class="badge-receta"
+                          [class.badge-receta-vacia]="!variante.tiene_receta"
+                        >
+                          {{
+                            variante.tiene_receta
+                              ? variante.total_insumos +
+                                (variante.total_insumos === 1 ? ' insumo' : ' insumos')
+                              : 'Sin receta'
+                          }}
+                        </span>
+                        @if (variante.tiene_tutorial) {
+                          <span class="badge-tutorial" title="Ya tiene tutorial de elaboración">
+                            <svg class="icono" aria-hidden="true"><use href="#ic-cocinar" /></svg>
+                          </span>
+                        }
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
+          </section>
+        }
+      }
+    }
+
+    <!-- ============================= PESTAÑA: MENÚ ============================ -->
+    @if (pestanaActiva() === 'menu') {
+      <section class="seccion-menu">
+        <!-- SUB-PESTAÑAS (2026-10-09): categorías y productos cada una en su
+             propia vista — antes iban apiladas en un solo scroll largo, con
+             cada producto desplegando de entrada su descripción, sus 3
+             botones y la lista completa de variantes; con el catálogo real
+             (~70 productos) eso se sentía saturado. -->
+        <nav class="subtabs-horario" role="tablist">
+          <button
+            type="button"
+            class="subtab-horario"
+            [class.subtab-horario-activa]="subPestanaMenu() === 'categorias'"
+            (click)="cambiarSubPestanaMenu('categorias')"
+          >
+            Categorías
+          </button>
+          <button
+            type="button"
+            class="subtab-horario"
+            [class.subtab-horario-activa]="subPestanaMenu() === 'productos'"
+            (click)="cambiarSubPestanaMenu('productos')"
+          >
+            Productos
+          </button>
+        </nav>
+
+        <!-- ---- Sub-vista: CATEGORÍAS ---- -->
+        @if (subPestanaMenu() === 'categorias') {
+          <div class="encabezado-seccion">
+            <h2 class="titulo-subseccion">Categorías</h2>
+            <button type="button" class="boton-enlace" (click)="abrirCreacionCategoria()">
+              + Nueva categoría
+            </button>
+          </div>
+
+          @if (categorias().length === 0) {
+            <p class="mensaje-estado">Todavía no hay categorías.</p>
+          } @else {
+            <ul class="lista-categorias-menu">
+              @for (categoria of categorias(); track categoria.id) {
+                <li class="item-categoria-menu">
+                  <span class="categoria-menu-nombre">{{ categoria.nombre }}</span>
+                  <button
+                    type="button"
+                    class="boton-editar"
+                    (click)="abrirEdicionCategoria(categoria)"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    class="boton-eliminar-chico"
+                    (click)="abrirConfirmarEliminarCategoria(categoria)"
+                  >
+                    Eliminar
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        }
+
+        <!-- ---- Sub-vista: PRODUCTOS (filas compactas; tocar una abre su
+             ventana de detalle con descripción, acciones y variantes) ---- -->
+        @if (subPestanaMenu() === 'productos') {
+          <div class="encabezado-seccion">
+            <h2 class="titulo-subseccion">Productos</h2>
+            <button type="button" class="boton-enlace" (click)="abrirCreacionProducto()">
+              + Nuevo producto
+            </button>
+          </div>
+
+          <div class="campo-busqueda">
+            <svg class="icono" aria-hidden="true"><use href="#ic-buscar" /></svg>
+            <input
+              type="text"
+              placeholder="Buscar producto..."
+              [value]="busquedaMenu()"
+              (input)="busquedaMenu.set($any($event.target).value)"
+            />
+          </div>
+
+          @if (errorMenu()) {
+            <p class="mensaje-estado mensaje-error">{{ errorMenu() }}</p>
+          }
+
+          @if (cargandoMenu()) {
+            <p class="mensaje-estado">Cargando menú...</p>
+          } @else if (gruposMenu().length === 0) {
+            <p class="mensaje-estado">
+              {{
+                busquedaMenu()
+                  ? 'Ningún producto coincide con la búsqueda.'
+                  : 'Todavía no hay productos. Crea el primero arriba.'
+              }}
+            </p>
+          } @else {
+            @for (grupo of gruposMenu(); track grupo.categoriaId) {
+              <section class="grupo-categoria">
+                <div class="encabezado-grupo-menu">
+                  <h3 class="titulo-categoria">{{ grupo.categoria }}</h3>
+                  <button
+                    type="button"
+                    class="boton-enlace-chico"
+                    (click)="abrirCreacionProducto(grupo.categoriaId)"
+                  >
+                    + Producto aquí
+                  </button>
+                </div>
+                <ul class="lista-productos-menu">
+                  @for (producto of grupo.productos; track producto.id) {
+                    <li class="item-producto-menu" (click)="abrirDetalleProducto(producto)">
+                      @if (producto.imagen_url) {
+                        <img
+                          class="producto-menu-miniatura"
+                          [src]="producto.imagen_url"
+                          [alt]="producto.nombre"
+                        />
+                      }
+                      <div class="item-producto-menu-info">
+                        <span class="producto-nombre" [class.texto-inactivo]="!producto.activo">
+                          {{ producto.nombre }}
+                        </span>
+                        <span class="item-producto-menu-detalle">
+                          {{ producto.variantes.length }}
+                          {{ producto.variantes.length === 1 ? 'variante' : 'variantes' }}
+                        </span>
+                      </div>
+                      <span class="badge-estado" [class.badge-inactivo]="!producto.activo">
+                        {{ producto.activo ? 'Activo' : 'Inactivo' }}
+                      </span>
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+          }
+        }
+      </section>
     }
   </div>
 
@@ -151,6 +341,66 @@
             <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
             Agregar insumo
           </button>
+
+          <!-- TUTORIAL DE ELABORACIÓN (2026-10-09): pasos numerados, para que
+               un auxiliar de cocina nuevo pueda preparar el platillo sin
+               tener que preguntar. Mismo botón "Guardar receta" de abajo
+               guarda esto también. Lo consulta Comandas con el botón
+               "Tutorial" de cada producto de la orden. -->
+          <h3 class="subtitulo-seccion-formulario">Tutorial de elaboración</h3>
+          @if (pasosTutorialForm().length === 0) {
+            <p class="mensaje-estado">
+              Todavía no tiene tutorial capturado. Agrega el primer paso abajo.
+            </p>
+          }
+
+          <ol class="lista-pasos-tutorial">
+            @for (paso of pasosTutorialForm(); track $index) {
+              <li class="paso-tutorial">
+                <span class="paso-tutorial-numero">{{ $index + 1 }}</span>
+                <textarea
+                  class="paso-tutorial-texto"
+                  rows="2"
+                  placeholder="Describe este paso..."
+                  [value]="paso"
+                  (input)="actualizarPasoTutorial($index, $any($event.target).value)"
+                ></textarea>
+                <div class="paso-tutorial-acciones">
+                  <button
+                    type="button"
+                    class="boton-mover-paso boton-mover-paso-arriba"
+                    (click)="moverPasoArriba($index)"
+                    [disabled]="$index === 0"
+                    aria-label="Mover paso hacia arriba"
+                  >
+                    <svg class="icono" aria-hidden="true"><use href="#ic-chevron" /></svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="boton-mover-paso"
+                    (click)="moverPasoAbajo($index)"
+                    [disabled]="$index === pasosTutorialForm().length - 1"
+                    aria-label="Mover paso hacia abajo"
+                  >
+                    <svg class="icono" aria-hidden="true"><use href="#ic-chevron" /></svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="boton-quitar-linea"
+                    (click)="quitarPasoTutorial($index)"
+                    aria-label="Quitar paso"
+                  >
+                    <svg class="icono" aria-hidden="true"><use href="#ic-cerrar" /></svg>
+                  </button>
+                </div>
+              </li>
+            }
+          </ol>
+
+          <button type="button" class="boton-agregar-linea" (click)="agregarPasoTutorial()">
+            <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
+            Agregar paso
+          </button>
         }
 
         @if (errorForm()) {
@@ -173,6 +423,534 @@
             (click)="guardar()"
           >
             {{ guardando() ? 'Guardando...' : 'Guardar receta' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- VENTANA EMERGENTE: crear/editar categoría. -->
+  @if (modoFormularioCategoria(); as modoCategoria) {
+    <div class="overlay">
+      <div class="panel-formulario">
+        <h2>{{ modoCategoria === 'crear' ? 'Nueva categoría' : 'Editar categoría' }}</h2>
+
+        <div class="campo">
+          <label for="nombre-categoria-form">Nombre <span class="marca-requerido">*</span></label>
+          <input
+            id="nombre-categoria-form"
+            type="text"
+            [value]="nombreCategoriaForm()"
+            (input)="nombreCategoriaForm.set($any($event.target).value)"
+          />
+        </div>
+
+        @if (errorFormularioCategoria()) {
+          <p class="mensaje-error">{{ errorFormularioCategoria() }}</p>
+        }
+
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarFormularioCategoria()"
+            [disabled]="procesandoCategoria()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar"
+            [disabled]="!puedeGuardarCategoria()"
+            (click)="guardarFormularioCategoria()"
+          >
+            {{
+              procesandoCategoria()
+                ? 'Guardando...'
+                : modoCategoria === 'crear'
+                  ? 'Crear categoría'
+                  : 'Guardar cambios'
+            }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- VENTANA EMERGENTE: confirmar eliminar categoría. -->
+  @if (categoriaAEliminar(); as categoria) {
+    <div class="overlay">
+      <div class="panel-formulario">
+        <h2>Eliminar categoría</h2>
+        <p class="texto-confirmacion">
+          ¿Eliminar la categoría <strong>{{ categoria.nombre }}</strong
+          >? Esta acción no se puede deshacer.
+        </p>
+
+        @if (errorEliminarCategoria()) {
+          <p class="mensaje-error">{{ errorEliminarCategoria() }}</p>
+        }
+
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarConfirmarEliminarCategoria()"
+            [disabled]="eliminandoCategoria()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar-eliminar"
+            (click)="confirmarEliminarCategoria()"
+            [disabled]="eliminandoCategoria()"
+          >
+            {{ eliminandoCategoria() ? 'Eliminando...' : 'Sí, eliminar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- VENTANA EMERGENTE: detalle de un producto (2026-10-09) — descripción,
+       acciones del producto y sus variantes, todo lo que antes vivía
+       siempre desplegado en la lista. Se deriva de productosMenu() con un
+       computed (ver productoDetalle() en recetario.ts), así que siempre
+       muestra datos frescos y se cierra sola si el producto se elimina. -->
+  @if (productoDetalle(); as producto) {
+    <div class="overlay">
+      <div class="panel-formulario panel-formulario-ancho">
+        <div class="detalle-producto-encabezado">
+          @if (producto.imagen_url) {
+            <img
+              class="detalle-producto-imagen"
+              [src]="producto.imagen_url"
+              [alt]="producto.nombre"
+            />
+          }
+          <div class="detalle-producto-titulo">
+            <h2>{{ producto.nombre }}</h2>
+            <span class="badge-estado" [class.badge-inactivo]="!producto.activo">
+              {{ producto.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+          </div>
+        </div>
+
+        @if (producto.descripcion) {
+          <p class="producto-menu-descripcion">{{ producto.descripcion }}</p>
+        }
+
+        <div class="acciones-producto-menu">
+          <button type="button" class="boton-editar" (click)="abrirEdicionProducto(producto)">
+            Editar
+          </button>
+          <button
+            type="button"
+            class="boton-alternar"
+            [class.boton-alternar-desactivar]="producto.activo"
+            [disabled]="actualizandoActivoProductoId() === producto.id"
+            (click)="alternarActivoProducto(producto)"
+          >
+            {{
+              actualizandoActivoProductoId() === producto.id
+                ? '...'
+                : producto.activo
+                  ? 'Desactivar'
+                  : 'Activar'
+            }}
+          </button>
+          <button
+            type="button"
+            class="boton-eliminar-chico"
+            (click)="abrirConfirmarEliminarProducto(producto)"
+          >
+            Eliminar
+          </button>
+        </div>
+
+        @if (producto.variantes.length === 0) {
+          <p class="mensaje-estado mensaje-estado-chico mensaje-estado-alerta">
+            Sin variantes todavía — no se puede vender ni aparecerá en el punto de venta hasta que
+            tenga al menos una. Agrégala abajo.
+          </p>
+        } @else {
+          <ul class="lista-variantes lista-variantes-menu">
+            @for (variante of producto.variantes; track variante.id) {
+              <li class="item-variante item-variante-menu">
+                <div class="variante-info">
+                  <span class="variante-nombre" [class.texto-inactivo]="!variante.activo">
+                    {{ variante.nombre }}
+                  </span>
+                  <span class="variante-precio">{{ variante.precio | currency: 'MXN' }}</span>
+                </div>
+                <span
+                  class="badge-estado badge-estado-chico"
+                  [class.badge-inactivo]="!variante.activo"
+                >
+                  {{ variante.activo ? 'Activa' : 'Inactiva' }}
+                </span>
+                <div class="acciones-variante-menu">
+                  <button
+                    type="button"
+                    class="boton-enlace-chico"
+                    (click)="abrirEdicionVariante(producto, variante)"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    class="boton-enlace-chico"
+                    (click)="alternarActivoVariante(variante)"
+                    [disabled]="actualizandoActivoVarianteId() === variante.id"
+                  >
+                    {{
+                      actualizandoActivoVarianteId() === variante.id
+                        ? '...'
+                        : variante.activo
+                          ? 'Desactivar'
+                          : 'Activar'
+                    }}
+                  </button>
+                  <button
+                    type="button"
+                    class="boton-enlace-chico boton-enlace-peligro"
+                    (click)="abrirConfirmarEliminarVariante(variante)"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+
+        <button type="button" class="boton-agregar-linea" (click)="abrirCreacionVariante(producto)">
+          <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
+          Agregar variante
+        </button>
+
+        <div class="acciones-formulario">
+          <button type="button" class="boton-cancelar" (click)="cerrarDetalleProducto()">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- VENTANA EMERGENTE: crear/editar producto. Al CREAR pide también los
+       datos de su primera variante — un producto sin ninguna variante no
+       se puede vender (ver nota 2026-10-09 en recetario.ts). -->
+  @if (modoFormularioProducto(); as modoProducto) {
+    <div class="overlay">
+      <div class="panel-formulario">
+        <h2>{{ modoProducto === 'crear' ? 'Nuevo producto' : 'Editar producto' }}</h2>
+        <p class="campo-ayuda campo-ayuda-requisitos">
+          Los campos con <span class="marca-requerido">*</span> son obligatorios.
+        </p>
+
+        <div class="campo">
+          <label for="categoria-producto-form"
+            >Categoría <span class="marca-requerido">*</span></label
+          >
+          <select
+            id="categoria-producto-form"
+            [value]="categoriaIdProductoForm() ?? ''"
+            (change)="categoriaIdProductoForm.set(+$any($event.target).value)"
+          >
+            @for (categoria of categorias(); track categoria.id) {
+              <option [value]="categoria.id">{{ categoria.nombre }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="nombre-producto-form">Nombre <span class="marca-requerido">*</span></label>
+          <input
+            id="nombre-producto-form"
+            type="text"
+            placeholder="Ej. Alitas, Pizza Hawaiana"
+            [value]="nombreProductoForm()"
+            (input)="nombreProductoForm.set($any($event.target).value)"
+          />
+        </div>
+
+        <div class="campo">
+          <label for="descripcion-producto-form">Descripción (opcional)</label>
+          <input
+            id="descripcion-producto-form"
+            type="text"
+            placeholder="Lo que ve el cliente en el menú"
+            [value]="descripcionProductoForm()"
+            (input)="descripcionProductoForm.set($any($event.target).value)"
+          />
+        </div>
+
+        <div class="campo">
+          <span class="campo-etiqueta-foto">Foto (opcional)</span>
+          <div class="selector-foto-producto-fila">
+            <label
+              class="selector-foto-producto"
+              [class.selector-foto-producto-con-imagen]="!!previsualizacionImagenForm()"
+            >
+              @if (previsualizacionImagenForm(); as previsualizacion) {
+                <img [src]="previsualizacion" alt="Vista previa de la foto del producto" />
+              }
+              <span class="selector-foto-producto-icono">
+                <svg class="icono" aria-hidden="true"><use href="#ic-camara" /></svg>
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                class="selector-foto-producto-input"
+                (change)="seleccionarArchivoImagen($event)"
+              />
+            </label>
+            <div class="selector-foto-producto-texto">
+              <p class="campo-ayuda">
+                @if (modoProducto === 'editar') {
+                  @if (subiendoImagenProducto()) {
+                    Subiendo...
+                  } @else if (previsualizacionImagenForm()) {
+                    Toca el ícono para cambiarla. Se guarda de inmediato, sin esperar a "Guardar
+                    cambios".
+                  } @else {
+                    Toca el ícono para subir una. Se guarda de inmediato, sin esperar a "Guardar
+                    cambios".
+                  }
+                } @else {
+                  Sin foto, el punto de venta muestra un bloque de color con el ícono de la
+                  categoría.
+                }
+              </p>
+              @if (previsualizacionImagenForm() && modoProducto === 'editar') {
+                <button
+                  type="button"
+                  class="boton-enlace-chico boton-enlace-peligro"
+                  [disabled]="subiendoImagenProducto()"
+                  (click)="quitarImagenProducto()"
+                >
+                  Quitar foto
+                </button>
+              }
+            </div>
+          </div>
+          @if (errorImagenProducto()) {
+            <p class="mensaje-error">{{ errorImagenProducto() }}</p>
+          }
+        </div>
+
+        @if (modoProducto === 'crear') {
+          <div class="separador-formulario">
+            <span class="separador-formulario-titulo">Primera variante</span>
+            <p class="campo-ayuda">
+              Un producto necesita al menos una variante con precio para poder venderse y aparecer
+              en el punto de venta — la creas aquí mismo; podrás agregar más después desde la lista
+              de productos.
+            </p>
+          </div>
+
+          <div class="campo-fila">
+            <div class="campo">
+              <label for="nombre-variante-inicial-form"
+                >Nombre de la variante <span class="marca-requerido">*</span></label
+              >
+              <input
+                id="nombre-variante-inicial-form"
+                type="text"
+                placeholder="Ej. Único, Paquete #1 · 8 pz"
+                [value]="nombreVarianteInicialForm()"
+                (input)="nombreVarianteInicialForm.set($any($event.target).value)"
+              />
+            </div>
+            <div class="campo">
+              <label for="precio-variante-inicial-form"
+                >Precio <span class="marca-requerido">*</span></label
+              >
+              <input
+                id="precio-variante-inicial-form"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                [value]="precioVarianteInicialForm() ?? ''"
+                (input)="
+                  precioVarianteInicialForm.set(
+                    $any($event.target).value === '' ? null : +$any($event.target).value
+                  )
+                "
+              />
+            </div>
+          </div>
+        }
+
+        @if (errorFormularioProducto()) {
+          <p class="mensaje-error">{{ errorFormularioProducto() }}</p>
+        }
+
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarFormularioProducto()"
+            [disabled]="procesandoProducto()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar"
+            [disabled]="!puedeGuardarProducto()"
+            (click)="guardarFormularioProducto()"
+          >
+            {{
+              procesandoProducto()
+                ? 'Guardando...'
+                : modoProducto === 'crear'
+                  ? 'Crear producto'
+                  : 'Guardar cambios'
+            }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- VENTANA EMERGENTE: confirmar eliminar producto. -->
+  @if (productoAEliminar(); as producto) {
+    <div class="overlay">
+      <div class="panel-formulario">
+        <h2>Eliminar producto</h2>
+        <p class="texto-confirmacion">
+          ¿Eliminar <strong>{{ producto.nombre }}</strong
+          >? Esta acción no se puede deshacer.
+        </p>
+
+        @if (errorEliminarProducto()) {
+          <p class="mensaje-error">{{ errorEliminarProducto() }}</p>
+        }
+
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarConfirmarEliminarProducto()"
+            [disabled]="eliminandoProducto()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar-eliminar"
+            (click)="confirmarEliminarProducto()"
+            [disabled]="eliminandoProducto()"
+          >
+            {{ eliminandoProducto() ? 'Eliminando...' : 'Sí, eliminar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- VENTANA EMERGENTE: crear/editar variante. -->
+  @if (modoFormularioVariante(); as modoVariante) {
+    <div class="overlay">
+      <div class="panel-formulario">
+        <h2>{{ modoVariante === 'crear' ? 'Nueva variante' : 'Editar variante' }}</h2>
+        @if (productoDeVarianteForm(); as productoVariante) {
+          <p class="subtitulo-formulario">{{ productoVariante.nombre }}</p>
+        }
+
+        <div class="campo">
+          <label for="nombre-variante-form">Nombre <span class="marca-requerido">*</span></label>
+          <input
+            id="nombre-variante-form"
+            type="text"
+            placeholder="Ej. Paquete #1 · 8 pz, Único"
+            [value]="nombreVarianteForm()"
+            (input)="nombreVarianteForm.set($any($event.target).value)"
+          />
+        </div>
+
+        <div class="campo">
+          <label for="precio-variante-form">Precio <span class="marca-requerido">*</span></label>
+          <input
+            id="precio-variante-form"
+            type="number"
+            min="0"
+            step="0.01"
+            [value]="precioVarianteForm() ?? ''"
+            (input)="
+              precioVarianteForm.set(
+                $any($event.target).value === '' ? null : +$any($event.target).value
+              )
+            "
+          />
+        </div>
+
+        @if (errorFormularioVariante()) {
+          <p class="mensaje-error">{{ errorFormularioVariante() }}</p>
+        }
+
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarFormularioVariante()"
+            [disabled]="procesandoVariante()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar"
+            [disabled]="!puedeGuardarVariante()"
+            (click)="guardarFormularioVariante()"
+          >
+            {{
+              procesandoVariante()
+                ? 'Guardando...'
+                : modoVariante === 'crear'
+                  ? 'Crear variante'
+                  : 'Guardar cambios'
+            }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- VENTANA EMERGENTE: confirmar eliminar variante. -->
+  @if (varianteAEliminar(); as varianteEliminar) {
+    <div class="overlay">
+      <div class="panel-formulario">
+        <h2>Eliminar variante</h2>
+        <p class="texto-confirmacion">
+          ¿Eliminar <strong>{{ varianteEliminar.nombre }}</strong
+          >? Esta acción no se puede deshacer.
+        </p>
+
+        @if (errorEliminarVariante()) {
+          <p class="mensaje-error">{{ errorEliminarVariante() }}</p>
+        }
+
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarConfirmarEliminarVariante()"
+            [disabled]="eliminandoVariante()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar-eliminar"
+            (click)="confirmarEliminarVariante()"
+            [disabled]="eliminandoVariante()"
+          >
+            {{ eliminandoVariante() ? 'Eliminando...' : 'Sí, eliminar' }}
           </button>
         </div>
       </div>

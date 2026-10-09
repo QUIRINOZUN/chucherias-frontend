@@ -23,6 +23,15 @@ export interface VarianteConReceta {
   categoria: string;
   tiene_receta: boolean;
   total_insumos: number;
+  tiene_tutorial: boolean;
+  total_pasos: number;
+}
+
+// Un paso del tutorial de elaboración (GET/PUT .../tutorial).
+export interface PasoTutorial {
+  id: number;
+  numero_paso: number;
+  descripcion: string;
 }
 
 // Una línea de la receta de una variante (GET /variante/:id).
@@ -64,6 +73,21 @@ export class RecetasService {
   guardarReceta(varianteId: number, insumos: LineaRecetaForm[]): Observable<LineaReceta[]> {
     return this.http.put<LineaReceta[]>(`${this.apiUrl}/recetas/variante/${varianteId}`, {
       insumos,
+    });
+  }
+
+  // GET /api/recetas/variante/:id/tutorial — lista vacía si todavía no tiene
+  // tutorial capturado. Abierto a cualquier rol autenticado (lo consume
+  // también Comandas, no solo Recetario).
+  obtenerTutorial(varianteId: number): Observable<PasoTutorial[]> {
+    return this.http.get<PasoTutorial[]>(`${this.apiUrl}/recetas/variante/${varianteId}/tutorial`);
+  }
+
+  // PUT /api/recetas/variante/:id/tutorial — reemplaza TODO el tutorial de
+  // una vez; el orden del arreglo es el orden de preparación.
+  guardarTutorial(varianteId: number, pasos: string[]): Observable<PasoTutorial[]> {
+    return this.http.put<PasoTutorial[]>(`${this.apiUrl}/recetas/variante/${varianteId}/tutorial`, {
+      pasos,
     });
   }
 }

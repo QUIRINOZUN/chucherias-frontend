@@ -233,6 +233,25 @@
   color: var(--pos-text-secondary);
 }
 
+/* Solo aparece si tiene_tutorial — no se muestra "sin tutorial" para no
+   agregar una segunda insignia siempre visible junto a ~114 variantes. */
+.badge-tutorial {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radio-pastilla);
+  background: color-mix(in srgb, var(--action-primary) 18%, var(--pos-bg-card));
+  color: var(--action-primary);
+}
+
+.badge-tutorial .icono {
+  width: 13px;
+  height: 13px;
+}
+
 /* ---- Ventana emergente: editor de receta ---- */
 .overlay {
   position: fixed;
@@ -371,6 +390,101 @@
   height: 16px;
 }
 
+/* TUTORIAL DE ELABORACIÓN (2026-10-09): pasos numerados dentro del mismo
+   editor de receta — ver recetario.ts (pasosTutorialForm) y recetas.js
+   (receta_pasos). */
+.subtitulo-seccion-formulario {
+  margin: 18px 0 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--pos-border);
+  font-size: 0.95rem;
+}
+
+.lista-pasos-tutorial {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.paso-tutorial {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.paso-tutorial-numero {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-top: 8px;
+  border-radius: var(--radio-pastilla);
+  background: var(--action-primary);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.paso-tutorial-texto {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 8px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  resize: vertical;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.paso-tutorial-texto:focus {
+  outline: none;
+  border-color: var(--pos-text-secondary);
+}
+
+.paso-tutorial-acciones {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.boton-mover-paso {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.boton-mover-paso:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.boton-mover-paso .icono {
+  width: 14px;
+  height: 14px;
+}
+
+/* ic-chevron apunta hacia abajo por defecto — se reutiliza rotado para
+   "mover arriba" en vez de agregar un ícono nuevo al sprite. */
+.boton-mover-paso-arriba .icono {
+  transform: rotate(180deg);
+}
+
 .acciones-formulario {
   display: flex;
   gap: 10px;
@@ -415,4 +529,550 @@
   .linea-receta-insumo {
     flex: 1 1 100%;
   }
+}
+
+/* ---- Pestañas: Recetas / Menú (2026-10-09) ---- */
+.tabs-recetario {
+  display: flex;
+  gap: 6px;
+  padding: 10px 16px;
+  background: var(--pos-bg-card);
+  border-bottom: 1px solid var(--pos-border);
+}
+
+.tab-recetario {
+  flex: 1;
+  min-height: 44px;
+  border: none;
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.tab-recetario-activa {
+  background: var(--action-primary);
+  color: #fff;
+  box-shadow: var(--sombra-acento);
+}
+
+/* ---- Pestaña Menú: encabezados de sub-sección y lista de categorías ---- */
+.seccion-menu {
+  display: block;
+}
+
+/* Sub-pestañas Categorías/Productos (2026-10-09) — mismo lenguaje visual
+   que ya usa Horarios para sus propias sub-vistas. */
+.subtabs-horario {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--pos-border);
+  overflow-x: auto;
+}
+
+.subtab-horario {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.subtab-horario-activa {
+  background: var(--action-primary);
+  color: #fff;
+}
+
+.encabezado-seccion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.titulo-subseccion {
+  font-family: var(--fuente-titulo);
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.boton-enlace {
+  border: none;
+  background: none;
+  color: var(--acento-texto);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 10px 0;
+  min-height: 44px;
+}
+
+.boton-enlace:hover {
+  text-decoration: underline;
+}
+
+.boton-enlace-chico {
+  border: none;
+  background: none;
+  color: var(--acento-texto);
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 2px;
+}
+
+.boton-enlace-chico:hover {
+  text-decoration: underline;
+}
+
+.boton-enlace-chico:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.boton-enlace-peligro {
+  color: var(--peligro-texto);
+}
+
+.lista-categorias-menu {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item-categoria-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-md);
+  box-shadow: var(--sombra-suave);
+  padding: 8px 12px;
+}
+
+.categoria-menu-nombre {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* ---- Pestaña Menú → Productos: lista compacta por categoría; tocar una
+   fila abre la ventana de detalle (2026-10-09) en vez de desplegar todo
+   ahí mismo. ---- */
+.encabezado-grupo-menu {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.lista-productos-menu {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item-producto-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-md);
+  box-shadow: var(--sombra-suave);
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.item-producto-menu:hover {
+  background: var(--pos-bg-main);
+}
+
+.item-producto-menu-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item-producto-menu-info .producto-nombre {
+  margin-bottom: 0;
+}
+
+.item-producto-menu-detalle {
+  font-size: 0.72rem;
+  color: var(--pos-text-secondary);
+}
+
+.producto-menu-miniatura {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radio-sm);
+  object-fit: cover;
+  background: var(--pos-bg-main);
+}
+
+/* ---- Ventana de detalle de un producto ---- */
+.detalle-producto-encabezado {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.detalle-producto-encabezado h2 {
+  margin: 0 0 4px;
+}
+
+.detalle-producto-titulo {
+  flex: 1;
+  min-width: 0;
+}
+
+.detalle-producto-imagen {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radio-md);
+  object-fit: cover;
+  background: var(--pos-bg-main);
+}
+
+/* Vista previa de la foto en el formulario de crear/editar producto. */
+/* Campo de foto del formulario de producto (2026-10-09): un círculo con
+   ícono de cámara en vez de un <input type="file"> crudo — más estético y
+   es el patrón que cualquiera reconoce de "editar foto de perfil". El
+   label envuelve el input real (oculto visualmente, no con display:none,
+   para que siga siendo accesible por teclado/lector de pantalla). */
+.campo-etiqueta-foto {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.selector-foto-producto-fila {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.selector-foto-producto {
+  position: relative;
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px dashed var(--pos-border);
+  background: var(--pos-bg-main);
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.selector-foto-producto:hover {
+  border-color: var(--action-primary);
+}
+
+.selector-foto-producto img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Centrado con position + transform (no flexbox): queda perfecto sin
+   importar el box-model del contenedor, es la técnica estándar para un
+   ícono superpuesto a un círculo. Sin foto: grande y centrado, es el
+   botón completo. Con foto: se encoge a una insignia en la esquina sobre
+   la vista previa — señal de "toca para cambiarla", sin tapar la imagen. */
+.selector-foto-producto-icono {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  color: var(--pos-text-secondary);
+}
+
+.selector-foto-producto-icono .icono {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.selector-foto-producto-con-imagen {
+  border-style: solid;
+}
+
+.selector-foto-producto-con-imagen .selector-foto-producto-icono {
+  top: auto;
+  left: auto;
+  right: 3px;
+  bottom: 3px;
+  transform: none;
+  width: 24px;
+  height: 24px;
+  padding: 4px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--action-primary);
+  color: #fff;
+  box-shadow: 0 0 0 2px var(--pos-bg-card);
+}
+
+.selector-foto-producto-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.selector-foto-producto-texto {
+  flex: 1;
+  min-width: 0;
+}
+
+.selector-foto-producto-texto .campo-ayuda {
+  margin-top: 0;
+}
+
+.producto-menu-descripcion {
+  margin: 0 0 10px;
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+}
+
+.texto-inactivo {
+  color: var(--pos-text-secondary);
+  text-decoration: line-through;
+}
+
+/* Etiqueta Activo/Activa / Inactivo/Inactiva. */
+.badge-estado {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--action-success) 20%, var(--pos-bg-card));
+  color: var(--exito-texto);
+  white-space: nowrap;
+}
+
+.badge-estado.badge-inactivo {
+  background: color-mix(in srgb, var(--action-danger) 20%, var(--pos-bg-card));
+  color: var(--peligro-texto);
+}
+
+.badge-estado-chico {
+  font-size: 0.64rem;
+  padding: 2px 8px;
+}
+
+.acciones-producto-menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.boton-editar,
+.boton-alternar {
+  min-height: 36px;
+  border: 1px solid var(--pos-border);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  border-radius: var(--radio-sm);
+  padding: 0 12px;
+  font-size: 0.76rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.boton-editar:hover {
+  border-color: var(--pos-text-secondary);
+}
+
+.boton-alternar-desactivar:hover:not(:disabled) {
+  border-color: var(--peligro-texto);
+  color: var(--peligro-texto);
+}
+
+.boton-alternar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.boton-eliminar-chico {
+  min-height: 36px;
+  border: 1px solid var(--peligro-texto);
+  background: var(--pos-bg-main);
+  color: var(--peligro-texto);
+  border-radius: var(--radio-sm);
+  padding: 0 12px;
+  font-size: 0.76rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.boton-eliminar-chico:hover {
+  background: color-mix(in srgb, var(--action-danger) 14%, var(--pos-bg-main));
+}
+
+.mensaje-estado-chico {
+  font-size: 0.78rem;
+  margin: 4px 0 10px;
+}
+
+.mensaje-estado-alerta {
+  color: var(--peligro-texto);
+}
+
+.lista-variantes-menu {
+  margin-bottom: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--pos-border);
+}
+
+.item-variante-menu {
+  cursor: default;
+  flex-wrap: wrap;
+}
+
+.item-variante-menu:hover {
+  background: none;
+}
+
+.acciones-variante-menu {
+  flex-basis: 100%;
+  display: flex;
+  gap: 12px;
+  padding-top: 2px;
+}
+
+/* ---- Formularios de categoría/producto/variante (reutilizan .panel-formulario) ---- */
+.campo {
+  margin-bottom: 14px;
+}
+
+.campo label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.campo input,
+.campo select {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 1rem;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.campo input:focus,
+.campo select:focus {
+  outline: none;
+  border-color: var(--pos-text-secondary);
+}
+
+.texto-confirmacion {
+  margin: 0 0 16px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--pos-text-primary);
+}
+
+.boton-confirmar-eliminar {
+  flex: 1;
+  min-height: 52px;
+  border: none;
+  background: var(--action-danger);
+  color: #fff;
+  border-radius: var(--radio-md);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.boton-confirmar-eliminar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.campo-fila {
+  display: flex;
+  gap: 10px;
+}
+
+.campo-fila .campo {
+  flex: 1;
+}
+
+.campo-ayuda {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  color: var(--pos-text-secondary);
+}
+
+.campo-ayuda-requisitos {
+  margin: -4px 0 16px;
+}
+
+.marca-requerido {
+  color: var(--peligro-texto);
+}
+
+/* Separa visualmente la sección "Primera variante" dentro del formulario
+   de crear producto (2026-10-09) — es un requisito distinto del resto de
+   los campos, no solo otro campo más. */
+.separador-formulario {
+  margin: 18px 0 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--pos-border);
+}
+
+.separador-formulario-titulo {
+  display: block;
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
 }
