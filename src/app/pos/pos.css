@@ -333,10 +333,21 @@
   color: inherit;
 }
 
+/* 2026-10-09: `cover` recortaba el platillo (las fotos son cuadradas
+   512×512 con fondo transparente, y esta caja es más ancha que alta) —
+   `contain` siempre muestra el alimento completo; el espacio que sobra a
+   los lados se rellena con un tinte del color de la categoría, para que
+   se sienta enmarcado a propósito y no como un hueco vacío (mismo color
+   que ya usa `.imagen-marcador` cuando no hay foto). */
 .imagen-producto {
   width: 100%;
   height: 132px;
-  object-fit: cover;
+  object-fit: contain;
+  background: color-mix(
+    in srgb,
+    var(--color-categoria, var(--pos-text-muted)) 10%,
+    var(--pos-bg-card)
+  );
   display: block;
 }
 
@@ -522,10 +533,17 @@
   z-index: 1;
 }
 
+/* Mismo criterio que .imagen-producto: `contain` para no recortar el
+   platillo, tinte del color de categoría en vez de hueco vacío. */
 .imagen-detalle-producto {
   width: 100%;
   height: 220px;
-  object-fit: cover;
+  object-fit: contain;
+  background: color-mix(
+    in srgb,
+    var(--color-categoria, var(--pos-text-muted)) 10%,
+    var(--pos-bg-card)
+  );
   display: block;
   border-radius: 28px 28px 0 0;
 }
