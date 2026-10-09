@@ -219,25 +219,17 @@
     <!-- ========================== SECCIÓN: HORARIOS ============================ -->
     @if (pestanaActiva() === 'horarios') {
       <section class="seccion-asistencias">
-        <!-- SUB-PESTAÑAS (2026-10-08): editar el horario de un empleado, ver el
-             calendario del mes con todos juntos, o el resumen de horas reales
-             trabajadas por semana. -->
+        <!-- SUB-PESTAÑAS (2026-10-09): el calendario editable de un empleado
+             (semana o mes, a elección), o el resumen de horas reales
+             trabajadas por semana (todos los empleados juntos). -->
         <nav class="subtabs-horario" role="tablist">
           <button
             type="button"
             class="subtab-horario"
-            [class.subtab-horario-activa]="subVistaHorario() === 'editar'"
-            (click)="cambiarSubVistaHorario('editar')"
+            [class.subtab-horario-activa]="subVistaHorario() === 'calendario'"
+            (click)="cambiarSubVistaHorario('calendario')"
           >
-            Editar
-          </button>
-          <button
-            type="button"
-            class="subtab-horario"
-            [class.subtab-horario-activa]="subVistaHorario() === 'mes'"
-            (click)="cambiarSubVistaHorario('mes')"
-          >
-            Mes
+            Calendario
           </button>
           <button
             type="button"
@@ -249,10 +241,8 @@
           </button>
         </nav>
 
-        <!-- Selector de empleado: compartido entre "Editar" y "Mes" (las dos
-             sub-vistas de UN empleado a la vez; "Horas trabajadas" es de
-             todos los empleados juntos, no lo necesita). -->
-        @if (subVistaHorario() === 'editar' || subVistaHorario() === 'mes') {
+        <!-- ---- Sub-vista: CALENDARIO (semana o mes, editable) ---- -->
+        @if (subVistaHorario() === 'calendario') {
           <div class="campo-filtro campo-filtro-ancho campo-selector-horario">
             <label for="empleado-horario">Empleado</label>
             <select
@@ -266,104 +256,47 @@
               }
             </select>
           </div>
-        }
 
-        <!-- ---- Sub-vista: EDITAR (horario semanal recurrente) ---- -->
-        @if (subVistaHorario() === 'editar') {
           @if (!empleadoIdHorario()) {
-            <p class="mensaje-estado">Elige un empleado para ver y editar su horario semanal.</p>
-          } @else if (cargandoHorario()) {
-            <p class="mensaje-estado">Cargando horario...</p>
+            <p class="mensaje-estado">Elige un empleado para ver y editar su calendario.</p>
           } @else {
-            <!-- Calendario visual: una columna por día operativo (martes a
-               domingo). El interruptor prende/apaga el día; con el día
-               prendido se ve un bloque de color con sus horas, apagado se ve
-               una columna "Descanso" apagada. -->
-            <div class="calendario-semana">
-              @for (dia of diasOperativos; track dia.valor) {
-                <div
-                  class="dia-columna"
-                  [class.dia-columna-activa]="horarioForm()[dia.valor].trabaja"
-                >
-                  <div class="dia-columna-header">
-                    <span class="dia-columna-nombre">{{ dia.etiqueta }}</span>
-                    <label class="interruptor-dia">
-                      <input
-                        type="checkbox"
-                        [checked]="horarioForm()[dia.valor].trabaja"
-                        (change)="alternarDiaHorario(dia.valor)"
-                      />
-                      <span class="interruptor-pista">
-                        <span class="interruptor-perilla"></span>
-                      </span>
-                    </label>
-                  </div>
-                  @if (horarioForm()[dia.valor].trabaja) {
-                    <div class="dia-columna-bloque">
-                      <svg class="icono" aria-hidden="true"><use href="#ic-reloj" /></svg>
-                      <input
-                        type="time"
-                        aria-label="Hora de entrada"
-                        [value]="horarioForm()[dia.valor].horaEntrada"
-                        (input)="
-                          actualizarHoraHorario(dia.valor, 'horaEntrada', $any($event.target).value)
-                        "
-                      />
-                      <span class="dia-columna-flecha">→</span>
-                      <input
-                        type="time"
-                        aria-label="Hora de salida"
-                        [value]="horarioForm()[dia.valor].horaSalida"
-                        (input)="
-                          actualizarHoraHorario(dia.valor, 'horaSalida', $any($event.target).value)
-                        "
-                      />
-                    </div>
-                  } @else {
-                    <div class="dia-columna-libre">Descanso</div>
-                  }
-                </div>
-              }
+            <!-- Selector Semana/Mes, igual criterio que Google Calendar. -->
+            <div class="selector-tipo-dia selector-vista-calendario">
+              <button
+                type="button"
+                class="pastilla-tipo-dia"
+                [class.pastilla-tipo-dia-activa]="vistaCalendario() === 'semana'"
+                (click)="cambiarVistaCalendario('semana')"
+              >
+                Semana
+              </button>
+              <button
+                type="button"
+                class="pastilla-tipo-dia"
+                [class.pastilla-tipo-dia-activa]="vistaCalendario() === 'mes'"
+                (click)="cambiarVistaCalendario('mes')"
+              >
+                Mes
+              </button>
             </div>
 
-            @if (errorHorario()) {
-              <p class="mensaje-error">{{ errorHorario() }}</p>
-            }
-            @if (exitoHorario()) {
-              <p class="mensaje-exito">{{ exitoHorario() }}</p>
-            }
-
-            <button
-              type="button"
-              class="boton-nuevo"
-              [disabled]="!puedeGuardarHorario()"
-              (click)="guardarHorario()"
-            >
-              {{ guardandoHorario() ? 'Guardando...' : 'Guardar horario' }}
-            </button>
-          }
-        }
-
-        <!-- ---- Sub-vista: MES (calendario de un empleado, editable) ---- -->
-        @if (subVistaHorario() === 'mes') {
-          @if (!empleadoIdHorario()) {
-            <p class="mensaje-estado">Elige un empleado para ver y editar su calendario del mes.</p>
-          } @else {
             <div class="nav-periodo">
               <button
                 type="button"
                 class="boton-nav-periodo"
-                (click)="mesAnterior()"
-                aria-label="Mes anterior"
+                (click)="periodoAnterior()"
+                [attr.aria-label]="vistaCalendario() === 'mes' ? 'Mes anterior' : 'Semana anterior'"
               >
                 <svg class="icono" aria-hidden="true"><use href="#ic-chevron" /></svg>
               </button>
-              <span class="nav-periodo-titulo">{{ nombreMesVisible() }}</span>
+              <span class="nav-periodo-titulo">{{ tituloPeriodoVisible() }}</span>
               <button
                 type="button"
                 class="boton-nav-periodo boton-nav-periodo-siguiente"
-                (click)="mesSiguiente()"
-                aria-label="Mes siguiente"
+                (click)="periodoSiguiente()"
+                [attr.aria-label]="
+                  vistaCalendario() === 'mes' ? 'Mes siguiente' : 'Semana siguiente'
+                "
               >
                 <svg class="icono" aria-hidden="true"><use href="#ic-chevron" /></svg>
               </button>
@@ -373,17 +306,21 @@
               <p class="mensaje-estado">Cargando...</p>
             }
 
-            <!-- Cuadrícula de calendario real: domingo a sábado, semanas
-                 completas (incluye días atenuados del mes anterior/siguiente).
-                 Tocar un día abre la ventana para asignarle trabaja/
-                 descanso/cerrado ese día en particular. -->
-            <div class="calendario-mes-grid">
+            <!-- Cuadrícula de calendario real: domingo a sábado — en "Mes",
+                 semanas completas (con días atenuados del mes anterior/
+                 siguiente); en "Semana", una sola fila con los 7 días
+                 visibles. Tocar un día abre la ventana para asignarle
+                 trabaja/descanso/cerrado ese día en particular. -->
+            <div
+              class="calendario-mes-grid"
+              [class.calendario-mes-grid-semana]="vistaCalendario() === 'semana'"
+            >
               <div class="fila-dias-semana">
                 @for (nombre of NOMBRES_DIA_CORTO; track nombre) {
                   <span class="dia-semana-cabecera">{{ nombre }}</span>
                 }
               </div>
-              @for (semana of semanasDelMesVisible(); track $index) {
+              @for (semana of celdasCalendario(); track $index) {
                 <div class="fila-semana-mes">
                   @for (celda of semana; track celda.numero + '-' + celda.enMesActual) {
                     @if (estadoDelDia(celda); as estado) {
@@ -399,7 +336,12 @@
                           celda.numero
                         }}</span>
                         @if (estado.tipo === 'trabaja' && estado.horaEntrada) {
-                          <span class="celda-mes-horas">{{ estado.horaEntrada.slice(0, 5) }}</span>
+                          <span class="celda-mes-horas">
+                            {{ estado.horaEntrada.slice(0, 5) }}
+                            @if (vistaCalendario() === 'semana' && estado.horaSalida) {
+                              – {{ estado.horaSalida.slice(0, 5) }}
+                            }
+                          </span>
                         }
                       </button>
                     }
@@ -747,15 +689,18 @@
   }
 
   <!-- VENTANA EMERGENTE: asignar trabaja/descanso/cerrado a UN día en
-       particular del calendario del mes (excepción de fecha específica,
-       no toca el horario recurrente de las demás semanas). -->
+       particular del calendario (semana o mes). Por default es una
+       excepción de ESA fecha; "Repetir todos los ___" (abajo) la
+       convierte en un cambio al horario fijo de cada semana — mismo
+       criterio que Google Calendar al editar "solo este evento" vs.
+       "todos los eventos" de un evento repetido. -->
   @if (diaExcepcionEditando(); as celda) {
     <div class="overlay">
       <div class="panel-formulario">
         <h2>{{ celda.numero }} de {{ NOMBRES_MES[celda.fecha.getMonth()] }}</h2>
         <p class="campo-ayuda">
-          Esto solo cambia este día en particular — el horario normal de las demás semanas no se
-          toca.
+          Por default esto solo cambia este día en particular — el horario normal de las demás
+          semanas no se toca.
         </p>
 
         <div class="selector-tipo-dia">
@@ -806,6 +751,17 @@
               />
             </div>
           </div>
+        }
+
+        @if (tipoExcepcionForm() !== 'cerrado') {
+          <label class="opcion-repetir-semanal">
+            <input
+              type="checkbox"
+              [checked]="repetirSemanalmenteForm()"
+              (change)="repetirSemanalmenteForm.set($any($event.target).checked)"
+            />
+            Repetir todos los {{ etiquetaDiaEditando() }} (cambia el horario fijo, no solo este día)
+          </label>
         }
 
         @if (errorExcepcion()) {

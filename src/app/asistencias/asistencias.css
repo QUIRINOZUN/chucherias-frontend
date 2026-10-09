@@ -655,6 +655,35 @@
   box-shadow: inset 0 0 0 2px var(--action-primary);
 }
 
+/* Vista "Semana" (2026-10-09): una sola fila con los 7 días — celdas más
+   altas para que quepa el rango completo de horas (entrada–salida), no
+   solo la hora de entrada como en "Mes". */
+.calendario-mes-grid-semana .celda-mes {
+  min-height: 84px;
+  justify-content: center;
+  gap: 6px;
+}
+
+.calendario-mes-grid-semana .celda-mes-numero {
+  width: 26px;
+  height: 26px;
+  font-size: 0.9rem;
+}
+
+.calendario-mes-grid-semana .celda-mes-horas {
+  font-size: 0.72rem;
+}
+
+/* Selector Semana/Mes: compacto, no estirado a todo el ancho (es un
+   interruptor de vista, no un formulario). */
+.selector-vista-calendario {
+  max-width: 220px;
+}
+
+.selector-vista-calendario .pastilla-tipo-dia {
+  min-height: 38px;
+}
+
 .leyenda-mes {
   display: flex;
   flex-wrap: wrap;
@@ -766,130 +795,6 @@
 .mensaje-exito {
   color: var(--exito-texto);
   font-size: 0.85rem;
-}
-
-/* Calendario visual de Horarios: una columna por día operativo. */
-.calendario-semana {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.dia-columna {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  background: var(--pos-bg-card);
-  border: 2px solid var(--pos-border);
-  border-radius: var(--radio-lg);
-  padding: 12px;
-  transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease;
-}
-
-.dia-columna-activa {
-  border-color: var(--action-primary);
-  background: color-mix(in srgb, var(--action-primary) 8%, var(--pos-bg-card));
-}
-
-.dia-columna-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.dia-columna-nombre {
-  font-family: var(--fuente-titulo);
-  font-weight: 700;
-  font-size: 0.9rem;
-}
-
-/* Interruptor tipo switch (más visual que una casilla suelta). */
-.interruptor-dia {
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-.interruptor-dia input {
-  position: absolute;
-  opacity: 0;
-  width: 1px;
-  height: 1px;
-}
-
-.interruptor-pista {
-  display: block;
-  width: 38px;
-  height: 22px;
-  border-radius: 999px;
-  background: var(--pos-border);
-  position: relative;
-  transition: background-color 0.15s ease;
-}
-
-.interruptor-perilla {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  background: #fff;
-  transition: transform 0.15s ease;
-}
-
-.interruptor-dia input:checked + .interruptor-pista {
-  background: var(--action-primary);
-}
-
-.interruptor-dia input:checked + .interruptor-pista .interruptor-perilla {
-  transform: translateX(16px);
-}
-
-.dia-columna-bloque {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 6px;
-  border-radius: var(--radio-md);
-  background: color-mix(in srgb, var(--action-primary) 14%, var(--pos-bg-card));
-}
-
-.dia-columna-bloque .icono {
-  width: 16px;
-  height: 16px;
-  color: var(--action-primary);
-}
-
-.dia-columna-bloque input[type='time'] {
-  width: 100%;
-  min-height: 38px;
-  box-sizing: border-box;
-  padding: 0 6px;
-  font-size: 0.82rem;
-  text-align: center;
-  border: 2px solid var(--pos-border);
-  border-radius: var(--radio-sm);
-  background: var(--pos-bg-main);
-  color: var(--pos-text-primary);
-}
-
-.dia-columna-flecha {
-  font-size: 0.8rem;
-  color: var(--pos-text-secondary);
-}
-
-.dia-columna-libre {
-  text-align: center;
-  padding: 14px 6px;
-  font-size: 0.8rem;
-  color: var(--pos-text-secondary);
-  border: 1px dashed var(--pos-border);
-  border-radius: var(--radio-md);
 }
 
 .lista-historial {
@@ -1010,6 +915,29 @@
   color: var(--pos-text-secondary);
 }
 
+/* Checkbox "Repetir todos los ___" del modal de día — convierte el
+   cambio de una excepción de esa fecha a una edición del horario fijo
+   (ver guardarComoRecurrente() en asistencias.ts). */
+.opcion-repetir-semanal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  font-size: 0.82rem;
+  color: var(--pos-text-primary);
+  cursor: pointer;
+}
+
+.opcion-repetir-semanal input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--action-primary);
+}
+
 /* Selector de tipo de día (ventana de excepción del calendario del mes):
    3 opciones excluyentes, mismo lenguaje de pastilla que el resto de la
    app, más grande que un chip normal porque es la decisión principal de
@@ -1114,15 +1042,5 @@
 
   .campo-fila {
     flex-direction: column;
-  }
-
-  .calendario-semana {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 380px) {
-  .calendario-semana {
-    grid-template-columns: 1fr;
   }
 }

@@ -59,26 +59,7 @@ import {
 } from '../core/horarios';
 import { ThemeService } from '../core/theme';
 
-// Días que opera el negocio (martes a domingo, cerrado lunes — ver
-// CLAUDE.md) en el orden en que se muestran en el calendario.
-const DIAS_OPERATIVOS: { valor: DiaSemana; etiqueta: string }[] = [
-  { valor: 'martes', etiqueta: 'Martes' },
-  { valor: 'miercoles', etiqueta: 'Miércoles' },
-  { valor: 'jueves', etiqueta: 'Jueves' },
-  { valor: 'viernes', etiqueta: 'Viernes' },
-  { valor: 'sabado', etiqueta: 'Sábado' },
-  { valor: 'domingo', etiqueta: 'Domingo' },
-];
-
-// Estado de un día dentro del formulario de horario (no se manda tal cual al
-// servidor — ver guardarHorario()).
-interface DiaFormHorario {
-  trabaja: boolean;
-  horaEntrada: string;
-  horaSalida: string;
-}
-
-// ---- Calendario del mes (2026-10-08) --------------------------------------
+// ---- Calendario (semana o mes, 2026-10-09) --------------------------------
 // Índice de JS Date.getDay() (0 = domingo … 6 = sábado) al día de la semana
 // del modelo; null en el índice 1 (lunes) porque el negocio no opera ese
 // día — el calendario del mes lo muestra como "Cerrado", nunca como
@@ -128,8 +109,28 @@ const NOMBRES_MES_CORTO = [
   'dic',
 ];
 
-// Una celda del calendario del mes (cuadrícula completa domingo→sábado,
-// incluye días de relleno del mes anterior/siguiente).
+// Nombre completo de cada día, para la etiqueta "Repetir todos los
+// martes" del checkbox de horario recurrente (ver guardarComoRecurrente()).
+const NOMBRE_DIA_SEMANA: Record<DiaSemana, string> = {
+  lunes: 'lunes',
+  martes: 'martes',
+  miercoles: 'miércoles',
+  jueves: 'jueves',
+  viernes: 'viernes',
+  sabado: 'sábado',
+  domingo: 'domingo',
+};
+
+// "5 – 11 oct" — usado tanto por el calendario editable (semana) como por
+// el resumen de horas trabajadas, para no formatear el rango dos veces.
+function formatoRangoCorto(inicio: Date, fin: Date): string {
+  const formato = (f: Date) => `${f.getDate()} ${NOMBRES_MES_CORTO[f.getMonth()]}`;
+  return `${formato(inicio)} – ${formato(fin)}`;
+}
+
+// Una celda del calendario (cuadrícula domingo→sábado; en la vista "mes"
+// incluye días de relleno del mes anterior/siguiente, en "semana" son
+// siempre los 7 días visibles).
 interface CeldaCalendario {
   fecha: Date;
   numero: number;
@@ -435,160 +436,68 @@ export class AsistenciasComponent implements OnInit {
   }
 
   // =====================================================================
-  // HORARIOS (calendario semanal recurrente por empleado)
+  // HORARIOS — CALENDARIO (semana o mes, a elección — estilo Google
+  // Calendar, 2026-10-09)
   // =====================================================================
-  diasOperativos = DIAS_OPERATIVOS;
+  // Una sola vista de calendario real para UN empleado a la vez, con un
+  // selector Semana/Mes (vistaCalendario) igual que Google Calendar —
+  // reemplaza las dos sub-vistas anteriores ("Editar", un formulario de
+  // interruptores sin forma de calendario, y "Mes", que solo tenía vista
+  // de mes). Tocar un día abre SIEMPRE la misma ventana, sin importar la
+  // vista activa, para asignarle trabaja/descanso/cerrado a ESA fecha.
+  //
+  // Esa ventana ahora distingue, igual que Google Calendar al editar un
+  // evento repetido ("solo este evento" vs. "todos los eventos"):
+  //   - Guardar normal → excepción de ESA fecha (horario_excepciones),
+  //     sin tocar las demás semanas.
+  //   - "Repetir cada semana" marcado → actualiza el horario RECURRENTE
+  //     de ese día de la semana (horarios) para todas las semanas, y
+  //     quita la excepción de esa fecha si tenía una (ya no hace falta,
+  //     el recurrente actualizado la cubre).
   NOMBRES_DIA_CORTO = NOMBRES_DIA_CORTO;
   NOMBRES_MES = NOMBRES_MES;
 
-  // Sub-navegación DENTRO de la pestaña Horarios (2026-10-08): editar el
-  // horario de un empleado (lo que ya existía), ver el calendario del mes
-  // con todos los empleados juntos, o el resumen de horas trabajadas por
-  // semana — mismo criterio de pestañas que el resto de la pantalla, para
-  // no apilar las tres vistas en un solo scroll.
-  subVistaHorario = signal<'editar' | 'mes' | 'horas'>('editar');
+  // Sub-navegación DENTRO de la pestaña Horarios: el calendario editable
+  // de un empleado (semana o mes), o el resumen de horas REALES
+  // trabajadas por semana (todos los empleados juntos) — mismo criterio
+  // de pestañas que el resto de la pantalla.
+  subVistaHorario = signal<'calendario' | 'horas'>('calendario');
 
-  cambiarSubVistaHorario(vista: 'editar' | 'mes' | 'horas'): void {
+  cambiarSubVistaHorario(vista: 'calendario' | 'horas'): void {
     this.subVistaHorario.set(vista);
   }
 
   empleadoIdHorario = signal<number | null>(null);
-  // Un registro por día operativo; se inicializa vacío y se llena al elegir
-  // un empleado (cargarHorario). record en vez de Map para que la plantilla
-  // pueda leerlo directo con horarioForm()[dia.valor].
-  horarioForm = signal<Record<DiaSemana, DiaFormHorario>>(this.horarioVacio());
-  cargandoHorario = signal(false);
-  guardandoHorario = signal(false);
-  errorHorario = signal('');
-  exitoHorario = signal('');
+  vistaCalendario = signal<'semana' | 'mes'>('mes');
 
-  private horarioVacio(): Record<DiaSemana, DiaFormHorario> {
-    const vacio = {} as Record<DiaSemana, DiaFormHorario>;
-    for (const dia of DIAS_OPERATIVOS) {
-      vacio[dia.valor] = { trabaja: false, horaEntrada: '', horaSalida: '' };
-    }
-    return vacio;
+  cambiarVistaCalendario(vista: 'semana' | 'mes'): void {
+    this.vistaCalendario.set(vista);
+    this.cargarExcepcionesCalendario();
   }
 
   seleccionarEmpleadoHorario(valor: string): void {
     const empleadoId = valor === '' ? null : +valor;
     this.empleadoIdHorario.set(empleadoId);
-    this.exitoHorario.set('');
-    this.errorHorario.set('');
-    if (empleadoId) {
-      this.cargarHorario(empleadoId);
-    } else {
-      this.horarioForm.set(this.horarioVacio());
-    }
-    // El selector de empleado es compartido entre "Editar" y "Mes" — cambiar
-    // de empleado también refresca el calendario del mes, aunque no esté
-    // visible en este momento (es barato y evita que quede desactualizado
-    // al cambiar de sub-pestaña).
-    this.cargarExcepcionesMes();
+    this.cargarExcepcionesCalendario();
   }
 
-  cargarHorario(empleadoId: number): void {
-    this.cargandoHorario.set(true);
-    this.horariosService.listar(empleadoId).subscribe({
-      next: (horarios) => {
-        const form = this.horarioVacio();
-        for (const h of horarios) {
-          // Un día fuera de DIAS_OPERATIVOS (ej. "lunes", que el negocio no
-          // opera pero el modelo no lo prohíbe) simplemente no tiene casilla
-          // en este calendario — se ignora aquí, no se pierde en el servidor.
-          if (form[h.dia_semana]) {
-            form[h.dia_semana] = {
-              trabaja: true,
-              horaEntrada: h.hora_entrada.slice(0, 5),
-              horaSalida: h.hora_salida.slice(0, 5),
-            };
-          }
-        }
-        this.horarioForm.set(form);
-        this.cargandoHorario.set(false);
-      },
-      error: () => {
-        this.errorHorario.set('No se pudo cargar el horario de ese empleado.');
-        this.cargandoHorario.set(false);
-      },
-    });
-  }
-
-  alternarDiaHorario(dia: DiaSemana): void {
-    this.horarioForm.update((form) => ({
-      ...form,
-      [dia]: { ...form[dia], trabaja: !form[dia].trabaja },
-    }));
-  }
-
-  actualizarHoraHorario(dia: DiaSemana, campo: 'horaEntrada' | 'horaSalida', valor: string): void {
-    this.horarioForm.update((form) => ({
-      ...form,
-      [dia]: { ...form[dia], [campo]: valor },
-    }));
-  }
-
-  puedeGuardarHorario(): boolean {
-    if (this.guardandoHorario() || !this.empleadoIdHorario()) {
-      return false;
-    }
-    const form = this.horarioForm();
-    return this.diasOperativos.every((dia) => {
-      const d = form[dia.valor];
-      if (!d.trabaja) {
-        return true;
-      }
-      return !!d.horaEntrada && !!d.horaSalida && d.horaSalida > d.horaEntrada;
-    });
-  }
-
-  guardarHorario(): void {
-    if (!this.puedeGuardarHorario()) {
-      return;
-    }
-    const empleadoId = this.empleadoIdHorario()!;
-    const form = this.horarioForm();
-    const dias: DiaHorario[] = this.diasOperativos
-      .filter((dia) => form[dia.valor].trabaja)
-      .map((dia) => ({
-        dia_semana: dia.valor,
-        hora_entrada: form[dia.valor].horaEntrada,
-        hora_salida: form[dia.valor].horaSalida,
-      }));
-
-    this.guardandoHorario.set(true);
-    this.errorHorario.set('');
-    this.exitoHorario.set('');
-    this.horariosService.guardarSemana(empleadoId, dias).subscribe({
-      next: () => {
-        this.guardandoHorario.set(false);
-        this.exitoHorario.set('Horario guardado.');
-      },
-      error: (error: HttpErrorResponse) => {
-        this.guardandoHorario.set(false);
-        this.errorHorario.set(error.error?.error || 'No se pudo guardar el horario.');
-      },
-    });
-  }
-
-  // =====================================================================
-  // HORARIOS — CALENDARIO DEL MES, EDITABLE (un empleado, 2026-10-08)
-  // =====================================================================
-  // Calendario de cuadrícula real (domingo a sábado, semanas completas,
-  // igual que un calendario de verdad) para el empleado elegido arriba
-  // (comparte `empleadoIdHorario` con la sub-vista Editar). Cada día
-  // muestra su estado EFECTIVO: si hay una excepción de fecha para ese
-  // día, esa manda; si no, se usa el horario recurrente según el día de
-  // la semana; si tampoco hay fila ahí, es "descanso". Tocar un día abre
-  // una ventana para asignarle trabaja/descanso/cerrado ese día en
-  // particular, sin afectar las demás semanas.
   todosLosHorarios = signal<Horario[]>([]);
   mesVisible = signal(this.inicioDeMes(new Date()));
-  excepcionesMes = signal<ExcepcionHorario[]>([]);
+  semanaVisibleCalendario = signal(this.domingoDeLaSemana(new Date()));
+  excepcionesCalendario = signal<ExcepcionHorario[]>([]);
   cargandoExcepciones = signal(false);
 
   private inicioDeMes(fecha: Date): { anio: number; mes: number } {
     return { anio: fecha.getFullYear(), mes: fecha.getMonth() };
+  }
+
+  // Domingo de la semana que contiene `fecha` (mismo criterio que la
+  // cuadrícula del mes: la semana siempre arranca en domingo).
+  private domingoDeLaSemana(fecha: Date): Date {
+    const d = new Date(fecha);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - d.getDay());
+    return d;
   }
 
   nombreMesVisible = computed(() => {
@@ -596,11 +505,21 @@ export class AsistenciasComponent implements OnInit {
     return `${NOMBRES_MES[mes]} ${anio}`;
   });
 
-  // Límites de la CUADRÍCULA completa (incluye los días de relleno del mes
-  // anterior/siguiente que completan la primera y la última semana) — se
-  // usan tanto para dibujar las semanas como para pedir las excepciones de
-  // ese rango exacto (así un día de relleno que se edite también refleja
-  // su excepción real, no solo los días del mes "actual").
+  // Título del período visible en la barra de navegación: el mes y año,
+  // o el rango de la semana — según la vista activa.
+  tituloPeriodoVisible = computed(() => {
+    if (this.vistaCalendario() === 'mes') {
+      return this.nombreMesVisible();
+    }
+    const inicio = this.semanaVisibleCalendario();
+    const fin = new Date(inicio);
+    fin.setDate(fin.getDate() + 6);
+    return formatoRangoCorto(inicio, fin);
+  });
+
+  // Límites de la CUADRÍCULA completa del mes (incluye los días de
+  // relleno del mes anterior/siguiente que completan la primera y la
+  // última semana).
   private limitesCuadriculaMes = computed(() => {
     const { anio, mes } = this.mesVisible();
     const primerDiaMes = new Date(anio, mes, 1);
@@ -612,27 +531,54 @@ export class AsistenciasComponent implements OnInit {
     return { inicio, fin };
   });
 
-  // Semanas completas (domingo→sábado) que cubren el mes visible, igual
-  // que un calendario de pared: incluye días del mes anterior/siguiente
-  // atenuados para rellenar la primera y la última semana.
-  semanasDelMesVisible = computed<CeldaCalendario[][]>(() => {
-    const { anio, mes } = this.mesVisible();
-    const { inicio, fin } = this.limitesCuadriculaMes();
+  // Rango real que hace falta pedirle al servidor (excepciones), según la
+  // vista activa: la cuadrícula completa del mes, o los 7 días de la
+  // semana visible.
+  private rangoVisibleCalendario = computed(() => {
+    if (this.vistaCalendario() === 'mes') {
+      return this.limitesCuadriculaMes();
+    }
+    const inicio = this.semanaVisibleCalendario();
+    const fin = new Date(inicio);
+    fin.setDate(fin.getDate() + 6);
+    return { inicio, fin };
+  });
+
+  // Celdas a dibujar: en "mes", semanas completas (domingo→sábado, con
+  // relleno del mes anterior/siguiente); en "semana", una sola fila con
+  // los 7 días del rango visible. El mismo arreglo de arreglos alimenta
+  // la misma cuadrícula en la plantilla sin importar la vista.
+  celdasCalendario = computed<CeldaCalendario[][]>(() => {
     const hoy = new Date();
+    const construirCelda = (fecha: Date, mesDeReferencia: number): CeldaCalendario => ({
+      fecha: new Date(fecha),
+      numero: fecha.getDate(),
+      enMesActual: this.vistaCalendario() === 'semana' || fecha.getMonth() === mesDeReferencia,
+      esHoy:
+        fecha.getFullYear() === hoy.getFullYear() &&
+        fecha.getMonth() === hoy.getMonth() &&
+        fecha.getDate() === hoy.getDate(),
+      diaSemana: DIA_SEMANA_POR_INDICE[fecha.getDay()],
+    });
+
+    if (this.vistaCalendario() === 'semana') {
+      const inicio = this.semanaVisibleCalendario();
+      const fila: CeldaCalendario[] = [];
+      const cursor = new Date(inicio);
+      for (let i = 0; i < 7; i++) {
+        fila.push(construirCelda(cursor, cursor.getMonth()));
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      return [fila];
+    }
+
+    const { mes } = this.mesVisible();
+    const { inicio, fin } = this.limitesCuadriculaMes();
     const semanas: CeldaCalendario[][] = [];
     let semanaActual: CeldaCalendario[] = [];
     const cursor = new Date(inicio);
     while (cursor <= fin) {
-      semanaActual.push({
-        fecha: new Date(cursor),
-        numero: cursor.getDate(),
-        enMesActual: cursor.getMonth() === mes,
-        esHoy:
-          cursor.getFullYear() === hoy.getFullYear() &&
-          cursor.getMonth() === hoy.getMonth() &&
-          cursor.getDate() === hoy.getDate(),
-        diaSemana: DIA_SEMANA_POR_INDICE[cursor.getDay()],
-      });
+      semanaActual.push(construirCelda(cursor, mes));
       if (semanaActual.length === 7) {
         semanas.push(semanaActual);
         semanaActual = [];
@@ -661,7 +607,7 @@ export class AsistenciasComponent implements OnInit {
 
   private excepcionesPorFecha = computed(() => {
     const mapa = new Map<string, ExcepcionHorario>();
-    for (const e of this.excepcionesMes()) {
+    for (const e of this.excepcionesCalendario()) {
       mapa.set(e.fecha, e);
     }
     return mapa;
@@ -696,16 +642,30 @@ export class AsistenciasComponent implements OnInit {
     return { tipo: 'descanso', horaEntrada: null, horaSalida: null, esExcepcion: false };
   }
 
-  mesAnterior(): void {
-    const { anio, mes } = this.mesVisible();
-    this.mesVisible.set(this.inicioDeMes(new Date(anio, mes - 1, 1)));
-    this.cargarExcepcionesMes();
+  // Retrocede/avanza un mes o una semana, según la vista activa — misma
+  // barra de navegación para las dos.
+  periodoAnterior(): void {
+    if (this.vistaCalendario() === 'mes') {
+      const { anio, mes } = this.mesVisible();
+      this.mesVisible.set(this.inicioDeMes(new Date(anio, mes - 1, 1)));
+    } else {
+      const inicio = new Date(this.semanaVisibleCalendario());
+      inicio.setDate(inicio.getDate() - 7);
+      this.semanaVisibleCalendario.set(inicio);
+    }
+    this.cargarExcepcionesCalendario();
   }
 
-  mesSiguiente(): void {
-    const { anio, mes } = this.mesVisible();
-    this.mesVisible.set(this.inicioDeMes(new Date(anio, mes + 1, 1)));
-    this.cargarExcepcionesMes();
+  periodoSiguiente(): void {
+    if (this.vistaCalendario() === 'mes') {
+      const { anio, mes } = this.mesVisible();
+      this.mesVisible.set(this.inicioDeMes(new Date(anio, mes + 1, 1)));
+    } else {
+      const inicio = new Date(this.semanaVisibleCalendario());
+      inicio.setDate(inicio.getDate() + 7);
+      this.semanaVisibleCalendario.set(inicio);
+    }
+    this.cargarExcepcionesCalendario();
   }
 
   private cargarTodosLosHorarios(): void {
@@ -719,19 +679,19 @@ export class AsistenciasComponent implements OnInit {
     });
   }
 
-  cargarExcepcionesMes(): void {
+  cargarExcepcionesCalendario(): void {
     const empleadoId = this.empleadoIdHorario();
     if (!empleadoId) {
-      this.excepcionesMes.set([]);
+      this.excepcionesCalendario.set([]);
       return;
     }
-    const { inicio, fin } = this.limitesCuadriculaMes();
+    const { inicio, fin } = this.rangoVisibleCalendario();
     this.cargandoExcepciones.set(true);
     this.horariosService
       .listarExcepciones(empleadoId, formatoFechaLocal(inicio), formatoFechaLocal(fin))
       .subscribe({
         next: (excepciones) => {
-          this.excepcionesMes.set(excepciones);
+          this.excepcionesCalendario.set(excepciones);
           this.cargandoExcepciones.set(false);
         },
         error: () => {
@@ -745,8 +705,21 @@ export class AsistenciasComponent implements OnInit {
   tipoExcepcionForm = signal<TipoExcepcion>('descanso');
   horaEntradaExcepcionForm = signal('');
   horaSalidaExcepcionForm = signal('');
+  // "Repetir cada semana" (2026-10-09): en vez de una excepción de solo
+  // esa fecha, actualiza el horario RECURRENTE de ese día de la semana —
+  // ver guardarComoRecurrente().
+  repetirSemanalmenteForm = signal(false);
   guardandoExcepcion = signal(false);
   errorExcepcion = signal('');
+
+  // Etiqueta para el checkbox "Repetir todos los ___" — vacío si el día
+  // que se edita no tiene un día de la semana real (no debería pasar: el
+  // checkbox se oculta cuando el tipo es "cerrado", el único caso donde
+  // esto importaría para un lunes).
+  etiquetaDiaEditando = computed(() => {
+    const celda = this.diaExcepcionEditando();
+    return celda?.diaSemana ? NOMBRE_DIA_SEMANA[celda.diaSemana] : '';
+  });
 
   abrirEdicionDia(celda: CeldaCalendario): void {
     if (!this.empleadoIdHorario()) {
@@ -757,6 +730,7 @@ export class AsistenciasComponent implements OnInit {
     this.tipoExcepcionForm.set(estado.tipo);
     this.horaEntradaExcepcionForm.set(estado.horaEntrada?.slice(0, 5) ?? '');
     this.horaSalidaExcepcionForm.set(estado.horaSalida?.slice(0, 5) ?? '');
+    this.repetirSemanalmenteForm.set(false);
     this.errorExcepcion.set('');
   }
 
@@ -798,6 +772,20 @@ export class AsistenciasComponent implements OnInit {
     this.guardandoExcepcion.set(true);
     this.errorExcepcion.set('');
 
+    // "Repetir cada semana" — igual que elegir "todos los eventos" al
+    // editar un evento repetido en Google Calendar: cambia el horario
+    // recurrente en vez de solo esta fecha. No aplica a "cerrado" (el
+    // checkbox se oculta en ese caso) — si por lo que sea llegara así, se
+    // trata como una excepción normal.
+    if (
+      this.repetirSemanalmenteForm() &&
+      celda.diaSemana &&
+      this.tipoExcepcionForm() !== 'cerrado'
+    ) {
+      this.guardarComoRecurrente(empleadoId, celda);
+      return;
+    }
+
     const datos: DatosExcepcion = {
       tipo: this.tipoExcepcionForm(),
       ...(this.tipoExcepcionForm() === 'trabaja'
@@ -814,13 +802,68 @@ export class AsistenciasComponent implements OnInit {
         next: () => {
           this.guardandoExcepcion.set(false);
           this.diaExcepcionEditando.set(null);
-          this.cargarExcepcionesMes();
+          this.cargarExcepcionesCalendario();
         },
         error: (error: HttpErrorResponse) => {
           this.guardandoExcepcion.set(false);
           this.errorExcepcion.set(error.error?.error || 'No se pudo guardar.');
         },
       });
+  }
+
+  // Actualiza el horario RECURRENTE (`horarios`) para el día de la semana
+  // de `celda`, en vez de una excepción de una sola fecha. Como el PUT
+  // reemplaza TODO el horario del empleado de una vez (ver
+  // routes/horarios.js), se parte de lo que ya tenía (todosLosHorarios,
+  // sin el día en cuestión) y se le agrega o se le quita ese día. Si esa
+  // fecha ya tenía una excepción propia, se quita: el recurrente
+  // actualizado ya la cubre, no hace falta que compitan.
+  private guardarComoRecurrente(empleadoId: number, celda: CeldaCalendario): void {
+    const diaSemana = celda.diaSemana!;
+    const diasActuales: DiaHorario[] = this.todosLosHorarios()
+      .filter((h) => h.empleado_id === empleadoId && h.dia_semana !== diaSemana)
+      .map((h) => ({
+        dia_semana: h.dia_semana,
+        hora_entrada: h.hora_entrada.slice(0, 5),
+        hora_salida: h.hora_salida.slice(0, 5),
+      }));
+
+    if (this.tipoExcepcionForm() === 'trabaja') {
+      diasActuales.push({
+        dia_semana: diaSemana,
+        hora_entrada: this.horaEntradaExcepcionForm(),
+        hora_salida: this.horaSalidaExcepcionForm(),
+      });
+    }
+    // "descanso": simplemente no se vuelve a agregar — ese día de la
+    // semana queda sin fila en `horarios`, que es "descanso" por default.
+
+    const teniaExcepcion = this.diaEditandoTieneExcepcion();
+    this.horariosService.guardarSemana(empleadoId, diasActuales).subscribe({
+      next: () => {
+        this.cargarTodosLosHorarios();
+        if (teniaExcepcion) {
+          this.horariosService
+            .quitarExcepcion(empleadoId, formatoFechaLocal(celda.fecha))
+            .subscribe({
+              next: () => this.finalizarGuardadoRecurrente(),
+              error: () => this.finalizarGuardadoRecurrente(),
+            });
+        } else {
+          this.finalizarGuardadoRecurrente();
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.guardandoExcepcion.set(false);
+        this.errorExcepcion.set(error.error?.error || 'No se pudo guardar el horario recurrente.');
+      },
+    });
+  }
+
+  private finalizarGuardadoRecurrente(): void {
+    this.guardandoExcepcion.set(false);
+    this.diaExcepcionEditando.set(null);
+    this.cargarExcepcionesCalendario();
   }
 
   // Quita la excepción del día: vuelve a usar el horario normal (recurrente
@@ -837,7 +880,7 @@ export class AsistenciasComponent implements OnInit {
       next: () => {
         this.guardandoExcepcion.set(false);
         this.diaExcepcionEditando.set(null);
-        this.cargarExcepcionesMes();
+        this.cargarExcepcionesCalendario();
       },
       error: (error: HttpErrorResponse) => {
         this.guardandoExcepcion.set(false);
@@ -877,8 +920,7 @@ export class AsistenciasComponent implements OnInit {
 
   textoRangoSemanaVisible = computed(() => {
     const { inicio, fin } = this.rangoSemanaVisible();
-    const formato = (f: Date) => `${f.getDate()} ${NOMBRES_MES_CORTO[f.getMonth()]}`;
-    return `${formato(inicio)} – ${formato(fin)}`;
+    return formatoRangoCorto(inicio, fin);
   });
 
   resumenHorasSemana = computed<ResumenHorasEmpleado[]>(() => {
