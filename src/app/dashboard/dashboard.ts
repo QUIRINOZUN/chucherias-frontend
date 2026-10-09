@@ -26,6 +26,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../core/auth';
 import { ThemeService } from '../core/theme';
 import { AsistenciasService, MiEstadoHoy } from '../core/asistencias';
+import { RecetasService } from '../core/recetas';
 
 // Descripción de una tarjeta del menú.
 interface Modulo {
@@ -133,17 +134,46 @@ export class DashboardComponent implements OnInit {
   procesandoMiAsistencia = signal(false);
   errorMiAsistencia = signal('');
 
+  // Aviso en la tarjeta de Recetario (2026-10-09): cuántas variantes activas
+  // todavía no tienen receta capturada. Una variante sin receta es un
+  // estado VÁLIDO (ver routes/recetas.js) — no bloquea nada, se puede
+  // vender igual — pero significa que venderla no descuenta ningún insumo
+  // del inventario, en silencio. Antes solo se veía ese conteo si alguien
+  // entraba a Recetario a buscarlo; ahora aparece aquí mismo para que no
+  // haga falta acordarse de ir a revisar.
+  variantesSinRecetaCount = signal<number | null>(null);
+
   constructor(
     // `public` para que la plantilla muestre el nombre/rol y llame a logout().
     public authService: AuthService,
     public themeService: ThemeService,
     private asistenciasService: AsistenciasService,
+    private recetasService: RecetasService,
   ) {}
 
   ngOnInit(): void {
     if (!this.esAdministrador()) {
       this.cargarMiEstadoHoy();
     }
+    // Solo administrador/encargado ven el módulo Recetario (y pueden
+    // consultar GET /api/recetas) — para los demás roles la llamada daría
+    // 403, así que ni se intenta.
+    const rol = this.authService.usuarioActual()?.rol;
+    if (rol === 'administrador' || rol === 'encargado') {
+      this.cargarVariantesSinReceta();
+    }
+  }
+
+  cargarVariantesSinReceta(): void {
+    this.recetasService.listarVariantes().subscribe({
+      next: (variantes) => {
+        this.variantesSinRecetaCount.set(variantes.filter((v) => !v.tiene_receta).length);
+      },
+      error: () => {
+        // El badge simplemente no aparece; el resto del dashboard sigue
+        // funcionando con normalidad.
+      },
+    });
   }
 
   cargarMiEstadoHoy(): void {

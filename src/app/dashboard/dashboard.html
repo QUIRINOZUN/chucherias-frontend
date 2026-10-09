@@ -78,6 +78,14 @@
       <div class="grid-modulos">
         @for (modulo of modulosVisibles(); track modulo.ruta) {
           <a class="tarjeta-modulo" [routerLink]="modulo.ruta">
+            @if (modulo.ruta === '/recetario' && (variantesSinRecetaCount() ?? 0) > 0) {
+              <span
+                class="modulo-badge-alerta"
+                [attr.aria-label]="variantesSinRecetaCount() + ' variantes sin receta'"
+              >
+                {{ variantesSinRecetaCount() }}
+              </span>
+            }
             <span class="modulo-icono">
               <svg class="icono" aria-hidden="true">
                 <use [attr.href]="'#ic-' + modulo.icono" />
