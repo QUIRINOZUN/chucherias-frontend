@@ -12,11 +12,13 @@
    de casillas. */
 
 :host {
+  --acento-modulo: var(--mod-asistencias);
   display: block;
   min-height: 100vh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
+  animation: aparecer 0.22s ease;
 }
 
 .asistencias-container {
@@ -62,6 +64,27 @@
 }
 
 /* ---- Pestañas (Hoy / Empleados / Horarios / Historial) ---- */
+/* Envoltorio + degradado: en un teléfono angosto las 4 pestañas no caben y
+   .tabs-asistencias se desplaza horizontalmente (overflow-x: auto) con solo
+   una barra de scroll muy delgada como pista — "Historial" podía quedar
+   fuera de vista sin que se notara. El degradado se desvanece hacia el
+   mismo color de fondo de la barra, así que es invisible por sí solo
+   cuando las 4 pestañas sí caben (de 480px en adelante) — no hace falta
+   ninguna media query para ocultarlo. */
+.tabs-asistencias-envoltorio {
+  position: relative;
+}
+
+.tabs-asistencias-desvanecido {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 1px;
+  width: 32px;
+  background: linear-gradient(to right, transparent, var(--pos-bg-card));
+  pointer-events: none;
+}
+
 .tabs-asistencias {
   display: flex;
   gap: 6px;
@@ -98,7 +121,7 @@
 }
 
 .tab-asistencias-activa {
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
   box-shadow: var(--sombra-acento);
 }
@@ -178,6 +201,10 @@
 
 .seccion-asistencias {
   margin-bottom: 28px;
+  /* Entrada suave al cambiar de pestaña (2026-10-13) — las 4 secciones
+     comparten esta clase, así que un cambio aquí cubre Hoy/Empleados/
+     Horarios/Historial sin tocar la plantilla. */
+  animation: aparecer 0.2s ease;
 }
 
 .titulo-seccion {
@@ -218,7 +245,7 @@
   margin-bottom: 14px;
   border: none;
   border-radius: var(--radio-md);
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
   font-weight: 700;
   font-size: 0.95rem;
@@ -256,6 +283,31 @@
 
 .tarjeta-hoy-adentro {
   border-left-color: var(--action-success);
+}
+
+/* Tarjeta fantasma (2026-10-12) — `.esqueleto`/`.esqueleto-en-tarjeta` son
+   globales (ver styles.css). */
+.tarjeta-hoy-esqueleto {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: 14px 16px;
+}
+
+.esqueleto-punto-hoy {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.esqueleto-linea-nombre-hoy {
+  flex: 1;
+  height: 15px;
+  max-width: 220px;
 }
 
 .tarjeta-hoy-completo {
@@ -315,7 +367,7 @@
   padding: 0 18px;
   border: none;
   border-radius: var(--radio-pastilla);
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
   font-weight: 700;
   font-size: 0.82rem;
@@ -350,6 +402,30 @@
   border-radius: var(--radio-lg);
   box-shadow: var(--sombra-suave);
   padding: 14px 16px;
+}
+
+/* Tarjeta fantasma (2026-10-12). */
+.tarjeta-empleado-esqueleto {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: 14px 16px;
+}
+
+.esqueleto-linea-nombre-empleado {
+  height: 15px;
+  width: 50%;
+}
+
+.esqueleto-linea-badge-empleado {
+  height: 22px;
+  width: 64px;
+  border-radius: var(--radio-pastilla);
+  flex-shrink: 0;
 }
 
 .empleado-info {
@@ -390,7 +466,7 @@
 .boton-editar,
 .boton-alternar {
   flex-shrink: 0;
-  min-height: 40px;
+  min-height: 44px;
   border: 1px solid var(--pos-border);
   background: var(--pos-bg-main);
   color: var(--pos-text-primary);
@@ -402,7 +478,7 @@
 }
 
 .boton-editar:hover {
-  border-color: var(--pos-text-secondary);
+  border-color: var(--acento-modulo);
 }
 
 .boton-alternar-desactivar:hover:not(:disabled) {
@@ -456,7 +532,7 @@
 .campo-filtro input:focus,
 .campo-filtro select:focus {
   outline: none;
-  border-color: var(--pos-text-secondary);
+  border-color: var(--acento-modulo);
 }
 
 .boton-limpiar-filtros {
@@ -473,7 +549,7 @@
 }
 
 .boton-limpiar-filtros:hover {
-  border-color: var(--pos-text-primary);
+  border-color: var(--acento-modulo);
   color: var(--pos-text-primary);
 }
 
@@ -493,7 +569,7 @@
 
 .subtab-horario {
   flex-shrink: 0;
-  min-height: 36px;
+  min-height: 44px;
   padding: 0 14px;
   border: none;
   border-radius: var(--radio-pastilla);
@@ -509,7 +585,7 @@
 }
 
 .subtab-horario-activa {
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
 }
 
@@ -525,8 +601,8 @@
 
 .boton-nav-periodo {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   border: none;
@@ -559,8 +635,18 @@
 /* Calendario del mes: cuadrícula real (domingo a sábado, semanas completas)
    de UN empleado a la vez, editable — tocar un día abre la ventana para
    asignarle trabaja/descanso/cerrado ese día en particular. */
-.calendario-mes-grid {
+/* Envoltorio con scroll horizontal (2026-10-16) — ver el comentario en
+   asistencias.html. min-width en .calendario-mes-grid es lo que fuerza el
+   scroll en vez de que las 7 columnas sigan encogiéndose por debajo de un
+   tamaño cómodo para tocar/leer. */
+.calendario-mes-scroll {
   margin-bottom: 14px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.calendario-mes-grid {
+  min-width: 392px;
   border: 1px solid var(--pos-border);
   border-radius: var(--radio-md);
   overflow: hidden;
@@ -569,7 +655,7 @@
 .fila-dias-semana,
 .fila-semana-mes {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(56px, 1fr));
 }
 
 .dia-semana-cabecera {
@@ -622,7 +708,7 @@
 }
 
 .celda-mes-numero.celda-mes-hoy {
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
   font-weight: 700;
 }
@@ -652,7 +738,7 @@
 /* Un día con excepción propia (no el horario normal) lleva un borde de
    acento para distinguirse de un vistazo — "esto es distinto de lo usual". */
 .celda-mes-excepcion {
-  box-shadow: inset 0 0 0 2px var(--action-primary);
+  box-shadow: inset 0 0 0 2px var(--acento-modulo);
 }
 
 /* Vista "Semana" (2026-10-09): una sola fila con los 7 días — celdas más
@@ -726,15 +812,31 @@
 }
 
 /* Resumen de horas trabajadas por semana. */
+.resumen-horas-encabezado-totales {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
 .resumen-horas-total {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  margin-bottom: 16px;
   padding: 14px 16px;
   border-radius: var(--radio-lg);
   background: var(--pos-bg-card);
   box-shadow: var(--sombra-suave);
+}
+
+/* RF-20 (2026-10-13): mismo bloque visual que el total de horas, pero en
+   tono de alerta — un retardo es algo que conviene notar, no celebrar. */
+.resumen-retardos-total .resumen-horas-total-numero {
+  color: var(--acento-texto);
+}
+
+.resumen-retardos {
+  color: var(--acento-texto);
 }
 
 .resumen-horas-total-numero {
@@ -858,6 +960,43 @@
   color: var(--pos-text-secondary);
 }
 
+/* RF-19 (2026-10-13): evidencia automática de corrección. */
+.item-historial-corregido {
+  font-size: 0.72rem;
+  color: var(--acento-texto);
+  margin-bottom: 4px;
+}
+
+.item-historial-acciones {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lista-correcciones {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--pos-border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item-correccion {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.75rem;
+}
+
+.item-correccion-encabezado {
+  font-weight: 600;
+}
+
+.item-correccion-anterior {
+  color: var(--pos-text-secondary);
+}
+
 /* ---- Ventanas emergentes (mismo patrón que usuarios.css) ---- */
 .overlay {
   position: fixed;
@@ -878,6 +1017,7 @@
   max-width: 380px;
   background: var(--pos-bg-card);
   border-radius: var(--radio-lg);
+  border-top: 4px solid var(--acento-modulo);
   box-shadow: var(--sombra-elevada);
   padding: 24px;
   box-sizing: border-box;
@@ -935,7 +1075,7 @@
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-  accent-color: var(--action-primary);
+  accent-color: var(--acento-modulo);
 }
 
 /* Selector de tipo de día (ventana de excepción del calendario del mes):
@@ -965,8 +1105,8 @@
 }
 
 .pastilla-tipo-dia-activa {
-  border-color: var(--action-primary);
-  background: var(--action-primary);
+  border-color: var(--acento-modulo);
+  background: var(--acento-modulo);
   color: #fff;
 }
 
@@ -986,7 +1126,7 @@
 .campo input:focus,
 .campo select:focus {
   outline: none;
-  border-color: var(--pos-text-secondary);
+  border-color: var(--acento-modulo);
 }
 
 .acciones-formulario {
@@ -1012,7 +1152,7 @@
 
 .boton-confirmar {
   border: none;
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
   font-weight: 700;
   box-shadow: var(--sombra-acento);

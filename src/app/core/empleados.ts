@@ -1,11 +1,14 @@
 // =============================================================================
 // core/empleados.ts — SERVICIO DE PERSONAL (Sprint 3, control de asistencias)
 // =============================================================================
-// Habla con /api/empleados. `empleados` es un dominio DISTINTO de `usuarios`:
-// un empleado no necesariamente tiene una cuenta para entrar al sistema
-// (ej. un repartidor). `usuario_id` solo liga al empleado con su cuenta
-// cuando la tiene. Permisos (los aplica el servidor): todo administrador y
-// encargado.
+// Habla con /api/empleados. Permisos (los aplica el servidor): todo
+// administrador y encargado.
+//
+// 2026-10-11 ("los usuarios son empleados"): el alta ya no se hace desde
+// aquí — todo empleado nace junto con su cuenta en routes/usuarios.js (el
+// backend conserva POST /api/empleados por si hace falta un alta directa
+// por API, pero el frontend ya no lo expone). Este servicio solo lista,
+// edita y activa/desactiva.
 // =============================================================================
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -23,13 +26,20 @@ export interface Empleado {
   usuario_login: string | null;
 }
 
-// Datos para crear o editar un empleado. usuario_id es opcional: en la
-// edición, omitirlo conserva el vínculo actual; mandar null lo quita.
+// Datos para editar un empleado. usuario_id es opcional: omitirlo conserva
+// el vínculo actual; mandar null lo quita.
 export interface DatosEmpleado {
   nombre: string;
   puesto: string;
   fecha_ingreso: string;
   usuario_id?: number | null;
+}
+
+// Repartidor activo, lista ligera para el selector del cobro a domicilio
+// (POS) y de Comandas — ver GET /api/empleados/repartidores.
+export interface Repartidor {
+  id: number;
+  nombre: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -45,11 +55,6 @@ export class EmpleadosService {
     return this.http.get<Empleado[]>(`${this.apiUrl}/empleados`, { params });
   }
 
-  // POST /api/empleados
-  crear(datos: DatosEmpleado): Observable<Empleado> {
-    return this.http.post<Empleado>(`${this.apiUrl}/empleados`, datos);
-  }
-
   // PATCH /api/empleados/:id
   editar(id: number, datos: Partial<DatosEmpleado>): Observable<Empleado> {
     return this.http.patch<Empleado>(`${this.apiUrl}/empleados/${id}`, datos);
@@ -59,5 +64,12 @@ export class EmpleadosService {
   // historial de asistencias quedaría huérfano).
   cambiarActivo(id: number, activo: boolean): Observable<Empleado> {
     return this.http.patch<Empleado>(`${this.apiUrl}/empleados/${id}/activo`, { activo });
+  }
+
+  // GET /api/empleados/repartidores — también la puede llamar el cajero
+  // (a diferencia del resto de este servicio), para el selector del cobro
+  // a domicilio.
+  listarRepartidores(): Observable<Repartidor[]> {
+    return this.http.get<Repartidor[]>(`${this.apiUrl}/empleados/repartidores`);
   }
 }

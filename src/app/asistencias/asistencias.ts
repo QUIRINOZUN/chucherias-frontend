@@ -9,8 +9,8 @@
 //   1. HOY: una tarjeta por empleado activo con un botón grande para marcar
 //      su entrada o su salida AHORA. El botón decide solo cuál mostrar según
 //      si ese empleado ya tiene un registro abierto hoy (asistenciasHoy).
-//   2. EMPLEADOS: alta, edición y activar/desactivar — mismo patrón de
-//      formulario único crear/editar que ya usa usuarios/usuarios.ts.
+//   2. EMPLEADOS: edición y activar/desactivar. Sin alta manual (ver nota
+//      "los usuarios son empleados" abajo) — solo corrige lo que ya existe.
 //   3. HORARIOS: tres sub-vistas (2026-10-08) —
 //      (a) Editar: horario SEMANAL recurrente de UN empleado (sin fecha
 //          propia, se repite cada semana); "Guardar" reemplaza TODO su
@@ -26,13 +26,13 @@
 //   4. HISTORIAL: filtros de fecha/empleado + un formulario (el mismo que la
 //      captura manual) para corregir un registro ya existente.
 //
-// Un empleado LIGADO a una cuenta (`empleados.usuario_id`) ya no necesita
-// que nadie le marque nada aquí: iniciar/cerrar sesión registra su entrada/
-// salida solo (ver routes/auth.js). Esta pantalla sigue sirviendo para: (a)
-// ligar cada cuenta con su empleado (selector en el formulario de alta/
-// edición de abajo), (b) el repartidor, que no tiene cuenta porque su
-// horario varía — a ese el encargado lo registra aquí a mano, y (c)
-// corregir cualquier registro (automático o manual) que haya quedado mal.
+// "LOS USUARIOS SON EMPLEADOS" (2026-10-11): toda cuenta no-administrador
+// nace YA con su empleado ligado (ver routes/usuarios.js) — por eso esta
+// pantalla ya no tiene alta manual de empleados. Sigue sirviendo para: (a)
+// editar un empleado existente (puesto, fecha de ingreso, corregir a mano el
+// vínculo con su cuenta si quedó mal), (b) activar/desactivar, y (c) marcar
+// o corregir cualquier registro de asistencia (el autoservicio por login/
+// logout se retiró — ver routes/auth.js — así que todo se registra aquí).
 // =============================================================================
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
@@ -44,9 +44,12 @@ import {
   AsistenciasService,
   CapturaManualAsistencia,
   CorreccionAsistencia,
+  CorreccionHistorial,
   FiltrosAsistencias,
+  Retardo,
 } from '../core/asistencias';
 import { DatosEmpleado, Empleado, EmpleadosService } from '../core/empleados';
+import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { Usuario, UsuariosService } from '../core/usuarios';
 import {
   DatosExcepcion,
@@ -61,13 +64,16 @@ import { ThemeService } from '../core/theme';
 
 // ---- Calendario (semana o mes, 2026-10-09) --------------------------------
 // Índice de JS Date.getDay() (0 = domingo … 6 = sábado) al día de la semana
-// del modelo; null en el índice 1 (lunes) porque el negocio no opera ese
-// día — el calendario del mes lo muestra como "Cerrado", nunca como
-// "Descanso" (son cosas distintas: cerrado es de TODO el negocio, descanso
-// es de un empleado en particular un día que sí se opera).
-const DIA_SEMANA_POR_INDICE: (DiaSemana | null)[] = [
+// del modelo. 2026-10-12: antes el índice 1 (lunes) era `null` a propósito,
+// asumiendo que el negocio siempre cierra ese día — el usuario aclaró que
+// no es así: no hay un día fijo cerrado, el administrador decide caso por
+// caso qué día cerrar (vía una excepción `cerrado` en una fecha específica,
+// ver estadoDelDia() más abajo). Ahora lunes es un día normal más, como
+// cualquier otro — "Cerrado" solo aparece si de verdad hay una excepción
+// guardada para esa fecha, nunca por default.
+const DIA_SEMANA_POR_INDICE: DiaSemana[] = [
   'domingo',
-  null,
+  'lunes',
   'martes',
   'miercoles',
   'jueves',
@@ -90,8 +96,7 @@ const NOMBRES_MES = [
   'Diciembre',
 ];
 
-// Cabecera de la cuadrícula del mes (domingo a sábado — aquí SÍ se incluye
-// lunes porque es un calendario real, aunque el negocio no opere ese día).
+// Cabecera de la cuadrícula del mes (domingo a sábado).
 const NOMBRES_DIA_CORTO = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
 
 const NOMBRES_MES_CORTO = [
@@ -161,6 +166,9 @@ interface ResumenHorasEmpleado {
   // `horas`, pero importa que no se pierdan de vista: alguien olvidó
   // cerrar, o sigue trabajando ahora mismo).
   turnosAbiertos: number;
+  // RF-20 (2026-10-13): retardos de la misma semana visible.
+  retardos: number;
+  minutosRetardo: number;
 }
 
 // Diferencia en horas entre dos horas "HH:MM" o "HH:MM:SS" del MISMO día
@@ -183,7 +191,6 @@ function formatoFechaLocal(fecha: Date): string {
   return `${anio}-${mes}-${dia}`;
 }
 
-type ModoFormularioEmpleado = 'crear' | 'editar' | null;
 type ModoFormularioAsistencia = 'crear' | 'editar' | null;
 
 // Las cuatro secciones ahora son pestañas (una visible a la vez) en vez de
@@ -194,7 +201,7 @@ type Pestana = 'hoy' | 'empleados' | 'horarios' | 'historial';
 @Component({
   selector: 'app-asistencias',
   standalone: true,
-  imports: [DatePipe, DecimalPipe],
+  imports: [DatePipe, DecimalPipe, FocoDialogoDirective],
   templateUrl: './asistencias.html',
   styleUrl: './asistencias.css',
 })
@@ -340,30 +347,21 @@ export class AsistenciasComponent implements OnInit {
     this.cargarEmpleados();
   }
 
-  modoFormularioEmpleado = signal<ModoFormularioEmpleado>(null);
+  empleadoFormAbierto = signal(false);
   empleadoEditandoId = signal<number | null>(null);
   nombreEmpleadoForm = signal('');
   puestoEmpleadoForm = signal('');
   fechaIngresoForm = signal('');
-  // Cuenta ligada (asistencia automática) — null = ninguna (ej. repartidor).
+  // Cuenta ligada — normalmente ya viene fijada sola desde que se creó la
+  // cuenta en Usuarios; este selector solo sirve para corregirla a mano.
   usuarioIdEmpleadoForm = signal<number | null>(null);
   procesandoFormEmpleado = signal(false);
   errorFormularioEmpleado = signal('');
 
   actualizandoActivoId = signal<number | null>(null);
 
-  abrirCreacionEmpleado(): void {
-    this.modoFormularioEmpleado.set('crear');
-    this.empleadoEditandoId.set(null);
-    this.nombreEmpleadoForm.set('');
-    this.puestoEmpleadoForm.set('');
-    this.fechaIngresoForm.set('');
-    this.usuarioIdEmpleadoForm.set(null);
-    this.errorFormularioEmpleado.set('');
-  }
-
   abrirEdicionEmpleado(empleado: Empleado): void {
-    this.modoFormularioEmpleado.set('editar');
+    this.empleadoFormAbierto.set(true);
     this.empleadoEditandoId.set(empleado.id);
     this.nombreEmpleadoForm.set(empleado.nombre);
     this.puestoEmpleadoForm.set(empleado.puesto);
@@ -373,7 +371,7 @@ export class AsistenciasComponent implements OnInit {
   }
 
   cerrarFormularioEmpleado(): void {
-    this.modoFormularioEmpleado.set(null);
+    this.empleadoFormAbierto.set(false);
   }
 
   puedeGuardarEmpleado(): boolean {
@@ -401,15 +399,10 @@ export class AsistenciasComponent implements OnInit {
       usuario_id: this.usuarioIdEmpleadoForm(),
     };
 
-    const peticion =
-      this.modoFormularioEmpleado() === 'crear'
-        ? this.empleadosService.crear(datos)
-        : this.empleadosService.editar(this.empleadoEditandoId()!, datos);
-
-    peticion.subscribe({
+    this.empleadosService.editar(this.empleadoEditandoId()!, datos).subscribe({
       next: () => {
         this.procesandoFormEmpleado.set(false);
-        this.modoFormularioEmpleado.set(null);
+        this.empleadoFormAbierto.set(false);
         this.cargarEmpleados();
       },
       error: (error: HttpErrorResponse) => {
@@ -627,9 +620,6 @@ export class AsistenciasComponent implements OnInit {
         esExcepcion: true,
       };
     }
-    if (!celda.diaSemana) {
-      return { tipo: 'cerrado', horaEntrada: null, horaSalida: null, esExcepcion: false };
-    }
     const horario = empleadoId ? this.horarioDeEseDia(empleadoId, celda.diaSemana) : null;
     if (horario) {
       return {
@@ -712,10 +702,7 @@ export class AsistenciasComponent implements OnInit {
   guardandoExcepcion = signal(false);
   errorExcepcion = signal('');
 
-  // Etiqueta para el checkbox "Repetir todos los ___" — vacío si el día
-  // que se edita no tiene un día de la semana real (no debería pasar: el
-  // checkbox se oculta cuando el tipo es "cerrado", el único caso donde
-  // esto importaría para un lunes).
+  // Etiqueta para el checkbox "Repetir todos los ___".
   etiquetaDiaEditando = computed(() => {
     const celda = this.diaExcepcionEditando();
     return celda?.diaSemana ? NOMBRE_DIA_SEMANA[celda.diaSemana] : '';
@@ -900,6 +887,7 @@ export class AsistenciasComponent implements OnInit {
   // sesión, o sigue trabajando en este momento).
   semanaVisibleInicio = signal(this.lunesDeLaSemana(new Date()));
   asistenciasSemana = signal<Asistencia[]>([]);
+  retardosSemana = signal<Retardo[]>([]);
   cargandoHorasSemana = signal(false);
 
   private lunesDeLaSemana(fecha: Date): Date {
@@ -925,17 +913,22 @@ export class AsistenciasComponent implements OnInit {
 
   resumenHorasSemana = computed<ResumenHorasEmpleado[]>(() => {
     const mapa = new Map<number, ResumenHorasEmpleado>();
-    for (const a of this.asistenciasSemana()) {
-      if (!mapa.has(a.empleado_id)) {
-        mapa.set(a.empleado_id, {
-          empleado_id: a.empleado_id,
-          nombre: a.empleado_nombre,
+    const obtener = (empleadoId: number, nombre: string) => {
+      if (!mapa.has(empleadoId)) {
+        mapa.set(empleadoId, {
+          empleado_id: empleadoId,
+          nombre,
           horas: 0,
           turnos: 0,
           turnosAbiertos: 0,
+          retardos: 0,
+          minutosRetardo: 0,
         });
       }
-      const resumen = mapa.get(a.empleado_id)!;
+      return mapa.get(empleadoId)!;
+    };
+    for (const a of this.asistenciasSemana()) {
+      const resumen = obtener(a.empleado_id, a.empleado_nombre);
       if (a.hora_entrada && a.hora_salida) {
         resumen.horas += horasEntreHoras(a.hora_entrada, a.hora_salida);
         resumen.turnos += 1;
@@ -943,11 +936,23 @@ export class AsistenciasComponent implements OnInit {
         resumen.turnosAbiertos += 1;
       }
     }
+    // RF-20: los retardos se piden aparte (GET /asistencias/retardos) y se
+    // mezclan aquí por empleado — un empleado con retardos pero sin ningún
+    // turno cerrado esta semana (poco probable, pero posible) igual aparece.
+    for (const r of this.retardosSemana()) {
+      const resumen = obtener(r.empleado_id, r.empleado_nombre);
+      resumen.retardos += 1;
+      resumen.minutosRetardo += r.minutos_retardo;
+    }
     return [...mapa.values()].sort((a, b) => a.nombre.localeCompare(b.nombre));
   });
 
   totalHorasSemana = computed(() =>
     this.resumenHorasSemana().reduce((total, r) => total + r.horas, 0),
+  );
+
+  totalRetardosSemana = computed(() =>
+    this.resumenHorasSemana().reduce((total, r) => total + r.retardos, 0),
   );
 
   semanaAnterior(): void {
@@ -967,17 +972,21 @@ export class AsistenciasComponent implements OnInit {
   cargarHorasSemana(): void {
     this.cargandoHorasSemana.set(true);
     const { inicio, fin } = this.rangoSemanaVisible();
-    this.asistenciasService
-      .listar({ desde: formatoFechaLocal(inicio), hasta: formatoFechaLocal(fin) })
-      .subscribe({
-        next: (asistencias) => {
-          this.asistenciasSemana.set(asistencias);
-          this.cargandoHorasSemana.set(false);
-        },
-        error: () => {
-          this.cargandoHorasSemana.set(false);
-        },
-      });
+    const rango = { desde: formatoFechaLocal(inicio), hasta: formatoFechaLocal(fin) };
+    this.asistenciasService.listar(rango).subscribe({
+      next: (asistencias) => {
+        this.asistenciasSemana.set(asistencias);
+        this.cargandoHorasSemana.set(false);
+      },
+      error: () => {
+        this.cargandoHorasSemana.set(false);
+      },
+    });
+    // RF-20: se pide aparte (no bloquea el resumen de horas si falla).
+    this.asistenciasService.obtenerRetardos(rango).subscribe({
+      next: (retardos) => this.retardosSemana.set(retardos),
+      error: () => this.retardosSemana.set([]),
+    });
   }
 
   // =====================================================================
@@ -1044,6 +1053,31 @@ export class AsistenciasComponent implements OnInit {
     this.filtroHasta.set('');
     this.filtroEmpleadoId.set(null);
     this.cargarHistorial();
+  }
+
+  // RF-19 (2026-10-13): historial de correcciones de UN registro, expandible
+  // dentro de la misma fila del historial (null = ninguna fila expandida).
+  correccionesExpandidasId = signal<number | null>(null);
+  correccionesHistorial = signal<CorreccionHistorial[]>([]);
+  cargandoCorrecciones = signal(false);
+
+  alternarCorrecciones(asistencia: Asistencia): void {
+    if (this.correccionesExpandidasId() === asistencia.id) {
+      this.correccionesExpandidasId.set(null);
+      return;
+    }
+    this.correccionesExpandidasId.set(asistencia.id);
+    this.correccionesHistorial.set([]);
+    this.cargandoCorrecciones.set(true);
+    this.asistenciasService.obtenerCorrecciones(asistencia.id).subscribe({
+      next: (historial) => {
+        this.correccionesHistorial.set(historial);
+        this.cargandoCorrecciones.set(false);
+      },
+      error: () => {
+        this.cargandoCorrecciones.set(false);
+      },
+    });
   }
 
   // Un solo formulario sirve para la captura manual (crear, día pasado) y
@@ -1146,6 +1180,10 @@ export class AsistenciasComponent implements OnInit {
   private alGuardarAsistenciaConExito(): void {
     this.procesandoFormAsistencia.set(false);
     this.modoFormularioAsistencia.set(null);
+    // El historial de correcciones expandido (si lo había) quedaría
+    // desactualizado tras esta corrección — se cierra en vez de mostrar
+    // datos viejos; volver a abrirlo lo trae fresco.
+    this.correccionesExpandidasId.set(null);
     this.cargarHistorial();
     this.cargarHoy();
   }

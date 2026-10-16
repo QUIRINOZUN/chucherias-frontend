@@ -13,6 +13,9 @@
       <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
       Volver
     </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-reloj" /></svg>
+    </span>
     <h1>Asistencias</h1>
     <button
       type="button"
@@ -29,56 +32,64 @@
   </header>
 
   <!-- PESTAÑAS: cambian qué sección se muestra abajo (los datos de las 4 ya
-       están cargados desde ngOnInit; esto solo cambia qué se ve). -->
-  <nav class="tabs-asistencias" role="tablist">
-    <button
-      type="button"
-      role="tab"
-      class="tab-asistencias"
-      [class.tab-asistencias-activa]="pestanaActiva() === 'hoy'"
-      [attr.aria-selected]="pestanaActiva() === 'hoy'"
-      (click)="cambiarPestana('hoy')"
-    >
-      <svg class="icono" aria-hidden="true"><use href="#ic-reloj" /></svg>
-      Hoy
-      @if (totalAdentroHoy() > 0) {
-        <span class="tab-badge">{{ totalAdentroHoy() }}</span>
-      }
-    </button>
-    <button
-      type="button"
-      role="tab"
-      class="tab-asistencias"
-      [class.tab-asistencias-activa]="pestanaActiva() === 'empleados'"
-      [attr.aria-selected]="pestanaActiva() === 'empleados'"
-      (click)="cambiarPestana('empleados')"
-    >
-      <svg class="icono" aria-hidden="true"><use href="#ic-usuarios" /></svg>
-      Empleados
-    </button>
-    <button
-      type="button"
-      role="tab"
-      class="tab-asistencias"
-      [class.tab-asistencias-activa]="pestanaActiva() === 'horarios'"
-      [attr.aria-selected]="pestanaActiva() === 'horarios'"
-      (click)="cambiarPestana('horarios')"
-    >
-      <svg class="icono" aria-hidden="true"><use href="#ic-calendario" /></svg>
-      Horarios
-    </button>
-    <button
-      type="button"
-      role="tab"
-      class="tab-asistencias"
-      [class.tab-asistencias-activa]="pestanaActiva() === 'historial'"
-      [attr.aria-selected]="pestanaActiva() === 'historial'"
-      (click)="cambiarPestana('historial')"
-    >
-      <svg class="icono" aria-hidden="true"><use href="#ic-comanda" /></svg>
-      Historial
-    </button>
-  </nav>
+       están cargados desde ngOnInit; esto solo cambia qué se ve). En un
+       teléfono angosto las 4 no caben y la fila se desplaza horizontalmente
+       (overflow-x: auto) — el envoltorio agrega un degradado a la derecha
+       (.tabs-asistencias-desvanecido, ver asistencias.css) para que se note
+       que hay más pestañas fuera de vista ("Historial" quedaba oculto sin
+       ninguna pista salvo una barra de scroll muy delgada). -->
+  <div class="tabs-asistencias-envoltorio">
+    <nav class="tabs-asistencias" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        class="tab-asistencias"
+        [class.tab-asistencias-activa]="pestanaActiva() === 'hoy'"
+        [attr.aria-selected]="pestanaActiva() === 'hoy'"
+        (click)="cambiarPestana('hoy')"
+      >
+        <svg class="icono" aria-hidden="true"><use href="#ic-reloj" /></svg>
+        Hoy
+        @if (totalAdentroHoy() > 0) {
+          <span class="tab-badge">{{ totalAdentroHoy() }}</span>
+        }
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="tab-asistencias"
+        [class.tab-asistencias-activa]="pestanaActiva() === 'empleados'"
+        [attr.aria-selected]="pestanaActiva() === 'empleados'"
+        (click)="cambiarPestana('empleados')"
+      >
+        <svg class="icono" aria-hidden="true"><use href="#ic-usuarios" /></svg>
+        Empleados
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="tab-asistencias"
+        [class.tab-asistencias-activa]="pestanaActiva() === 'horarios'"
+        [attr.aria-selected]="pestanaActiva() === 'horarios'"
+        (click)="cambiarPestana('horarios')"
+      >
+        <svg class="icono" aria-hidden="true"><use href="#ic-calendario" /></svg>
+        Horarios
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="tab-asistencias"
+        [class.tab-asistencias-activa]="pestanaActiva() === 'historial'"
+        [attr.aria-selected]="pestanaActiva() === 'historial'"
+        (click)="cambiarPestana('historial')"
+      >
+        <svg class="icono" aria-hidden="true"><use href="#ic-comanda" /></svg>
+        Historial
+      </button>
+    </nav>
+    <div class="tabs-asistencias-desvanecido" aria-hidden="true"></div>
+  </div>
 
   <div class="asistencias-cuerpo">
     <!-- ============================= SECCIÓN: HOY ============================= -->
@@ -102,7 +113,14 @@
         }
 
         @if (cargandoHoy() || cargandoEmpleados()) {
-          <p class="mensaje-estado">Cargando...</p>
+          <ul class="lista-hoy" aria-hidden="true">
+            @for (i of [1, 2, 3]; track i) {
+              <li class="tarjeta-hoy-esqueleto">
+                <div class="esqueleto esqueleto-en-tarjeta esqueleto-punto-hoy"></div>
+                <div class="esqueleto esqueleto-en-tarjeta esqueleto-linea-nombre-hoy"></div>
+              </li>
+            }
+          </ul>
         } @else if (empleadosActivos().length === 0) {
           <p class="mensaje-estado">
             No hay empleados activos todavía. Da de alta uno en "Empleados" abajo.
@@ -167,12 +185,15 @@
           </button>
         </div>
 
-        <button type="button" class="boton-nuevo" (click)="abrirCreacionEmpleado()">
-          + Nuevo empleado
-        </button>
-
         @if (cargandoEmpleados()) {
-          <p class="mensaje-estado">Cargando empleados...</p>
+          <ul class="lista-empleados" aria-hidden="true">
+            @for (i of [1, 2, 3]; track i) {
+              <li class="tarjeta-empleado-esqueleto">
+                <div class="esqueleto esqueleto-en-tarjeta esqueleto-linea-nombre-empleado"></div>
+                <div class="esqueleto esqueleto-en-tarjeta esqueleto-linea-badge-empleado"></div>
+              </li>
+            }
+          </ul>
         } @else if (empleados().length === 0) {
           <p class="mensaje-estado">Todavía no hay empleados dados de alta.</p>
         } @else {
@@ -310,44 +331,54 @@
                  semanas completas (con días atenuados del mes anterior/
                  siguiente); en "Semana", una sola fila con los 7 días
                  visibles. Tocar un día abre la ventana para asignarle
-                 trabaja/descanso/cerrado ese día en particular. -->
-            <div
-              class="calendario-mes-grid"
-              [class.calendario-mes-grid-semana]="vistaCalendario() === 'semana'"
-            >
-              <div class="fila-dias-semana">
-                @for (nombre of NOMBRES_DIA_CORTO; track nombre) {
-                  <span class="dia-semana-cabecera">{{ nombre }}</span>
-                }
-              </div>
-              @for (semana of celdasCalendario(); track $index) {
-                <div class="fila-semana-mes">
-                  @for (celda of semana; track celda.numero + '-' + celda.enMesActual) {
-                    @if (estadoDelDia(celda); as estado) {
-                      <button
-                        type="button"
-                        class="celda-mes"
-                        [class.celda-mes-fuera]="!celda.enMesActual"
-                        [class.celda-mes-excepcion]="estado.esExcepcion"
-                        [class]="'celda-mes-' + estado.tipo"
-                        (click)="abrirEdicionDia(celda)"
-                      >
-                        <span class="celda-mes-numero" [class.celda-mes-hoy]="celda.esHoy">{{
-                          celda.numero
-                        }}</span>
-                        @if (estado.tipo === 'trabaja' && estado.horaEntrada) {
-                          <span class="celda-mes-horas">
-                            {{ estado.horaEntrada.slice(0, 5) }}
-                            @if (vistaCalendario() === 'semana' && estado.horaSalida) {
-                              – {{ estado.horaSalida.slice(0, 5) }}
-                            }
-                          </span>
-                        }
-                      </button>
-                    }
+                 trabaja/descanso/cerrado ese día en particular.
+
+                 .calendario-mes-scroll (2026-10-16): en un teléfono angosto
+                 (320-375px) 7 columnas repartidas en el ancho disponible
+                 encogían cada celda a ~40-46px, apretado para leer la hora
+                 — en vez de seguir encogiendo, el calendario se desplaza
+                 horizontalmente (overflow-x: auto) con un mínimo de 56px
+                 por columna, mismo recurso ya usado en el carrito del POS y
+                 la barra de Inventario para este mismo problema. -->
+            <div class="calendario-mes-scroll">
+              <div
+                class="calendario-mes-grid"
+                [class.calendario-mes-grid-semana]="vistaCalendario() === 'semana'"
+              >
+                <div class="fila-dias-semana">
+                  @for (nombre of NOMBRES_DIA_CORTO; track nombre) {
+                    <span class="dia-semana-cabecera">{{ nombre }}</span>
                   }
                 </div>
-              }
+                @for (semana of celdasCalendario(); track $index) {
+                  <div class="fila-semana-mes">
+                    @for (celda of semana; track celda.numero + '-' + celda.enMesActual) {
+                      @if (estadoDelDia(celda); as estado) {
+                        <button
+                          type="button"
+                          class="celda-mes"
+                          [class.celda-mes-fuera]="!celda.enMesActual"
+                          [class.celda-mes-excepcion]="estado.esExcepcion"
+                          [class]="'celda-mes-' + estado.tipo"
+                          (click)="abrirEdicionDia(celda)"
+                        >
+                          <span class="celda-mes-numero" [class.celda-mes-hoy]="celda.esHoy">{{
+                            celda.numero
+                          }}</span>
+                          @if (estado.tipo === 'trabaja' && estado.horaEntrada) {
+                            <span class="celda-mes-horas">
+                              {{ estado.horaEntrada.slice(0, 5) }}
+                              @if (vistaCalendario() === 'semana' && estado.horaSalida) {
+                                – {{ estado.horaSalida.slice(0, 5) }}
+                              }
+                            </span>
+                          }
+                        </button>
+                      }
+                    }
+                  </div>
+                }
+              </div>
             </div>
 
             <div class="leyenda-mes">
@@ -391,11 +422,21 @@
           } @else if (resumenHorasSemana().length === 0) {
             <p class="mensaje-estado">Nadie registró asistencia en esta semana.</p>
           } @else {
-            <div class="resumen-horas-total">
-              <span class="resumen-horas-total-numero">{{
-                totalHorasSemana() | number: '1.1-1'
-              }}</span>
-              <span class="resumen-horas-total-etiqueta">horas en total esta semana</span>
+            <div class="resumen-horas-encabezado-totales">
+              <div class="resumen-horas-total">
+                <span class="resumen-horas-total-numero">{{
+                  totalHorasSemana() | number: '1.1-1'
+                }}</span>
+                <span class="resumen-horas-total-etiqueta">horas en total esta semana</span>
+              </div>
+              @if (totalRetardosSemana() > 0) {
+                <!-- RF-20 (2026-10-13): entradas reales más tarde que la hora
+                     esperada (horario recurrente o excepción del día). -->
+                <div class="resumen-horas-total resumen-retardos-total">
+                  <span class="resumen-horas-total-numero">{{ totalRetardosSemana() }}</span>
+                  <span class="resumen-horas-total-etiqueta">retardos esta semana</span>
+                </div>
+              }
             </div>
             <ul class="lista-resumen-horas">
               @for (r of resumenHorasSemana(); track r.empleado_id) {
@@ -406,6 +447,15 @@
                     {{ r.turnos }} turno{{ r.turnos === 1 ? '' : 's' }}
                     @if (r.turnosAbiertos > 0) {
                       · {{ r.turnosAbiertos }} sin cerrar
+                    }
+                    @if (r.retardos > 0) {
+                      ·
+                      <span class="resumen-retardos">
+                        {{ r.retardos }} retardo{{ r.retardos === 1 ? '' : 's' }} ({{
+                          r.minutosRetardo
+                        }}
+                        min)
+                      </span>
                     }
                   </span>
                 </li>
@@ -485,14 +535,59 @@
                 @if (a.observaciones) {
                   <div class="item-historial-observaciones">{{ a.observaciones }}</div>
                 }
+                @if (a.fecha_ultima_correccion) {
+                  <!-- RF-19 (2026-10-13): evidencia automática de la última
+                       corrección — quién y cuándo, con un enlace al
+                       historial completo (puede haber más de una). -->
+                  <div class="item-historial-corregido">
+                    Corregido por {{ a.ultima_correccion_por_nombre }} el
+                    {{ a.fecha_ultima_correccion | date: 'dd/MM/yyyy HH:mm' }}
+                  </div>
+                }
                 <div class="item-historial-pie">
                   <span class="item-historial-registrado-por">
                     Registrado por {{ a.registrado_por_nombre ?? '—' }}
                   </span>
-                  <button type="button" class="boton-enlace" (click)="abrirCorreccion(a)">
-                    Corregir
-                  </button>
+                  <div class="item-historial-acciones">
+                    @if (a.fecha_ultima_correccion) {
+                      <button type="button" class="boton-enlace" (click)="alternarCorrecciones(a)">
+                        {{
+                          correccionesExpandidasId() === a.id
+                            ? 'Ocultar historial'
+                            : 'Ver historial de cambios'
+                        }}
+                      </button>
+                    }
+                    <button type="button" class="boton-enlace" (click)="abrirCorreccion(a)">
+                      Corregir
+                    </button>
+                  </div>
                 </div>
+
+                @if (correccionesExpandidasId() === a.id) {
+                  <div class="lista-correcciones">
+                    @if (cargandoCorrecciones()) {
+                      <p class="mensaje-estado">Consultando historial...</p>
+                    } @else {
+                      @for (c of correccionesHistorial(); track c.id) {
+                        <div class="item-correccion">
+                          <span class="item-correccion-encabezado">
+                            {{ c.corregido_por_nombre }} ·
+                            {{ c.fecha_correccion | date: 'dd/MM/yyyy HH:mm' }}
+                          </span>
+                          <span class="item-correccion-anterior">
+                            Antes: {{ c.fecha_anterior | date: 'dd/MM/yyyy' }} · Entrada:
+                            {{ c.hora_entrada_anterior?.slice(0, 5) ?? '—' }} · Salida:
+                            {{ c.hora_salida_anterior?.slice(0, 5) ?? '—' }}
+                            @if (c.observaciones_anteriores) {
+                              · "{{ c.observaciones_anteriores }}"
+                            }
+                          </span>
+                        </div>
+                      }
+                    }
+                  </div>
+                }
               </li>
             }
           </ul>
@@ -501,11 +596,20 @@
     }
   </div>
 
-  <!-- VENTANA EMERGENTE: alta/edición de empleado. -->
-  @if (modoFormularioEmpleado(); as modo) {
+  <!-- VENTANA EMERGENTE: edición de empleado (ver nota "los usuarios son
+       empleados" en asistencias.ts — ya no existe un alta suelta, todo
+       empleado nace junto con su cuenta desde Usuarios). -->
+  @if (empleadoFormAbierto()) {
     <div class="overlay">
-      <div class="panel-formulario">
-        <h2>{{ modo === 'crear' ? 'Nuevo empleado' : 'Editar empleado' }}</h2>
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Editar empleado"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarFormularioEmpleado()"
+      >
+        <h2>Editar empleado</h2>
 
         <div class="campo">
           <label for="nombre-empleado-form">Nombre completo</label>
@@ -549,7 +653,7 @@
               )
             "
           >
-            <option value="">Ninguna (ej. repartidor, horario variable)</option>
+            <option value="">Ninguna</option>
             @for (usuario of usuariosDisponibles(); track usuario.id) {
               <option [value]="usuario.id">
                 &#64;{{ usuario.usuario }} ({{ usuario.nombre }})
@@ -557,8 +661,8 @@
             }
           </select>
           <p class="campo-ayuda">
-            Si tiene cuenta, su entrada y salida se registran solas al iniciar y cerrar sesión — no
-            hace falta marcarlas aquí.
+            Normalmente ya viene ligada sola desde que se creó la cuenta en Usuarios — solo cámbiala
+            aquí si hace falta corregir el vínculo.
           </p>
         </div>
 
@@ -581,13 +685,7 @@
             (click)="guardarFormularioEmpleado()"
             [disabled]="!puedeGuardarEmpleado()"
           >
-            {{
-              procesandoFormEmpleado()
-                ? 'Guardando...'
-                : modo === 'crear'
-                  ? 'Crear empleado'
-                  : 'Guardar cambios'
-            }}
+            {{ procesandoFormEmpleado() ? 'Guardando...' : 'Guardar cambios' }}
           </button>
         </div>
       </div>
@@ -597,7 +695,16 @@
   <!-- VENTANA EMERGENTE: captura manual / corrección de una asistencia. -->
   @if (modoFormularioAsistencia(); as modoAsistencia) {
     <div class="overlay">
-      <div class="panel-formulario">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="
+          modoAsistencia === 'crear' ? 'Registrar asistencia' : 'Corregir asistencia'
+        "
+        appFocoDialogo
+        (cerrarConEscape)="cerrarFormularioAsistencia()"
+      >
         <h2>{{ modoAsistencia === 'crear' ? 'Registrar asistencia' : 'Corregir asistencia' }}</h2>
 
         @if (modoAsistencia === 'crear') {
@@ -696,7 +803,14 @@
        "todos los eventos" de un evento repetido. -->
   @if (diaExcepcionEditando(); as celda) {
     <div class="overlay">
-      <div class="panel-formulario">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="'Editar ' + celda.numero + ' de ' + NOMBRES_MES[celda.fecha.getMonth()]"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarEdicionDia()"
+      >
         <h2>{{ celda.numero }} de {{ NOMBRES_MES[celda.fecha.getMonth()] }}</h2>
         <p class="campo-ayuda">
           Por default esto solo cambia este día en particular — el horario normal de las demás
