@@ -29,6 +29,10 @@ export interface Variante {
   precio: number;
   // 2026-10-09: deshabilitar UNA presentación sin ocultar todo el producto.
   activo: boolean;
+  // RNF-02 (2026-10-16): quién cambió el precio/nombre por última vez, y
+  // cuándo — null si nunca se ha editado desde que esto se agregó.
+  editado_por_nombre: string | null;
+  fecha_edicion: string | null;
 }
 
 // Un producto del menú con todas sus variantes ya incluidas.

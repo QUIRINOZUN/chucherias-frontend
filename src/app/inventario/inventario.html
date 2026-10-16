@@ -11,6 +11,9 @@
       <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
       Volver
     </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-paquete" /></svg>
+    </span>
     <h1>Inventario</h1>
     <button
       type="button"
@@ -28,7 +31,17 @@
 
   <div class="inventario-cuerpo">
     @if (cargando()) {
-      <p class="mensaje-estado">Cargando insumos...</p>
+      <!-- Skeleton (2026-10-11) en vez de solo texto — mismas proporciones
+           que .tarjeta-insumo (nombre a la izquierda, existencia a la
+           derecha) para que no salte de tamaño al terminar de cargar. -->
+      <div class="lista-insumos-esqueleto" aria-hidden="true">
+        @for (i of [1, 2, 3, 4, 5]; track i) {
+          <div class="tarjeta-insumo-esqueleto">
+            <div class="esqueleto esqueleto-en-tarjeta esqueleto-linea-nombre"></div>
+            <div class="esqueleto esqueleto-en-tarjeta esqueleto-linea-dato"></div>
+          </div>
+        }
+      </div>
     } @else {
       @if (error()) {
         <p class="mensaje-estado mensaje-error">{{ error() }}</p>
@@ -65,65 +78,71 @@
           <!-- CHIPS DE CATEGORÍA: filtran la lista; "Todas" es el default.
                Elegir un chip limpia la búsqueda (mismo criterio que el POS). -->
           <p class="etiqueta-filtro">Categoría</p>
-          <div class="fila-chips">
-            <button
-              type="button"
-              class="chip-categoria"
-              [class.chip-activa]="categoriaFiltroId() === null"
-              (click)="seleccionarCategoria(null)"
-            >
-              Todas <span class="chip-conteo">{{ contarCategoria(null) }}</span>
-            </button>
-            @for (categoria of categorias(); track categoria.id) {
+          <div class="fila-chips-envoltorio">
+            <div class="fila-chips">
               <button
                 type="button"
                 class="chip-categoria"
-                [class.chip-activa]="categoriaFiltroId() === categoria.id"
-                (click)="seleccionarCategoria(categoria.id)"
+                [class.chip-activa]="categoriaFiltroId() === null"
+                (click)="seleccionarCategoria(null)"
               >
-                {{ categoria.nombre }}
-                <span class="chip-conteo">{{ contarCategoria(categoria.id) }}</span>
+                Todas <span class="chip-conteo">{{ contarCategoria(null) }}</span>
               </button>
-            }
+              @for (categoria of categorias(); track categoria.id) {
+                <button
+                  type="button"
+                  class="chip-categoria"
+                  [class.chip-activa]="categoriaFiltroId() === categoria.id"
+                  (click)="seleccionarCategoria(categoria.id)"
+                >
+                  {{ categoria.nombre }}
+                  <span class="chip-conteo">{{ contarCategoria(categoria.id) }}</span>
+                </button>
+              }
+            </div>
+            <div class="fila-chips-desvanecido" aria-hidden="true"></div>
           </div>
 
           <!-- CHIPS DE NIVEL DE STOCK: eje independiente de la categoría, se
                combina con ella y con la búsqueda en vez de limpiarlas
                (ver seleccionarNivel en inventario.ts). -->
           <p class="etiqueta-filtro">Nivel de stock</p>
-          <div class="fila-chips">
-            <button
-              type="button"
-              class="chip-categoria"
-              [class.chip-activa]="nivelStockFiltro() === null"
-              (click)="seleccionarNivel(null)"
-            >
-              Todo el stock <span class="chip-conteo">{{ contarNivel(null) }}</span>
-            </button>
-            <button
-              type="button"
-              class="chip-categoria chip-nivel-bajo"
-              [class.chip-activa]="nivelStockFiltro() === 'bajo'"
-              (click)="seleccionarNivel('bajo')"
-            >
-              Bajo <span class="chip-conteo">{{ contarNivel('bajo') }}</span>
-            </button>
-            <button
-              type="button"
-              class="chip-categoria chip-nivel-medio"
-              [class.chip-activa]="nivelStockFiltro() === 'medio'"
-              (click)="seleccionarNivel('medio')"
-            >
-              Medio <span class="chip-conteo">{{ contarNivel('medio') }}</span>
-            </button>
-            <button
-              type="button"
-              class="chip-categoria chip-nivel-alto"
-              [class.chip-activa]="nivelStockFiltro() === 'alto'"
-              (click)="seleccionarNivel('alto')"
-            >
-              Alto <span class="chip-conteo">{{ contarNivel('alto') }}</span>
-            </button>
+          <div class="fila-chips-envoltorio">
+            <div class="fila-chips">
+              <button
+                type="button"
+                class="chip-categoria"
+                [class.chip-activa]="nivelStockFiltro() === null"
+                (click)="seleccionarNivel(null)"
+              >
+                Todo el stock <span class="chip-conteo">{{ contarNivel(null) }}</span>
+              </button>
+              <button
+                type="button"
+                class="chip-categoria chip-nivel-bajo"
+                [class.chip-activa]="nivelStockFiltro() === 'bajo'"
+                (click)="seleccionarNivel('bajo')"
+              >
+                Bajo <span class="chip-conteo">{{ contarNivel('bajo') }}</span>
+              </button>
+              <button
+                type="button"
+                class="chip-categoria chip-nivel-medio"
+                [class.chip-activa]="nivelStockFiltro() === 'medio'"
+                (click)="seleccionarNivel('medio')"
+              >
+                Medio <span class="chip-conteo">{{ contarNivel('medio') }}</span>
+              </button>
+              <button
+                type="button"
+                class="chip-categoria chip-nivel-alto"
+                [class.chip-activa]="nivelStockFiltro() === 'alto'"
+                (click)="seleccionarNivel('alto')"
+              >
+                Alto <span class="chip-conteo">{{ contarNivel('alto') }}</span>
+              </button>
+            </div>
+            <div class="fila-chips-desvanecido" aria-hidden="true"></div>
           </div>
 
           <!-- CHIPS DE PROVEEDOR (2026-10-08): mismo eje independiente que el
@@ -131,26 +150,29 @@
                alta — con el catálogo vacío no tiene nada que filtrar. -->
           @if (proveedores().length > 0) {
             <p class="etiqueta-filtro">Proveedor</p>
-            <div class="fila-chips">
-              <button
-                type="button"
-                class="chip-categoria"
-                [class.chip-activa]="proveedorFiltroId() === null"
-                (click)="seleccionarProveedor(null)"
-              >
-                Todos <span class="chip-conteo">{{ contarProveedor(null) }}</span>
-              </button>
-              @for (proveedor of proveedores(); track proveedor.id) {
+            <div class="fila-chips-envoltorio">
+              <div class="fila-chips">
                 <button
                   type="button"
                   class="chip-categoria"
-                  [class.chip-activa]="proveedorFiltroId() === proveedor.id"
-                  (click)="seleccionarProveedor(proveedor.id)"
+                  [class.chip-activa]="proveedorFiltroId() === null"
+                  (click)="seleccionarProveedor(null)"
                 >
-                  {{ proveedor.nombre }}
-                  <span class="chip-conteo">{{ contarProveedor(proveedor.id) }}</span>
+                  Todos <span class="chip-conteo">{{ contarProveedor(null) }}</span>
                 </button>
-              }
+                @for (proveedor of proveedores(); track proveedor.id) {
+                  <button
+                    type="button"
+                    class="chip-categoria"
+                    [class.chip-activa]="proveedorFiltroId() === proveedor.id"
+                    (click)="seleccionarProveedor(proveedor.id)"
+                  >
+                    {{ proveedor.nombre }}
+                    <span class="chip-conteo">{{ contarProveedor(proveedor.id) }}</span>
+                  </button>
+                }
+              </div>
+              <div class="fila-chips-desvanecido" aria-hidden="true"></div>
             </div>
           }
         </aside>
@@ -185,6 +207,9 @@
                             mín. {{ insumo.cantidad_minima }} {{ insumo.unidad_medida }}
                             @if (insumo.proveedor) {
                               · {{ insumo.proveedor }}
+                            }
+                            @if (insumo.costo_extra) {
+                              · +{{ insumo.costo_extra | currency: 'MXN' }} por elección
                             }
                           </span>
                           @if (insumo.alerta) {
@@ -289,7 +314,14 @@
   <!-- VENTANA de alta/edición de insumo. -->
   @if (modoFormulario(); as modo) {
     <div class="overlay">
-      <div class="panel-formulario">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="modo === 'crear' ? 'Nuevo insumo' : 'Editar insumo'"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarFormularioInsumo()"
+      >
         <h2>{{ modo === 'crear' ? 'Nuevo insumo' : 'Editar insumo' }}</h2>
 
         <div class="campo">
@@ -369,6 +401,26 @@
         </div>
 
         <div class="campo">
+          <label for="costo-extra-insumo">
+            Costo extra por elección (opcional) — cuando el cliente elige este insumo en el POS se
+            suma este cargo al total (ej. "cacahuate diferente")
+          </label>
+          <input
+            id="costo-extra-insumo"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Sin cargo"
+            [value]="costoExtraForm() ?? ''"
+            (input)="
+              costoExtraForm.set(
+                $any($event.target).value === '' ? null : +$any($event.target).value
+              )
+            "
+          />
+        </div>
+
+        <div class="campo">
           <label for="proveedor-insumo">Proveedor (opcional)</label>
           <select
             id="proveedor-insumo"
@@ -441,7 +493,20 @@
   <!-- VENTANA de movimiento: entrada, ajuste o merma. -->
   @if (tipoMovimiento(); as tipo) {
     <div class="overlay">
-      <div class="panel-formulario">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="
+          tipo === 'entrada'
+            ? 'Registrar entrada'
+            : tipo === 'merma'
+              ? 'Registrar merma'
+              : 'Registrar ajuste'
+        "
+        appFocoDialogo
+        (cerrarConEscape)="cerrarMovimiento()"
+      >
         <h2>
           {{
             tipo === 'entrada'

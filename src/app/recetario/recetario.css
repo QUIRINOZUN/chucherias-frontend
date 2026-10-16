@@ -8,11 +8,13 @@
    de trabajo pendiente, no un error. */
 
 :host {
+  --acento-modulo: var(--mod-recetario);
   display: block;
   min-height: 100vh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
+  animation: aparecer 0.22s ease;
 }
 
 .recetario-container {
@@ -130,6 +132,14 @@
   color: var(--pos-text-secondary);
 }
 
+/* El <input> no tiene borde propio (el borde visible vive en el envoltorio
+   de arriba), así que el foco se marca aquí — si no, el anillo global de
+   :focus-visible recolorearía un borde que no existe y quedaría invisible. */
+.campo-busqueda:focus-within {
+  border-color: var(--acento-foco);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--acento-foco) 30%, transparent);
+}
+
 .campo-busqueda .icono {
   width: 18px;
   height: 18px;
@@ -165,6 +175,7 @@
 
 .tarjeta-producto {
   background: var(--pos-bg-card);
+  border-top: 3px solid var(--acento-modulo);
   border-radius: var(--radio-lg);
   box-shadow: var(--sombra-suave);
   padding: 12px 14px;
@@ -243,8 +254,8 @@
   width: 22px;
   height: 22px;
   border-radius: var(--radio-pastilla);
-  background: color-mix(in srgb, var(--action-primary) 18%, var(--pos-bg-card));
-  color: var(--action-primary);
+  background: color-mix(in srgb, var(--acento-modulo) 20%, var(--pos-bg-card));
+  color: var(--acento-modulo);
 }
 
 .badge-tutorial .icono {
@@ -272,6 +283,7 @@
   max-width: 380px;
   background: var(--pos-bg-card);
   border-radius: var(--radio-lg);
+  border-top: 4px solid var(--acento-modulo);
   box-shadow: var(--sombra-elevada);
   padding: 24px;
   box-sizing: border-box;
@@ -290,6 +302,15 @@
 .subtitulo-formulario {
   margin: 0 0 16px;
   font-size: 0.85rem;
+  color: var(--pos-text-secondary);
+}
+
+/* RNF-02 (2026-10-16): aviso de quién/cuándo editó por última vez (precio
+   de variante o receta). */
+.aviso-auditoria {
+  margin: -8px 0 16px;
+  font-size: 0.75rem;
+  font-style: italic;
   color: var(--pos-text-secondary);
 }
 
@@ -333,7 +354,7 @@
 .linea-receta-insumo:focus,
 .linea-receta-cantidad:focus {
   outline: none;
-  border-color: var(--pos-text-secondary);
+  border-color: var(--acento-modulo);
 }
 
 .linea-receta-unidad {
@@ -381,8 +402,8 @@
 }
 
 .boton-agregar-linea:hover {
-  border-color: var(--action-primary);
-  color: var(--action-primary);
+  border-color: var(--acento-modulo);
+  color: var(--pos-text-primary);
 }
 
 .boton-agregar-linea .icono {
@@ -424,7 +445,7 @@
   height: 28px;
   margin-top: 8px;
   border-radius: var(--radio-pastilla);
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
   font-size: 0.8rem;
   font-weight: 700;
@@ -446,7 +467,7 @@
 
 .paso-tutorial-texto:focus {
   outline: none;
-  border-color: var(--pos-text-secondary);
+  border-color: var(--acento-modulo);
 }
 
 .paso-tutorial-acciones {
@@ -508,7 +529,7 @@
 
 .boton-confirmar {
   border: none;
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
   font-weight: 700;
   box-shadow: var(--sombra-acento);
@@ -556,7 +577,7 @@
 }
 
 .tab-recetario-activa {
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
   box-shadow: var(--sombra-acento);
 }
@@ -564,6 +585,13 @@
 /* ---- Pestaña Menú: encabezados de sub-sección y lista de categorías ---- */
 .seccion-menu {
   display: block;
+  animation: aparecer 0.2s ease;
+}
+
+/* Misma entrada suave para la pestaña "Recetas" (sin un <section> propio
+   que envolver, se anima el primer bloque visible de esa pestaña). */
+.resumen-recetario {
+  animation: aparecer 0.2s ease;
 }
 
 /* Sub-pestañas Categorías/Productos (2026-10-09) — mismo lenguaje visual
@@ -579,7 +607,7 @@
 
 .subtab-horario {
   flex-shrink: 0;
-  min-height: 36px;
+  min-height: 44px;
   padding: 0 14px;
   border: none;
   border-radius: var(--radio-pastilla);
@@ -595,7 +623,7 @@
 }
 
 .subtab-horario-activa {
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
 }
 
@@ -629,13 +657,17 @@
 }
 
 .boton-enlace-chico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   border: none;
   background: none;
   color: var(--acento-texto);
   font-size: 0.74rem;
   font-weight: 700;
   cursor: pointer;
-  padding: 4px 2px;
+  padding: 4px 10px;
 }
 
 .boton-enlace-chico:hover {
@@ -665,6 +697,7 @@
   align-items: center;
   gap: 10px;
   background: var(--pos-bg-card);
+  border-left: 3px solid var(--acento-modulo);
   border-radius: var(--radio-md);
   box-shadow: var(--sombra-suave);
   padding: 8px 12px;
@@ -702,6 +735,7 @@
   align-items: center;
   gap: 10px;
   background: var(--pos-bg-card);
+  border-left: 3px solid var(--acento-modulo);
   border-radius: var(--radio-md);
   box-shadow: var(--sombra-suave);
   padding: 10px 12px;
@@ -799,7 +833,7 @@
 }
 
 .selector-foto-producto:hover {
-  border-color: var(--action-primary);
+  border-color: var(--acento-modulo);
 }
 
 .selector-foto-producto img {
@@ -846,7 +880,7 @@
   padding: 4px;
   box-sizing: border-box;
   border-radius: 50%;
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
   box-shadow: 0 0 0 2px var(--pos-bg-card);
 }
@@ -922,7 +956,7 @@
 }
 
 .boton-editar:hover {
-  border-color: var(--pos-text-secondary);
+  border-color: var(--acento-modulo);
 }
 
 .boton-alternar-desactivar:hover:not(:disabled) {
@@ -936,7 +970,10 @@
 }
 
 .boton-eliminar-chico {
-  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   border: 1px solid var(--peligro-texto);
   background: var(--pos-bg-main);
   color: var(--peligro-texto);
@@ -1010,7 +1047,7 @@
 .campo input:focus,
 .campo select:focus {
   outline: none;
-  border-color: var(--pos-text-secondary);
+  border-color: var(--acento-modulo);
 }
 
 .texto-confirmacion {
@@ -1075,4 +1112,93 @@
   font-weight: 700;
   font-size: 0.9rem;
   margin-bottom: 4px;
+}
+
+/* ===================== Skeletons de carga (2026-10-12) =====================
+   Misma mecánica que ya usan pos.css/caja.css/inventario.css (`.esqueleto`/
+   `.esqueleto-en-tarjeta` son globales, con el brillo en styles.css); aquí
+   solo se definen las formas propias de cada lista de este módulo. */
+
+/* ---- Pestaña "Recetas": categoría → producto → variantes ---- */
+.esqueleto-linea-categoria {
+  height: 13px;
+  width: 140px;
+  margin-bottom: 10px;
+}
+
+.esqueleto-linea-producto {
+  height: 15px;
+  width: 55%;
+  margin-bottom: 10px;
+}
+
+.item-variante-esqueleto {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 4px;
+}
+
+.item-variante-esqueleto .esqueleto-linea-variante {
+  height: 14px;
+  width: 50%;
+}
+
+.item-variante-esqueleto .esqueleto-linea-badge {
+  height: 20px;
+  width: 64px;
+  border-radius: var(--radio-pastilla);
+}
+
+/* ---- Menú → Categorías ---- */
+.item-categoria-menu-esqueleto {
+  display: flex;
+  align-items: center;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-md);
+  box-shadow: var(--sombra-suave);
+  padding: 8px 12px;
+}
+
+.esqueleto-linea-categoria-menu {
+  height: 15px;
+  width: 50%;
+}
+
+/* ---- Menú → Productos ---- */
+.item-producto-menu-esqueleto {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-md);
+  box-shadow: var(--sombra-suave);
+  padding: 10px 12px;
+}
+
+.esqueleto-linea-producto-menu {
+  height: 15px;
+  width: 55%;
+}
+
+/* ---- Editor de receta: líneas de insumo ---- */
+.linea-receta-esqueleto {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.esqueleto-linea-insumo {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+}
+
+.esqueleto-linea-cantidad {
+  width: 72px;
+  flex-shrink: 0;
+  height: 44px;
 }

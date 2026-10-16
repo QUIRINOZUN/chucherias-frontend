@@ -12,6 +12,9 @@
       <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
       Volver
     </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-cocinar" /></svg>
+    </span>
     <h1>Recetario</h1>
     <button
       type="button"
@@ -72,6 +75,7 @@
         <input
           type="text"
           placeholder="Buscar producto o variante..."
+          aria-label="Buscar producto o variante"
           [value]="busqueda()"
           (input)="busqueda.set($any($event.target).value)"
         />
@@ -82,7 +86,26 @@
       }
 
       @if (cargando()) {
-        <p class="mensaje-estado">Cargando recetario...</p>
+        <!-- Skeleton (2026-10-12): misma forma de categoría → producto →
+             variantes que el contenido real, en vez de solo texto. -->
+        <div aria-hidden="true">
+          @for (i of [1, 2]; track i) {
+            <section class="grupo-categoria">
+              <div class="esqueleto esqueleto-linea-categoria"></div>
+              <div class="tarjeta-producto">
+                <div class="esqueleto esqueleto-linea-producto"></div>
+                <ul class="lista-variantes">
+                  @for (j of [1, 2]; track j) {
+                    <li class="item-variante-esqueleto">
+                      <div class="esqueleto esqueleto-en-tarjeta esqueleto-linea-variante"></div>
+                      <div class="esqueleto esqueleto-en-tarjeta esqueleto-linea-badge"></div>
+                    </li>
+                  }
+                </ul>
+              </div>
+            </section>
+          }
+        </div>
       } @else if (grupos().length === 0) {
         <p class="mensaje-estado">No hay productos que coincidan con la búsqueda.</p>
       } @else {
@@ -104,7 +127,14 @@
                 } @else {
                   <ul class="lista-variantes">
                     @for (variante of producto.variantes; track variante.variante_id) {
-                      <li class="item-variante" (click)="abrirEditor(variante)">
+                      <li
+                        class="item-variante"
+                        role="button"
+                        tabindex="0"
+                        (click)="abrirEditor(variante)"
+                        (keydown.enter)="abrirEditor(variante)"
+                        (keydown.space)="$event.preventDefault(); abrirEditor(variante)"
+                      >
                         <div class="variante-info">
                           <span class="variante-nombre">{{ variante.variante_nombre }}</span>
                           <span class="variante-precio">{{
@@ -125,6 +155,11 @@
                         @if (variante.tiene_tutorial) {
                           <span class="badge-tutorial" title="Ya tiene tutorial de elaboración">
                             <svg class="icono" aria-hidden="true"><use href="#ic-cocinar" /></svg>
+                          </span>
+                        }
+                        @if (variante.tiene_imagen_referencia) {
+                          <span class="badge-tutorial" title="Ya tiene foto de referencia">
+                            <svg class="icono" aria-hidden="true"><use href="#ic-camara" /></svg>
                           </span>
                         }
                       </li>
@@ -174,7 +209,15 @@
             </button>
           </div>
 
-          @if (categorias().length === 0) {
+          @if (cargandoMenu()) {
+            <ul class="lista-categorias-menu" aria-hidden="true">
+              @for (i of [1, 2, 3, 4]; track i) {
+                <li class="item-categoria-menu-esqueleto">
+                  <div class="esqueleto esqueleto-en-tarjeta esqueleto-linea-categoria-menu"></div>
+                </li>
+              }
+            </ul>
+          } @else if (categorias().length === 0) {
             <p class="mensaje-estado">Todavía no hay categorías.</p>
           } @else {
             <ul class="lista-categorias-menu">
@@ -216,6 +259,7 @@
             <input
               type="text"
               placeholder="Buscar producto..."
+              aria-label="Buscar producto"
               [value]="busquedaMenu()"
               (input)="busquedaMenu.set($any($event.target).value)"
             />
@@ -226,7 +270,14 @@
           }
 
           @if (cargandoMenu()) {
-            <p class="mensaje-estado">Cargando menú...</p>
+            <ul class="lista-productos-menu" aria-hidden="true">
+              @for (i of [1, 2, 3, 4, 5]; track i) {
+                <li class="item-producto-menu-esqueleto">
+                  <div class="esqueleto esqueleto-en-tarjeta esqueleto-linea-producto-menu"></div>
+                  <div class="esqueleto esqueleto-en-tarjeta esqueleto-linea-badge"></div>
+                </li>
+              }
+            </ul>
           } @else if (gruposMenu().length === 0) {
             <p class="mensaje-estado">
               {{
@@ -250,7 +301,14 @@
                 </div>
                 <ul class="lista-productos-menu">
                   @for (producto of grupo.productos; track producto.id) {
-                    <li class="item-producto-menu" (click)="abrirDetalleProducto(producto)">
+                    <li
+                      class="item-producto-menu"
+                      role="button"
+                      tabindex="0"
+                      (click)="abrirDetalleProducto(producto)"
+                      (keydown.enter)="abrirDetalleProducto(producto)"
+                      (keydown.space)="$event.preventDefault(); abrirDetalleProducto(producto)"
+                    >
                       @if (producto.imagen_url) {
                         <img
                           class="producto-menu-miniatura"
@@ -284,12 +342,35 @@
   <!-- VENTANA EMERGENTE: editor de receta de una variante. -->
   @if (varianteEditando(); as variante) {
     <div class="overlay">
-      <div class="panel-formulario panel-formulario-ancho">
+      <div
+        class="panel-formulario panel-formulario-ancho"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="
+          'Receta de ' + variante.producto_nombre + ' — ' + variante.variante_nombre
+        "
+        appFocoDialogo
+        (cerrarConEscape)="cerrarEditor()"
+      >
         <h2>{{ variante.producto_nombre }}</h2>
         <p class="subtitulo-formulario">{{ variante.variante_nombre }}</p>
+        @if (variante.editado_por_nombre) {
+          <!-- RNF-02: quién modificó esta receta por última vez. -->
+          <p class="aviso-auditoria">
+            Editada por {{ variante.editado_por_nombre }} el
+            {{ variante.fecha_edicion | date: 'dd/MM/yyyy HH:mm' }}
+          </p>
+        }
 
         @if (cargandoReceta()) {
-          <p class="mensaje-estado">Cargando receta...</p>
+          <ul class="lista-lineas-receta" aria-hidden="true">
+            @for (i of [1, 2, 3]; track i) {
+              <li class="linea-receta-esqueleto">
+                <div class="esqueleto esqueleto-linea-insumo"></div>
+                <div class="esqueleto esqueleto-linea-cantidad"></div>
+              </li>
+            }
+          </ul>
         } @else {
           @if (lineasForm().length === 0) {
             <p class="mensaje-estado">
@@ -302,6 +383,7 @@
               <li class="linea-receta">
                 <select
                   class="linea-receta-insumo"
+                  [attr.aria-label]="'Insumo de la línea ' + ($index + 1)"
                   [value]="linea.insumo_id ?? ''"
                   (change)="
                     actualizarInsumoLinea(
@@ -321,6 +403,7 @@
                   min="0"
                   step="0.01"
                   placeholder="Cantidad"
+                  [attr.aria-label]="'Cantidad del insumo de la línea ' + ($index + 1)"
                   [value]="linea.cantidad ?? ''"
                   (input)="actualizarCantidadLinea($index, $any($event.target).value)"
                 />
@@ -401,6 +484,64 @@
             <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
             Agregar paso
           </button>
+
+          <!-- FOTO DE REFERENCIA (2026-10-12): "así debe quedar" el
+               platillo, para que el auxiliar de cocina pueda comparar su
+               resultado — se muestra junto al tutorial en Comandas. Mismo
+               patrón del ícono de cámara que ya usa la foto de producto;
+               aquí siempre se sube de inmediato porque la variante ya
+               existe (no hay un "crear" pendiente como con un producto
+               nuevo). -->
+          <div class="campo">
+            <span class="campo-etiqueta-foto"
+              >Foto de referencia — "así debe quedar" (opcional)</span
+            >
+            <div class="selector-foto-producto-fila">
+              <label
+                class="selector-foto-producto"
+                [class.selector-foto-producto-con-imagen]="!!previsualizacionImagenRecetaForm()"
+              >
+                @if (previsualizacionImagenRecetaForm(); as previsualizacion) {
+                  <img [src]="previsualizacion" alt="Vista previa de la foto de referencia" />
+                }
+                <span class="selector-foto-producto-icono">
+                  <svg class="icono" aria-hidden="true"><use href="#ic-camara" /></svg>
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  class="selector-foto-producto-input"
+                  (change)="seleccionarArchivoImagenReceta($event)"
+                />
+              </label>
+              <div class="selector-foto-producto-texto">
+                <p class="campo-ayuda">
+                  @if (subiendoImagenReceta()) {
+                    Subiendo...
+                  } @else if (previsualizacionImagenRecetaForm()) {
+                    Toca el ícono para cambiarla. Se guarda de inmediato, sin esperar a "Guardar
+                    receta".
+                  } @else {
+                    Toca el ícono para subir una. Se guarda de inmediato, sin esperar a "Guardar
+                    receta".
+                  }
+                </p>
+                @if (previsualizacionImagenRecetaForm()) {
+                  <button
+                    type="button"
+                    class="boton-enlace-chico boton-enlace-peligro"
+                    [disabled]="subiendoImagenReceta()"
+                    (click)="quitarImagenReceta()"
+                  >
+                    Quitar foto
+                  </button>
+                }
+              </div>
+            </div>
+            @if (errorImagenReceta()) {
+              <p class="mensaje-error">{{ errorImagenReceta() }}</p>
+            }
+          </div>
         }
 
         @if (errorForm()) {
@@ -432,7 +573,14 @@
   <!-- VENTANA EMERGENTE: crear/editar categoría. -->
   @if (modoFormularioCategoria(); as modoCategoria) {
     <div class="overlay">
-      <div class="panel-formulario">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="modoCategoria === 'crear' ? 'Nueva categoría' : 'Editar categoría'"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarFormularioCategoria()"
+      >
         <h2>{{ modoCategoria === 'crear' ? 'Nueva categoría' : 'Editar categoría' }}</h2>
 
         <div class="campo">
@@ -480,7 +628,14 @@
   <!-- VENTANA EMERGENTE: confirmar eliminar categoría. -->
   @if (categoriaAEliminar(); as categoria) {
     <div class="overlay">
-      <div class="panel-formulario">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Eliminar categoría"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarConfirmarEliminarCategoria()"
+      >
         <h2>Eliminar categoría</h2>
         <p class="texto-confirmacion">
           ¿Eliminar la categoría <strong>{{ categoria.nombre }}</strong
@@ -520,7 +675,14 @@
        muestra datos frescos y se cierra sola si el producto se elimina. -->
   @if (productoDetalle(); as producto) {
     <div class="overlay">
-      <div class="panel-formulario panel-formulario-ancho">
+      <div
+        class="panel-formulario panel-formulario-ancho"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="'Detalle de ' + producto.nombre"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarDetalleProducto()"
+      >
         <div class="detalle-producto-encabezado">
           @if (producto.imagen_url) {
             <img
@@ -644,7 +806,14 @@
        se puede vender (ver nota 2026-10-09 en recetario.ts). -->
   @if (modoFormularioProducto(); as modoProducto) {
     <div class="overlay">
-      <div class="panel-formulario">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="modoProducto === 'crear' ? 'Nuevo producto' : 'Editar producto'"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarFormularioProducto()"
+      >
         <h2>{{ modoProducto === 'crear' ? 'Nuevo producto' : 'Editar producto' }}</h2>
         <p class="campo-ayuda campo-ayuda-requisitos">
           Los campos con <span class="marca-requerido">*</span> son obligatorios.
@@ -820,7 +989,14 @@
   <!-- VENTANA EMERGENTE: confirmar eliminar producto. -->
   @if (productoAEliminar(); as producto) {
     <div class="overlay">
-      <div class="panel-formulario">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Eliminar producto"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarConfirmarEliminarProducto()"
+      >
         <h2>Eliminar producto</h2>
         <p class="texto-confirmacion">
           ¿Eliminar <strong>{{ producto.nombre }}</strong
@@ -856,10 +1032,24 @@
   <!-- VENTANA EMERGENTE: crear/editar variante. -->
   @if (modoFormularioVariante(); as modoVariante) {
     <div class="overlay">
-      <div class="panel-formulario">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="modoVariante === 'crear' ? 'Nueva variante' : 'Editar variante'"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarFormularioVariante()"
+      >
         <h2>{{ modoVariante === 'crear' ? 'Nueva variante' : 'Editar variante' }}</h2>
         @if (productoDeVarianteForm(); as productoVariante) {
           <p class="subtitulo-formulario">{{ productoVariante.nombre }}</p>
+        }
+        @if (varianteEditandoAuditoria()?.editado_por_nombre; as editadoPor) {
+          <!-- RNF-02: quién cambió el precio/nombre por última vez. -->
+          <p class="aviso-auditoria">
+            Editada por {{ editadoPor }} el
+            {{ varianteEditandoAuditoria()?.fecha_edicion | date: 'dd/MM/yyyy HH:mm' }}
+          </p>
         }
 
         <div class="campo">
@@ -924,7 +1114,14 @@
   <!-- VENTANA EMERGENTE: confirmar eliminar variante. -->
   @if (varianteAEliminar(); as varianteEliminar) {
     <div class="overlay">
-      <div class="panel-formulario">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Eliminar variante"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarConfirmarEliminarVariante()"
+      >
         <h2>Eliminar variante</h2>
         <p class="texto-confirmacion">
           ¿Eliminar <strong>{{ varianteEliminar.nombre }}</strong

@@ -35,10 +35,11 @@
 //      historial; eliminar es la excepción, para algo que nunca se vendió.
 // =============================================================================
 import { Component, OnInit, computed, signal } from '@angular/core';
-import { CurrencyPipe } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { ThemeService } from '../core/theme';
+import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { LineaRecetaForm, RecetasService, VarianteConReceta } from '../core/recetas';
 import { Insumo, InsumosService } from '../core/insumos';
 import { CatalogoService, Categoria, Producto, Variante } from '../core/catalogo';
@@ -78,7 +79,7 @@ type ModoFormularioVariante = 'crear' | 'editar' | null;
 @Component({
   selector: 'app-recetario',
   standalone: true,
-  imports: [CurrencyPipe],
+  imports: [CurrencyPipe, DatePipe, FocoDialogoDirective],
   templateUrl: './recetario.html',
   styleUrl: './recetario.css',
 })
@@ -106,7 +107,15 @@ export class RecetarioComponent implements OnInit {
   private recetaInfoPorVariante = computed(() => {
     const mapa = new Map<
       number,
-      { tiene_receta: boolean; total_insumos: number; tiene_tutorial: boolean; total_pasos: number }
+      {
+        tiene_receta: boolean;
+        total_insumos: number;
+        tiene_tutorial: boolean;
+        total_pasos: number;
+        tiene_imagen_referencia: boolean;
+        editado_por_nombre: string | null;
+        fecha_edicion: string | null;
+      }
     >();
     for (const v of this.variantes()) {
       mapa.set(v.variante_id, {
@@ -114,6 +123,9 @@ export class RecetarioComponent implements OnInit {
         total_insumos: v.total_insumos,
         tiene_tutorial: v.tiene_tutorial,
         total_pasos: v.total_pasos,
+        tiene_imagen_referencia: v.tiene_imagen_referencia,
+        editado_por_nombre: v.editado_por_nombre,
+        fecha_edicion: v.fecha_edicion,
       });
     }
     return mapa;
@@ -157,6 +169,9 @@ export class RecetarioComponent implements OnInit {
             total_insumos: recetaInfo.get(v.id)?.total_insumos ?? 0,
             tiene_tutorial: recetaInfo.get(v.id)?.tiene_tutorial ?? false,
             total_pasos: recetaInfo.get(v.id)?.total_pasos ?? 0,
+            tiene_imagen_referencia: recetaInfo.get(v.id)?.tiene_imagen_referencia ?? false,
+            editado_por_nombre: recetaInfo.get(v.id)?.editado_por_nombre ?? null,
+            fecha_edicion: recetaInfo.get(v.id)?.fecha_edicion ?? null,
           }));
 
         // Con búsqueda activa, un producto sin ninguna coincidencia (ni su
@@ -195,6 +210,16 @@ export class RecetarioComponent implements OnInit {
   // preparación, editados en el mismo formulario que los insumos de la
   // receta — se guardan los dos con el mismo botón "Guardar receta".
   pasosTutorialForm = signal<string[]>([]);
+
+  // Foto de referencia "así debe quedar" (2026-10-12, Cloudinary): a
+  // diferencia de la foto del producto, aquí la variante YA existe siempre
+  // (el editor solo abre sobre una variante real) — así que elegir un
+  // archivo sube de inmediato, sin el paso intermedio de "crear primero"
+  // que sí hace falta en el formulario de producto nuevo.
+  archivoImagenRecetaForm = signal<File | null>(null);
+  previsualizacionImagenRecetaForm = signal<string | null>(null);
+  subiendoImagenReceta = signal(false);
+  errorImagenReceta = signal('');
 
   constructor(
     private recetasService: RecetasService,
@@ -242,6 +267,9 @@ export class RecetarioComponent implements OnInit {
     this.cargandoReceta.set(true);
     this.lineasForm.set([]);
     this.pasosTutorialForm.set([]);
+    this.archivoImagenRecetaForm.set(null);
+    this.previsualizacionImagenRecetaForm.set(null);
+    this.errorImagenReceta.set('');
 
     this.recetasService.obtenerReceta(variante.variante_id).subscribe({
       next: (lineas) => {
@@ -267,10 +295,66 @@ export class RecetarioComponent implements OnInit {
         // editor (insumos se cargan en una petición aparte, arriba).
       },
     });
+
+    this.recetasService.obtenerImagenReferencia(variante.variante_id).subscribe({
+      next: (resp) => this.previsualizacionImagenRecetaForm.set(resp.imagen_url),
+      error: () => {
+        // La vista previa simplemente queda vacía; no bloquea el editor.
+      },
+    });
   }
 
   cerrarEditor(): void {
     this.varianteEditando.set(null);
+  }
+
+  // ---- Foto de referencia "así debe quedar" ----
+
+  seleccionarArchivoImagenReceta(event: Event): void {
+    const archivo = (event.target as HTMLInputElement).files?.[0] ?? null;
+    const variante = this.varianteEditando();
+    this.archivoImagenRecetaForm.set(archivo);
+    this.errorImagenReceta.set('');
+    if (!archivo || !variante) {
+      return;
+    }
+    const lector = new FileReader();
+    lector.onload = () => this.previsualizacionImagenRecetaForm.set(lector.result as string);
+    lector.readAsDataURL(archivo);
+
+    this.subiendoImagenReceta.set(true);
+    this.recetasService.subirImagenReferencia(variante.variante_id, archivo).subscribe({
+      next: (resp) => {
+        this.subiendoImagenReceta.set(false);
+        this.previsualizacionImagenRecetaForm.set(resp.imagen_url);
+        this.cargarVariantes();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.subiendoImagenReceta.set(false);
+        this.errorImagenReceta.set(error.error?.error || 'No se pudo subir la imagen.');
+      },
+    });
+  }
+
+  quitarImagenReceta(): void {
+    const variante = this.varianteEditando();
+    if (!variante || this.subiendoImagenReceta()) {
+      return;
+    }
+    this.subiendoImagenReceta.set(true);
+    this.errorImagenReceta.set('');
+    this.recetasService.eliminarImagenReferencia(variante.variante_id).subscribe({
+      next: () => {
+        this.subiendoImagenReceta.set(false);
+        this.archivoImagenRecetaForm.set(null);
+        this.previsualizacionImagenRecetaForm.set(null);
+        this.cargarVariantes();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.subiendoImagenReceta.set(false);
+        this.errorImagenReceta.set(error.error?.error || 'No se pudo quitar la imagen.');
+      },
+    });
   }
 
   agregarLinea(): void {
@@ -908,6 +992,12 @@ export class RecetarioComponent implements OnInit {
   precioVarianteForm = signal<number | null>(null);
   procesandoVariante = signal(false);
   errorFormularioVariante = signal('');
+  // RNF-02: quién cambió esta variante por última vez — foto tomada al
+  // abrir el formulario, no reactiva (la ventana se cierra al guardar).
+  varianteEditandoAuditoria = signal<{
+    editado_por_nombre: string | null;
+    fecha_edicion: string | null;
+  } | null>(null);
 
   abrirCreacionVariante(producto: Producto): void {
     this.modoFormularioVariante.set('crear');
@@ -916,6 +1006,7 @@ export class RecetarioComponent implements OnInit {
     this.nombreVarianteForm.set('');
     this.precioVarianteForm.set(null);
     this.errorFormularioVariante.set('');
+    this.varianteEditandoAuditoria.set(null);
   }
 
   abrirEdicionVariante(producto: Producto, variante: Variante): void {
@@ -925,6 +1016,10 @@ export class RecetarioComponent implements OnInit {
     this.nombreVarianteForm.set(variante.nombre);
     this.precioVarianteForm.set(variante.precio);
     this.errorFormularioVariante.set('');
+    this.varianteEditandoAuditoria.set({
+      editado_por_nombre: variante.editado_por_nombre,
+      fecha_edicion: variante.fecha_edicion,
+    });
   }
 
   cerrarFormularioVariante(): void {

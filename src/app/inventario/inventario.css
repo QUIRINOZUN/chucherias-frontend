@@ -6,11 +6,13 @@
    siendo la única acción principal; el rojo solo marca alerta de mínimo. */
 
 :host {
+  --acento-modulo: var(--mod-inventario);
   display: block;
   min-height: 100vh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
+  animation: aparecer 0.22s ease;
 }
 
 .inventario-container {
@@ -107,13 +109,20 @@
   font-weight: 600;
 }
 
+/* Botón principal de Inventario, en el azul cielo del módulo en vez del
+   naranja de marca genérico (2026-10-13, tercera ronda): el usuario pidió
+   explícitamente que los botones y controles de cada pantalla, no solo
+   los bordes decorativos, tomen el color propio del módulo. El naranja
+   sigue siendo la acción principal SOLO en el POS (--mod-pos ya es el
+   naranja de marca); en el resto de módulos de gestión, su propio botón
+   "principal" usa --acento-modulo. */
 .boton-nuevo-insumo {
   min-height: 56px;
   width: 100%;
   margin-bottom: 12px;
   border: none;
   border-radius: var(--radio-md);
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
   font-weight: 700;
   font-size: 1rem;
@@ -125,7 +134,7 @@
 }
 
 .boton-nuevo-insumo:hover {
-  background: var(--action-primary-hover);
+  background: color-mix(in srgb, var(--acento-modulo) 85%, black);
 }
 
 .boton-nuevo-insumo:active {
@@ -177,6 +186,30 @@
 }
 
 /* Chips de categoría: fila desplazable horizontalmente, "Todas" primero. */
+/* Envoltorio + degradado: con 3 filas de chips (categoría, nivel, proveedor)
+   que se desplazan horizontalmente en pantallas angostas, la última de cada
+   una quedaba cortada sin ninguna pista salvo una barra de scroll delgada.
+   Mismo arreglo ya usado en asistencias.css para el mismo problema: el
+   degradado se desvanece hacia el fondo de la tarjeta, así que es invisible
+   por sí solo cuando los chips ya caben sin desplazarse (de 860px en
+   adelante, donde .fila-chips pasa a flex-wrap) — no hace falta ninguna
+   media query para ocultarlo. */
+.fila-chips-envoltorio {
+  position: relative;
+}
+
+.fila-chips-desvanecido {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 4px;
+  width: 28px;
+  /* --pos-bg-main (no --pos-bg-card): aquí los chips viven directo sobre el
+     fondo de la página, no dentro de una tarjeta. */
+  background: linear-gradient(to right, transparent, var(--pos-bg-main));
+  pointer-events: none;
+}
+
 .fila-chips {
   display: flex;
   gap: 8px;
@@ -208,8 +241,8 @@
 }
 
 .chip-categoria.chip-activa {
-  border-color: var(--action-primary);
-  background: var(--action-primary);
+  border-color: var(--acento-modulo);
+  background: var(--acento-modulo);
   color: #fff;
 }
 
@@ -299,10 +332,41 @@
   gap: 10px;
 }
 
-.tarjeta-insumo {
+.lista-insumos-esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tarjeta-insumo-esqueleto {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   background: var(--pos-bg-card);
   border: 1px solid var(--pos-border);
   border-radius: var(--radio-lg);
+  padding: 20px 16px;
+}
+
+.tarjeta-insumo-esqueleto .esqueleto-linea-nombre {
+  height: 14px;
+  width: 45%;
+}
+
+.tarjeta-insumo-esqueleto .esqueleto-linea-dato {
+  height: 20px;
+  width: 15%;
+}
+
+/* Borde izquierdo en el azul cielo de Inventario, SIEMPRE visible (ver
+   nota 2026-10-13 abajo) — el punto de color de nivel de stock
+   (.indicador-nivel) sigue siendo el único lenguaje funcional de
+   existencia, esto es puramente de identidad del módulo. */
+.tarjeta-insumo {
+  background: var(--pos-bg-card);
+  border: 1px solid var(--pos-border);
+  border-left: 4px solid var(--acento-modulo);
+  border-radius: var(--radio-lg) var(--radio-lg) var(--radio-lg) 4px;
   box-shadow: var(--sombra-suave);
   padding: 14px 16px;
   transition:
@@ -310,8 +374,16 @@
     transform 0.15s ease;
 }
 
+/* 2026-10-13: antes esta regla usaba el atajo `border-color` (pisa los 4
+   lados), así que con el catálogo real casi completo bajo mínimo el azul
+   de identidad de arriba nunca llegaba a verse — cualquier tarjeta en
+   alerta tapaba el azul con rojo en los 4 bordes. Ahora solo tiñe de rojo
+   los 3 lados que no cargan la identidad del módulo; el izquierdo se
+   queda azul siempre. */
 .tarjeta-insumo.tarjeta-alerta {
-  border-color: var(--action-danger);
+  border-top-color: var(--action-danger);
+  border-right-color: var(--action-danger);
+  border-bottom-color: var(--action-danger);
 }
 
 .tarjeta-insumo:hover {
@@ -442,7 +514,7 @@
   justify-content: center;
   border: none;
   border-radius: 50%;
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
   cursor: pointer;
   box-shadow: var(--sombra-acento);
@@ -457,7 +529,7 @@
 }
 
 .boton-surtir:hover {
-  background: var(--action-primary-hover);
+  background: color-mix(in srgb, var(--acento-modulo) 85%, black);
 }
 
 .boton-surtir:active {
@@ -477,7 +549,7 @@
 }
 
 .boton-accion:hover {
-  border-color: var(--pos-text-secondary);
+  border-color: var(--acento-modulo);
 }
 
 .boton-accion:disabled {
@@ -563,6 +635,7 @@
   overflow-y: auto;
   background: var(--pos-bg-card);
   border-radius: var(--radio-lg);
+  border-top: 4px solid var(--acento-modulo);
   box-shadow: var(--sombra-elevada);
   padding: 24px;
   box-sizing: border-box;
@@ -608,7 +681,7 @@
 .campo input:focus,
 .campo select:focus {
   outline: none;
-  border-color: var(--pos-text-secondary);
+  border-color: var(--acento-modulo);
 }
 
 /* Cantidad + selector de unidad de captura (kg/L junto a g/ml), en la
@@ -648,8 +721,8 @@
 }
 
 .pastilla-unidad.pastilla-activa {
-  border-color: var(--action-primary);
-  background: var(--action-primary);
+  border-color: var(--acento-modulo);
+  background: var(--acento-modulo);
   color: #fff;
 }
 
@@ -726,7 +799,7 @@
   flex: 1;
   min-height: 52px;
   border: none;
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
   border-radius: var(--radio-md);
   cursor: pointer;

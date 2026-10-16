@@ -34,6 +34,10 @@ export interface Insumo {
   existencia: number;
   // true si existencia <= cantidad_minima: necesita reabastecerse.
   alerta: boolean;
+  // RF-16 (2026-10-13): cargo fijo cuando este insumo se elige como una
+  // opción con costo en el POS (ej. "cacahuate diferente" +$5). null = sin
+  // cargo (la gran mayoría de los insumos).
+  costo_extra: number | null;
 }
 
 // Datos para crear/editar un insumo.
@@ -43,6 +47,14 @@ export interface DatosInsumo {
   cantidad_minima: number;
   proveedor_id: number | null;
   categoria_id: number | null;
+  costo_extra: number | null;
+}
+
+// Un insumo con cargo extra activo — lo que consulta el POS (ver
+// GET /api/insumos/costos-extra, abierto a cualquier rol con sesión).
+export interface CostoExtraInsumo {
+  nombre: string;
+  costo_extra: string; // NUMERIC llega como texto
 }
 
 // Un renglón del historial de movimientos de un insumo.
@@ -69,6 +81,11 @@ export class InsumosService {
   // GET /api/insumos/categorias — para agrupar la lista y el selector del formulario.
   listarCategorias(): Observable<CategoriaInsumo[]> {
     return this.http.get<CategoriaInsumo[]>(`${this.apiUrl}/insumos/categorias`);
+  }
+
+  // GET /api/insumos/costos-extra — RF-16, lo usa el POS (cualquier rol).
+  obtenerCostosExtra(): Observable<CostoExtraInsumo[]> {
+    return this.http.get<CostoExtraInsumo[]>(`${this.apiUrl}/insumos/costos-extra`);
   }
 
   // POST /api/insumos/categorias — da de alta una categoría nueva.

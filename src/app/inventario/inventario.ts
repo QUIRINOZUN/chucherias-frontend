@@ -40,7 +40,8 @@
 //     servidor (ver opcionesSurtido) — la unidad de consumo NUNCA cambia.
 // =============================================================================
 import { Component, OnInit, computed, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
+import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { ThemeService } from '../core/theme';
@@ -123,7 +124,7 @@ function opcionesSurtido(unidadBase: string): OpcionUnidadSurtido[] {
 @Component({
   selector: 'app-inventario',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, CurrencyPipe, FocoDialogoDirective],
   templateUrl: './inventario.html',
   styleUrl: './inventario.css',
 })
@@ -306,6 +307,9 @@ export class InventarioComponent implements OnInit {
   minimoForm = signal(0);
   proveedorIdForm = signal<number | null>(null);
   categoriaIdForm = signal<number | null>(null);
+  // RF-16 (2026-10-13): cargo extra cuando este insumo se elige como opción
+  // con costo en el POS (ej. "cacahuate diferente" +$5) — null = sin cargo.
+  costoExtraForm = signal<number | null>(null);
   procesandoForm = signal(false);
   errorFormulario = signal('');
 
@@ -423,6 +427,7 @@ export class InventarioComponent implements OnInit {
     // Si se estaba viendo una categoría filtrada, se preselecciona: lo más
     // común es dar de alta un insumo mientras se navega esa misma sección.
     this.categoriaIdForm.set(this.categoriaFiltroId());
+    this.costoExtraForm.set(null);
     this.mostrarNuevoProveedor.set(false);
     this.nombreProveedorForm.set('');
     this.mostrarNuevaCategoria.set(false);
@@ -438,6 +443,7 @@ export class InventarioComponent implements OnInit {
     this.minimoForm.set(insumo.cantidad_minima);
     this.proveedorIdForm.set(insumo.proveedor_id);
     this.categoriaIdForm.set(insumo.categoria_id);
+    this.costoExtraForm.set(insumo.costo_extra != null ? Number(insumo.costo_extra) : null);
     this.mostrarNuevoProveedor.set(false);
     this.nombreProveedorForm.set('');
     this.mostrarNuevaCategoria.set(false);
@@ -473,6 +479,7 @@ export class InventarioComponent implements OnInit {
       cantidad_minima: this.minimoForm(),
       proveedor_id: this.proveedorIdForm(),
       categoria_id: this.categoriaIdForm(),
+      costo_extra: this.costoExtraForm(),
     };
 
     const peticion =

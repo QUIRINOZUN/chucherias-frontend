@@ -25,6 +25,12 @@ export interface VarianteConReceta {
   total_insumos: number;
   tiene_tutorial: boolean;
   total_pasos: number;
+  tiene_imagen_referencia: boolean;
+  // RNF-02 (2026-10-16): quién modificó esta receta por última vez, y
+  // cuándo — null si nunca se ha editado desde que esto se agregó, o si
+  // la variante todavía no tiene receta capturada.
+  editado_por_nombre: string | null;
+  fecha_edicion: string | null;
 }
 
 // Un paso del tutorial de elaboración (GET/PUT .../tutorial).
@@ -89,5 +95,34 @@ export class RecetasService {
     return this.http.put<PasoTutorial[]>(`${this.apiUrl}/recetas/variante/${varianteId}/tutorial`, {
       pasos,
     });
+  }
+
+  // GET /api/recetas/variante/:id/imagen — foto de referencia "así debe
+  // quedar" (null si no tiene). Abierta a cualquier rol autenticado, igual
+  // que el tutorial (la consume también Comandas).
+  obtenerImagenReferencia(varianteId: number): Observable<{ imagen_url: string | null }> {
+    return this.http.get<{ imagen_url: string | null }>(
+      `${this.apiUrl}/recetas/variante/${varianteId}/imagen`,
+    );
+  }
+
+  // POST /api/recetas/variante/:id/imagen — sube o reemplaza la foto.
+  subirImagenReferencia(
+    varianteId: number,
+    archivo: File,
+  ): Observable<{ imagen_url: string | null }> {
+    const formData = new FormData();
+    formData.append('imagen', archivo);
+    return this.http.post<{ imagen_url: string | null }>(
+      `${this.apiUrl}/recetas/variante/${varianteId}/imagen`,
+      formData,
+    );
+  }
+
+  // DELETE /api/recetas/variante/:id/imagen — quita la foto de referencia.
+  eliminarImagenReferencia(varianteId: number): Observable<{ imagen_url: string | null }> {
+    return this.http.delete<{ imagen_url: string | null }>(
+      `${this.apiUrl}/recetas/variante/${varianteId}/imagen`,
+    );
   }
 }
