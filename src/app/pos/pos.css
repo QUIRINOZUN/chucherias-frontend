@@ -11,11 +11,13 @@
    hardcodeados aquí. */
 
 :host {
+  --acento-modulo: var(--mod-pos);
   display: block;
   min-height: 100vh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
+  animation: aparecer 0.22s ease;
 }
 
 .pos-container {
@@ -26,6 +28,7 @@
 
 .pos-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
@@ -35,10 +38,27 @@
   z-index: 15;
 }
 
+/* Con el logo de por medio (a diferencia de otras pantallas, que solo
+   llevan Volver + título + tema), en un teléfono angosto no cabe todo en
+   un renglón sin que el título se parta en 3 líneas verticales. Mismo
+   criterio ya usado en dashboard.css para el mismo problema: bajo 480px
+   el título se manda a su propio renglón completo (order 4, flex-basis
+   100%); de 480px en adelante vuelve al orden natural en una sola fila. */
 .pos-header h1 {
-  flex: 1;
+  order: 4;
+  flex: 1 1 100%;
+  min-width: 0;
   margin: 0;
   font-size: 1.25rem;
+}
+
+.pos-header .boton-volver {
+  order: 1;
+}
+
+.pos-header .boton-tema {
+  order: 3;
+  margin-left: auto;
 }
 
 /* Logotipo junto al título del encabezado: grande y llamativo a propósito.
@@ -48,10 +68,30 @@
    rectángulo detrás del logo). */
 .pos-logo {
   display: block;
+  order: 2;
   width: clamp(110px, 24vw, 170px);
   height: auto;
   flex-shrink: 0;
   filter: drop-shadow(0 4px 12px rgba(194, 65, 12, 0.35));
+}
+
+@media (min-width: 480px) {
+  .pos-header {
+    flex-wrap: nowrap;
+  }
+
+  .pos-header h1 {
+    order: initial;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pos-header .boton-volver,
+  .pos-header .boton-tema,
+  .pos-logo {
+    order: initial;
+    margin-left: 0;
+  }
 }
 
 .boton-volver,
@@ -143,6 +183,14 @@
 .accion-caja-icono-exito {
   background: color-mix(in srgb, var(--action-success) 20%, var(--pos-bg-card));
   color: var(--exito-texto);
+}
+
+/* "Registrar cliente" (2026-10-16): color de identidad del módulo
+   Clientes (--mod-clientes), no de acción/éxito — es un alta, no un
+   movimiento de dinero. */
+.accion-caja-icono-cliente {
+  background: color-mix(in srgb, var(--mod-clientes) 20%, var(--pos-bg-card));
+  color: var(--mod-clientes);
 }
 
 .accion-caja-texto {
@@ -293,7 +341,47 @@
   gap: 20px;
 }
 
+/* Tarjeta fantasma del estado de carga (2026-10-11): mismas proporciones
+   que .tarjeta-producto/.imagen-producto/.info-producto para que el cambio
+   a las tarjetas reales, cuando termine de cargar, no salte de tamaño. */
+.tarjeta-producto-esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 4px;
+  /* Sin fondo propio a propósito: cada bloque .esqueleto (con su propio
+     fondo var(--pos-bg-card)) es quien se distingue del fondo de la
+     página, igual que una .tarjeta-producto real se distingue de ella —
+     si esta envoltura tuviera el mismo fondo que los bloques de adentro,
+     las "líneas" de texto quedarían invisibles sobre su propio contenedor. */
+}
+
+.tarjeta-producto-esqueleto .esqueleto-imagen {
+  height: 132px;
+  border-radius: var(--radio-lg);
+}
+
+.tarjeta-producto-esqueleto .esqueleto-linea {
+  height: 14px;
+  margin: 0 4px;
+}
+
+.tarjeta-producto-esqueleto .esqueleto-linea-corta {
+  width: 40%;
+}
+
+.tarjeta-producto-esqueleto .esqueleto-linea-media {
+  width: 70%;
+  height: 18px;
+}
+
+.tarjeta-producto-esqueleto .esqueleto-linea-precio {
+  width: 50%;
+  margin-top: 4px;
+}
+
 .tarjeta-producto {
+  position: relative;
   background: var(--pos-bg-card);
   border-radius: var(--radio-lg);
   overflow: hidden;
@@ -314,6 +402,29 @@
   box-shadow:
     0 0 0 2px var(--color-categoria, var(--pos-border)),
     var(--sombra-elevada);
+}
+
+/* Insignia "ya está en el carrito" (2026-10-11): verde porque es información
+   positiva ("ya lo agregaste"), no una alerta — mismo verde que ya usa el
+   resto de la app para éxito (cambio, venta registrada). z-index por encima
+   de la imagen/bloque de color de la cabecera, que es lo que queda debajo. */
+.insignia-en-carrito {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--action-success);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--sombra-suave);
 }
 
 /* La cabecera es un <button> de ancho completo: toda la tarjeta (imagen +
@@ -521,8 +632,8 @@
   position: absolute;
   top: 14px;
   right: 14px;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   border: none;
@@ -919,7 +1030,7 @@
   border: 1.5px dashed var(--action-primary);
   border-radius: var(--radio-sm);
   background: color-mix(in srgb, var(--action-primary) 8%, var(--pos-bg-main));
-  color: var(--action-primary);
+  color: var(--acento-texto);
   cursor: pointer;
   white-space: nowrap;
   transition:
@@ -1016,6 +1127,13 @@
   color: var(--pos-text-primary);
 }
 
+/* RF-16 (2026-10-13): el cargo extra de una opción con costo (ej.
+   "cacahuate diferente"), visible ANTES de elegirla. */
+.opcion-costo-extra {
+  color: var(--acento-texto);
+  font-weight: 600;
+}
+
 .opcion-contador-controles {
   display: flex;
   align-items: center;
@@ -1024,8 +1142,8 @@
 }
 
 .opcion-contador-controles button {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   border: none;
@@ -1230,17 +1348,49 @@
   font-size: 1.5rem;
 }
 
+/* Tarjeta destacada del total (2026-10-16): el dato más importante de toda
+   la ventana, ahora con su propio fondo tintado + ícono — antes era solo
+   texto suelto arriba del formulario. */
+.cobro-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  border-radius: var(--radio-lg);
+  background: color-mix(in srgb, var(--acento-modulo) 12%, var(--pos-bg-card));
+  box-shadow: var(--sombra-suave);
+}
+
+.cobro-hero-icono {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--acento-modulo);
+  color: #fff;
+  box-shadow: var(--sombra-acento);
+}
+
+.cobro-hero-icono .icono {
+  width: 24px;
+  height: 24px;
+}
+
 .total-a-pagar {
-  margin: 0 0 22px;
+  margin: 0;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--pos-text-secondary);
 }
 
-.total-a-pagar strong {
+.total-a-pagar-cifra {
   display: block;
   font-family: var(--fuente-titulo);
-  font-size: 2.6rem;
+  font-size: 2.2rem;
   font-weight: 800;
   line-height: 1.1;
   color: var(--pos-text-primary);
@@ -1287,12 +1437,54 @@
   justify-content: center;
 }
 
-.etiqueta-seccion-cobro {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 0.78rem;
+/* Cada bloque del cobro (Entrega / Cliente de lealtad / Método de pago) es
+   su propia tarjeta con ícono + título (2026-10-16) — antes era solo una
+   etiqueta de texto plano en mayúsculas, apenas distinguible entre bloque y
+   bloque en una ventana ya larga. Mismo lenguaje visual que el resto de la
+   app: tarjeta con fondo propio + borde de acento, no un rediseño nuevo. */
+.seccion-cobro {
+  background: var(--pos-bg-main);
+  border-radius: var(--radio-lg);
+  border-left: 4px solid var(--acento-modulo);
+  padding: 16px;
+  margin-bottom: 18px;
+}
+
+.seccion-cobro-encabezado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.seccion-cobro-icono {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--acento-modulo) 20%, var(--pos-bg-card));
+  color: var(--acento-modulo);
+}
+
+.seccion-cobro-icono .icono {
+  width: 17px;
+  height: 17px;
+}
+
+.seccion-cobro-titulo {
+  font-family: var(--fuente-titulo);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  font-size: 1.02rem;
+}
+
+.seccion-cobro-opcional {
+  margin-left: auto;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   color: var(--pos-text-secondary);
 }
@@ -1371,8 +1563,60 @@
   color: var(--acento-texto);
 }
 
+/* Billetes con ilustración vectorial propia (2026-10-12,
+   public/img/billetes/) — el botón se vuelve "el billete mismo": sin
+   relleno de color de fondo, con la proporción real de un billete (2:1) en
+   vez del cuadrado compacto del botón de solo texto. */
+.boton-billete-vector {
+  flex-basis: 108px;
+  min-width: 108px;
+  padding: 0;
+  overflow: hidden;
+  background: none;
+}
+
+.boton-billete-vector.billete-activo {
+  background: none;
+  box-shadow: 0 0 0 3px var(--acento-texto);
+}
+
+.billete-imagen {
+  display: block;
+  width: 100%;
+  height: 54px;
+  object-fit: contain;
+  border-radius: inherit;
+}
+
 .campo-monto {
   margin-bottom: 16px;
+}
+
+/* Nombre/dirección del cliente, solo para domicilio (2026-10-11) — mismo
+   patrón visual que .campo-monto, pero texto normal (no son cifras). */
+.campo-cliente-domicilio {
+  margin-bottom: 16px;
+}
+
+.campo-cliente-domicilio label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--pos-text-secondary);
+}
+
+.campo-cliente-domicilio input,
+.campo-cliente-domicilio select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  font-size: 0.95rem;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  box-sizing: border-box;
 }
 
 .campo-monto label {
@@ -1473,20 +1717,29 @@
   box-shadow: none;
 }
 
+/* 2026-10-12: antes el encabezado solo tenía el texto "CHUCHERIAS" — ahora
+   lleva el logotipo real arriba (mismo PNG a color que ya usan el dashboard
+   y el header del POS) y un borde punteado abajo, a juego con el que ya
+   separa la lista de productos, para que de verdad se sienta como un
+   ticket y no como un panel más de la app. */
 .comprobante-encabezado {
   text-align: center;
   margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 2px dashed var(--pos-border);
 }
 
-.comprobante-encabezado h2 {
-  margin: 0;
-  font-size: 1.6rem;
-  letter-spacing: 0.06em;
+.comprobante-logo {
+  display: block;
+  width: 150px;
+  max-width: 70%;
+  height: auto;
+  margin: 0 auto 10px;
 }
 
 .venta-registrada-badge {
   display: inline-flex;
-  margin: 10px 0 6px;
+  margin: 0 0 6px;
   padding: 5px 14px;
   border-radius: var(--radio-pastilla);
   background: color-mix(in srgb, var(--action-success) 22%, var(--pos-bg-card));
@@ -1552,8 +1805,9 @@
   font-size: 1.5rem;
   font-weight: 800;
   color: var(--pos-text-primary);
-  padding-top: 8px;
-  border-top: 2px solid var(--pos-border);
+  padding-top: 10px;
+  margin-top: 2px;
+  border-top: 3px double var(--pos-border);
 }
 
 .comprobante-acciones {
@@ -1616,6 +1870,15 @@
     animation: escalar 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
+  /* Solo la ventana de COBRO/comprobante (2026-10-16) — las otras que
+     comparten .panel-cobro (saldo inicial, ingresar efectivo, registrar
+     cliente, aviso de retiro) son formularios de 1-2 campos; ensancharlas
+     igual las dejaría con demasiado espacio vacío. */
+  .panel-cobro-ancho {
+    max-width: 560px;
+    padding: 32px 30px 28px;
+  }
+
   .panel-detalle-producto {
     max-width: 420px;
     border-radius: var(--radio-lg);
@@ -1674,4 +1937,128 @@
 
 .boton-variante span:first-child {
   text-align: left;
+}
+
+/* ===================== Cliente de lealtad (RF-21/RF-22, 2026-10-15) ===================== */
+.aviso-descuento-lealtad {
+  margin: -4px 0 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--exito-texto);
+}
+
+.campo-busqueda-lealtad {
+  margin-bottom: 8px;
+}
+
+.campo-busqueda-lealtad input {
+  padding-left: 18px;
+  min-height: 48px;
+}
+
+.cliente-lealtad-estado {
+  margin: 0 0 16px;
+  font-size: 0.85rem;
+  color: var(--pos-text-secondary);
+}
+
+.cliente-lealtad-telefono,
+.cliente-lealtad-visitas-chico {
+  color: var(--pos-text-secondary);
+  font-size: 0.85rem;
+}
+
+.cliente-lealtad-visitas {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: var(--pos-text-secondary);
+}
+
+.cliente-lealtad-seleccionado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 2px solid var(--acento-modulo);
+  border-radius: var(--radio-sm);
+  background: var(--acento-suave);
+}
+
+.resultados-cliente-lealtad {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  max-height: 180px;
+  overflow-y: auto;
+  border-radius: var(--radio-sm);
+  border: 1px solid var(--pos-border);
+}
+
+.boton-resultado-cliente-lealtad {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: none;
+  border-bottom: 1px solid var(--pos-border);
+  background: var(--pos-bg-card);
+  color: var(--pos-text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.boton-resultado-cliente-lealtad:last-child {
+  border-bottom: none;
+}
+
+.boton-resultado-cliente-lealtad:hover {
+  background: var(--acento-suave);
+}
+
+.nuevo-cliente-lealtad {
+  margin-bottom: 16px;
+}
+
+.nuevo-cliente-lealtad input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  box-sizing: border-box;
+}
+
+.nuevo-cliente-lealtad-acciones {
+  display: flex;
+  gap: 8px;
+}
+
+.nuevo-cliente-lealtad-acciones button {
+  flex: 1;
+}
+
+.error-cliente-lealtad {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  color: var(--peligro-texto);
+}
+
+.boton-enlace-chico {
+  min-height: 44px;
+  padding: 0 6px;
+  border: none;
+  background: none;
+  color: var(--acento-modulo);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
 }

@@ -16,7 +16,11 @@
       <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
       Volver
     </button>
-    <img src="/img/logo-chucherias.png" alt="Chucherías" class="pos-logo" />
+    <img
+      src="https://res.cloudinary.com/isjkpamh/image/upload/v1792190975/chucherias/marca/xnua730fuk6dau2nsko1.png"
+      alt="Chucherías"
+      class="pos-logo"
+    />
     <h1>Punto de venta</h1>
     <button
       type="button"
@@ -33,7 +37,8 @@
   </header>
 
   <!-- BARRA DE CAJA: "Saldo inicial" e "Ingresar efectivo" los registra quien está en el POS;
-       un retiro SOLO lo emite el administrador desde la pantalla de Caja — aquí no hay botón para eso. -->
+       un retiro SOLO lo emite el administrador desde la pantalla de Caja — aquí no hay botón para eso.
+       "Registrar cliente" (2026-10-16) da de alta a un cliente de lealtad sin que compre nada. -->
   <div class="pos-caja-barra">
     <button type="button" class="accion-caja" (click)="abrirMovimientoCaja('apertura')">
       <span class="accion-caja-icono accion-caja-icono-neutral">
@@ -48,6 +53,13 @@
       </span>
       <span class="accion-caja-texto">Ingresar efectivo</span>
     </button>
+    <span class="accion-caja-separador" aria-hidden="true"></span>
+    <button type="button" class="accion-caja" (click)="abrirRegistroCliente()">
+      <span class="accion-caja-icono accion-caja-icono-cliente">
+        <svg class="icono" aria-hidden="true"><use href="#ic-corazon" /></svg>
+      </span>
+      <span class="accion-caja-texto">Registrar cliente</span>
+    </button>
   </div>
 
   <!-- CUERPO: catálogo a la izquierda y carrito a la derecha (en móvil el carrito es un panel aparte). -->
@@ -55,7 +67,19 @@
     <!-- MENÚ: muestra "Cargando", un error de conexión, o el catálogo completo. -->
     <section class="pos-menu">
       @if (cargando()) {
-        <p class="mensaje-estado">Cargando menú...</p>
+        <!-- Skeleton (2026-10-11) en vez de solo texto: mismo número de
+             "tarjetas fantasma" que una pantalla típica, con la forma real
+             de .tarjeta-producto (imagen + 2 líneas de texto + precio). -->
+        <div class="grid-productos" aria-hidden="true">
+          @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+            <div class="tarjeta-producto-esqueleto">
+              <div class="esqueleto esqueleto-imagen"></div>
+              <div class="esqueleto esqueleto-linea esqueleto-linea-corta"></div>
+              <div class="esqueleto esqueleto-linea esqueleto-linea-media"></div>
+              <div class="esqueleto esqueleto-linea esqueleto-linea-precio"></div>
+            </div>
+          }
+        </div>
       } @else if (errorCarga()) {
         <p class="mensaje-estado mensaje-error">{{ errorCarga() }}</p>
       } @else {
@@ -116,6 +140,15 @@
                 [class.tarjeta-expandida]="estaAbierto(producto.id)"
                 [style.--color-categoria]="estiloCategoria(producto.categoria).color"
               >
+                @if (cantidadEnCarrito(producto); as cantidad) {
+                  <!-- Insignia "ya está en el carrito" (2026-10-11): cuántas
+                       unidades de este producto (cualquier variante) ya se
+                       agregaron, para no tener que abrir el carrito para
+                       saberlo ni agregar por accidente dos veces. -->
+                  <span class="insignia-en-carrito" [attr.aria-label]="cantidad + ' en el carrito'">
+                    {{ cantidad }}
+                  </span>
+                }
                 <button
                   type="button"
                   class="cabecera-producto"
@@ -179,7 +212,12 @@
       </div>
 
       @if (carrito().length === 0) {
-        <p class="mensaje-estado">Aún no has agregado productos.</p>
+        <div class="estado-vacio">
+          <span class="estado-vacio-icono">
+            <svg class="icono" aria-hidden="true"><use href="#ic-bolsa" /></svg>
+          </span>
+          <p>Aún no has agregado productos.</p>
+        </div>
       } @else {
         <!-- LÍNEAS DEL CARRITO. Cada línea = una variante con su cantidad (+/−), subtotal y botón de eliminar. -->
         <ul class="lista-carrito">
@@ -199,9 +237,7 @@
                     <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
                   </button>
                 </div>
-                <span class="item-subtotal">{{
-                  item.precio * item.cantidad | currency: 'MXN'
-                }}</span>
+                <span class="item-subtotal">{{ subtotalLinea(item) | currency: 'MXN' }}</span>
                 <button
                   type="button"
                   class="boton-quitar"
@@ -365,7 +401,14 @@
                       </p>
                       @for (opcion of grupo.opciones; track opcion.insumo) {
                         <div class="opcion-contador">
-                          <span class="opcion-contador-nombre">{{ opcion.display }}</span>
+                          <span class="opcion-contador-nombre">
+                            {{ opcion.display }}
+                            @if (costoExtraInsumo(opcion.insumo) > 0) {
+                              <span class="opcion-costo-extra">
+                                (+{{ costoExtraInsumo(opcion.insumo) | currency: 'MXN' }})
+                              </span>
+                            }
+                          </span>
                           <div class="opcion-contador-controles">
                             <button
                               type="button"
@@ -406,6 +449,11 @@
                             (change)="alternarEleccion(item, grupo, opcion)"
                           />
                           {{ opcion.display }}
+                          @if (costoExtraInsumo(opcion.insumo) > 0) {
+                            <span class="opcion-costo-extra">
+                              (+{{ costoExtraInsumo(opcion.insumo) | currency: 'MXN' }})
+                            </span>
+                          }
                         </label>
                       }
                     }
@@ -467,6 +515,11 @@
     <div class="overlay">
       <div
         class="panel-detalle-producto"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="'Detalle de ' + producto.nombre"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarDetalleProducto()"
         [style.--color-categoria]="estiloCategoria(producto.categoria).color"
       >
         <button
@@ -527,13 +580,24 @@
        al confirmar la venta, el comprobante. -->
   @if (mostrarCobro()) {
     <div class="overlay">
-      <div class="panel-cobro">
+      <div
+        class="panel-cobro panel-cobro-ancho"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="recibo() ? 'Comprobante de venta' : 'Cobro'"
+        appFocoDialogo
+        (cerrarConEscape)="recibo() ? nuevaVenta() : cerrarCobro()"
+      >
         <!-- COMPROBANTE (venta ya registrada): número de orden, productos con notas, totales,
              método de pago, recibido y cambio. Se puede imprimir. -->
         @if (recibo(); as r) {
           <div class="comprobante" id="comprobante-imprimible">
             <div class="comprobante-encabezado">
-              <h2>CHUCHERIAS</h2>
+              <img
+                src="https://res.cloudinary.com/isjkpamh/image/upload/v1792190975/chucherias/marca/xnua730fuk6dau2nsko1.png"
+                alt="Chucherías Mix"
+                class="comprobante-logo"
+              />
               <p class="venta-registrada-badge">Venta registrada</p>
               <p class="comprobante-orden">Orden {{ r.venta.orden.numero_orden }}</p>
               <p class="comprobante-fecha">{{ r.fecha | date: 'dd/MM/yyyy HH:mm' }}</p>
@@ -552,7 +616,7 @@
                         item.varianteNombre
                       }})</span
                     >
-                    <span>{{ item.precio * item.cantidad | currency: 'MXN' }}</span>
+                    <span>{{ subtotalLinea(item) | currency: 'MXN' }}</span>
                   </div>
                   @if (notaCompleta(item)) {
                     <p class="comprobante-item-notas">{{ notaCompleta(item) }}</p>
@@ -567,14 +631,46 @@
                 <span>Subtotal</span>
                 <span>{{ r.subtotal | currency: 'MXN' }}</span>
               </div>
+              @if (r.descuentoLealtad > 0) {
+                <div class="comprobante-linea">
+                  <span>Descuento por lealtad</span>
+                  <span>-{{ r.descuentoLealtad | currency: 'MXN' }}</span>
+                </div>
+              }
               <div class="comprobante-linea comprobante-total-final">
                 <span>Total</span>
                 <span>{{ r.total | currency: 'MXN' }}</span>
               </div>
+              @if (r.clienteLealtadNombre) {
+                <div class="comprobante-linea">
+                  <span>Cliente de lealtad</span>
+                  <span>{{ r.clienteLealtadNombre }}</span>
+                </div>
+              }
               <div class="comprobante-linea">
                 <span>Entrega</span>
                 <span>{{ r.tipoEntrega === 'presencial' ? 'Presencial' : 'A domicilio' }}</span>
               </div>
+              @if (r.tipoEntrega === 'domicilio') {
+                <div class="comprobante-linea">
+                  <span>Cliente</span>
+                  <span>{{ r.clienteNombre }}</span>
+                </div>
+                <div class="comprobante-linea">
+                  <span>Dirección</span>
+                  <span>{{ r.clienteDireccion }}</span>
+                </div>
+                <div class="comprobante-linea">
+                  <span>Teléfono</span>
+                  <span>{{ r.clienteTelefono }}</span>
+                </div>
+                @if (r.repartidorNombre) {
+                  <div class="comprobante-linea">
+                    <span>Repartidor</span>
+                    <span>{{ r.repartidorNombre }}</span>
+                  </div>
+                }
+              }
               <div class="comprobante-linea">
                 <span>Método de pago</span>
                 <span>{{ r.metodoPago === 'efectivo' ? 'Efectivo' : 'Transferencia' }}</span>
@@ -604,93 +700,302 @@
           </div>
         } @else {
           <!-- FORMULARIO DE COBRO: total a pagar, tipo de entrega, método de pago y (si es efectivo)
-               monto recibido con cambio. -->
+               monto recibido con cambio. Cada bloque es su propia "tarjeta" con ícono + título
+               (2026-10-16, antes eran solo etiquetas de texto plano una tras otra). -->
           <h2>Cobrar</h2>
-          <p class="total-a-pagar">
-            Total a pagar: <strong>{{ totalCarrito() | currency: 'MXN' }}</strong>
-          </p>
 
-          <span class="etiqueta-seccion-cobro">Entrega</span>
-          <div class="metodos-pago">
-            <button
-              type="button"
-              class="boton-metodo"
-              [class.metodo-activo]="tipoEntrega() === 'presencial'"
-              (click)="seleccionarTipoEntrega('presencial')"
-            >
-              Presencial
-            </button>
-            <button
-              type="button"
-              class="boton-metodo"
-              [class.metodo-activo]="tipoEntrega() === 'domicilio'"
-              (click)="seleccionarTipoEntrega('domicilio')"
-            >
-              A domicilio
-            </button>
-          </div>
-
-          <!-- MÉTODO DE PAGO: efectivo o transferencia. -->
-          <span class="etiqueta-seccion-cobro">Método de pago</span>
-          <div class="metodos-pago">
-            <button
-              type="button"
-              class="boton-metodo"
-              [class.metodo-activo]="metodoPago() === 'efectivo'"
-              (click)="seleccionarMetodoPago('efectivo')"
-            >
-              Efectivo
-            </button>
-            <button
-              type="button"
-              class="boton-metodo"
-              [class.metodo-activo]="metodoPago() === 'transferencia'"
-              (click)="seleccionarMetodoPago('transferencia')"
-            >
-              Transferencia
-            </button>
-          </div>
-
-          @if (metodoPago() === 'efectivo') {
-            <!-- EFECTIVO: botones rápidos con el total exacto y los billetes mayores al total;
-                 abajo se puede teclear un monto distinto. -->
-            <div class="sugerencias-efectivo">
-              @for (monto of sugerenciasEfectivo(); track monto) {
-                <button
-                  type="button"
-                  class="boton-billete"
-                  [class.billete-activo]="montoRecibido() === monto"
-                  (click)="seleccionarMontoSugerido(monto)"
-                >
-                  {{ monto | currency: 'MXN' : 'symbol' : '1.0-0' }}
-                </button>
-              }
+          <!-- TOTAL: tarjeta destacada, el dato más importante de toda la ventana. -->
+          <div class="cobro-hero">
+            <span class="cobro-hero-icono" aria-hidden="true">
+              <svg class="icono"><use href="#ic-recibo" /></svg>
+            </span>
+            <div>
+              <p class="total-a-pagar">Total a pagar</p>
+              <strong class="total-a-pagar-cifra">{{ totalAPagar() | currency: 'MXN' }}</strong>
             </div>
-
-            <div class="campo-monto">
-              <label for="monto-recibido">O teclea el monto exacto</label>
-              <input
-                id="monto-recibido"
-                type="number"
-                min="0"
-                step="0.01"
-                [value]="montoRecibido() ?? ''"
-                (input)="actualizarMontoRecibido($any($event.target).value)"
-              />
-            </div>
-
-            @if (montoRecibido() != null) {
-              <!-- CAMBIO EN VIVO: verde si alcanza ("Cambio: $X"), rojo si falta dinero.
-                   "Confirmar venta" solo se habilita con cambio ≥ 0. -->
-              <div class="cambio" [class.cambio-invalido]="(cambio() ?? -1) < 0">
-                @if ((cambio() ?? -1) < 0) {
-                  <span>Falta {{ totalCarrito() - (montoRecibido() ?? 0) | currency: 'MXN' }}</span>
-                } @else {
-                  <span>Cambio: {{ cambio() | currency: 'MXN' }}</span>
-                }
-              </div>
+          </div>
+          @if (previsualizacionLealtad(); as preview) {
+            @if (preview.porcentaje > 0) {
+              <p class="aviso-descuento-lealtad">
+                Esta compra completa la visita #{{ preview.visitaNumero }} del ciclo:
+                {{ preview.porcentaje }}% de descuento ya aplicado arriba.
+              </p>
             }
           }
+
+          <!-- ENTREGA -->
+          <section class="seccion-cobro">
+            <div class="seccion-cobro-encabezado">
+              <span class="seccion-cobro-icono" aria-hidden="true">
+                <svg class="icono"><use href="#ic-paquete" /></svg>
+              </span>
+              <span class="seccion-cobro-titulo">Entrega</span>
+            </div>
+            <div class="metodos-pago">
+              <button
+                type="button"
+                class="boton-metodo"
+                [class.metodo-activo]="tipoEntrega() === 'presencial'"
+                (click)="seleccionarTipoEntrega('presencial')"
+              >
+                Presencial
+              </button>
+              <button
+                type="button"
+                class="boton-metodo"
+                [class.metodo-activo]="tipoEntrega() === 'domicilio'"
+                (click)="seleccionarTipoEntrega('domicilio')"
+              >
+                A domicilio
+              </button>
+            </div>
+
+            <!-- DATOS DEL CLIENTE: solo para domicilio, obligatorios para poder cobrar. -->
+            @if (tipoEntrega() === 'domicilio') {
+              <div class="campo-cliente-domicilio">
+                <label for="cliente-nombre">Nombre del cliente</label>
+                <input
+                  id="cliente-nombre"
+                  type="text"
+                  placeholder="Nombre de quien recibe"
+                  [value]="clienteNombreForm()"
+                  (input)="clienteNombreForm.set($any($event.target).value)"
+                />
+              </div>
+              <div class="campo-cliente-domicilio">
+                <label for="cliente-direccion">Dirección de entrega</label>
+                <input
+                  id="cliente-direccion"
+                  type="text"
+                  placeholder="Calle, número, colonia..."
+                  [value]="clienteDireccionForm()"
+                  (input)="clienteDireccionForm.set($any($event.target).value)"
+                />
+              </div>
+              <div class="campo-cliente-domicilio">
+                <label for="cliente-telefono">Teléfono de contacto</label>
+                <input
+                  id="cliente-telefono"
+                  type="tel"
+                  placeholder="Número de celular"
+                  [value]="clienteTelefonoForm()"
+                  (input)="clienteTelefonoForm.set($any($event.target).value)"
+                />
+              </div>
+              <!-- Repartidor (2026-10-16): opcional — si todavía no se sabe
+                   quién la va a llevar, se puede asignar después desde
+                   Comandas. Sin repartidores activos capturados, no se
+                   muestra el selector (nada que elegir). -->
+              @if (repartidores().length > 0) {
+                <div class="campo-cliente-domicilio">
+                  <label for="repartidor-venta">Repartidor (opcional)</label>
+                  <select
+                    id="repartidor-venta"
+                    [value]="repartidorSeleccionadoId() ?? ''"
+                    (change)="seleccionarRepartidor($any($event.target).value)"
+                  >
+                    <option value="">Sin asignar todavía</option>
+                    @for (repartidor of repartidores(); track repartidor.id) {
+                      <option [value]="repartidor.id">{{ repartidor.nombre }}</option>
+                    }
+                  </select>
+                </div>
+              }
+            }
+          </section>
+
+          <!-- CLIENTE DE LEALTAD (RF-21/RF-22): opcional, independiente de si es
+               presencial o a domicilio. Buscar por nombre o teléfono; si no
+               existe, se puede crear ahí mismo. -->
+          <section class="seccion-cobro">
+            <div class="seccion-cobro-encabezado">
+              <span class="seccion-cobro-icono" aria-hidden="true">
+                <svg class="icono"><use href="#ic-corazon" /></svg>
+              </span>
+              <span class="seccion-cobro-titulo">Cliente de lealtad</span>
+              <span class="seccion-cobro-opcional">Opcional</span>
+            </div>
+            @if (clienteLealtadSeleccionado(); as cliente) {
+              <div class="cliente-lealtad-seleccionado">
+                <div>
+                  <strong>{{ cliente.nombre_completo }}</strong>
+                  @if (cliente.telefono) {
+                    <span class="cliente-lealtad-telefono"> · {{ cliente.telefono }}</span>
+                  }
+                  <p class="cliente-lealtad-visitas">
+                    {{ cliente.visitas_acumuladas }} visita(s) acumulada(s) en el ciclo
+                  </p>
+                </div>
+                <button type="button" class="boton-enlace-chico" (click)="quitarClienteLealtad()">
+                  Quitar
+                </button>
+              </div>
+            } @else {
+              <div class="campo-busqueda campo-busqueda-lealtad">
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre o teléfono..."
+                  aria-label="Buscar cliente de lealtad"
+                  [value]="clienteLealtadQuery()"
+                  (input)="buscarClienteLealtad($any($event.target).value)"
+                />
+              </div>
+              @if (buscandoClienteLealtad()) {
+                <p class="cliente-lealtad-estado">Buscando...</p>
+              } @else if (clienteLealtadQuery().trim().length >= 2) {
+                @if (resultadosClienteLealtad().length > 0) {
+                  <ul class="resultados-cliente-lealtad">
+                    @for (resultado of resultadosClienteLealtad(); track resultado.id) {
+                      <li>
+                        <button
+                          type="button"
+                          class="boton-resultado-cliente-lealtad"
+                          (click)="seleccionarClienteLealtad(resultado)"
+                        >
+                          <strong>{{ resultado.nombre_completo }}</strong>
+                          @if (resultado.telefono) {
+                            <span> · {{ resultado.telefono }}</span>
+                          }
+                          <span class="cliente-lealtad-visitas-chico"
+                            >{{ resultado.visitas_acumuladas }} visitas</span
+                          >
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                } @else if (!mostrarNuevoClienteLealtad()) {
+                  <p class="cliente-lealtad-estado">
+                    Sin resultados.
+                    <button
+                      type="button"
+                      class="boton-enlace-chico"
+                      (click)="abrirNuevoClienteLealtad()"
+                    >
+                      + Nuevo cliente
+                    </button>
+                  </p>
+                }
+              }
+              @if (mostrarNuevoClienteLealtad()) {
+                <div class="nuevo-cliente-lealtad">
+                  <input
+                    type="text"
+                    placeholder="Nombre completo *"
+                    aria-label="Nombre del nuevo cliente"
+                    [value]="nuevoClienteLealtadNombre()"
+                    (input)="nuevoClienteLealtadNombre.set($any($event.target).value)"
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Teléfono (opcional)"
+                    aria-label="Teléfono del nuevo cliente"
+                    [value]="nuevoClienteLealtadTelefono()"
+                    (input)="nuevoClienteLealtadTelefono.set($any($event.target).value)"
+                  />
+                  @if (errorClienteLealtad()) {
+                    <p class="error-cliente-lealtad">{{ errorClienteLealtad() }}</p>
+                  }
+                  <div class="nuevo-cliente-lealtad-acciones">
+                    <button
+                      type="button"
+                      class="boton-cancelar"
+                      (click)="cancelarNuevoClienteLealtad()"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      class="boton-confirmar"
+                      [disabled]="creandoClienteLealtad()"
+                      (click)="crearClienteLealtad()"
+                    >
+                      {{ creandoClienteLealtad() ? 'Creando...' : 'Crear y seleccionar' }}
+                    </button>
+                  </div>
+                </div>
+              }
+            }
+          </section>
+
+          <!-- MÉTODO DE PAGO: efectivo o transferencia. -->
+          <section class="seccion-cobro">
+            <div class="seccion-cobro-encabezado">
+              <span class="seccion-cobro-icono" aria-hidden="true">
+                <svg class="icono"><use href="#ic-billetes" /></svg>
+              </span>
+              <span class="seccion-cobro-titulo">Método de pago</span>
+            </div>
+            <div class="metodos-pago">
+              <button
+                type="button"
+                class="boton-metodo"
+                [class.metodo-activo]="metodoPago() === 'efectivo'"
+                (click)="seleccionarMetodoPago('efectivo')"
+              >
+                Efectivo
+              </button>
+              <button
+                type="button"
+                class="boton-metodo"
+                [class.metodo-activo]="metodoPago() === 'transferencia'"
+                (click)="seleccionarMetodoPago('transferencia')"
+              >
+                Transferencia
+              </button>
+            </div>
+
+            @if (metodoPago() === 'efectivo') {
+              <!-- EFECTIVO: botones rápidos con el total exacto y los billetes mayores al total;
+                   abajo se puede teclear un monto distinto. -->
+              <div class="sugerencias-efectivo">
+                @for (monto of sugerenciasEfectivo(); track monto) {
+                  <button
+                    type="button"
+                    class="boton-billete"
+                    [class.boton-billete-vector]="imagenBillete(monto)"
+                    [class.billete-activo]="montoRecibido() === monto"
+                    (click)="seleccionarMontoSugerido(monto)"
+                  >
+                    @if (imagenBillete(monto); as src) {
+                      <img
+                        [src]="src"
+                        [alt]="'Billete de ' + monto + ' pesos'"
+                        class="billete-imagen"
+                      />
+                    } @else {
+                      {{ monto | currency: 'MXN' : 'symbol' : '1.0-0' }}
+                    }
+                  </button>
+                }
+              </div>
+
+              <div class="campo-monto">
+                <label for="monto-recibido">O teclea el monto exacto</label>
+                <input
+                  id="monto-recibido"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  [value]="montoRecibido() ?? ''"
+                  (input)="actualizarMontoRecibido($any($event.target).value)"
+                />
+              </div>
+
+              @if (montoRecibido() != null) {
+                <!-- CAMBIO EN VIVO: verde si alcanza ("Cambio: $X"), rojo si falta dinero.
+                     "Confirmar venta" solo se habilita con cambio ≥ 0. -->
+                <div class="cambio" [class.cambio-invalido]="(cambio() ?? -1) < 0">
+                  @if ((cambio() ?? -1) < 0) {
+                    <span
+                      >Falta {{ totalAPagar() - (montoRecibido() ?? 0) | currency: 'MXN' }}</span
+                    >
+                  } @else {
+                    <span>Cambio: {{ cambio() | currency: 'MXN' }}</span>
+                  }
+                </div>
+              }
+            }
+          </section>
 
           @if (errorVenta()) {
             <p class="mensaje-error">{{ errorVenta() }}</p>
@@ -725,7 +1030,14 @@
   <!-- VENTANA "Saldo inicial" / "Ingresar efectivo": lo registra directo quien está en el POS. -->
   @if (mostrarMovimientoCaja(); as tipoMov) {
     <div class="overlay">
-      <div class="panel-cobro">
+      <div
+        class="panel-cobro"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="tipoMov === 'apertura' ? 'Saldo inicial de caja' : 'Ingresar efectivo'"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarMovimientoCaja()"
+      >
         <h2>{{ tipoMov === 'apertura' ? 'Saldo inicial de caja' : 'Ingresar efectivo' }}</h2>
         <p class="movimiento-caja-descripcion">
           {{
@@ -790,11 +1102,103 @@
     </div>
   }
 
+  <!-- VENTANA "Registrar cliente" (2026-10-16): alta de un cliente de lealtad SIN que
+       compre nada — independiente del carrito y del cobro. -->
+  @if (mostrarRegistroCliente()) {
+    <div class="overlay">
+      <div
+        class="panel-cobro"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Registrar cliente"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarRegistroCliente()"
+      >
+        @if (clienteRegistrado(); as registrado) {
+          <h2>Cliente registrado</h2>
+          <p class="movimiento-caja-descripcion">
+            <strong>{{ registrado.nombre_completo }}</strong>
+            @if (registrado.telefono) {
+              · {{ registrado.telefono }}
+            }
+            ya forma parte del programa de lealtad, con 0 visitas acumuladas.
+          </p>
+          <div class="acciones-cobro">
+            <button type="button" class="boton-cancelar" (click)="cerrarRegistroCliente()">
+              Cerrar
+            </button>
+            <button type="button" class="boton-confirmar" (click)="registrarOtroCliente()">
+              Registrar otro
+            </button>
+          </div>
+        } @else {
+          <h2>Registrar cliente</h2>
+          <p class="movimiento-caja-descripcion">
+            Da de alta a un cliente en el programa de lealtad sin necesidad de que compre algo ahora
+            — empieza con 0 visitas.
+          </p>
+
+          <div class="campo-monto">
+            <label for="nombre-registro-cliente">Nombre completo *</label>
+            <input
+              id="nombre-registro-cliente"
+              type="text"
+              [value]="nombreRegistroCliente()"
+              (input)="nombreRegistroCliente.set($any($event.target).value)"
+            />
+          </div>
+
+          <div class="campo-monto">
+            <label for="telefono-registro-cliente">Teléfono (opcional)</label>
+            <input
+              id="telefono-registro-cliente"
+              type="tel"
+              [value]="telefonoRegistroCliente()"
+              (input)="telefonoRegistroCliente.set($any($event.target).value)"
+            />
+          </div>
+
+          @if (errorRegistroCliente()) {
+            <p class="mensaje-error">{{ errorRegistroCliente() }}</p>
+          }
+
+          <div class="acciones-cobro">
+            <button
+              type="button"
+              class="boton-cancelar"
+              (click)="cerrarRegistroCliente()"
+              [disabled]="registrandoCliente()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton-confirmar"
+              (click)="registrarCliente()"
+              [disabled]="registrandoCliente() || !nombreRegistroCliente().trim()"
+            >
+              {{ registrandoCliente() ? 'Registrando...' : 'Registrar' }}
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
   <!-- AVISO DE RETIRO PENDIENTE: lo detecta el sondeo (ver pos.ts). El cajero debe confirmarlo
        para seguir usando el POS; al confirmar se arma el ticket imprimible de abajo. -->
   @if (retiroPendiente(); as retiro) {
     <div class="overlay">
-      <div class="panel-cobro aviso-retiro">
+      <!-- Sin (cerrarConEscape): esta ventana es de confirmación obligatoria
+           (no tiene botón "Cancelar"), así que Escape no la cierra a
+           propósito — mismo criterio que ya aplicaba al click del fondo. -->
+      <div
+        class="panel-cobro aviso-retiro"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Retiro de efectivo pendiente"
+        appFocoDialogo
+      >
         <h2>Retiro de efectivo</h2>
         <p class="venta-registrada-badge aviso-retiro-badge">Autorizó {{ retiro.responsable }}</p>
         <p class="aviso-retiro-monto">{{ +retiro.monto | currency: 'MXN' }}</p>
@@ -828,10 +1232,21 @@
        recibo de venta, así hereda el mismo @media print (fondo blanco, texto negro, sin acciones). -->
   @if (ticketRetiro(); as ticket) {
     <div class="overlay">
-      <div class="panel-cobro">
+      <div
+        class="panel-cobro"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Ticket de retiro de efectivo"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarTicketRetiro()"
+      >
         <div class="comprobante">
           <div class="comprobante-encabezado">
-            <h2>CHUCHERIAS</h2>
+            <img
+              src="https://res.cloudinary.com/isjkpamh/image/upload/v1792190975/chucherias/marca/xnua730fuk6dau2nsko1.png"
+              alt="Chucherías Mix"
+              class="comprobante-logo"
+            />
             <p class="venta-registrada-badge">Retiro de efectivo</p>
             <p class="comprobante-fecha">
               {{ ticket.fecha_confirmacion | date: 'dd/MM/yyyy HH:mm' }}

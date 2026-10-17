@@ -12,6 +12,9 @@
       <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
       Volver
     </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-recibo" /></svg>
+    </span>
     <h1>Ventas de hoy</h1>
     <button
       type="button"
@@ -28,8 +31,35 @@
   </header>
 
   <div class="historial-cuerpo">
+    <!-- RF-23 (2026-10-16): aviso breve si la venta recién cancelada había
+         contado una visita de lealtad — el servidor ya la revirtió solo. -->
+    @if (avisoLealtadRevertida()) {
+      <div class="aviso-lealtad-revertida">
+        <span
+          >La venta cancelada había contado una visita de lealtad para el cliente — se revirtió
+          automáticamente.</span
+        >
+        <button
+          type="button"
+          class="boton-cerrar-aviso"
+          (click)="cerrarAvisoLealtad()"
+          aria-label="Cerrar aviso"
+        >
+          <svg class="icono" aria-hidden="true"><use href="#ic-cerrar" /></svg>
+        </button>
+      </div>
+    }
     @if (cargando()) {
-      <p class="mensaje-estado">Cargando ventas...</p>
+      <!-- Skeleton (2026-10-12) con la misma forma que .tarjeta-venta. -->
+      <ul class="lista-ventas" aria-hidden="true">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <li class="tarjeta-venta-esqueleto">
+            <div class="esqueleto esqueleto-linea-orden"></div>
+            <div class="esqueleto esqueleto-linea-item-venta"></div>
+            <div class="esqueleto esqueleto-linea-item-venta"></div>
+          </li>
+        }
+      </ul>
     } @else {
       @if (error()) {
         <p class="mensaje-estado mensaje-error">{{ error() }}</p>
@@ -165,6 +195,29 @@
               </span>
               <span class="venta-total">{{ venta.total | currency: 'MXN' }}</span>
             </div>
+
+            @if (venta.tipo_entrega === 'domicilio') {
+              <p class="venta-domicilio">
+                {{ venta.cliente_nombre }} · {{ venta.cliente_direccion }} ·
+                {{ venta.cliente_telefono }}
+              </p>
+              <p class="venta-domicilio">
+                Repartidor: {{ venta.repartidor_nombre || 'sin asignar' }}
+              </p>
+            }
+
+            <!-- RF-21/RF-22: cliente de lealtad ligado a esta venta, con el
+                 descuento real que se aplicó (si hubo uno). -->
+            @if (venta.cliente_lealtad_nombre) {
+              <p class="venta-lealtad">
+                Lealtad: {{ venta.cliente_lealtad_nombre }}
+                @if (+venta.descuento_lealtad > 0) {
+                  <span class="venta-lealtad-descuento">
+                    (-{{ venta.descuento_lealtad | currency: 'MXN' }})
+                  </span>
+                }
+              </p>
+            }
 
             <!-- CANCELAR: solo las ventas con algún producto activo. Primero un
                  botón; al pulsarlo se abre un panel para elegir QUÉ productos

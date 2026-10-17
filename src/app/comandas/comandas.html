@@ -11,6 +11,9 @@
       <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
       Volver
     </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-comanda" /></svg>
+    </span>
     <h1>Comandas</h1>
     <button
       type="button"
@@ -27,7 +30,30 @@
   </header>
 
   @if (cargando()) {
-    <p class="mensaje-estado">Cargando comandas...</p>
+    <!-- Skeleton (2026-10-12): las 3 columnas reales (título + ícono, que no
+         dependen del servidor) con tarjetas fantasma en vez de solo texto. -->
+    <div class="tablero" aria-hidden="true">
+      @for (columna of columnas; track columna.estado) {
+        <section class="columna">
+          <h2 class="columna-titulo">
+            <span class="columna-icono">
+              <svg class="icono" aria-hidden="true">
+                <use [attr.href]="'#ic-' + columna.icono" />
+              </svg>
+            </span>
+            {{ columna.titulo }}
+          </h2>
+          @for (i of [1, 2]; track i) {
+            <div class="tarjeta-orden-esqueleto">
+              <div class="esqueleto esqueleto-en-tarjeta esqueleto-linea-numero"></div>
+              <div class="esqueleto esqueleto-en-tarjeta esqueleto-linea-etiqueta"></div>
+              <div class="esqueleto esqueleto-en-tarjeta esqueleto-linea-item"></div>
+              <div class="esqueleto esqueleto-en-tarjeta esqueleto-linea-item"></div>
+            </div>
+          }
+        </section>
+      }
+    </div>
   } @else {
     @if (error()) {
       <p class="mensaje-estado mensaje-error" role="alert">{{ error() }}</p>
@@ -57,12 +83,25 @@
           </h2>
 
           @if ((ordenesPorEstado()[columna.estado] ?? []).length === 0) {
-            <p class="mensaje-vacio">{{ columna.vacio }}</p>
+            <!-- Mismo ícono que ya tiene el encabezado de esta columna arriba
+                 (reloj/cocinar/paquete) — no uno genérico nuevo sin relación. -->
+            <div class="mensaje-vacio">
+              <svg class="icono" aria-hidden="true">
+                <use [attr.href]="'#ic-' + columna.icono" />
+              </svg>
+              <p>{{ columna.vacio }}</p>
+            </div>
           }
 
           @for (orden of ordenesPorEstado()[columna.estado] ?? []; track orden.id) {
-            <!-- TARJETA DE COMANDA: número, tiempo de espera (se marca en rojo si es urgente), tipo de entrega y productos con notas. -->
-            <article class="tarjeta-orden" [class.tarjeta-urgente]="esUrgente(orden)">
+            <!-- TARJETA DE COMANDA: número, tiempo de espera (naranja si se
+                 acerca al límite, rojo si ya lo pasó), tipo de entrega y
+                 productos con notas. -->
+            <article
+              class="tarjeta-orden"
+              [class.tarjeta-atencion]="necesitaAtencion(orden)"
+              [class.tarjeta-urgente]="esUrgente(orden)"
+            >
               <div class="tarjeta-orden-encabezado">
                 <span class="numero-orden">{{ orden.numero_orden }}</span>
                 <span class="tiempo-transcurrido">{{
@@ -76,6 +115,52 @@
               >
                 {{ orden.tipo_entrega === 'domicilio' ? 'A domicilio' : 'Presencial' }}
               </span>
+
+              @if (orden.tipo_entrega === 'domicilio') {
+                <div class="datos-domicilio">
+                  <span class="datos-domicilio-cliente">{{ orden.cliente_nombre }}</span>
+                  <span class="datos-domicilio-direccion">{{ orden.cliente_direccion }}</span>
+                  <span class="datos-domicilio-telefono">{{ orden.cliente_telefono }}</span>
+                </div>
+
+                <!-- REPARTIDOR (2026-10-16): si ya está asignado se muestra su
+                     nombre; si el rol puede asignar/cambiarlo, un botón abre un
+                     selector corto ahí mismo. -->
+                @if (asignandoRepartidorPara() === orden.id) {
+                  <div class="asignar-repartidor">
+                    <select
+                      [attr.aria-label]="'Repartidor de la orden ' + orden.numero_orden"
+                      [value]="orden.repartidor_id ?? ''"
+                      (change)="confirmarRepartidor(orden.id, $any($event.target).value)"
+                      [disabled]="guardandoRepartidor()"
+                    >
+                      <option value="">Sin asignar</option>
+                      @for (repartidor of repartidores(); track repartidor.id) {
+                        <option [value]="repartidor.id">{{ repartidor.nombre }}</option>
+                      }
+                    </select>
+                    <button
+                      type="button"
+                      class="boton-cancelar-repartidor"
+                      (click)="cerrarAsignarRepartidor()"
+                      aria-label="Cancelar"
+                    >
+                      <svg class="icono" aria-hidden="true"><use href="#ic-cerrar" /></svg>
+                    </button>
+                  </div>
+                } @else {
+                  <button
+                    type="button"
+                    class="dato-repartidor"
+                    [class.dato-repartidor-sin-asignar]="!orden.repartidor_nombre"
+                    (click)="puedeAsignarRepartidor() && abrirAsignarRepartidor(orden)"
+                    [disabled]="!puedeAsignarRepartidor()"
+                  >
+                    <svg class="icono" aria-hidden="true"><use href="#ic-usuarios" /></svg>
+                    {{ orden.repartidor_nombre || 'Repartidor sin asignar' }}
+                  </button>
+                }
+              }
 
               <ul class="lista-items-orden">
                 @for (item of orden.items; track $index) {
@@ -121,7 +206,15 @@
   <!-- VENTANA: tutorial de elaboración de un producto de la orden. -->
   @if (itemTutorial(); as item) {
     <div class="overlay" (click)="cerrarTutorial()">
-      <div class="panel-tutorial" (click)="$event.stopPropagation()">
+      <div
+        class="panel-tutorial"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Tutorial de preparación"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarTutorial()"
+        (click)="$event.stopPropagation()"
+      >
         <div class="panel-tutorial-encabezado">
           <h2>{{ item.producto }}</h2>
           <button
@@ -134,6 +227,19 @@
           </button>
         </div>
         <p class="subtitulo-tutorial">{{ item.variante }}</p>
+
+        <!-- FOTO DE REFERENCIA (2026-10-12): "así debe quedar" — se
+             muestra arriba de los pasos, es lo primero que compara quien
+             prepara el platillo. Se carga aparte de los pasos (puede llegar
+             antes, después, o no tener ninguna) así que no depende de
+             cargandoTutorial(). -->
+        @if (imagenReferenciaTutorial(); as imagen) {
+          <img
+            [src]="imagen"
+            alt="Así debe quedar el platillo"
+            class="imagen-referencia-tutorial"
+          />
+        }
 
         @if (cargandoTutorial()) {
           <p class="mensaje-estado">Cargando tutorial...</p>

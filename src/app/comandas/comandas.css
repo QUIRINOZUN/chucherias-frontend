@@ -5,11 +5,13 @@
    lado. La tarjeta de una comanda urgente (15+ min) lleva anillo rojo. */
 
 :host {
+  --acento-modulo: var(--mod-comandas);
   display: block;
   min-height: 100vh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
+  animation: aparecer 0.22s ease;
 }
 
 .comandas-container {
@@ -98,14 +100,26 @@
   font-size: 1.15rem;
 }
 
+/* Ícono de columna en el color propio de Comandas (verde azulado,
+   --mod-comandas) en vez del acento naranja genérico — junto con el borde
+   de abajo del título, es el detalle que pidió el usuario ("mete detalles
+   en ese color en esa interfaz"). */
 .columna-icono {
   width: 36px;
   height: 36px;
   display: grid;
   place-items: center;
   border-radius: var(--radio-sm);
-  background: var(--acento-suave);
-  color: var(--acento-texto);
+  background: color-mix(in srgb, var(--acento-modulo) 20%, var(--pos-bg-card));
+  color: var(--acento-modulo);
+}
+
+/* Banda de color bajo el título de cada columna — el mismo espíritu que
+   la decoración del encabezado, repetida en miniatura arriba de cada
+   sección del tablero. */
+.columna-titulo {
+  padding-bottom: 10px;
+  border-bottom: 3px solid color-mix(in srgb, var(--acento-modulo) 45%, transparent);
 }
 
 .columna-contador {
@@ -116,15 +130,18 @@
   place-items: center;
   padding: 0 8px;
   border-radius: var(--radio-pastilla);
-  background: var(--pos-bg-card);
-  color: var(--pos-text-secondary);
+  background: color-mix(in srgb, var(--acento-modulo) 16%, var(--pos-bg-card));
+  color: var(--pos-text-primary);
   font-family: var(--fuente-texto);
   font-size: 0.85rem;
   font-weight: 700;
 }
 
 .mensaje-vacio {
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   padding: 20px 16px;
   border: 2px dashed var(--pos-border);
   border-radius: var(--radio-lg);
@@ -133,7 +150,19 @@
   font-size: 0.88rem;
 }
 
-/* Tarjeta de una comanda. */
+.mensaje-vacio p {
+  margin: 0;
+}
+
+.mensaje-vacio .icono {
+  width: 22px;
+  height: 22px;
+}
+
+/* Tarjeta de una comanda: borde superior en el color del módulo (no el
+   izquierdo, que ya usan los anillos de atención/urgente para su propio
+   aviso — ver abajo, esos SÍ necesitan quedarse naranja/rojo sin
+   competencia de otro color). */
 .tarjeta-orden {
   display: flex;
   flex-direction: column;
@@ -141,12 +170,56 @@
   padding: 18px;
   background: var(--pos-bg-card);
   border-radius: var(--radio-lg);
+  border-top: 3px solid var(--acento-modulo);
   box-shadow: var(--sombra-suave);
   animation: escalar 0.25s ease;
 }
 
+/* Tarjeta fantasma del tablero (2026-10-12) — `.esqueleto`/`.esqueleto-en-tarjeta`
+   son globales (ver styles.css); aquí solo la forma de una tarjeta de orden. */
+.tarjeta-orden-esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+}
+
+.tarjeta-orden-esqueleto .esqueleto-linea-numero {
+  height: 16px;
+  width: 45%;
+}
+
+.tarjeta-orden-esqueleto .esqueleto-linea-etiqueta {
+  height: 18px;
+  width: 80px;
+  border-radius: var(--radio-pastilla);
+}
+
+.tarjeta-orden-esqueleto .esqueleto-linea-item {
+  height: 14px;
+  width: 85%;
+}
+
 /* Una comanda que lleva mucho esperando se marca; el aviso no depende solo
-   del color: el tiempo también se lee en texto. */
+   del color: el tiempo también se lee en texto. Dos niveles en vez de uno
+   solo (2026-10-11): naranja de marca al acercarse al límite ("atención",
+   MINUTOS_PARA_ATENCION) y rojo solo al pasarlo de verdad ("urgente", el
+   umbral de siempre) — así cocina tiene aviso previo en vez de que una
+   comanda salte directo de "normal" a "roja" sin ninguna transición. */
+.tarjeta-atencion {
+  box-shadow:
+    0 0 0 2px var(--action-primary),
+    var(--sombra-suave);
+}
+
+.tarjeta-atencion .tiempo-transcurrido {
+  color: var(--acento-texto);
+  font-weight: 700;
+}
+
 .tarjeta-urgente {
   box-shadow:
     0 0 0 2px var(--action-danger),
@@ -188,8 +261,99 @@
 }
 
 .etiqueta-domicilio {
-  background: var(--acento-suave);
-  color: var(--acento-texto);
+  background: color-mix(in srgb, var(--acento-modulo) 22%, var(--pos-bg-card));
+  color: var(--pos-text-primary);
+}
+
+/* Nombre y dirección del cliente, solo en órdenes a domicilio (2026-10-11)
+   — para que cocina/repartidor sepan a dónde va sin tener que preguntar. */
+.datos-domicilio {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: var(--radio-xs);
+  background: color-mix(in srgb, var(--acento-modulo) 14%, var(--pos-bg-card));
+}
+
+.datos-domicilio-cliente {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--pos-text-primary);
+}
+
+.datos-domicilio-direccion {
+  font-size: 0.8rem;
+  color: var(--pos-text-secondary);
+}
+
+.datos-domicilio-telefono {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--pos-text-secondary);
+}
+
+/* Repartidor (2026-10-16). */
+.dato-repartidor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px;
+  margin-top: -4px;
+  border: none;
+  border-radius: var(--radio-xs);
+  background: color-mix(in srgb, var(--acento-modulo) 10%, transparent);
+  color: var(--pos-text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.dato-repartidor:disabled {
+  cursor: default;
+}
+
+.dato-repartidor .icono {
+  width: 14px;
+  height: 14px;
+}
+
+.dato-repartidor-sin-asignar {
+  color: var(--pos-text-secondary);
+  font-weight: 500;
+  font-style: italic;
+}
+
+.asignar-repartidor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.asignar-repartidor select {
+  flex: 1;
+  min-height: 36px;
+  padding: 0 8px;
+  font-size: 0.8rem;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-xs);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.boton-cancelar-repartidor {
+  flex-shrink: 0;
+  min-width: 36px;
+  min-height: 36px;
+  border: none;
+  background: none;
+  color: var(--pos-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .lista-items-orden {
@@ -219,7 +383,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  min-height: 32px;
+  min-height: 44px;
   padding: 0 10px;
   border: 1px solid var(--pos-border);
   border-radius: var(--radio-pastilla);
@@ -231,8 +395,9 @@
 }
 
 .boton-tutorial:hover {
-  border-color: var(--action-primary);
-  color: var(--action-primary);
+  border-color: var(--acento-modulo);
+  color: var(--pos-text-primary);
+  background: color-mix(in srgb, var(--acento-modulo) 14%, var(--pos-bg-main));
 }
 
 .boton-tutorial .icono {
@@ -262,6 +427,7 @@
   overflow-y: auto;
   background: var(--pos-bg-card);
   border-radius: var(--radio-lg);
+  border-top: 4px solid var(--acento-modulo);
   box-shadow: var(--sombra-elevada);
   padding: 24px;
   box-sizing: border-box;
@@ -282,8 +448,8 @@
 
 .boton-cerrar-tutorial {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: var(--radio-pastilla);
   background: var(--pos-bg-main);
@@ -303,6 +469,17 @@
   margin: 2px 0 16px;
   font-size: 0.85rem;
   color: var(--pos-text-secondary);
+}
+
+/* Foto de referencia "así debe quedar" (2026-10-12). */
+.imagen-referencia-tutorial {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  margin: 0 0 16px;
+  border-radius: var(--radio-md);
+  background: var(--pos-bg-main);
 }
 
 .lista-pasos-tutorial-comandas {
@@ -330,7 +507,7 @@
   width: 26px;
   height: 26px;
   border-radius: var(--radio-pastilla);
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
   font-size: 0.78rem;
   font-weight: 700;
@@ -352,7 +529,7 @@
   min-height: 56px;
   border: none;
   border-radius: var(--radio-md);
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
   font-size: 1rem;
   font-weight: 800;
@@ -364,7 +541,7 @@
 }
 
 .boton-avanzar:hover:not(:disabled) {
-  background: var(--action-primary-hover);
+  background: color-mix(in srgb, var(--acento-modulo) 85%, black);
 }
 
 .boton-avanzar:active:not(:disabled) {

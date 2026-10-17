@@ -11,6 +11,10 @@
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
+  /* Entrada suave al navegar aquí (2026-10-13) — mismo keyframe `aparecer`
+     ya usado en toda la app, aplicado una vez por pantalla en su :host en
+     vez de animar cada elemento interno por separado. */
+  animation: aparecer 0.22s ease;
 }
 
 .dashboard-container {
@@ -151,68 +155,51 @@
   text-align: center;
 }
 
-/* Widget de autoservicio de asistencia (Sprint 3). `width: 100%` por la
-   misma razón que `.grid-modulos` de abajo: `.dashboard-cuerpo` usa
-   `align-items: center`, así que sin un ancho explícito esta tarjeta se
-   encogería a su contenido en vez de usar el ancho disponible. */
-.tarjeta-mi-asistencia {
+/* Franja "Resumen de hoy" (2026-10-11): antes de esto, con pocos módulos
+   en un viewport alto, .dashboard-cuerpo (que centra verticalmente con
+   justify-content: center) dejaba un hueco grande entre el encabezado y la
+   rejilla sin aprovechar — ahora ese espacio muestra datos reales del día
+   en vez de quedar vacío. Mismo ancho máximo que .grid-modulos para que
+   ambos se vean como una sola columna centrada, no dos anchos distintos. */
+.dashboard-resumen {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
+  justify-content: center;
+  gap: 14px;
   width: 100%;
   max-width: 720px;
-  margin-bottom: 20px;
+  margin-bottom: 28px;
+}
+
+.resumen-stat {
+  flex: 1 1 160px;
   padding: 16px 20px;
   background: var(--pos-bg-card);
   border-radius: var(--radio-lg);
   box-shadow: var(--sombra-suave);
+  text-align: center;
 }
 
-.mi-asistencia-info {
-  flex: 1;
-  min-width: 0;
+.resumen-stat-valor {
+  display: block;
+  font-family: var(--fuente-titulo);
+  font-size: 1.4rem;
+  font-weight: 700;
+  /* --acento-texto, no --action-primary: el naranja de marca está pensado
+     para ir de FONDO con texto blanco (5.2:1); como texto sobre superficie
+     esta pantalla usa la variante por tema que sí llega a AA (revisado con
+     la fórmula de contraste WCAG: --action-primary aquí daba 3.06:1, apenas
+     sobre el mínimo de 3:1 para texto grande/negrita y por debajo del 4.5:1
+     que ya exige el resto del proyecto — ver nota del sistema de diseño en
+     styles.css). */
+  color: var(--acento-texto);
 }
 
-.mi-asistencia-estado {
-  font-size: 0.9rem;
+.resumen-stat-etiqueta {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
   color: var(--pos-text-secondary);
-}
-
-.mi-asistencia-adentro {
-  color: var(--exito-texto);
-  font-weight: 700;
-}
-
-.boton-mi-asistencia {
-  flex-shrink: 0;
-  min-height: 48px;
-  padding: 0 20px;
-  border: none;
-  border-radius: var(--radio-pastilla);
-  background: var(--action-primary);
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.88rem;
-  cursor: pointer;
-  box-shadow: var(--sombra-acento);
-}
-
-.boton-mi-asistencia-salida {
-  background: var(--action-success);
-}
-
-.boton-mi-asistencia:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.mi-asistencia-error {
-  flex-basis: 100%;
-  margin: 0;
-  color: var(--peligro-texto);
-  font-size: 0.82rem;
 }
 
 /* Rejilla adaptable: tantas columnas como quepan (mínimo 170 px por tarjeta).
@@ -234,22 +221,78 @@
   max-width: 720px;
 }
 
-/* Tarjeta de un módulo: es un enlace completo (área táctil grande). */
+/* Tarjeta de un módulo: es un enlace completo (área táctil grande). El
+   borde izquierdo usa el color de identidad propio del módulo
+   (--acento-modulo, fijado inline por cada tarjeta desde dashboard.html —
+   ver Modulo.colorVar) — es el mismo color que va a recibir el encabezado
+   de esa pantalla al abrirla, así la tarjeta ya "avisa" de qué color es
+   cada módulo antes de entrar. */
 .tarjeta-modulo {
   position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 8px;
   min-height: 44px;
   padding: 22px 20px;
   background: var(--pos-bg-card);
-  border-radius: var(--radio-lg);
+  animation: subir 0.3s ease both;
+  /* Esquina inferior izquierda a propósito sin redondear (2026-10-13): una
+     tarjeta perfectamente simétrica en sus 4 esquinas es el molde más
+     genérico posible — esta pequeña irregularidad, junto al borde de color
+     del lado izquierdo, hace que la tarjeta se sienta más una "etiqueta"
+     recortada que un bloque de plantilla. */
+  border-radius: var(--radio-lg) var(--radio-lg) var(--radio-lg) 4px;
+  border-left: 4px solid var(--acento-modulo, var(--action-primary));
   box-shadow: var(--sombra-suave);
   text-decoration: none;
   color: inherit;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
+}
+
+/* Entrada escalonada (2026-10-13, ampliada 2026-10-15 con el módulo
+   Clientes): cada tarjeta aparece un poco después de la anterior en vez de
+   todas a la vez — hasta 12 módulos existen hoy, así que cubre el caso real
+   sin necesitar JavaScript para calcular el retraso. `both` en la animación
+   de arriba mantiene el estado inicial (oculta) durante el retraso, en vez
+   de destellar visible un instante. */
+.tarjeta-modulo:nth-child(1) {
+  animation-delay: 0.03s;
+}
+.tarjeta-modulo:nth-child(2) {
+  animation-delay: 0.07s;
+}
+.tarjeta-modulo:nth-child(3) {
+  animation-delay: 0.11s;
+}
+.tarjeta-modulo:nth-child(4) {
+  animation-delay: 0.15s;
+}
+.tarjeta-modulo:nth-child(5) {
+  animation-delay: 0.19s;
+}
+.tarjeta-modulo:nth-child(6) {
+  animation-delay: 0.23s;
+}
+.tarjeta-modulo:nth-child(7) {
+  animation-delay: 0.27s;
+}
+.tarjeta-modulo:nth-child(8) {
+  animation-delay: 0.31s;
+}
+.tarjeta-modulo:nth-child(9) {
+  animation-delay: 0.35s;
+}
+.tarjeta-modulo:nth-child(10) {
+  animation-delay: 0.39s;
+}
+.tarjeta-modulo:nth-child(11) {
+  animation-delay: 0.43s;
+}
+.tarjeta-modulo:nth-child(12) {
+  animation-delay: 0.47s;
 }
 
 /* Aviso de "N variantes sin receta" sobre la tarjeta de Recetario
@@ -280,8 +323,9 @@
   }
 
   .tarjeta-modulo:hover .modulo-icono {
-    background: var(--action-primary);
+    background: var(--acento-modulo, var(--action-primary));
     color: #fff;
+    transform: rotate(-6deg) scale(1.06);
   }
 }
 
@@ -289,19 +333,31 @@
   transform: scale(0.98);
 }
 
-/* Cuadro del ícono; se rellena de naranja al pasar el cursor sobre la tarjeta. */
+/* Sello circular del ícono (2026-10-13: antes un cuadrado con esquinas
+   redondeadas — el molde de "ícono en caja" de cualquier plantilla
+   genérica). Mismo tratamiento que .insignia-pantalla de los encabezados:
+   círculo + halo. Se rellena con el color propio del módulo y se ladea
+   un poco al pasar el cursor sobre la tarjeta, en vez de solo cambiar de
+   color. */
 .modulo-icono {
   width: 52px;
   height: 52px;
   display: grid;
   place-items: center;
   margin-bottom: 8px;
-  border-radius: var(--radio-md);
-  background: var(--acento-suave);
-  color: var(--acento-texto);
+  border-radius: 50%;
+  background: color-mix(
+    in srgb,
+    var(--acento-modulo, var(--action-primary)) 20%,
+    var(--pos-bg-card)
+  );
+  color: var(--acento-modulo, var(--action-primary));
+  box-shadow: 0 0 0 4px
+    color-mix(in srgb, var(--acento-modulo, var(--action-primary)) 12%, transparent);
   transition:
     background-color 0.2s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    transform 0.25s ease;
 }
 
 .modulo-icono .icono {
@@ -309,16 +365,114 @@
   height: 26px;
 }
 
+/* Título de la tarjeta: mismos ejes variables de Fraunces que ya aplican a
+   h1-h3 globalmente (ver styles.css) — .modulo-titulo es un <span>, no un
+   encabezado real, así que necesita su propia declaración. */
 .modulo-titulo {
+  position: relative;
   font-family: var(--fuente-titulo);
   font-weight: 800;
   font-size: 1.15rem;
+  font-variation-settings:
+    'SOFT' 60,
+    'WONK' 1;
 }
 
 .modulo-descripcion {
   font-size: 0.82rem;
   line-height: 1.35;
   color: var(--pos-text-secondary);
+}
+
+/* Envoltorio de título + descripción (2026-10-16): antes eran dos hijos
+   sueltos del flex de la tarjeta; agrupados para poder reacomodarlos junto
+   al ícono en una fila (columna izquierda/derecha del menú, ver abajo) sin
+   que pierdan su propio espaciado vertical entre sí. Mismo gap de 8px que
+   ya separaba todo en la tarjeta original (el `gap` del `.tarjeta-modulo`
+   ahora solo corre entre el ícono y este bloque). */
+.modulo-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Identidad por COLUMNA en el menú principal (2026-10-16, pedido
+   explícito del usuario): con 3 columnas, cada una tiene su propio
+   tratamiento en vez de que las 10 tarjetas se vean idénticas. Se activa
+   SOLO cuando la rejilla de verdad tiene 3 columnas fijas (ver
+   grid-template-columns más abajo) — con auto-fill (fuera de este
+   breakpoint) el índice de una tarjeta no corresponde a ninguna columna
+   real, así que aplicar esto sin la rejilla fija daría resultados
+   incoherentes en pantallas intermedias. */
+@media (min-width: 640px) {
+  .grid-modulos {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 780px;
+    gap: 20px;
+  }
+
+  /* COLUMNA IZQUIERDA (1, 4, 7, 10): ícono grande, pegado a la izquierda,
+     con el texto a su lado — en vez de arriba del texto. */
+  .tarjeta-modulo:nth-child(3n + 1) {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .tarjeta-modulo:nth-child(3n + 1) .modulo-icono {
+    width: 68px;
+    height: 68px;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  .tarjeta-modulo:nth-child(3n + 1) .modulo-icono .icono {
+    width: 34px;
+    height: 34px;
+  }
+
+  /* COLUMNA CENTRAL (2, 5, 8): todo centrado — ícono, título y descripción. */
+  .tarjeta-modulo:nth-child(3n + 2) {
+    align-items: center;
+    text-align: center;
+  }
+
+  .tarjeta-modulo:nth-child(3n + 2) .modulo-texto {
+    align-items: center;
+  }
+
+  /* COLUMNA DERECHA (3, 6, 9): grande y llamativa — ícono más grande que
+     el de la izquierda, pegado del lado derecho (fila invertida), con
+     más tamaño de letra y una sombra de acento permanente (no solo al
+     pasar el cursor, como el resto) para que destaque de un vistazo. */
+  .tarjeta-modulo:nth-child(3n) {
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 16px;
+    padding: 26px 22px;
+    box-shadow: var(--sombra-acento);
+  }
+
+  .tarjeta-modulo:nth-child(3n) .modulo-texto {
+    text-align: right;
+  }
+
+  .tarjeta-modulo:nth-child(3n) .modulo-icono {
+    width: 76px;
+    height: 76px;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  .tarjeta-modulo:nth-child(3n) .modulo-icono .icono {
+    width: 38px;
+    height: 38px;
+  }
+
+  .tarjeta-modulo:nth-child(3n) .modulo-titulo {
+    font-size: 1.3rem;
+  }
 }
 
 /* Botón de cerrar sesión: contorno neutro y texto de peligro. */

@@ -59,6 +59,10 @@ export class HistorialVentasComponent implements OnInit {
   motivoCancelacion = signal('');
   procesandoCancelacion = signal(false);
 
+  // RF-23 (2026-10-16): aviso breve tras cancelar, si esa venta había
+  // contado una visita de lealtad que el servidor acaba de revertir.
+  avisoLealtadRevertida = signal(false);
+
   // Qué productos (orden_detalle_id) se van a cancelar; por default todos los
   // activos de la venta (cancelación total). Desmarcar alguno la vuelve parcial.
   lineasACancelar = signal<Set<number>>(new Set());
@@ -209,10 +213,11 @@ export class HistorialVentasComponent implements OnInit {
         [...this.insumosRescatados()],
       )
       .subscribe({
-        next: () => {
+        next: (respuesta) => {
           this.procesandoCancelacion.set(false);
           this.cancelandoId.set(null);
           this.insumosParaRescate.set([]);
+          this.avisoLealtadRevertida.set(respuesta.lealtad_revertida);
           this.cargarVentas();
         },
         error: (error: HttpErrorResponse) => {
@@ -220,6 +225,10 @@ export class HistorialVentasComponent implements OnInit {
           this.error.set(error.error?.error || 'No se pudo cancelar la venta.');
         },
       });
+  }
+
+  cerrarAvisoLealtad(): void {
+    this.avisoLealtadRevertida.set(false);
   }
 
   // RF-08: expande/colapsa el detalle de tiempos por estado de una venta

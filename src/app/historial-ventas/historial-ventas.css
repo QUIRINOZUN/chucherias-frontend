@@ -6,11 +6,13 @@
 
 /* Contenedor del componente. */
 :host {
+  --acento-modulo: var(--mod-ventas);
   display: block;
   min-height: 100vh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
+  animation: aparecer 0.22s ease;
 }
 
 .historial-container {
@@ -72,6 +74,33 @@
   color: var(--peligro-texto);
 }
 
+/* RF-23 (2026-10-16): aviso de lealtad revertida tras cancelar. */
+.aviso-lealtad-revertida {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: var(--radio-md);
+  border-left: 4px solid var(--mod-clientes);
+  background: color-mix(in srgb, var(--mod-clientes) 12%, var(--pos-bg-card));
+  font-size: 0.85rem;
+}
+
+.boton-cerrar-aviso {
+  flex-shrink: 0;
+  min-width: 32px;
+  min-height: 32px;
+  border: none;
+  background: none;
+  color: var(--pos-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Barra con el total del día. */
 .resumen-dia {
   display: flex;
@@ -111,6 +140,27 @@
 .tarjeta-venta.tarjeta-venta-cancelada {
   border-left-color: var(--peligro-texto);
   opacity: 0.75;
+}
+
+/* Tarjeta fantasma (2026-10-12) — `.esqueleto` es global (ver styles.css). */
+.tarjeta-venta-esqueleto {
+  background: var(--pos-bg-card);
+  border: 1px solid var(--pos-border);
+  border-radius: var(--pos-radio);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.esqueleto-linea-orden {
+  height: 15px;
+  width: 50%;
+}
+
+.esqueleto-linea-item-venta {
+  height: 12px;
+  width: 75%;
 }
 
 .venta-encabezado {
@@ -296,6 +346,24 @@
   font-size: 1rem;
 }
 
+/* Nombre y dirección del cliente, solo en ventas a domicilio (2026-10-11). */
+.venta-domicilio {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: var(--pos-text-secondary);
+}
+
+.venta-lealtad {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: var(--pos-text-secondary);
+}
+
+.venta-lealtad-descuento {
+  color: var(--exito-texto);
+  font-weight: 600;
+}
+
 .boton-cancelar-venta {
   width: 100%;
   min-height: 40px;
@@ -425,8 +493,16 @@
   box-shadow: var(--sombra-suave);
 }
 
+/* Barra del total del día, con el color propio de Ventas (azul) arriba —
+   las tarjetas de venta se quedan SOLO con su verde/rojo funcional
+   (completada/cancelada), sin un segundo color compitiendo por atención. */
 .resumen-dia {
   border-color: transparent;
+  border-top: 3px solid var(--acento-modulo);
+}
+
+.tiempos-panel {
+  border-top: 3px solid var(--acento-modulo);
 }
 
 .resumen-dia-monto,

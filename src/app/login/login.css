@@ -35,6 +35,20 @@
   color: #fdf6ec;
 }
 
+/* Franja arcoíris arriba del panel de marca (2026-10-13): un guiño al
+   logotipo real de Chucherías Mix, cuyas letras alternan varios colores
+   (ver las fotos de marca). Usa --franja-arcoiris (styles.css) — la MISMA
+   variable que ahora llevan los 9 encabezados de pantalla, para que el
+   arcoíris sea un elemento consistente en toda la app y no algo exclusivo
+   del login. */
+.login-marca::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 5px;
+  background: var(--franja-arcoiris);
+}
+
 .marca-composicion {
   position: absolute;
   inset: 0;

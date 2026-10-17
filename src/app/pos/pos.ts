@@ -45,6 +45,10 @@ import { Router } from '@angular/router';
 import { AuthService } from '../core/auth';
 import { CajaService, MovimientoCaja, TipoMovimientoCaja } from '../core/caja';
 import { CatalogoService, Categoria, Producto, Variante } from '../core/catalogo';
+import { Cliente, ClientesService } from '../core/clientes';
+import { EmpleadosService, Repartidor } from '../core/empleados';
+import { FocoDialogoDirective } from '../core/foco-dialogo';
+import { InsumosService } from '../core/insumos';
 import { ThemeService } from '../core/theme';
 import { MetodoPago, RespuestaVenta, TipoEntrega, VentasService } from '../core/ventas';
 import { obtenerEstiloCategoria } from './categoria-estilos';
@@ -106,6 +110,19 @@ interface Recibo {
   total: number;
   metodoPago: MetodoPago;
   tipoEntrega: TipoEntrega;
+  // Solo tienen valor cuando tipoEntrega es 'domicilio'.
+  clienteNombre: string;
+  clienteDireccion: string;
+  clienteTelefono: string;
+  // Nombre del repartidor asignado (2026-10-16), si tipoEntrega es
+  // 'domicilio' y se eligió uno — null si no se asignó todavía.
+  repartidorNombre: string | null;
+  // RF-21/RF-22 (2026-10-15): nombre del cliente de LEALTAD (si se ligó
+  // alguno) y el descuento que el SERVIDOR de verdad aplicó — nunca el
+  // estimado local (ver previsualizacionLealtad), que puede no coincidir
+  // si el cliente ya tenía una visita contada hoy por otra compra.
+  clienteLealtadNombre: string | null;
+  descuentoLealtad: number;
   montoRecibido: number | null;
   cambio: number | null;
   cajero: string;
@@ -115,7 +132,7 @@ interface Recibo {
 @Component({
   selector: 'app-pos',
   standalone: true,
-  imports: [CurrencyPipe, DatePipe],
+  imports: [CurrencyPipe, DatePipe, FocoDialogoDirective],
   templateUrl: './pos.html',
   styleUrl: './pos.css',
 })
@@ -158,6 +175,50 @@ export class PosComponent implements OnInit, OnDestroy {
   // ingredientes removibles de cada producto.
   ingredientesDisponibles = obtenerIngredientesRemovibles;
   tipoEntrega = signal<TipoEntrega>('presencial');
+  // Solo se piden y se mandan al servidor cuando tipoEntrega es 'domicilio'.
+  clienteNombreForm = signal('');
+  clienteDireccionForm = signal('');
+  clienteTelefonoForm = signal('');
+  // Repartidor asignado (2026-10-16, opcional — también se puede asignar
+  // después desde Comandas). La lista se carga una vez al entrar al POS;
+  // vacía = no hay repartidores activos capturados todavía.
+  repartidores = signal<Repartidor[]>([]);
+  repartidorSeleccionadoId = signal<number | null>(null);
+
+  // ---------------------------------------------------------------------------
+  // CLIENTE DE LEALTAD (RF-21/RF-22, 2026-10-15) — independiente de tipoEntrega:
+  // un cliente de lealtad puede pedir presencial o a domicilio por igual.
+  // Opcional: sin seleccionar ninguno, la venta es la de siempre (cliente
+  // ocasional, sin descuento). Ver ClientesService para las reglas completas.
+  // ---------------------------------------------------------------------------
+  clienteLealtadQuery = signal('');
+  resultadosClienteLealtad = signal<Cliente[]>([]);
+  buscandoClienteLealtad = signal(false);
+  clienteLealtadSeleccionado = signal<Cliente | null>(null);
+  // Alta rápida cuando la búsqueda no encuentra al cliente.
+  mostrarNuevoClienteLealtad = signal(false);
+  nuevoClienteLealtadNombre = signal('');
+  nuevoClienteLealtadTelefono = signal('');
+  creandoClienteLealtad = signal(false);
+  errorClienteLealtad = signal('');
+  // Para no disparar una búsqueda en cada tecla — se reinicia en cada cambio.
+  private debounceClienteLealtadId?: ReturnType<typeof setTimeout>;
+
+  // ---------------------------------------------------------------------------
+  // REGISTRO DE CLIENTE INDEPENDIENTE (2026-10-16): un botón de la barra
+  // superior para dar de alta a un cliente SIN que compre nada — el mismo
+  // alta rápida que ya existía dentro del cobro (ver arriba), pero accesible
+  // en cualquier momento, sin carrito ni venta de por medio. Usa el mismo
+  // ClientesService; no toca el carrito, el cobro ni tipoEntrega.
+  // ---------------------------------------------------------------------------
+  mostrarRegistroCliente = signal(false);
+  nombreRegistroCliente = signal('');
+  telefonoRegistroCliente = signal('');
+  registrandoCliente = signal(false);
+  errorRegistroCliente = signal('');
+  // Cuando tiene valor, la ventana muestra la confirmación en vez del
+  // formulario — "Nombre registrado con 0 visitas".
+  clienteRegistrado = signal<Cliente | null>(null);
 
   // Contador para fabricar ids únicos de línea (item-1, item-2, …).
   private contadorIdItem = 0;
@@ -225,22 +286,67 @@ export class PosComponent implements OnInit, OnDestroy {
     return categoriaId ? productos.filter((p) => p.categoria_id === categoriaId) : productos;
   });
 
-  // Total a cobrar: suma de precio × cantidad de cada línea.
+  // Total a cobrar: (precio + cargos extra de elección, RF-16) × cantidad
+  // de cada línea. El servidor vuelve a calcular esto él solo al registrar
+  // la venta (ver routes/ventas.js) — este total es solo lo que se MUESTRA
+  // antes de cobrar, para que coincida con lo que de verdad se va a cobrar.
   totalCarrito = computed(() =>
-    this.carrito().reduce((suma, item) => suma + item.precio * item.cantidad, 0),
+    this.carrito().reduce(
+      (suma, item) => suma + (item.precio + this.costoExtraDeLinea(item)) * item.cantidad,
+      0,
+    ),
   );
 
   // Cantidad total de artículos (suma de cantidades, no de líneas).
   cantidadItems = computed(() => this.carrito().reduce((suma, item) => suma + item.cantidad, 0));
+
+  // RF-21/RF-22: estimación del descuento de lealtad ANTES de cobrar, para
+  // que el cajero pida el monto correcto en efectivo. Es solo una vista
+  // previa — el servidor es quien de verdad decide al registrar la venta
+  // (POST /api/ventas), porque solo él sabe si ese cliente ya tuvo una
+  // visita contada hoy por otra compra. null = sin cliente seleccionado o
+  // el total no alcanza los $100 mínimos para contar visita.
+  previsualizacionLealtad = computed(() => {
+    const cliente = this.clienteLealtadSeleccionado();
+    if (!cliente || this.totalCarrito() < 100) {
+      return null;
+    }
+    const visitaNumero = cliente.visitas_acumuladas + 1;
+    const porcentaje = visitaNumero === 10 ? 15 : visitaNumero === 5 ? 5 : 0;
+    return { visitaNumero, porcentaje };
+  });
+
+  // Total que de verdad se le cobra al cliente: el de las líneas del
+  // carrito menos el descuento de lealtad ESTIMADO (ver arriba). Es lo que
+  // se usa para cobrar en efectivo y armar las sugerencias de billete —
+  // `totalCarrito()` sigue siendo la suma cruda, sin descuento, para el
+  // badge del carrito (ahí todavía no se ha elegido ningún cliente).
+  totalAPagar = computed(() => {
+    const total = this.totalCarrito();
+    const preview = this.previsualizacionLealtad();
+    if (!preview || preview.porcentaje === 0) {
+      return total;
+    }
+    return Math.round(total * (1 - preview.porcentaje / 100) * 100) / 100;
+  });
 
   // Botones rápidos de "con qué billete pagó": el total exacto (pago
   // justo, sin cambio) + cada denominación real por encima del total. Si
   // el cliente entrega una combinación que no calza con ningún billete
   // (ej. $105), el cajero sigue pudiendo teclear el monto a mano.
   sugerenciasEfectivo = computed(() => {
-    const total = this.totalCarrito();
+    const total = this.totalAPagar();
     return [total, ...DENOMINACIONES_MXN.filter((billete) => billete > total)];
   });
+
+  // 2026-10-12: solo los billetes reales (20/50/100/200/500/1000) tienen una
+  // ilustración vectorial propia (public/img/billetes/); el "total exacto"
+  // de sugerenciasEfectivo casi siempre es un monto que no corresponde a
+  // ningún billete real (ej. $46), así que ese botón sigue mostrando solo
+  // el número.
+  imagenBillete(monto: number): string | null {
+    return DENOMINACIONES_MXN.includes(monto) ? `/img/billetes/billete_${monto}.svg` : null;
+  }
 
   // Cambio a devolver = monto recibido - total. Solo tiene sentido en
   // efectivo y con un monto capturado; si es negativo, todavía falta dinero.
@@ -249,7 +355,7 @@ export class PosComponent implements OnInit, OnDestroy {
     if (this.metodoPago() !== 'efectivo' || recibido == null) {
       return null;
     }
-    const diferencia = recibido - this.totalCarrito();
+    const diferencia = recibido - this.totalAPagar();
     return diferencia;
   });
 
@@ -257,6 +363,9 @@ export class PosComponent implements OnInit, OnDestroy {
     private catalogoService: CatalogoService,
     private ventasService: VentasService,
     private cajaService: CajaService,
+    private insumosService: InsumosService,
+    private clientesService: ClientesService,
+    private empleadosService: EmpleadosService,
     private authService: AuthService,
     public themeService: ThemeService,
     private router: Router,
@@ -287,6 +396,54 @@ export class PosComponent implements OnInit, OnDestroy {
       () => this.verificarRetirosPendientes(),
       INTERVALO_RETIROS_MS,
     );
+
+    // RF-16 (2026-10-13): nombre de insumo → cargo extra. Falla en
+    // silencio (el mapa se queda vacío): sin esto ninguna opción muestra
+    // recargo, pero el resto del POS sigue funcionando igual.
+    this.insumosService.obtenerCostosExtra().subscribe({
+      next: (lista) => {
+        const mapa = new Map<string, number>();
+        for (const fila of lista) {
+          mapa.set(fila.nombre, Number(fila.costo_extra));
+        }
+        this.costosExtraPorInsumo.set(mapa);
+      },
+      error: () => {},
+    });
+
+    // 2026-10-16: repartidores activos, para el selector del cobro a
+    // domicilio. Falla en silencio — sin esto el selector simplemente no
+    // aparece, no bloquea cobrar (el repartidor es opcional).
+    this.empleadosService.listarRepartidores().subscribe({
+      next: (lista) => this.repartidores.set(lista),
+      error: () => {},
+    });
+  }
+
+  // RF-16: nombre de insumo → cargo extra (solo los que de verdad tienen
+  // uno, ver GET /api/insumos/costos-extra).
+  costosExtraPorInsumo = signal<Map<string, number>>(new Map());
+
+  // Cargo extra de UN insumo, o 0 si no tiene.
+  costoExtraInsumo(nombreInsumo: string): number {
+    return this.costosExtraPorInsumo().get(nombreInsumo) ?? 0;
+  }
+
+  // Suma de los cargos extra de las opciones ya elegidas en una línea — se
+  // factura la MISMA cantidad de veces que aparece en eleccionesSeleccionadas
+  // (si una opción con cargo se repite, el cargo se repite también).
+  costoExtraDeLinea(item: ItemCarrito): number {
+    return item.eleccionesSeleccionadas.reduce(
+      (suma, opcion) => suma + this.costoExtraInsumo(opcion.insumo),
+      0,
+    );
+  }
+
+  // Subtotal de una línea del carrito, con cargos extra ya incluidos — lo
+  // usa tanto el carrito como el comprobante impreso, para que ninguno de
+  // los dos muestre un número distinto al total real que cobra el servidor.
+  subtotalLinea(item: ItemCarrito): number {
+    return (item.precio + this.costoExtraDeLinea(item)) * item.cantidad;
   }
 
   // Al salir de la pantalla se apaga el sondeo; si no, seguiría consultando
@@ -295,6 +452,7 @@ export class PosComponent implements OnInit, OnDestroy {
     if (this.intervaloRetirosId) {
       clearInterval(this.intervaloRetirosId);
     }
+    clearTimeout(this.debounceClienteLealtadId);
   }
 
   // ===========================================================================
@@ -342,6 +500,20 @@ export class PosComponent implements OnInit, OnDestroy {
   // (con "Desde" si el producto tiene más de una).
   precioDesde(producto: Producto): number {
     return Math.min(...producto.variantes.map((v) => v.precio));
+  }
+
+  // Insignia "ya está en el carrito" de la tarjeta colapsada (2026-10-11):
+  // suma la cantidad de TODAS las líneas del carrito cuya variante pertenece
+  // a este producto — una variante basta (no hace falta que sea siempre la
+  // misma) porque la tarjeta representa al producto completo, no a una sola
+  // presentación. Antes, agregar algo y volver a la rejilla se veía igual
+  // que antes de agregarlo, sin ninguna pista; esto da retroalimentación
+  // inmediata y ayuda a no duplicar por accidente.
+  cantidadEnCarrito(producto: Producto): number {
+    const idsVariantes = new Set(producto.variantes.map((v) => v.id));
+    return this.carrito()
+      .filter((item) => idsVariantes.has(item.varianteId))
+      .reduce((total, item) => total + item.cantidad, 0);
   }
 
   // ===========================================================================
@@ -673,17 +845,29 @@ export class PosComponent implements OnInit, OnDestroy {
     if (item.eleccionesSeleccionadas.length > 0) {
       // Se agrupan por insumo para que un sabor elegido más de una vez
       // (ej. "doble Nutella") salga como "Nutella ×2" y no repetido.
-      const conteos = new Map<string, { display: string; cantidad: number }>();
+      const conteos = new Map<string, { display: string; cantidad: number; costoExtra: number }>();
       for (const eleccion of item.eleccionesSeleccionadas) {
         const actual = conteos.get(eleccion.insumo);
         if (actual) {
           actual.cantidad += 1;
         } else {
-          conteos.set(eleccion.insumo, { display: eleccion.display, cantidad: 1 });
+          conteos.set(eleccion.insumo, {
+            display: eleccion.display,
+            cantidad: 1,
+            costoExtra: this.costoExtraInsumo(eleccion.insumo),
+          });
         }
       }
+      // RF-16 (2026-10-13): la opción con cargo lo muestra junto al nombre
+      // ("Cacahuate enchilado (+$5.00)") para que quede claro por qué subió
+      // el total antes de confirmar la venta.
       const texto = [...conteos.values()]
-        .map((c) => (c.cantidad > 1 ? `${c.display} ×${c.cantidad}` : c.display))
+        .map((c) => {
+          const nombre = c.cantidad > 1 ? `${c.display} ×${c.cantidad}` : c.display;
+          return c.costoExtra > 0
+            ? `${nombre} (+${(c.costoExtra * c.cantidad).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })})`
+            : nombre;
+        })
         .join(', ');
       partes.push('Con: ' + texto);
     }
@@ -727,6 +911,138 @@ export class PosComponent implements OnInit, OnDestroy {
   // y aparece en el comprobante y en el tablero de comandas.
   seleccionarTipoEntrega(tipo: TipoEntrega): void {
     this.tipoEntrega.set(tipo);
+    // Si se vuelve a presencial, se limpian para no mandar basura si el
+    // cajero cambia de opinión después de haber empezado a escribir.
+    if (tipo === 'presencial') {
+      this.clienteNombreForm.set('');
+      this.clienteDireccionForm.set('');
+      this.clienteTelefonoForm.set('');
+      this.repartidorSeleccionadoId.set(null);
+    }
+  }
+
+  seleccionarRepartidor(id: string): void {
+    this.repartidorSeleccionadoId.set(id ? +id : null);
+  }
+
+  // ===========================================================================
+  // CLIENTE DE LEALTAD (RF-21/RF-22)
+  // ===========================================================================
+
+  // Typeahead: busca por nombre o teléfono con un pequeño retraso (no en
+  // cada tecla) para no saturar al servidor. Menos de 2 caracteres no busca.
+  buscarClienteLealtad(texto: string): void {
+    this.clienteLealtadQuery.set(texto);
+    this.mostrarNuevoClienteLealtad.set(false);
+    clearTimeout(this.debounceClienteLealtadId);
+    if (texto.trim().length < 2) {
+      this.resultadosClienteLealtad.set([]);
+      return;
+    }
+    this.debounceClienteLealtadId = setTimeout(() => {
+      this.buscandoClienteLealtad.set(true);
+      this.clientesService.buscar(texto).subscribe({
+        next: (resultados) => {
+          this.resultadosClienteLealtad.set(resultados);
+          this.buscandoClienteLealtad.set(false);
+        },
+        error: () => {
+          this.resultadosClienteLealtad.set([]);
+          this.buscandoClienteLealtad.set(false);
+        },
+      });
+    }, 300);
+  }
+
+  seleccionarClienteLealtad(cliente: Cliente): void {
+    this.clienteLealtadSeleccionado.set(cliente);
+    this.clienteLealtadQuery.set('');
+    this.resultadosClienteLealtad.set([]);
+    this.mostrarNuevoClienteLealtad.set(false);
+  }
+
+  quitarClienteLealtad(): void {
+    this.clienteLealtadSeleccionado.set(null);
+  }
+
+  // La búsqueda no encontró al cliente: se ofrece un alta rápida con lo que
+  // ya se tecleó como nombre inicial (el cajero puede corregirlo).
+  abrirNuevoClienteLealtad(): void {
+    this.mostrarNuevoClienteLealtad.set(true);
+    this.nuevoClienteLealtadNombre.set(this.clienteLealtadQuery());
+    this.nuevoClienteLealtadTelefono.set('');
+    this.errorClienteLealtad.set('');
+  }
+
+  cancelarNuevoClienteLealtad(): void {
+    this.mostrarNuevoClienteLealtad.set(false);
+  }
+
+  crearClienteLealtad(): void {
+    const nombre = this.nuevoClienteLealtadNombre().trim();
+    if (!nombre) {
+      this.errorClienteLealtad.set('El nombre del cliente es obligatorio.');
+      return;
+    }
+    this.creandoClienteLealtad.set(true);
+    this.errorClienteLealtad.set('');
+    this.clientesService.crear(nombre, this.nuevoClienteLealtadTelefono().trim()).subscribe({
+      next: (cliente) => {
+        this.creandoClienteLealtad.set(false);
+        this.seleccionarClienteLealtad(cliente);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.creandoClienteLealtad.set(false);
+        this.errorClienteLealtad.set(error.error?.error || 'Error al crear el cliente.');
+      },
+    });
+  }
+
+  // ===========================================================================
+  // REGISTRO DE CLIENTE INDEPENDIENTE (botón de la barra superior): dar de
+  // alta a un cliente sin que compre nada. No toca el carrito ni el cobro.
+  // ===========================================================================
+
+  abrirRegistroCliente(): void {
+    this.nombreRegistroCliente.set('');
+    this.telefonoRegistroCliente.set('');
+    this.errorRegistroCliente.set('');
+    this.clienteRegistrado.set(null);
+    this.mostrarRegistroCliente.set(true);
+  }
+
+  cerrarRegistroCliente(): void {
+    this.mostrarRegistroCliente.set(false);
+  }
+
+  registrarCliente(): void {
+    const nombre = this.nombreRegistroCliente().trim();
+    if (!nombre) {
+      this.errorRegistroCliente.set('El nombre del cliente es obligatorio.');
+      return;
+    }
+    this.registrandoCliente.set(true);
+    this.errorRegistroCliente.set('');
+    this.clientesService.crear(nombre, this.telefonoRegistroCliente().trim()).subscribe({
+      next: (cliente) => {
+        this.registrandoCliente.set(false);
+        // Se queda en la misma ventana mostrando la confirmación —
+        // "Registrar otro" reinicia el formulario sin tener que reabrir.
+        this.clienteRegistrado.set(cliente);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.registrandoCliente.set(false);
+        this.errorRegistroCliente.set(error.error?.error || 'Error al registrar el cliente.');
+      },
+    });
+  }
+
+  // "Registrar otro": vuelve al formulario vacío sin cerrar la ventana.
+  registrarOtroCliente(): void {
+    this.nombreRegistroCliente.set('');
+    this.telefonoRegistroCliente.set('');
+    this.errorRegistroCliente.set('');
+    this.clienteRegistrado.set(null);
   }
 
   // Panel del carrito en pantallas angostas.
@@ -788,6 +1104,14 @@ export class PosComponent implements OnInit, OnDestroy {
     if (!this.carrito().every((item) => this.personalizacionCompleta(item))) {
       return false;
     }
+    if (
+      this.tipoEntrega() === 'domicilio' &&
+      (!this.clienteNombreForm().trim() ||
+        !this.clienteDireccionForm().trim() ||
+        !this.clienteTelefonoForm().trim())
+    ) {
+      return false;
+    }
     if (this.metodoPago() === 'efectivo') {
       const cambio = this.cambio();
       return cambio != null && cambio >= 0;
@@ -821,14 +1145,30 @@ export class PosComponent implements OnInit, OnDestroy {
     const itemsCarrito = this.carrito();
     const metodoPago = this.metodoPago();
     const tipoEntrega = this.tipoEntrega();
+    const clienteNombre = this.clienteNombreForm().trim();
+    const clienteDireccion = this.clienteDireccionForm().trim();
+    const clienteTelefono = this.clienteTelefonoForm().trim();
     const montoRecibido = this.montoRecibido();
     const total = this.totalCarrito();
+    const clienteLealtad = this.clienteLealtadSeleccionado();
+    const repartidorId = this.repartidorSeleccionadoId();
 
     // Lo que viaja al servidor: método, entrega y, por línea, SOLO variante,
-    // cantidad y notas. Ningún precio.
+    // cantidad y notas. Ningún precio. Datos del cliente solo si es domicilio.
+    // cliente_id es opcional (RF-21/RF-22) — el servidor vuelve a calcular el
+    // descuento de lealtad él solo, nunca se envía un porcentaje o monto.
     const payload = {
       metodo_pago: metodoPago,
-      tipo_entrega: this.tipoEntrega(),
+      tipo_entrega: tipoEntrega,
+      ...(tipoEntrega === 'domicilio'
+        ? {
+            cliente_nombre: clienteNombre,
+            cliente_direccion: clienteDireccion,
+            cliente_telefono: clienteTelefono,
+            ...(repartidorId ? { repartidor_id: repartidorId } : {}),
+          }
+        : {}),
+      ...(clienteLealtad ? { cliente_id: clienteLealtad.id } : {}),
       items: itemsCarrito.map((item) => ({
         variante_id: item.varianteId,
         cantidad: item.cantidad,
@@ -851,16 +1191,28 @@ export class PosComponent implements OnInit, OnDestroy {
     this.ventasService.registrarVenta(payload).subscribe({
       next: (respuesta) => {
         this.procesandoVenta.set(false);
+        // El total/descuento REALES son los que decidió el servidor (puede
+        // diferir de la vista previa si, por ejemplo, este cliente ya tenía
+        // una visita contada hoy por otra compra) — el comprobante siempre
+        // refleja lo que de verdad se cobró, no la estimación de pantalla.
+        const totalReal = Number(respuesta.venta.total);
+        const descuentoReal = Number(respuesta.venta.descuento_lealtad);
         // Al tener `recibo`, la ventana pasa de "cobro" a "comprobante".
         this.recibo.set({
           venta: respuesta,
           items: itemsCarrito,
           subtotal: total,
-          total,
+          total: totalReal,
           metodoPago,
           tipoEntrega,
+          clienteNombre,
+          clienteDireccion,
+          clienteTelefono,
+          repartidorNombre: this.repartidores().find((r) => r.id === repartidorId)?.nombre || null,
+          clienteLealtadNombre: clienteLealtad?.nombre_completo || null,
+          descuentoLealtad: descuentoReal,
           montoRecibido: metodoPago === 'efectivo' ? montoRecibido : null,
-          cambio: metodoPago === 'efectivo' ? (montoRecibido ?? 0) - total : null,
+          cambio: metodoPago === 'efectivo' ? (montoRecibido ?? 0) - totalReal : null,
           cajero: this.authService.usuarioActual()?.nombre || '',
           fecha: new Date(),
         });
@@ -890,7 +1242,16 @@ export class PosComponent implements OnInit, OnDestroy {
     this.recibo.set(null);
     this.metodoPago.set('efectivo');
     this.tipoEntrega.set('presencial');
+    this.clienteNombreForm.set('');
+    this.clienteDireccionForm.set('');
+    this.clienteTelefonoForm.set('');
+    this.repartidorSeleccionadoId.set(null);
     this.montoRecibido.set(null);
+    this.clienteLealtadSeleccionado.set(null);
+    this.clienteLealtadQuery.set('');
+    this.resultadosClienteLealtad.set([]);
+    this.mostrarNuevoClienteLealtad.set(false);
+    this.errorClienteLealtad.set('');
   }
 
   volverAlDashboard(): void {

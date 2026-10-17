@@ -18,6 +18,9 @@
 //   /mermas     → administrador, encargado                (reporte consolidado de mermas)
 //   /asistencias → administrador, encargado                (Sprint 3: personal y asistencias)
 //   /recetario  → administrador, encargado                (recetario: insumos por variante)
+//   /clientes   → administrador, encargado                (Sprint 4: clientes y lealtad)
+//   /reportes   → administrador, encargado                (RF-26: reporte consolidado)
+//   /checklist  → todos los roles operativos               (checklist de apertura/cierre)
 //
 // Estas reglas deben coincidir con las del backend (requiereRol en routes/*.js)
 // y con la lista de módulos del dashboard (dashboard/dashboard.ts).
@@ -34,6 +37,9 @@ import { InventarioComponent } from './inventario/inventario';
 import { MermasComponent } from './mermas/mermas';
 import { AsistenciasComponent } from './asistencias/asistencias';
 import { RecetarioComponent } from './recetario/recetario';
+import { ClientesComponent } from './clientes/clientes';
+import { ReportesComponent } from './reportes/reportes';
+import { ChecklistComponent } from './checklist/checklist';
 import { authGuard, rolGuard } from './core/auth-guard';
 
 export const routes: Routes = [
@@ -95,6 +101,25 @@ export const routes: Routes = [
     path: 'recetario',
     component: RecetarioComponent,
     canActivate: [authGuard, rolGuard('administrador', 'encargado')],
+  },
+  // Clientes y programa de lealtad (Sprint 4: RF-21 a RF-23).
+  {
+    path: 'clientes',
+    component: ClientesComponent,
+    canActivate: [authGuard, rolGuard('administrador', 'encargado')],
+  },
+  // Reporte consolidado — ventas, inventario, personal y clientes (RF-26).
+  {
+    path: 'reportes',
+    component: ReportesComponent,
+    canActivate: [authGuard, rolGuard('administrador', 'encargado')],
+  },
+  // Checklist de apertura/cierre — cualquier rol operativo puede marcarlo
+  // (según la entrevista), no solo administrador/encargado.
+  {
+    path: 'checklist',
+    component: ChecklistComponent,
+    canActivate: [authGuard, rolGuard('administrador', 'encargado', 'cajero', 'auxiliar')],
   },
   // La raíz del sitio y cualquier URL desconocida llevan al login. (La pantalla
   // de login no redirige sola al dashboard si ya hay sesión: quien tenga la

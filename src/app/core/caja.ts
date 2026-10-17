@@ -10,10 +10,13 @@
 //     entra fuera de una venta) o retiro (solo administrador) de efectivo.
 //   - obtenerRetirosPendientes / confirmarRetiro → el POS hace polling de
 //     retiros sin confirmar y, al confirmarlos, imprime su comprobante.
+//   - obtenerListadoRetiros → TODOS los retiros de hoy + su suma, para el
+//     ticket "Listado de retiros" que se imprime al hacer el corte.
 //
 // Permisos (los aplica el servidor): resumen, corte, apertura/ingreso →
 // administrador, encargado y cajero; retiro → solo administrador; historial
-// y GET /movimientos → solo administrador y encargado.
+// y GET /movimientos → solo administrador y encargado. GET /retiros (el
+// listado para el ticket) SÍ es para los tres, a diferencia de /movimientos.
 // =============================================================================
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -78,6 +81,14 @@ export interface CorteCaja {
   diferencia: string;
   responsable_id: number;
   responsable: string;
+}
+
+// Respuesta de GET /api/caja/retiros — todos los retiros de un día
+// (confirmados o no) + su suma, para el ticket "Listado de retiros".
+export interface ListadoRetiros {
+  fecha: string;
+  total: number;
+  retiros: MovimientoCaja[];
 }
 
 // Filtros opcionales y combinables del historial de cortes.
@@ -151,5 +162,14 @@ export class CajaService {
   // el retiro; la respuesta trae lo necesario para imprimir el comprobante.
   confirmarRetiro(id: number): Observable<MovimientoCaja> {
     return this.http.patch<MovimientoCaja>(`${this.apiUrl}/caja/movimientos/${id}/confirmar`, {});
+  }
+
+  // GET /api/caja/retiros — todos los retiros de hoy (confirmados o no) + su
+  // suma, para el ticket "Listado de retiros" del corte. A diferencia de
+  // obtenerMovimientos(), SÍ la puede llamar el cajero.
+  obtenerListadoRetiros(fecha?: string): Observable<ListadoRetiros> {
+    return this.http.get<ListadoRetiros>(`${this.apiUrl}/caja/retiros`, {
+      params: fecha ? { fecha } : {},
+    });
   }
 }

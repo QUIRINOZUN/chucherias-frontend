@@ -1,0 +1,230 @@
+<!-- ============================================================================
+     reportes.html — REPORTE CONSOLIDADO (lógica en reportes.ts)
+     ============================================================================
+     Solo administrador y encargado. Un resumen por dominio (ventas,
+     inventario, personal, clientes/lealtad), cada uno con el color de
+     identidad del módulo al que pertenece esa información — así el
+     reporte "se parece" a las pantallas de donde salen esos datos.
+     ============================================================================ -->
+<div class="reportes-container">
+  <header class="reportes-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      Volver
+    </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-grafica" /></svg>
+    </span>
+    <h1>Reportes</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
+    >
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
+    </button>
+  </header>
+
+  <div class="reportes-cuerpo">
+    <!-- FILTROS: rango de fechas, opcional. Sin filtros se ve TODO el histórico
+         (ventas/mermas/asistencias/clientes nuevos) — los insumos bajo mínimo,
+         los empleados activos y el top de clientes son siempre de AHORA, el
+         filtro de fecha no les aplica (ver aviso dentro de cada sección). -->
+    <section class="tarjeta-filtros-reportes">
+      <div class="filtros-reportes">
+        <div class="campo-filtro">
+          <label for="filtro-desde">Desde</label>
+          <input
+            id="filtro-desde"
+            type="date"
+            [value]="filtroDesde()"
+            (change)="cambiarDesde($any($event.target).value)"
+          />
+        </div>
+        <div class="campo-filtro">
+          <label for="filtro-hasta">Hasta</label>
+          <input
+            id="filtro-hasta"
+            type="date"
+            [value]="filtroHasta()"
+            (change)="cambiarHasta($any($event.target).value)"
+          />
+        </div>
+      </div>
+      <!-- RF-26 ("por día, semana y mes"): accesos rápidos, sin tener que
+           teclear el rango a mano. -->
+      <div class="filtros-rapidos-reportes">
+        <button type="button" class="boton-filtro-rapido" (click)="seleccionarHoy()">Hoy</button>
+        <button type="button" class="boton-filtro-rapido" (click)="seleccionarSemana()">
+          Esta semana
+        </button>
+        <button type="button" class="boton-filtro-rapido" (click)="seleccionarMes()">
+          Este mes
+        </button>
+      </div>
+      @if (hayFiltros()) {
+        <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltros()">
+          Limpiar filtros
+        </button>
+      }
+    </section>
+
+    @if (error()) {
+      <p class="mensaje-estado mensaje-error">{{ error() }}</p>
+    } @else if (cargando()) {
+      <div class="grid-secciones-reportes" aria-hidden="true">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="esqueleto esqueleto-seccion-reporte"></div>
+        }
+      </div>
+    } @else if (resumen(); as r) {
+      <div class="grid-secciones-reportes">
+        <!-- VENTAS -->
+        <section class="seccion-reporte" style="--acento-seccion: var(--mod-ventas)">
+          <div class="seccion-reporte-encabezado">
+            <span class="seccion-reporte-icono" aria-hidden="true">
+              <svg class="icono"><use href="#ic-recibo" /></svg>
+            </span>
+            <h2>Ventas</h2>
+          </div>
+          <div class="grid-stats-reporte">
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{ r.ventas.total_ventas }}</span>
+              <span class="stat-reporte-etiqueta">Ventas completadas</span>
+            </div>
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{ r.ventas.monto_total | currency: 'MXN' }}</span>
+              <span class="stat-reporte-etiqueta">Monto total</span>
+            </div>
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{
+                r.ventas.monto_efectivo | currency: 'MXN'
+              }}</span>
+              <span class="stat-reporte-etiqueta">Efectivo</span>
+            </div>
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{
+                r.ventas.monto_transferencia | currency: 'MXN'
+              }}</span>
+              <span class="stat-reporte-etiqueta">Transferencia</span>
+            </div>
+            <div class="stat-reporte" [class.stat-reporte-alerta]="r.ventas.canceladas > 0">
+              <span class="stat-reporte-valor">{{ r.ventas.canceladas }}</span>
+              <span class="stat-reporte-etiqueta">Canceladas</span>
+            </div>
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{
+                r.ventas.descuento_lealtad_total | currency: 'MXN'
+              }}</span>
+              <span class="stat-reporte-etiqueta">Descuento por lealtad</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- INVENTARIO -->
+        <section class="seccion-reporte" style="--acento-seccion: var(--mod-inventario)">
+          <div class="seccion-reporte-encabezado">
+            <span class="seccion-reporte-icono" aria-hidden="true">
+              <svg class="icono"><use href="#ic-paquete" /></svg>
+            </span>
+            <h2>Inventario</h2>
+          </div>
+          <p class="seccion-reporte-aviso">
+            Existencias de ahora mismo; mermas del periodo seleccionado.
+          </p>
+          <div class="grid-stats-reporte">
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{ r.inventario.total_insumos }}</span>
+              <span class="stat-reporte-etiqueta">Insumos registrados</span>
+            </div>
+            <div class="stat-reporte" [class.stat-reporte-alerta]="r.inventario.bajo_minimo > 0">
+              <span class="stat-reporte-valor">{{ r.inventario.bajo_minimo }}</span>
+              <span class="stat-reporte-etiqueta">Bajo su mínimo</span>
+            </div>
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{ r.inventario.mermas_total }}</span>
+              <span class="stat-reporte-etiqueta">Mermas registradas</span>
+            </div>
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{
+                r.inventario.mermas_valor_total | currency: 'MXN'
+              }}</span>
+              <span class="stat-reporte-etiqueta">Valor perdido</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- PERSONAL -->
+        <section class="seccion-reporte" style="--acento-seccion: var(--mod-asistencias)">
+          <div class="seccion-reporte-encabezado">
+            <span class="seccion-reporte-icono" aria-hidden="true">
+              <svg class="icono"><use href="#ic-reloj" /></svg>
+            </span>
+            <h2>Personal</h2>
+          </div>
+          <p class="seccion-reporte-aviso">
+            Empleados activos de ahora mismo; asistencias y retardos del periodo seleccionado.
+          </p>
+          <div class="grid-stats-reporte">
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{ r.personal.empleados_activos }}</span>
+              <span class="stat-reporte-etiqueta">Empleados activos</span>
+            </div>
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{ r.personal.asistencias_registradas }}</span>
+              <span class="stat-reporte-etiqueta">Asistencias registradas</span>
+            </div>
+            <div class="stat-reporte" [class.stat-reporte-alerta]="r.personal.retardos > 0">
+              <span class="stat-reporte-valor">{{ r.personal.retardos }}</span>
+              <span class="stat-reporte-etiqueta">Retardos</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- CLIENTES Y LEALTAD -->
+        <section class="seccion-reporte" style="--acento-seccion: var(--mod-clientes)">
+          <div class="seccion-reporte-encabezado">
+            <span class="seccion-reporte-icono" aria-hidden="true">
+              <svg class="icono"><use href="#ic-corazon" /></svg>
+            </span>
+            <h2>Clientes y lealtad</h2>
+          </div>
+          <p class="seccion-reporte-aviso">
+            Clientes nuevos del periodo seleccionado; visitas acumuladas del ciclo actual de cada
+            cliente.
+          </p>
+          <div class="grid-stats-reporte">
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{ r.clientes.total_clientes }}</span>
+              <span class="stat-reporte-etiqueta">Clientes registrados</span>
+            </div>
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{ r.clientes.nuevos_en_periodo }}</span>
+              <span class="stat-reporte-etiqueta">Nuevos en el periodo</span>
+            </div>
+          </div>
+          @if (r.clientes.top_clientes.length > 0) {
+            <p class="subtitulo-top-clientes">Más cerca de su próximo descuento</p>
+            <ul class="lista-top-clientes">
+              @for (cliente of r.clientes.top_clientes; track cliente.id) {
+                <li class="item-top-cliente">
+                  <span>{{ cliente.nombre_completo }}</span>
+                  <span class="badge-visitas-reporte"
+                    >{{ cliente.visitas_acumuladas }} visitas</span
+                  >
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="mensaje-estado">Todavía no hay clientes con visitas acumuladas.</p>
+          }
+        </section>
+      </div>
+    }
+  </div>
+</div>

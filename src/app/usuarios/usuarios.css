@@ -6,11 +6,13 @@
 
 /* Contenedor del componente. */
 :host {
+  --acento-modulo: var(--mod-usuarios);
   display: block;
   min-height: 100vh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
+  animation: aparecer 0.22s ease;
 }
 
 .usuarios-container {
@@ -79,14 +81,14 @@
   margin-bottom: 16px;
   border: none;
   border-radius: var(--pos-radio);
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
   font-weight: 700;
   cursor: pointer;
 }
 
 .boton-nuevo-usuario:hover {
-  background: var(--action-primary-hover);
+  background: color-mix(in srgb, var(--acento-modulo) 85%, black);
 }
 
 .lista-usuarios {
@@ -107,6 +109,30 @@
   border: 1px solid var(--pos-border);
   border-radius: var(--pos-radio);
   padding: 12px 14px;
+}
+
+/* Tarjeta fantasma (2026-10-12) — `.esqueleto` es global (ver styles.css). */
+.tarjeta-usuario-esqueleto {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--pos-bg-card);
+  border: 1px solid var(--pos-border);
+  border-radius: var(--pos-radio);
+  padding: 12px 14px;
+}
+
+.esqueleto-linea-usuario {
+  height: 15px;
+  width: 55%;
+}
+
+.esqueleto-linea-badge-usuario {
+  height: 22px;
+  width: 64px;
+  border-radius: var(--radio-pastilla);
+  flex-shrink: 0;
 }
 
 .usuario-info {
@@ -156,7 +182,7 @@
 }
 
 .boton-editar:hover {
-  border-color: var(--pos-text-secondary);
+  border-color: var(--acento-modulo);
 }
 
 .boton-alternar-desactivar:hover:not(:disabled) {
@@ -246,7 +272,7 @@
 .campo input:focus,
 .campo select:focus {
   outline: none;
-  border-color: var(--pos-text-secondary);
+  border-color: var(--acento-modulo);
 }
 
 .acciones-formulario {
@@ -270,7 +296,7 @@
   flex: 1;
   min-height: 44px;
   border: none;
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
   border-radius: var(--pos-radio);
   cursor: pointer;
@@ -340,7 +366,8 @@
 
 .tarjeta-usuario {
   border-color: transparent;
-  border-radius: var(--radio-lg);
+  border-left: 4px solid var(--acento-modulo);
+  border-radius: var(--radio-lg) var(--radio-lg) var(--radio-lg) 4px;
   box-shadow: var(--sombra-suave);
   padding: 14px 18px;
 }
@@ -356,6 +383,7 @@
 
 .panel-formulario {
   border-radius: var(--radio-lg);
+  border-top: 4px solid var(--acento-modulo);
   box-shadow: var(--sombra-elevada);
   animation: escalar 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }

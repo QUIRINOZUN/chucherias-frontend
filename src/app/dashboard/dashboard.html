@@ -7,7 +7,11 @@
 <div class="dashboard-container">
   <!-- ENCABEZADO: saludo con el nombre, el rol del usuario en sesión y el cambio de tema. -->
   <header class="dashboard-header">
-    <img src="/img/logo-chucherias.png" alt="Chucherías" class="dashboard-logo" />
+    <img
+      src="https://res.cloudinary.com/isjkpamh/image/upload/v1792190975/chucherias/marca/xnua730fuk6dau2nsko1.png"
+      alt="Chucherías"
+      class="dashboard-logo"
+    />
     <div class="dashboard-header-texto">
       @if (authService.usuarioActual(); as usuario) {
         <h1>Hola, {{ usuario.nombre }}</h1>
@@ -31,41 +35,48 @@
   </header>
 
   <div class="dashboard-cuerpo">
-    <!-- AUTOSERVICIO DE ASISTENCIA (Sprint 3): no se muestra al administrador
-         (no lleva asistencia) ni si el servidor no confirma que la cuenta
-         está ligada a un empleado (ver Asistencias → Empleados). -->
-    @if (!esAdministrador() && miEstadoHoy()?.ligado) {
-      <section class="tarjeta-mi-asistencia">
-        <div class="mi-asistencia-info">
-          @if (miEstadoHoy()?.abierta; as abierta) {
-            <span class="mi-asistencia-estado mi-asistencia-adentro">
-              Entraste a las {{ abierta.hora_entrada.slice(0, 5) }}
-            </span>
-          } @else if ((miEstadoHoy()?.completados ?? 0) > 0) {
-            <span class="mi-asistencia-estado">Ya marcaste tu asistencia hoy</span>
+    <!-- RESUMEN DE HOY: antes este espacio quedaba vacío (.dashboard-cuerpo
+         centra verticalmente su contenido). "Ventas de hoy" y "Efectivo en
+         caja" para quien puede consultar GET /api/caja/resumen (admin/
+         encargado/cajero); "Personal adentro" solo admin/encargado, que son
+         los únicos que pueden consultar GET /api/asistencias/hoy. -->
+    @if (puedeVerResumenCaja() || puedeVerPersonalAdentro()) {
+      <div class="dashboard-resumen">
+        @if (puedeVerResumenCaja()) {
+          @if (resumenCaja(); as resumen) {
+            <!-- Objeto completo en vez de ventasHoyTotal() por separado:
+                 un signal<number> que de verdad vale 0 (cero ventas hoy) es
+                 "falsy" y el @if lo trataría como "todavía sin dato" — el
+                 objeto resumen en cambio solo es null/undefined antes de
+                 que responda el servidor, nunca por un total en cero. -->
+            <div class="resumen-stat">
+              <span class="resumen-stat-valor">
+                {{ resumen.ventas_efectivo + resumen.total_transferencia | currency: 'MXN' }}
+              </span>
+              <span class="resumen-stat-etiqueta">Ventas de hoy</span>
+            </div>
+            <div class="resumen-stat">
+              <span class="resumen-stat-valor">{{ resumen.total_efectivo | currency: 'MXN' }}</span>
+              <span class="resumen-stat-etiqueta">Efectivo en caja</span>
+            </div>
           } @else {
-            <span class="mi-asistencia-estado">Todavía no marcas tu entrada hoy</span>
+            <div class="resumen-stat">
+              <span class="resumen-stat-valor">—</span>
+              <span class="resumen-stat-etiqueta">Ventas de hoy</span>
+            </div>
+            <div class="resumen-stat">
+              <span class="resumen-stat-valor">—</span>
+              <span class="resumen-stat-etiqueta">Efectivo en caja</span>
+            </div>
           }
-        </div>
-        <button
-          type="button"
-          class="boton-mi-asistencia"
-          [class.boton-mi-asistencia-salida]="!!miEstadoHoy()?.abierta"
-          [disabled]="procesandoMiAsistencia()"
-          (click)="marcarMiAsistencia()"
-        >
-          {{
-            procesandoMiAsistencia()
-              ? '...'
-              : miEstadoHoy()?.abierta
-                ? 'Marcar mi salida'
-                : 'Marcar mi entrada'
-          }}
-        </button>
-        @if (errorMiAsistencia()) {
-          <p class="mi-asistencia-error">{{ errorMiAsistencia() }}</p>
         }
-      </section>
+        @if (puedeVerPersonalAdentro()) {
+          <div class="resumen-stat">
+            <span class="resumen-stat-valor">{{ personalAdentroHoy() ?? '—' }}</span>
+            <span class="resumen-stat-etiqueta">Personal adentro</span>
+          </div>
+        }
+      </div>
     }
 
     <!-- Sin módulos: rol sin permisos asignados (ver dashboard.ts). -->
@@ -77,7 +88,11 @@
       <!-- TARJETAS DE MÓDULOS: cada una es un enlace a su ruta (protegida además por rolGuard en app.routes.ts). -->
       <div class="grid-modulos">
         @for (modulo of modulosVisibles(); track modulo.ruta) {
-          <a class="tarjeta-modulo" [routerLink]="modulo.ruta">
+          <a
+            class="tarjeta-modulo"
+            [routerLink]="modulo.ruta"
+            [style.--acento-modulo]="modulo.colorVar"
+          >
             @if (modulo.ruta === '/recetario' && (variantesSinRecetaCount() ?? 0) > 0) {
               <span
                 class="modulo-badge-alerta"
@@ -91,8 +106,14 @@
                 <use [attr.href]="'#ic-' + modulo.icono" />
               </svg>
             </span>
-            <span class="modulo-titulo">{{ modulo.titulo }}</span>
-            <span class="modulo-descripcion">{{ modulo.descripcion }}</span>
+            <!-- Agrupados (2026-10-16) para que la columna izquierda/derecha
+                 del menú principal pueda ponerlos junto al ícono en una fila,
+                 sin que el título y la descripción pierdan su propia columna
+                 interna — ver .modulo-texto en dashboard.css. -->
+            <span class="modulo-texto">
+              <span class="modulo-titulo">{{ modulo.titulo }}</span>
+              <span class="modulo-descripcion">{{ modulo.descripcion }}</span>
+            </span>
           </a>
         }
       </div>

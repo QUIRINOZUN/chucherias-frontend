@@ -11,6 +11,9 @@
       <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
       Volver
     </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-usuarios" /></svg>
+    </span>
     <h1>Usuarios</h1>
     <button
       type="button"
@@ -29,7 +32,15 @@
   <!-- CUERPO: estados de carga/error, botón de alta y lista de cuentas. -->
   <div class="usuarios-cuerpo">
     @if (cargando()) {
-      <p class="mensaje-estado">Cargando usuarios...</p>
+      <!-- Skeleton (2026-10-12) con la misma forma que .tarjeta-usuario. -->
+      <ul class="lista-usuarios" aria-hidden="true">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <li class="tarjeta-usuario-esqueleto">
+            <div class="esqueleto esqueleto-linea-usuario"></div>
+            <div class="esqueleto esqueleto-linea-badge-usuario"></div>
+          </li>
+        }
+      </ul>
     } @else {
       @if (error()) {
         <p class="mensaje-estado mensaje-error">{{ error() }}</p>
@@ -108,7 +119,14 @@
        Al editar, la contraseña es opcional (en blanco = no cambiarla). -->
   @if (modoFormulario(); as modo) {
     <div class="overlay">
-      <div class="panel-formulario">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="modo === 'crear' ? 'Nuevo usuario' : 'Editar usuario'"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarFormulario()"
+      >
         <h2>{{ modo === 'crear' ? 'Nuevo usuario' : 'Editar usuario' }}</h2>
 
         <div class="campo">
@@ -195,7 +213,14 @@
        en vez de cerrar la ventana. -->
   @if (usuarioAEliminar(); as usuario) {
     <div class="overlay">
-      <div class="panel-formulario">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Eliminar usuario"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarConfirmarEliminar()"
+      >
         <h2>Eliminar usuario</h2>
         <p class="texto-confirmacion">
           ¿Eliminar la cuenta de <strong>{{ usuario.nombre }}</strong> (&#64;{{ usuario.usuario }})?

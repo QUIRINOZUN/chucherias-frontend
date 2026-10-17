@@ -24,7 +24,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../core/auth';
-import { CajaService, CorteCaja, MovimientoCaja, ResumenCaja } from '../core/caja';
+import { CajaService, CorteCaja, ListadoRetiros, MovimientoCaja, ResumenCaja } from '../core/caja';
+import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { ThemeService } from '../core/theme';
 import { Usuario, UsuariosService } from '../core/usuarios';
 
@@ -35,7 +36,7 @@ const ROLES_QUE_HACEN_CORTE = ['administrador', 'encargado', 'cajero'];
 @Component({
   selector: 'app-caja',
   standalone: true,
-  imports: [CurrencyPipe, DatePipe],
+  imports: [CurrencyPipe, DatePipe, FocoDialogoDirective],
   templateUrl: './caja.html',
   styleUrl: './caja.css',
 })
@@ -44,6 +45,14 @@ export class CajaComponent implements OnInit {
   resumen = signal<ResumenCaja | null>(null);
   cargando = signal(true);
   error = signal('');
+
+  // ---- Ticket "Listado de retiros" (2026-10-12) -----------------------------
+  // Acumula todos los retiros del día (confirmados o no) para imprimirlos de
+  // un vistazo al hacer el corte — visible a los tres roles que hacen corte,
+  // no solo administrador/encargado (a diferencia de movimientosHoy abajo).
+  listadoRetiros = signal<ListadoRetiros | null>(null);
+  cargandoListadoRetiros = signal(false);
+  errorListadoRetiros = signal('');
 
   // ---- Bloque 2: retiro de efectivo (solo administrador) -------------------
   montoRetiro = signal<number | null>(null);
@@ -162,6 +171,32 @@ export class CajaComponent implements OnInit {
         // La lista simplemente queda vacía; el resto de la pantalla sigue funcionando.
       },
     });
+  }
+
+  // Pide el listado de retiros de hoy y abre el ticket imprimible.
+  verListadoRetiros(): void {
+    this.cargandoListadoRetiros.set(true);
+    this.errorListadoRetiros.set('');
+    this.cajaService.obtenerListadoRetiros().subscribe({
+      next: (listado) => {
+        this.listadoRetiros.set(listado);
+        this.cargandoListadoRetiros.set(false);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.errorListadoRetiros.set(
+          error.error?.error || 'No se pudo obtener el listado de retiros.',
+        );
+        this.cargandoListadoRetiros.set(false);
+      },
+    });
+  }
+
+  cerrarListadoRetiros(): void {
+    this.listadoRetiros.set(null);
+  }
+
+  imprimirListadoRetiros(): void {
+    window.print();
   }
 
   // Habilita "Registrar retiro" solo con monto y motivo capturados y sin

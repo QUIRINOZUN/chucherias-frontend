@@ -1,0 +1,242 @@
+<!-- ============================================================================
+     clientes.html — CLIENTES Y PROGRAMA DE LEALTAD (lógica en clientes.ts)
+     ============================================================================
+     Solo administrador y encargado. Lista con búsqueda; tocar una fila abre
+     el detalle (historial de visitas/descuentos) con edición de nombre/
+     teléfono. Los clientes nuevos se dan de alta desde el cobro del POS, no
+     aquí — esta pantalla es de consulta y corrección.
+     ============================================================================ -->
+<div class="clientes-container">
+  <header class="clientes-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      Volver
+    </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-corazon" /></svg>
+    </span>
+    <h1>Clientes</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
+    >
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
+    </button>
+  </header>
+
+  <div class="clientes-cuerpo">
+    <div class="campo-busqueda">
+      <input
+        type="text"
+        placeholder="Buscar por nombre o teléfono..."
+        aria-label="Buscar cliente"
+        [value]="busqueda()"
+        (input)="actualizarBusqueda($any($event.target).value)"
+      />
+    </div>
+
+    @if (error()) {
+      <p class="mensaje-estado mensaje-error">{{ error() }}</p>
+    } @else if (cargando()) {
+      <ul class="lista-clientes" aria-hidden="true">
+        @for (i of [1, 2, 3]; track i) {
+          <li class="item-cliente-esqueleto">
+            <div class="esqueleto esqueleto-cliente-nombre"></div>
+            <div class="esqueleto esqueleto-cliente-visitas"></div>
+          </li>
+        }
+      </ul>
+    } @else if (clientes().length === 0) {
+      <p class="mensaje-estado">
+        @if (busqueda()) {
+          Sin resultados para "{{ busqueda() }}".
+        } @else {
+          Todavía no hay clientes registrados — se dan de alta desde el cobro del punto de venta.
+        }
+      </p>
+    } @else {
+      <ul class="lista-clientes">
+        @for (cliente of clientes(); track cliente.id) {
+          <li
+            class="item-cliente"
+            role="button"
+            tabindex="0"
+            (click)="abrirDetalle(cliente)"
+            (keydown.enter)="abrirDetalle(cliente)"
+            (keydown.space)="$event.preventDefault(); abrirDetalle(cliente)"
+          >
+            <div class="item-cliente-info">
+              <span class="item-cliente-nombre">{{ cliente.nombre_completo }}</span>
+              @if (cliente.telefono) {
+                <span class="item-cliente-telefono">{{ cliente.telefono }}</span>
+              }
+            </div>
+            <span class="badge-visitas">
+              {{ cliente.visitas_acumuladas }}
+              {{ cliente.visitas_acumuladas === 1 ? 'visita' : 'visitas' }}
+            </span>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  <!-- VENTANA DE DETALLE: datos del cliente, progreso del ciclo de lealtad,
+       edición de nombre/teléfono y el historial completo de eventos. -->
+  @if (clienteDetalleId() !== null) {
+    <div class="overlay">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Detalle del cliente"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarDetalle()"
+      >
+        @if (cargandoDetalle()) {
+          <p class="mensaje-estado">Cargando cliente...</p>
+        } @else if (errorDetalle()) {
+          <p class="mensaje-estado mensaje-error">{{ errorDetalle() }}</p>
+        } @else if (clienteDetalle(); as detalle) {
+          @if (!editando()) {
+            <div class="detalle-cliente-encabezado">
+              <h2>{{ detalle.nombre_completo }}</h2>
+              <button type="button" class="boton-enlace-chico" (click)="iniciarEdicion()">
+                Editar
+              </button>
+            </div>
+            @if (detalle.telefono) {
+              <p class="subtitulo-formulario">{{ detalle.telefono }}</p>
+            }
+
+            <div class="progreso-lealtad">
+              <p class="progreso-lealtad-texto">
+                {{ detalle.visitas_acumuladas }} de 10 visitas del ciclo actual
+              </p>
+              <div class="progreso-lealtad-barra">
+                <div
+                  class="progreso-lealtad-relleno"
+                  [style.width.%]="(detalle.visitas_acumuladas / 10) * 100"
+                ></div>
+                <!-- Marcas en la visita 5 (5% de descuento) y 10 (15%). -->
+                <span class="progreso-lealtad-marca" style="left: 50%"></span>
+              </div>
+              <p class="progreso-lealtad-leyenda">
+                Visita 5 → 5% de descuento · Visita 10 → 15% y reinicia el ciclo
+              </p>
+            </div>
+          } @else {
+            <h2>Editar cliente</h2>
+            <div class="campo">
+              <label for="nombre-cliente-edit">Nombre completo *</label>
+              <input
+                id="nombre-cliente-edit"
+                type="text"
+                [value]="nombreEditForm()"
+                (input)="nombreEditForm.set($any($event.target).value)"
+              />
+            </div>
+            <div class="campo">
+              <label for="telefono-cliente-edit">Teléfono</label>
+              <input
+                id="telefono-cliente-edit"
+                type="tel"
+                [value]="telefonoEditForm()"
+                (input)="telefonoEditForm.set($any($event.target).value)"
+              />
+            </div>
+            @if (errorEdicion()) {
+              <p class="mensaje-estado mensaje-error">{{ errorEdicion() }}</p>
+            }
+            <div class="acciones-formulario">
+              <button type="button" class="boton-cancelar" (click)="cancelarEdicion()">
+                Cancelar
+              </button>
+              <button
+                type="button"
+                class="boton-confirmar"
+                [disabled]="guardandoEdicion()"
+                (click)="guardarEdicion()"
+              >
+                {{ guardandoEdicion() ? 'Guardando...' : 'Guardar' }}
+              </button>
+            </div>
+          }
+
+          @if (!editando()) {
+            <h3 class="subtitulo-historial">Historial de lealtad</h3>
+            @if (detalle.historial.length === 0) {
+              <p class="mensaje-estado">Todavía no tiene ninguna visita registrada.</p>
+            } @else {
+              <ul class="lista-historial-lealtad">
+                @for (evento of detalle.historial; track evento.id) {
+                  <li
+                    class="item-historial-lealtad"
+                    [class.item-historial-descuento]="evento.tipo_evento === 'descuento_aplicado'"
+                  >
+                    <div class="item-historial-linea">
+                      <span class="item-historial-descripcion">{{ evento.descripcion }}</span>
+                      @if (evento.venta_total) {
+                        <span class="item-historial-monto">{{
+                          evento.venta_total | currency: 'MXN'
+                        }}</span>
+                      }
+                    </div>
+                    <span class="item-historial-fecha">{{
+                      evento.fecha | date: 'dd/MM/yyyy HH:mm'
+                    }}</span>
+                  </li>
+                }
+              </ul>
+            }
+
+            <!-- RF-21 ("historial de compras"): distinto del historial de
+                 lealtad de arriba — aquí van TODAS las ventas reales del
+                 cliente, hayan contado como visita o no. -->
+            <h3 class="subtitulo-historial">Historial de compras</h3>
+            @if (detalle.compras.length === 0) {
+              <p class="mensaje-estado">Todavía no tiene ninguna compra registrada.</p>
+            } @else {
+              <ul class="lista-historial-compras">
+                @for (compra of detalle.compras; track compra.id) {
+                  <li
+                    class="item-historial-compra"
+                    [class.item-historial-compra-cancelada]="compra.estado === 'cancelada'"
+                  >
+                    <div class="item-historial-linea">
+                      <span class="item-historial-descripcion">{{ compra.numero_orden }}</span>
+                      <span class="item-historial-monto">{{ compra.total | currency: 'MXN' }}</span>
+                    </div>
+                    <span class="item-compra-productos">
+                      @for (item of compra.items; track $index) {
+                        <span [class.item-compra-producto-cancelado]="item.cancelado"
+                          >{{ item.cantidad }}× {{ item.producto }} ({{ item.variante }})</span
+                        >{{ !$last ? ' · ' : '' }}
+                      }
+                    </span>
+                    <span class="item-historial-fecha">
+                      {{ compra.fecha | date: 'dd/MM/yyyy HH:mm' }}
+                      @if (compra.estado === 'cancelada') {
+                        · Cancelada
+                      }
+                    </span>
+                  </li>
+                }
+              </ul>
+            }
+
+            <div class="acciones-formulario">
+              <button type="button" class="boton-cancelar" (click)="cerrarDetalle()">Cerrar</button>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+</div>

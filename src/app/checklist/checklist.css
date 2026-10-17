@@ -1,0 +1,442 @@
+/* =============================================================================
+   checklist.css — CHECKLIST DE APERTURA/CIERRE (2026-10-16)
+   =============================================================================
+   Mismo lenguaje visual que asistencias.css (pestañas) y mermas.css
+   (encabezado, tarjetas). Token de identidad propio, --mod-checklist,
+   definido en styles.css (ver nota ahí: tono neutro cálido, distinto del
+   --mod-reportes neutro frío, ambos a propósito desaturados porque ya no
+   queda un hueco de color vívido en el círculo sin acercarse a otro
+   módulo). */
+
+:host {
+  --acento-modulo: var(--mod-checklist);
+  display: block;
+  min-height: 100vh;
+  background: var(--pos-bg-main);
+  font-family: var(--fuente-texto);
+  color: var(--pos-text-primary);
+  animation: aparecer 0.22s ease;
+}
+
+.checklist-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.checklist-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--pos-bg-card);
+  border-bottom: 1px solid var(--pos-border);
+  position: sticky;
+  top: 0;
+}
+
+.checklist-header h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.boton-volver,
+.boton-tema {
+  min-height: 44px;
+  border: none;
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  border-radius: var(--radio-pastilla);
+  padding: 0 18px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.boton-tema {
+  min-width: 44px;
+  padding: 0;
+  font-size: 1.15rem;
+}
+
+.mensaje-estado {
+  color: var(--pos-text-secondary);
+  font-size: 0.9rem;
+}
+
+.mensaje-error {
+  color: var(--peligro-texto);
+}
+
+/* ===================== Pestañas ===================== */
+.tabs-checklist-envoltorio {
+  position: relative;
+}
+
+.tabs-checklist {
+  display: flex;
+  gap: 6px;
+  padding: 10px 16px;
+  background: var(--pos-bg-card);
+  border-bottom: 1px solid var(--pos-border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tab-checklist {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.tab-checklist .icono {
+  width: 18px;
+  height: 18px;
+}
+
+.tab-checklist-activa {
+  background: var(--acento-modulo);
+  color: #fff;
+  box-shadow: var(--sombra-acento);
+}
+
+.tab-badge-progreso {
+  min-width: 28px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-checklist:not(.tab-checklist-activa) .tab-badge-progreso {
+  background: color-mix(in srgb, var(--acento-modulo) 20%, var(--pos-bg-card));
+  color: var(--acento-modulo);
+}
+
+.checklist-cuerpo {
+  flex: 1;
+  padding: 16px;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+  animation: aparecer 0.2s ease;
+}
+
+/* ===================== Lista de pasos (Apertura/Cierre) ===================== */
+.lista-pasos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item-paso {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 14px;
+  border-radius: var(--radio-lg);
+  border-left: 4px solid var(--pos-border);
+  background: var(--pos-bg-card);
+  box-shadow: var(--sombra-suave);
+  cursor: pointer;
+}
+
+.item-paso-marcado {
+  border-left-color: var(--exito-texto);
+}
+
+.paso-casilla {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--pos-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-paso-marcado .paso-casilla {
+  border-color: var(--exito-texto);
+  background: var(--exito-texto);
+  color: #fff;
+}
+
+.paso-casilla .icono {
+  width: 14px;
+  height: 14px;
+}
+
+.paso-texto {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.paso-descripcion {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.item-paso-marcado .paso-descripcion {
+  text-decoration: line-through;
+  color: var(--pos-text-secondary);
+}
+
+.paso-detalle {
+  font-size: 0.75rem;
+  color: var(--pos-text-secondary);
+}
+
+.paso-procesando {
+  flex-shrink: 0;
+  color: var(--pos-text-secondary);
+  font-size: 0.8rem;
+}
+
+/* Esqueleto de carga. */
+.paso-esqueleto {
+  padding: 14px;
+  border-radius: var(--radio-lg);
+  background: var(--pos-bg-card);
+}
+
+.esqueleto-paso {
+  height: 20px;
+  width: 70%;
+}
+
+/* ===================== Historial (2026-10-16) ===================== */
+.seccion-historial-checklist {
+  margin-top: 8px;
+}
+
+.filtros-historial-checklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.campo-filtro-checklist {
+  flex: 1;
+  min-width: 130px;
+}
+
+.campo-filtro-checklist label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pos-text-secondary);
+}
+
+.campo-filtro-checklist input,
+.campo-filtro-checklist select {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 10px;
+  font-size: 0.9rem;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.campo-filtro-checklist input:focus,
+.campo-filtro-checklist select:focus {
+  outline: none;
+  border-color: var(--acento-modulo);
+}
+
+.boton-limpiar-filtros-checklist {
+  min-height: 44px;
+  padding: 0 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: none;
+  color: var(--pos-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-limpiar-filtros-checklist:hover {
+  border-color: var(--acento-modulo);
+  color: var(--pos-text-primary);
+}
+
+.lista-historial-checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-historial-checklist {
+  padding: 10px 12px;
+  border-left: 3px solid var(--acento-modulo);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-card);
+  box-shadow: var(--sombra-suave);
+}
+
+.item-historial-checklist-apertura {
+  border-left-color: var(--acento-texto);
+}
+
+.item-historial-checklist-linea {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.88rem;
+}
+
+.item-historial-checklist-descripcion {
+  font-weight: 600;
+}
+
+.item-historial-checklist-tipo {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--pos-text-secondary);
+  white-space: nowrap;
+}
+
+.item-historial-checklist-detalle {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: var(--pos-text-secondary);
+}
+
+/* ===================== Gestión del catálogo ===================== */
+.seccion-gestion-checklist {
+  margin-top: 8px;
+}
+
+.subtitulo-gestion {
+  margin: 20px 0 10px;
+  font-size: 1rem;
+}
+
+.form-nuevo-paso {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.form-nuevo-paso select {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.form-nuevo-paso input {
+  flex: 1;
+  min-width: 160px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  box-sizing: border-box;
+}
+
+.boton-agregar-paso {
+  min-height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radio-sm);
+  background: var(--acento-modulo);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-agregar-paso:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.lista-pasos-gestion {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item-paso-gestion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-card);
+  font-size: 0.88rem;
+}
+
+.item-paso-gestion-inactivo span {
+  color: var(--pos-text-secondary);
+  text-decoration: line-through;
+}
+
+.boton-activar-paso {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: none;
+  color: var(--pos-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-activar-paso:hover {
+  border-color: var(--acento-modulo);
+  color: var(--pos-text-primary);
+}

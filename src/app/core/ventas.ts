@@ -31,11 +31,19 @@ export interface ItemVenta {
   insumos_elegidos?: { insumo: string; cantidad: number; unidad_medida: string }[];
 }
 
-// Cuerpo de POST /api/ventas.
+// Cuerpo de POST /api/ventas. cliente_nombre/cliente_direccion/
+// cliente_telefono solo son obligatorios (el servidor los valida) cuando
+// tipo_entrega es 'domicilio'.
 export interface NuevaVenta {
   items: ItemVenta[];
   metodo_pago: MetodoPago;
   tipo_entrega: TipoEntrega;
+  cliente_nombre?: string;
+  cliente_direccion?: string;
+  cliente_telefono?: string;
+  // Opcional, solo tiene sentido en domicilio — se puede asignar después
+  // desde Comandas si todavía no se sabe quién la va a llevar.
+  repartidor_id?: number;
   cliente_id?: number;
 }
 
@@ -43,7 +51,13 @@ export interface NuevaVenta {
 // número de orden del comprobante).
 export interface RespuestaVenta {
   orden: { id: number; numero_orden: string };
-  venta: { id: number; subtotal: string; total: string; metodo_pago: MetodoPago };
+  venta: {
+    id: number;
+    subtotal: string;
+    descuento_lealtad: string;
+    total: string;
+    metodo_pago: MetodoPago;
+  };
 }
 
 // Un renglón de producto dentro de una venta del historial. Puede cancelarse
@@ -69,6 +83,16 @@ export interface VentaHistorial {
   orden_id: number;
   numero_orden: string;
   tipo_entrega: TipoEntrega;
+  // Solo llenos cuando tipo_entrega es 'domicilio'.
+  cliente_nombre: string | null;
+  cliente_direccion: string | null;
+  cliente_telefono: string | null;
+  // Nombre del cliente de LEALTAD ligado a la orden (RF-21/RF-22) — distinto
+  // de cliente_nombre, que es el del pedido a domicilio (pueden coincidir o
+  // no: un cliente de lealtad puede pedir presencial, y viceversa).
+  cliente_lealtad_nombre: string | null;
+  // Repartidor asignado (solo domicilio) — null si todavía no se asigna.
+  repartidor_nombre: string | null;
   fecha: string;
   subtotal: string;
   descuento_lealtad: string;
@@ -120,6 +144,9 @@ export interface RespuestaCancelacion {
   mermas_valor_total: string;
   insumos_restituidos: number;
   monto_reembolso: string;
+  // RF-23 (2026-10-16): true si esta venta había contado una visita de
+  // lealtad (y, si aplica, un descuento) que se revirtió al cancelarla.
+  lealtad_revertida: boolean;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -36,6 +36,8 @@ import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth';
+import { EmpleadosService, Repartidor } from '../core/empleados';
+import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { EstadoOrden, ItemOrden, Orden, OrdenesService } from '../core/ordenes';
 import { PasoTutorial, RecetasService } from '../core/recetas';
 import { ThemeService } from '../core/theme';
@@ -45,10 +47,19 @@ const INTERVALO_ACTUALIZACION_MS = 15000;
 
 // Una comanda con más de este tiempo esperando se resalta en el tablero.
 const MINUTOS_PARA_RESALTAR = 15;
+// Aviso intermedio (2026-10-11): antes el resaltado era binario (nada hasta
+// los 15 min, rojo de golpe al llegarles) — con este umbral a medio camino
+// el borde pasa primero por el naranja de la marca ("se está acercando") y
+// solo llega a rojo si de verdad se pasó del límite, dando más margen de
+// reacción a cocina en vez de una sorpresa repentina.
+const MINUTOS_PARA_ATENCION = 10;
 
 // Quién puede avanzar una comanda: el mismo criterio que aplica el servidor
 // en PATCH /api/ordenes/:id/estado (el cajero solo consulta).
 const ROLES_QUE_AVANZAN = ['administrador', 'encargado', 'auxiliar'];
+// Asignar repartidor (2026-10-16): mismo criterio que registrar la venta
+// (routes/ordenes.js), no cocina.
+const ROLES_QUE_ASIGNAN_REPARTIDOR = ['administrador', 'encargado', 'cajero'];
 
 // A qué estado pasa una comanda al tocar su botón. 'entregado' no aparece como
 // clave porque una orden entregada ya no se muestra ni se puede avanzar.
@@ -99,6 +110,7 @@ const COLUMNAS: ColumnaTablero[] = [
 @Component({
   selector: 'app-comandas',
   standalone: true,
+  imports: [FocoDialogoDirective],
   templateUrl: './comandas.html',
   styleUrl: './comandas.css',
 })
@@ -118,6 +130,13 @@ export class ComandasComponent implements OnInit, OnDestroy {
   puedeAvanzar = computed(() => {
     const rol = this.authService.usuarioActual()?.rol;
     return !!rol && ROLES_QUE_AVANZAN.includes(rol);
+  });
+
+  // 2026-10-16: true si el rol puede asignar/cambiar el repartidor de una
+  // orden a domicilio.
+  puedeAsignarRepartidor = computed(() => {
+    const rol = this.authService.usuarioActual()?.rol;
+    return !!rol && ROLES_QUE_ASIGNAN_REPARTIDOR.includes(rol);
   });
 
   // Órdenes agrupadas por columna del tablero.
@@ -148,10 +167,21 @@ export class ComandasComponent implements OnInit, OnDestroy {
   itemTutorial = signal<ItemOrden | null>(null);
   pasosTutorial = signal<PasoTutorial[]>([]);
   cargandoTutorial = signal(false);
+  // Foto de referencia "así debe quedar" (2026-10-12) — null mientras carga
+  // o si esa variante no tiene una capturada.
+  imagenReferenciaTutorial = signal<string | null>(null);
+
+  // ASIGNAR REPARTIDOR (2026-10-16): id de la orden cuyo selector está
+  // abierto (null = ninguno) + la lista de repartidores activos, cargada
+  // una vez al entrar.
+  asignandoRepartidorPara = signal<number | null>(null);
+  repartidores = signal<Repartidor[]>([]);
+  guardandoRepartidor = signal(false);
 
   constructor(
     private ordenesService: OrdenesService,
     private recetasService: RecetasService,
+    private empleadosService: EmpleadosService,
     private authService: AuthService,
     public themeService: ThemeService,
     private router: Router,
@@ -161,6 +191,13 @@ export class ComandasComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.cargarOrdenes();
     this.intervaloId = setInterval(() => this.cargarOrdenes(), INTERVALO_ACTUALIZACION_MS);
+
+    if (this.puedeAsignarRepartidor()) {
+      this.empleadosService.listarRepartidores().subscribe({
+        next: (lista) => this.repartidores.set(lista),
+        error: () => {},
+      });
+    }
   }
 
   // Al salir de la pantalla se apaga el sondeo; si no, seguiría consultando al
@@ -279,6 +316,34 @@ export class ComandasComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ===========================================================================
+  // ASIGNAR REPARTIDOR (2026-10-16)
+  // ===========================================================================
+
+  abrirAsignarRepartidor(orden: Orden): void {
+    this.asignandoRepartidorPara.set(orden.id);
+  }
+
+  cerrarAsignarRepartidor(): void {
+    this.asignandoRepartidorPara.set(null);
+  }
+
+  confirmarRepartidor(ordenId: number, valor: string): void {
+    const repartidorId = valor ? +valor : null;
+    this.guardandoRepartidor.set(true);
+    this.ordenesService.asignarRepartidor(ordenId, repartidorId).subscribe({
+      next: () => {
+        this.guardandoRepartidor.set(false);
+        this.asignandoRepartidorPara.set(null);
+        this.cargarOrdenes();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.guardandoRepartidor.set(false);
+        this.error.set(error.error?.error || 'No se pudo asignar el repartidor.');
+      },
+    });
+  }
+
   // Minutos enteros desde que se registró la venta.
   minutosEsperando(fechaCreacion: string): number {
     return Math.max(0, Math.floor((Date.now() - new Date(fechaCreacion).getTime()) / 60000));
@@ -301,6 +366,13 @@ export class ComandasComponent implements OnInit, OnDestroy {
     return this.minutosEsperando(orden.fecha_creacion) >= MINUTOS_PARA_RESALTAR;
   }
 
+  // true si ya se acerca al límite pero todavía no lo pasa (se resalta en
+  // naranja, un paso antes del rojo de esUrgente).
+  necesitaAtencion(orden: Orden): boolean {
+    const minutos = this.minutosEsperando(orden.fecha_creacion);
+    return minutos >= MINUTOS_PARA_ATENCION && minutos < MINUTOS_PARA_RESALTAR;
+  }
+
   volverAlDashboard(): void {
     this.router.navigate(['/dashboard']);
   }
@@ -313,6 +385,7 @@ export class ComandasComponent implements OnInit, OnDestroy {
   verTutorial(item: ItemOrden): void {
     this.itemTutorial.set(item);
     this.pasosTutorial.set([]);
+    this.imagenReferenciaTutorial.set(null);
     this.cargandoTutorial.set(true);
     this.recetasService.obtenerTutorial(item.variante_id).subscribe({
       next: (pasos) => {
@@ -321,6 +394,12 @@ export class ComandasComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.cargandoTutorial.set(false);
+      },
+    });
+    this.recetasService.obtenerImagenReferencia(item.variante_id).subscribe({
+      next: (resp) => this.imagenReferenciaTutorial.set(resp.imagen_url),
+      error: () => {
+        // Sin foto de referencia, la ventana solo muestra los pasos.
       },
     });
   }

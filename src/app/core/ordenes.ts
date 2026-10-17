@@ -36,6 +36,15 @@ export interface Orden {
   estado: EstadoOrden;
   // 'presencial' o 'domicilio'.
   tipo_entrega: string;
+  // Solo llenos cuando tipo_entrega es 'domicilio' — para que cocina/
+  // repartidor sepan a dónde va.
+  cliente_nombre: string | null;
+  cliente_direccion: string | null;
+  cliente_telefono: string | null;
+  // Repartidor asignado (solo domicilio, 2026-10-16) — null si todavía no
+  // se asigna. Se puede fijar al cobrar o después desde aquí mismo.
+  repartidor_id: number | null;
+  repartidor_nombre: string | null;
   // Momento de la venta; sirve para calcular "hace X min" y resaltar demoras.
   fecha_creacion: string;
   items: ItemOrden[];
@@ -79,6 +88,18 @@ export class OrdenesService {
   // siguiente de la secuencia; el servidor rechaza saltos y retrocesos.
   avanzarEstado(ordenId: number, estado: EstadoOrden): Observable<Orden> {
     return this.http.patch<Orden>(`${this.apiUrl}/ordenes/${ordenId}/estado`, { estado });
+  }
+
+  // PATCH /api/ordenes/:id/repartidor — asigna/cambia el repartidor de una
+  // orden a domicilio; `null` quita la asignación.
+  asignarRepartidor(
+    ordenId: number,
+    repartidorId: number | null,
+  ): Observable<{ id: number; repartidor_id: number | null }> {
+    return this.http.patch<{ id: number; repartidor_id: number | null }>(
+      `${this.apiUrl}/ordenes/${ordenId}/repartidor`,
+      { repartidor_id: repartidorId },
+    );
   }
 
   // GET /api/ordenes/:id/tiempos — cuánto duró la orden en cada estado

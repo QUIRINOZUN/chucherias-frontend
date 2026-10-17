@@ -4,29 +4,38 @@
 // Es la pantalla a la que se llega tras iniciar sesión. Muestra una tarjeta por
 // cada módulo al que el usuario tiene permiso. Cada rol ve solo lo suyo:
 //
-//   administrador → Punto de venta, Comandas, Corte de caja, Ventas de hoy, Usuarios, Inventario, Mermas, Asistencias, Recetario
-//   encargado     → Punto de venta, Comandas, Corte de caja, Ventas de hoy, Usuarios, Inventario, Mermas, Asistencias, Recetario
-//   cajero        → Punto de venta, Comandas (consulta), Corte de caja
-//   auxiliar      → Comandas
+//   administrador → Punto de venta, Comandas, Corte de caja, Ventas de hoy,
+//                   Recetario, Inventario, Mermas, Usuarios, Asistencias,
+//                   Clientes, Reportes, Checklist
+//   encargado     → (los mismos 12 que administrador)
+//   cajero        → Punto de venta, Comandas (consulta), Corte de caja, Checklist
+//   auxiliar      → Comandas, Checklist
 //
 // PARA AGREGAR UN MÓDULO NUEVO: añade su entrada a MODULOS (ruta, título,
 // ícono, descripción y roles) y registra la misma ruta con rolGuard en
 // app.routes.ts. La lista de roles debe coincidir con la del backend.
 //
-// WIDGET DE AUTOSERVICIO (Sprint 3): además de los módulos, cualquier rol
-// salvo administrador ve aquí mismo un botón para marcar su propia entrada/
-// salida — para cuando el personal no inicia/cierra sesión por turno (ej.
-// un dispositivo de mostrador que se queda logueado todo el día), caso en
-// el que la asistencia automática por login/logout (routes/auth.js) no
-// aplica. Respeta la misma ventana horaria del negocio que el backend.
+// 2026-10-11: se retiró el widget de autoservicio de asistencia ("Marcar mi
+// entrada/salida") a petición del usuario — registrar asistencia vuelve a
+// ser exclusivo de administrador/encargado desde el módulo Asistencias (ver
+// routes/asistencias.js y routes/auth.js).
+//
+// 2026-10-11: franja "Resumen de hoy" arriba de la rejilla de módulos —
+// ventas + efectivo esperado (administrador/encargado/cajero, mismos roles
+// que ya pueden consultar GET /api/caja/resumen) y personal adentro ahora
+// mismo (administrador/encargado, mismos roles que GET /api/asistencias/hoy).
+// Antes esa franja de la pantalla era espacio vacío sin usar: .dashboard-cuerpo
+// centra verticalmente su contenido (`justify-content: center`), así que con
+// solo la rejilla de módulos quedaba un hueco grande en viewports altos.
 // =============================================================================
 import { Component, OnInit, computed, signal } from '@angular/core';
+import { CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../core/auth';
 import { ThemeService } from '../core/theme';
-import { AsistenciasService, MiEstadoHoy } from '../core/asistencias';
 import { RecetasService } from '../core/recetas';
+import { CajaService, ResumenCaja } from '../core/caja';
+import { AsistenciasService } from '../core/asistencias';
 
 // Descripción de una tarjeta del menú.
 interface Modulo {
@@ -38,18 +47,39 @@ interface Modulo {
   descripcion: string;
   // Roles que pueden ver (y abrir) este módulo.
   roles: string[];
+  // Token de color de identidad del módulo (--mod-*, definido en
+  // styles.css) — se liga a --acento-modulo en la tarjeta vía
+  // [style.--acento-modulo], mismo color que usa el encabezado de ese
+  // módulo al abrirlo (ver ":host { --acento-modulo: ... }" en cada
+  // componente) para que la tarjeta "avise" de qué color será la pantalla.
+  colorVar: string;
 }
 
 // Cada módulo declara qué roles pueden verlo, con los mismos permisos que
 // ya aplica el backend (ver core/auth-guard.ts y las rutas del API). El
 // administrador siempre ve todo lo que existe hoy en el sistema.
+//
+// ORDEN (2026-10-16, reorganizado a petición del usuario): antes de esto
+// el orden era puramente cronológico (el orden en que se construyó cada
+// módulo, Sprint por Sprint); ahora agrupa por TEMA, para que los módulos
+// relacionados queden contiguos en la rejilla (que los pinta en orden de
+// lectura, fila por fila — ver `modulosVisibles`, un simple `.filter()`
+// que conserva el orden de este arreglo):
+//   1-4  Ventas y caja    — la operación del día a día en el mostrador.
+//   5-7  Cocina e inventario — lo que sostiene lo que se vende (receta →
+//        insumo → merma).
+//   8-10 Personas         — empleados (Usuarios, Asistencias) y clientes.
+// Para el cajero (solo ve 1-3) y el auxiliar (solo ve 2) esto no cambia
+// nada — esos 3 módulos ya eran los primeros antes de este reordenamiento.
 const MODULOS: Modulo[] = [
+  // ---- Ventas y caja ----
   {
     ruta: '/pos',
     titulo: 'Punto de venta',
     icono: 'bolsa',
     descripcion: 'Menú, carrito y cobro.',
     roles: ['administrador', 'encargado', 'cajero'],
+    colorVar: 'var(--mod-pos)',
   },
   {
     ruta: '/comandas',
@@ -57,6 +87,7 @@ const MODULOS: Modulo[] = [
     icono: 'comanda',
     descripcion: 'Pedidos en preparación y por entregar.',
     roles: ['administrador', 'encargado', 'cajero', 'auxiliar'],
+    colorVar: 'var(--mod-comandas)',
   },
   {
     ruta: '/caja',
@@ -64,6 +95,7 @@ const MODULOS: Modulo[] = [
     icono: 'billetes',
     descripcion: 'Resumen del día y registrar corte.',
     roles: ['administrador', 'encargado', 'cajero'],
+    colorVar: 'var(--mod-caja)',
   },
   {
     ruta: '/ventas',
@@ -71,13 +103,16 @@ const MODULOS: Modulo[] = [
     icono: 'recibo',
     descripcion: 'Historial y cancelación de ventas.',
     roles: ['administrador', 'encargado'],
+    colorVar: 'var(--mod-ventas)',
   },
+  // ---- Cocina e inventario ----
   {
-    ruta: '/usuarios',
-    titulo: 'Usuarios',
-    icono: 'usuarios',
-    descripcion: 'Cuentas, roles y permisos.',
+    ruta: '/recetario',
+    titulo: 'Recetario',
+    icono: 'cocinar',
+    descripcion: 'Insumos que lleva cada variante.',
     roles: ['administrador', 'encargado'],
+    colorVar: 'var(--mod-recetario)',
   },
   {
     ruta: '/inventario',
@@ -85,6 +120,7 @@ const MODULOS: Modulo[] = [
     icono: 'paquete',
     descripcion: 'Insumos, existencias y proveedores.',
     roles: ['administrador', 'encargado'],
+    colorVar: 'var(--mod-inventario)',
   },
   {
     ruta: '/mermas',
@@ -92,6 +128,16 @@ const MODULOS: Modulo[] = [
     icono: 'picante',
     descripcion: 'Reporte de producto e insumo perdidos.',
     roles: ['administrador', 'encargado'],
+    colorVar: 'var(--mod-mermas)',
+  },
+  // ---- Personas: empleados y clientes ----
+  {
+    ruta: '/usuarios',
+    titulo: 'Usuarios',
+    icono: 'usuarios',
+    descripcion: 'Cuentas, roles y permisos.',
+    roles: ['administrador', 'encargado'],
+    colorVar: 'var(--mod-usuarios)',
   },
   {
     ruta: '/asistencias',
@@ -99,20 +145,44 @@ const MODULOS: Modulo[] = [
     icono: 'reloj',
     descripcion: 'Personal, entradas, salidas e historial.',
     roles: ['administrador', 'encargado'],
+    colorVar: 'var(--mod-asistencias)',
   },
   {
-    ruta: '/recetario',
-    titulo: 'Recetario',
-    icono: 'cocinar',
-    descripcion: 'Insumos que lleva cada variante.',
+    ruta: '/clientes',
+    titulo: 'Clientes',
+    icono: 'corazon',
+    descripcion: 'Catálogo de clientes y su historial de lealtad.',
     roles: ['administrador', 'encargado'],
+    colorVar: 'var(--mod-clientes)',
+  },
+  // ---- Transversal: no pertenece a ninguno de los 3 grupos de arriba,
+  // junta datos de todos ellos (RF-26) — por eso va al final, no mezclado
+  // con un grupo específico.
+  {
+    ruta: '/reportes',
+    titulo: 'Reportes',
+    icono: 'grafica',
+    descripcion: 'Resumen de ventas, inventario, personal y clientes.',
+    roles: ['administrador', 'encargado'],
+    colorVar: 'var(--mod-reportes)',
+  },
+  // Checklist (2026-10-16, entrevista: "aunque parece sencillo, es clave
+  // para la operación diaria") — también transversal, pero visible a TODO
+  // rol operativo (cualquiera puede abrir/cerrar), no solo admin/encargado.
+  {
+    ruta: '/checklist',
+    titulo: 'Checklist',
+    icono: 'check',
+    descripcion: 'Pasos de apertura y cierre del negocio.',
+    roles: ['administrador', 'encargado', 'cajero', 'auxiliar'],
+    colorVar: 'var(--mod-checklist)',
   },
 ];
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, CurrencyPipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -125,15 +195,6 @@ export class DashboardComponent implements OnInit {
     return MODULOS.filter((modulo) => rol && modulo.roles.includes(rol));
   });
 
-  // El administrador no lleva asistencia (ver nota de diseño de Sprint 3);
-  // para el resto de roles se muestra el widget si el servidor confirma que
-  // su cuenta sí está ligada a un empleado.
-  esAdministrador = computed(() => this.authService.usuarioActual()?.rol === 'administrador');
-
-  miEstadoHoy = signal<MiEstadoHoy | null>(null);
-  procesandoMiAsistencia = signal(false);
-  errorMiAsistencia = signal('');
-
   // Aviso en la tarjeta de Recetario (2026-10-09): cuántas variantes activas
   // todavía no tienen receta capturada. Una variante sin receta es un
   // estado VÁLIDO (ver routes/recetas.js) — no bloquea nada, se puede
@@ -143,24 +204,48 @@ export class DashboardComponent implements OnInit {
   // haga falta acordarse de ir a revisar.
   variantesSinRecetaCount = signal<number | null>(null);
 
+  // ---- Resumen de hoy (franja arriba de la rejilla de módulos) ----
+  rol = computed(() => this.authService.usuarioActual()?.rol ?? null);
+  // Mismos roles que ya puede consultar GET /api/caja/resumen en el servidor.
+  puedeVerResumenCaja = computed(() =>
+    ['administrador', 'encargado', 'cajero'].includes(this.rol() ?? ''),
+  );
+  // Mismos roles que ya puede consultar GET /api/asistencias/hoy en el servidor.
+  puedeVerPersonalAdentro = computed(() =>
+    ['administrador', 'encargado'].includes(this.rol() ?? ''),
+  );
+
+  // "Ventas de hoy" en la plantilla se calcula directo de resumenCaja()
+  // (ventas_efectivo + total_transferencia) en vez de un computed aparte —
+  // a diferencia de `total_sistema`, que mezcla las ventas con saldo
+  // inicial/ingresos/retiros de caja (ver routes/caja.js, resumenCajaDelDia),
+  // esto es la cifra de ventas "limpia" para la tarjeta de un vistazo.
+  resumenCaja = signal<ResumenCaja | null>(null);
+
+  personalAdentroHoy = signal<number | null>(null);
+
   constructor(
     // `public` para que la plantilla muestre el nombre/rol y llame a logout().
     public authService: AuthService,
     public themeService: ThemeService,
-    private asistenciasService: AsistenciasService,
     private recetasService: RecetasService,
+    private cajaService: CajaService,
+    private asistenciasService: AsistenciasService,
   ) {}
 
   ngOnInit(): void {
-    if (!this.esAdministrador()) {
-      this.cargarMiEstadoHoy();
-    }
     // Solo administrador/encargado ven el módulo Recetario (y pueden
     // consultar GET /api/recetas) — para los demás roles la llamada daría
     // 403, así que ni se intenta.
     const rol = this.authService.usuarioActual()?.rol;
     if (rol === 'administrador' || rol === 'encargado') {
       this.cargarVariantesSinReceta();
+    }
+    if (this.puedeVerResumenCaja()) {
+      this.cargarResumenCaja();
+    }
+    if (this.puedeVerPersonalAdentro()) {
+      this.cargarPersonalAdentro();
     }
   }
 
@@ -176,36 +261,25 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  cargarMiEstadoHoy(): void {
-    this.asistenciasService.miHoy().subscribe({
-      next: (estado) => this.miEstadoHoy.set(estado),
+  cargarResumenCaja(): void {
+    this.cajaService.obtenerResumen().subscribe({
+      next: (resumen) => this.resumenCaja.set(resumen),
       error: () => {
-        // El widget simplemente no se muestra; el resto del dashboard sigue
-        // funcionando con normalidad.
+        // La franja de resumen simplemente no aparece; el resto del
+        // dashboard sigue funcionando con normalidad.
       },
     });
   }
 
-  marcarMiAsistencia(): void {
-    const estado = this.miEstadoHoy();
-    if (!estado) {
-      return;
-    }
-    this.procesandoMiAsistencia.set(true);
-    this.errorMiAsistencia.set('');
-
-    const accion = estado.abierta
-      ? this.asistenciasService.marcarMiSalida()
-      : this.asistenciasService.marcarMiEntrada();
-
-    accion.subscribe({
-      next: () => {
-        this.procesandoMiAsistencia.set(false);
-        this.cargarMiEstadoHoy();
+  cargarPersonalAdentro(): void {
+    // "Adentro ahora" = tiene una entrada de hoy sin salida todavía (mismo
+    // criterio que ya usa asistencias.ts para su tarjeta-resumen "Hoy").
+    this.asistenciasService.listarHoy().subscribe({
+      next: (asistencias) => {
+        this.personalAdentroHoy.set(asistencias.filter((a) => !a.hora_salida).length);
       },
-      error: (error: HttpErrorResponse) => {
-        this.procesandoMiAsistencia.set(false);
-        this.errorMiAsistencia.set(error.error?.error || 'No se pudo registrar tu asistencia.');
+      error: () => {
+        // El dato simplemente no aparece.
       },
     });
   }

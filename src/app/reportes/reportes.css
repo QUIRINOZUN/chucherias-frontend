@@ -1,0 +1,302 @@
+/* =============================================================================
+   reportes.css — REPORTE CONSOLIDADO (RF-26, Sprint 4 oficial)
+   =============================================================================
+   Encabezado + filtros de fecha + 4 secciones (ventas/inventario/personal/
+   clientes), cada una con el color de identidad del módulo al que
+   pertenece ese dato (--acento-seccion, fijado inline por sección en
+   reportes.html) — no todo el color de identidad propio de Reportes
+   (--mod-reportes), que solo se usa en el encabezado y la insignia de la
+   pantalla. Mismo lenguaje visual que mermas.css/dashboard.css: tarjetas
+   con sombra suave, radios grandes, cifras en la fuente de títulos. */
+
+:host {
+  --acento-modulo: var(--mod-reportes);
+  display: block;
+  min-height: 100vh;
+  background: var(--pos-bg-main);
+  font-family: var(--fuente-texto);
+  color: var(--pos-text-primary);
+  animation: aparecer 0.22s ease;
+}
+
+.reportes-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.reportes-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--pos-bg-card);
+  border-bottom: 1px solid var(--pos-border);
+  position: sticky;
+  top: 0;
+}
+
+.reportes-header h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.boton-volver,
+.boton-tema {
+  min-height: 44px;
+  border: none;
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  border-radius: var(--radio-pastilla);
+  padding: 0 18px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.boton-tema {
+  min-width: 44px;
+  padding: 0;
+  font-size: 1.15rem;
+}
+
+.reportes-cuerpo {
+  flex: 1;
+  padding: 16px;
+  max-width: 920px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.mensaje-estado {
+  color: var(--pos-text-secondary);
+  font-size: 0.9rem;
+}
+
+.mensaje-error {
+  color: var(--peligro-texto);
+}
+
+/* ===================== Filtros ===================== */
+.tarjeta-filtros-reportes {
+  background: var(--pos-bg-card);
+  border-top: 3px solid var(--acento-modulo);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.filtros-reportes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.campo-filtro {
+  flex: 1;
+  min-width: 130px;
+}
+
+.campo-filtro label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pos-text-secondary);
+}
+
+.campo-filtro input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 10px;
+  font-size: 0.9rem;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.campo-filtro input:focus {
+  outline: none;
+  border-color: var(--acento-modulo);
+}
+
+/* RF-26: accesos rápidos de periodo. */
+.filtros-rapidos-reportes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.boton-filtro-rapido {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-filtro-rapido:hover {
+  border-color: var(--acento-modulo);
+  color: var(--acento-modulo);
+}
+
+.boton-limpiar-filtros {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: none;
+  color: var(--pos-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-limpiar-filtros:hover {
+  border-color: var(--acento-modulo);
+  color: var(--pos-text-primary);
+}
+
+/* ===================== Secciones ===================== */
+.grid-secciones-reportes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.seccion-reporte {
+  background: var(--pos-bg-card);
+  border-top: 4px solid var(--acento-seccion, var(--acento-modulo));
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: 18px;
+}
+
+.seccion-reporte-encabezado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.seccion-reporte-encabezado h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.seccion-reporte-icono {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(
+    in srgb,
+    var(--acento-seccion, var(--acento-modulo)) 20%,
+    var(--pos-bg-card)
+  );
+  color: var(--acento-seccion, var(--acento-modulo));
+}
+
+.seccion-reporte-icono .icono {
+  width: 19px;
+  height: 19px;
+}
+
+.seccion-reporte-aviso {
+  margin: 0 0 14px;
+  font-size: 0.76rem;
+  color: var(--pos-text-secondary);
+}
+
+.grid-stats-reporte {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px;
+}
+
+.stat-reporte {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+}
+
+.stat-reporte-valor {
+  font-family: var(--fuente-titulo);
+  font-weight: 800;
+  font-size: 1.3rem;
+  line-height: 1.1;
+}
+
+.stat-reporte-etiqueta {
+  font-size: 0.72rem;
+  color: var(--pos-text-secondary);
+}
+
+/* Métricas que conviene que salten a la vista (canceladas, bajo mínimo,
+   retardos) cuando son mayores a 0 — mismo rojo funcional que ya usa toda
+   la app para avisos, nunca el color de la sección. */
+.stat-reporte-alerta .stat-reporte-valor {
+  color: var(--peligro-texto);
+}
+
+/* ===================== Top clientes ===================== */
+.subtitulo-top-clientes {
+  margin: 16px 0 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--pos-text-secondary);
+}
+
+.lista-top-clientes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item-top-cliente {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  font-size: 0.85rem;
+}
+
+.badge-visitas-reporte {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: var(--radio-pastilla);
+  background: color-mix(in srgb, var(--mod-clientes) 20%, var(--pos-bg-card));
+  color: var(--mod-clientes);
+  white-space: nowrap;
+}
+
+/* ===================== Esqueleto de carga ===================== */
+.esqueleto-seccion-reporte {
+  height: 220px;
+  border-radius: var(--radio-lg);
+}

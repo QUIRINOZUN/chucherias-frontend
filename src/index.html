@@ -5,11 +5,26 @@
     <title>Chucherías</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Ícono real de la marca (2026-10-16), reemplaza el favicon default de
+         Angular CLI. favicon.ico (multi-resolución 16/32/48/256) cubre el
+         fallback de navegadores/crawlers que piden /favicon.ico directo sin
+         leer este <link>; icon.png (192×192) es el que usan los navegadores
+         modernos que prefieren PNG. Ambos generados con sharp/png-to-ico a
+         partir del icon.png original (1254×1254) que se compartió para esto
+         — demasiado pesado (~1 MB) para servirlo tal cual en cada carga. -->
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Fraunces gana los ejes variables SOFT y WONK (2026-10-13): antes solo
+         se pedían opsz/wght, así que Google servía una instancia sin acceso
+         a esos ejes en tiempo real. SOFT redondea los remates (menos rígido)
+         y WONK activa las alternas "chuecas" a propósito — el estilo
+         juguetón/hecho a mano de Fraunces, pensado para títulos, no para
+         texto de lectura. Se usan solo en encabezados (ver styles.css),
+         nunca en el texto de cuerpo/datos. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&family=Fraunces:opsz,wght@9..144,600..800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&family=Fraunces:SOFT,WONK,opsz,wght@0..100,0..1,9..144,600..800&display=swap"
       rel="stylesheet"
     />
     <script>
@@ -193,6 +208,16 @@
           d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
         />
         <circle cx="12" cy="13" r="4" />
+      </symbol>
+      <symbol id="ic-corazon" viewBox="0 0 24 24">
+        <path
+          d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"
+        />
+      </symbol>
+      <symbol id="ic-grafica" viewBox="0 0 24 24">
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
       </symbol>
     </svg>
     <app-root></app-root>

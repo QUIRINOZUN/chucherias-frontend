@@ -7,11 +7,13 @@
    cifras en la fuente de títulos). */
 
 :host {
+  --acento-modulo: var(--mod-mermas);
   display: block;
   min-height: 100vh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
+  animation: aparecer 0.22s ease;
 }
 
 .mermas-container {
@@ -74,9 +76,14 @@
   color: var(--peligro-texto);
 }
 
+/* Carmín de Mermas (--mod-mermas) arriba de las tarjetas neutras — un tono
+   distinto del rojo de peligro (--peligro-texto) que ya usan las mermas
+   individuales y el total perdido, para que la identidad del módulo no se
+   confunda con ese aviso funcional. */
 .tarjeta-resumen-mermas,
 .tarjeta-filtros-mermas {
   background: var(--pos-bg-card);
+  border-top: 3px solid var(--acento-modulo);
   border-radius: var(--radio-lg);
   box-shadow: var(--sombra-suave);
   padding: 16px;
@@ -139,7 +146,7 @@
 .campo-filtro input:focus,
 .campo-filtro select:focus {
   outline: none;
-  border-color: var(--pos-text-secondary);
+  border-color: var(--acento-modulo);
 }
 
 .boton-limpiar-filtros {
@@ -155,7 +162,7 @@
 }
 
 .boton-limpiar-filtros:hover {
-  border-color: var(--pos-text-primary);
+  border-color: var(--acento-modulo);
   color: var(--pos-text-primary);
 }
 

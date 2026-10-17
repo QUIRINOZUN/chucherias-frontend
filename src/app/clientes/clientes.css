@@ -1,0 +1,423 @@
+/* =============================================================================
+   clientes.css — CLIENTES Y PROGRAMA DE LEALTAD (Sprint 4)
+   =============================================================================
+   Mismo lenguaje visual que mermas.css/usuarios.css: encabezado, búsqueda,
+   lista de tarjetas y una ventana de detalle (aquí con historial + edición).
+   ============================================================================= */
+
+:host {
+  --acento-modulo: var(--mod-clientes);
+  display: block;
+  min-height: 100vh;
+  background: var(--pos-bg-main);
+  font-family: var(--fuente-texto);
+  color: var(--pos-text-primary);
+  animation: aparecer 0.22s ease;
+}
+
+.clientes-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.clientes-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--pos-bg-card);
+  border-bottom: 1px solid var(--pos-border);
+  position: sticky;
+  top: 0;
+}
+
+.clientes-header h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.boton-volver,
+.boton-tema {
+  min-height: 44px;
+  border: none;
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  border-radius: var(--radio-pastilla);
+  padding: 0 18px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.boton-tema {
+  min-width: 44px;
+  padding: 0;
+  font-size: 1.15rem;
+}
+
+.clientes-cuerpo {
+  flex: 1;
+  padding: 16px;
+  max-width: 680px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.mensaje-estado {
+  color: var(--pos-text-secondary);
+  font-size: 0.9rem;
+}
+
+.mensaje-error {
+  color: var(--peligro-texto);
+}
+
+/* ===================== Búsqueda ===================== */
+.campo-busqueda {
+  margin-bottom: 16px;
+}
+
+.campo-busqueda input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 16px;
+  font-size: 0.95rem;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-card);
+  color: var(--pos-text-primary);
+  box-sizing: border-box;
+}
+
+.campo-busqueda:focus-within {
+  border-color: var(--acento-modulo);
+}
+
+.campo-busqueda input:focus {
+  outline: none;
+}
+
+/* ===================== Lista ===================== */
+.lista-clientes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item-cliente {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  background: var(--pos-bg-card);
+  border-left: 4px solid var(--acento-modulo);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: 14px;
+  cursor: pointer;
+}
+
+.item-cliente:hover,
+.item-cliente:focus-visible {
+  box-shadow: var(--sombra-elevada);
+}
+
+.item-cliente-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item-cliente-nombre {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.item-cliente-telefono {
+  font-size: 0.8rem;
+  color: var(--pos-text-secondary);
+}
+
+.badge-visitas {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radio-pastilla);
+  background: color-mix(in srgb, var(--acento-modulo) 20%, var(--pos-bg-card));
+  color: var(--acento-modulo);
+  white-space: nowrap;
+}
+
+/* Esqueletos de carga. */
+.item-cliente-esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: 14px;
+}
+
+.esqueleto-cliente-nombre {
+  width: 55%;
+  height: 16px;
+}
+
+.esqueleto-cliente-visitas {
+  width: 35%;
+  height: 12px;
+}
+
+/* ===================== Ventana de detalle ===================== */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 20;
+  animation: aparecer 0.2s ease;
+}
+
+.panel-formulario {
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-lg);
+  border-top: 4px solid var(--acento-modulo);
+  box-shadow: var(--sombra-elevada);
+  padding: 24px;
+  box-sizing: border-box;
+  animation: escalar 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.panel-formulario h2 {
+  margin: 0 0 4px;
+  font-size: 1.4rem;
+}
+
+.subtitulo-formulario {
+  margin: 0 0 16px;
+  color: var(--pos-text-secondary);
+  font-size: 0.88rem;
+}
+
+.detalle-cliente-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.detalle-cliente-encabezado h2 {
+  margin: 0;
+}
+
+.boton-enlace-chico {
+  min-height: 44px;
+  padding: 0 6px;
+  border: none;
+  background: none;
+  color: var(--acento-modulo);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.campo {
+  margin-bottom: 14px;
+}
+
+.campo label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.campo input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: 0 12px;
+  font-size: 1rem;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.campo input:focus {
+  outline: none;
+  border-color: var(--acento-modulo);
+}
+
+.acciones-formulario {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.boton-cancelar,
+.boton-confirmar {
+  flex: 1;
+  min-height: 52px;
+  border-radius: var(--radio-md);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.boton-cancelar {
+  border: 1px solid var(--pos-border);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.boton-confirmar {
+  border: none;
+  background: var(--acento-modulo);
+  color: #fff;
+  box-shadow: var(--sombra-acento);
+}
+
+.boton-confirmar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ===================== Progreso del ciclo de lealtad ===================== */
+.progreso-lealtad {
+  margin: 12px 0 20px;
+}
+
+.progreso-lealtad-texto {
+  margin: 0 0 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.progreso-lealtad-barra {
+  position: relative;
+  height: 10px;
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  overflow: hidden;
+}
+
+.progreso-lealtad-relleno {
+  height: 100%;
+  background: var(--acento-modulo);
+  transition: width 0.3s ease;
+}
+
+.progreso-lealtad-marca {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--pos-bg-card);
+}
+
+.progreso-lealtad-leyenda {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  color: var(--pos-text-secondary);
+}
+
+/* ===================== Historial de lealtad ===================== */
+.subtitulo-historial {
+  margin: 8px 0 10px;
+  font-size: 1rem;
+}
+
+.lista-historial-lealtad {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-historial-lealtad {
+  padding: 10px 12px;
+  border-left: 3px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+}
+
+.item-historial-descuento {
+  border-left-color: var(--exito-texto);
+}
+
+.item-historial-linea {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+
+.item-historial-monto {
+  font-weight: 700;
+  color: var(--pos-text-secondary);
+  white-space: nowrap;
+}
+
+.item-historial-fecha {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.72rem;
+  color: var(--pos-text-secondary);
+}
+
+/* RF-21 (2026-10-16): historial de compras — mismo lenguaje visual que el
+   historial de lealtad de arriba, con su propio acento (rojo = cancelada,
+   en vez del verde de "descuento" del historial de lealtad). */
+.lista-historial-compras {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-historial-compra {
+  padding: 10px 12px;
+  border-left: 3px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+}
+
+.item-historial-compra-cancelada {
+  border-left-color: var(--peligro-texto);
+}
+
+.item-compra-productos {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+}
+
+.item-compra-producto-cancelado {
+  text-decoration: line-through;
+}

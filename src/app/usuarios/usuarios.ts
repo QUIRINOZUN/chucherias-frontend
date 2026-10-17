@@ -20,6 +20,7 @@
 // =============================================================================
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth';
@@ -32,7 +33,7 @@ type ModoFormulario = 'crear' | 'editar' | null;
 @Component({
   selector: 'app-usuarios',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, FocoDialogoDirective],
   templateUrl: './usuarios.html',
   styleUrl: './usuarios.css',
 })

@@ -12,6 +12,9 @@
       <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
       Volver
     </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-billetes" /></svg>
+    </span>
     <h1>Corte de caja</h1>
     <button
       type="button"
@@ -30,7 +33,15 @@
   <div class="caja-cuerpo">
     <!-- Estados de la pantalla: cargando el resumen, error de conexión, o el contenido. -->
     @if (cargando()) {
-      <p class="mensaje-estado">Calculando resumen del día...</p>
+      <!-- Skeleton (2026-10-11) en vez de solo texto — reutiliza la clase
+           real .tarjeta-resumen (mismo fondo/borde/padding de siempre) para
+           que no salte de tamaño al terminar de cargar. -->
+      <section class="tarjeta-resumen" aria-hidden="true">
+        <div class="esqueleto esqueleto-en-tarjeta esqueleto-caja-titulo"></div>
+        @for (i of [1, 2, 3]; track i) {
+          <div class="esqueleto esqueleto-en-tarjeta esqueleto-caja-linea"></div>
+        }
+      </section>
     } @else if (error()) {
       <p class="mensaje-estado mensaje-error">{{ error() }}</p>
     } @else if (resumen(); as r) {
@@ -162,6 +173,17 @@
                   <span>− Retiros de efectivo</span>
                   <span>{{ r.retiros_efectivo | currency: 'MXN' }}</span>
                 </div>
+                <button
+                  type="button"
+                  class="boton-listado-retiros"
+                  [disabled]="cargandoListadoRetiros()"
+                  (click)="verListadoRetiros()"
+                >
+                  {{ cargandoListadoRetiros() ? 'Cargando...' : 'Listado de retiros' }}
+                </button>
+                @if (errorListadoRetiros()) {
+                  <p class="mensaje-error">{{ errorListadoRetiros() }}</p>
+                }
               }
               @if (r.reembolsos_efectivo > 0) {
                 <div class="linea-corte linea-corte-secundaria">
@@ -372,4 +394,72 @@
       </div>
     }
   </div>
+
+  <!-- TICKET "LISTADO DE RETIROS" (2026-10-12): todos los retiros de hoy
+       (confirmados o no) + su suma, imprimible al hacer el corte. Mismas
+       clases .comprobante-* que el comprobante de venta y el ticket de
+       retiro del POS, así hereda el mismo @media print (ver abajo) y la
+       misma decoración (logo, bordes punteados) — pero vive aquí porque
+       esta pantalla es la de Corte de caja, no el POS. -->
+  @if (listadoRetiros(); as listado) {
+    <div class="overlay">
+      <div
+        class="panel-cobro"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Listado de retiros"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarListadoRetiros()"
+      >
+        <div class="comprobante" id="comprobante-imprimible">
+          <div class="comprobante-encabezado">
+            <img
+              src="https://res.cloudinary.com/isjkpamh/image/upload/v1792190975/chucherias/marca/xnua730fuk6dau2nsko1.png"
+              alt="Chucherías Mix"
+              class="comprobante-logo"
+            />
+            <p class="venta-registrada-badge">Listado de retiros</p>
+            <p class="comprobante-fecha">{{ listado.fecha | date: 'dd/MM/yyyy' }}</p>
+          </div>
+
+          @if (listado.retiros.length === 0) {
+            <p class="mensaje-estado">No hay retiros registrados hoy.</p>
+          } @else {
+            <ul class="comprobante-items">
+              @for (retiro of listado.retiros; track retiro.id) {
+                <li>
+                  <div class="comprobante-item-linea">
+                    <span>{{ retiro.fecha | date: 'HH:mm' }} · {{ retiro.responsable }}</span>
+                    <span>{{ +retiro.monto | currency: 'MXN' }}</span>
+                  </div>
+                  @if (retiro.motivo) {
+                    <p class="comprobante-item-notas">{{ retiro.motivo }}</p>
+                  }
+                  @if (!retiro.confirmado) {
+                    <p class="comprobante-item-notas">Sin confirmar por el cajero todavía</p>
+                  }
+                </li>
+              }
+            </ul>
+
+            <div class="comprobante-totales">
+              <div class="comprobante-linea comprobante-total-final">
+                <span>Total retirado</span>
+                <span>{{ listado.total | currency: 'MXN' }}</span>
+              </div>
+            </div>
+          }
+
+          <div class="comprobante-acciones">
+            <button type="button" class="boton-cancelar" (click)="imprimirListadoRetiros()">
+              Imprimir
+            </button>
+            <button type="button" class="boton-confirmar" (click)="cerrarListadoRetiros()">
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 </div>

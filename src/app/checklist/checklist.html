@@ -1,0 +1,265 @@
+<!-- ============================================================================
+     checklist.html — CHECKLIST DE APERTURA/CIERRE (lógica en checklist.ts)
+     ============================================================================
+     Visible a todo rol operativo. Dos pestañas (Apertura/Cierre) con los
+     pasos de hoy; una tercera ("Gestionar", solo administrador/encargado)
+     para personalizar el catálogo de pasos.
+     ============================================================================ -->
+<div class="checklist-container">
+  <header class="checklist-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      Volver
+    </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-check" /></svg>
+    </span>
+    <h1>Checklist</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
+    >
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
+    </button>
+  </header>
+
+  <div class="tabs-checklist-envoltorio">
+    <nav class="tabs-checklist" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        class="tab-checklist"
+        [class.tab-checklist-activa]="pestanaActiva() === 'apertura'"
+        [attr.aria-selected]="pestanaActiva() === 'apertura'"
+        (click)="cambiarPestana('apertura')"
+      >
+        <svg class="icono" aria-hidden="true"><use href="#ic-sol" /></svg>
+        Apertura
+        <span class="tab-badge-progreso"
+          >{{ contarMarcados('apertura') }}/{{ itemsDe('apertura').length }}</span
+        >
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="tab-checklist"
+        [class.tab-checklist-activa]="pestanaActiva() === 'cierre'"
+        [attr.aria-selected]="pestanaActiva() === 'cierre'"
+        (click)="cambiarPestana('cierre')"
+      >
+        <svg class="icono" aria-hidden="true"><use href="#ic-luna" /></svg>
+        Cierre
+        <span class="tab-badge-progreso"
+          >{{ contarMarcados('cierre') }}/{{ itemsDe('cierre').length }}</span
+        >
+      </button>
+      @if (esGestor()) {
+        <button
+          type="button"
+          role="tab"
+          class="tab-checklist"
+          [class.tab-checklist-activa]="pestanaActiva() === 'historial'"
+          [attr.aria-selected]="pestanaActiva() === 'historial'"
+          (click)="cambiarPestana('historial')"
+        >
+          <svg class="icono" aria-hidden="true"><use href="#ic-comanda" /></svg>
+          Historial
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="tab-checklist"
+          [class.tab-checklist-activa]="pestanaActiva() === 'gestion'"
+          [attr.aria-selected]="pestanaActiva() === 'gestion'"
+          (click)="cambiarPestana('gestion')"
+        >
+          <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
+          Gestionar
+        </button>
+      }
+    </nav>
+  </div>
+
+  <div class="checklist-cuerpo">
+    @if (error()) {
+      <p class="mensaje-estado mensaje-error">{{ error() }}</p>
+    }
+
+    @if (pestanaActiva() === 'apertura' || pestanaActiva() === 'cierre') {
+      @if (cargando()) {
+        <ul class="lista-pasos" aria-hidden="true">
+          @for (i of [1, 2, 3, 4]; track i) {
+            <li class="paso-esqueleto">
+              <div class="esqueleto esqueleto-paso"></div>
+            </li>
+          }
+        </ul>
+      } @else if (itemsDe(tipoActivo()).length === 0) {
+        <p class="mensaje-estado">
+          Todavía no hay pasos de {{ pestanaActiva() === 'apertura' ? 'apertura' : 'cierre' }}
+          capturados.
+        </p>
+      } @else {
+        <ul class="lista-pasos">
+          @for (item of itemsDe(tipoActivo()); track item.id) {
+            <li
+              class="item-paso"
+              [class.item-paso-marcado]="item.marcado"
+              role="button"
+              tabindex="0"
+              (click)="alternarMarca(item, tipoActivo())"
+              (keydown.enter)="alternarMarca(item, tipoActivo())"
+              (keydown.space)="$event.preventDefault(); alternarMarca(item, tipoActivo())"
+            >
+              <span class="paso-casilla" aria-hidden="true">
+                @if (item.marcado) {
+                  <svg class="icono"><use href="#ic-check" /></svg>
+                }
+              </span>
+              <div class="paso-texto">
+                <span class="paso-descripcion">{{ item.descripcion }}</span>
+                @if (item.marcado) {
+                  <span class="paso-detalle">
+                    {{ item.marcado_por_nombre }} · {{ item.fecha_marcado | date: 'HH:mm' }}
+                  </span>
+                }
+              </div>
+              @if (procesandoItemId() === item.id) {
+                <span class="paso-procesando">...</span>
+              }
+            </li>
+          }
+        </ul>
+      }
+    }
+
+    @if (pestanaActiva() === 'historial' && esGestor()) {
+      <!-- Quién marcó qué y a qué hora, en cualquier rango de fechas
+           (2026-10-16) — distinto de Apertura/Cierre, que solo muestran HOY. -->
+      <section class="seccion-historial-checklist">
+        <div class="filtros-historial-checklist">
+          <div class="campo-filtro-checklist">
+            <label for="historial-desde">Desde</label>
+            <input
+              id="historial-desde"
+              type="date"
+              [value]="filtroHistorialDesde()"
+              (change)="cambiarFiltroHistorialDesde($any($event.target).value)"
+            />
+          </div>
+          <div class="campo-filtro-checklist">
+            <label for="historial-hasta">Hasta</label>
+            <input
+              id="historial-hasta"
+              type="date"
+              [value]="filtroHistorialHasta()"
+              (change)="cambiarFiltroHistorialHasta($any($event.target).value)"
+            />
+          </div>
+          <div class="campo-filtro-checklist">
+            <label for="historial-tipo">Tipo</label>
+            <select
+              id="historial-tipo"
+              [value]="filtroHistorialTipo() ?? ''"
+              (change)="cambiarFiltroHistorialTipo($any($event.target).value)"
+            >
+              <option value="">Todos</option>
+              <option value="apertura">Apertura</option>
+              <option value="cierre">Cierre</option>
+            </select>
+          </div>
+        </div>
+        @if (hayFiltrosHistorial()) {
+          <button
+            type="button"
+            class="boton-limpiar-filtros-checklist"
+            (click)="limpiarFiltrosHistorial()"
+          >
+            Limpiar filtros
+          </button>
+        }
+
+        @if (errorHistorial()) {
+          <p class="mensaje-estado mensaje-error">{{ errorHistorial() }}</p>
+        } @else if (cargandoHistorial()) {
+          <p class="mensaje-estado">Consultando historial...</p>
+        } @else if (historialMarcas().length === 0) {
+          <p class="mensaje-estado">No hay marcas con esos filtros.</p>
+        } @else {
+          <ul class="lista-historial-checklist">
+            @for (marca of historialMarcas(); track marca.id) {
+              <li
+                class="item-historial-checklist"
+                [class.item-historial-checklist-apertura]="marca.tipo === 'apertura'"
+              >
+                <div class="item-historial-checklist-linea">
+                  <span class="item-historial-checklist-descripcion">{{ marca.descripcion }}</span>
+                  <span class="item-historial-checklist-tipo">{{
+                    marca.tipo === 'apertura' ? 'Apertura' : 'Cierre'
+                  }}</span>
+                </div>
+                <span class="item-historial-checklist-detalle">
+                  {{ marca.marcado_por_nombre }} ·
+                  {{ marca.fecha_marcado | date: 'dd/MM/yyyy HH:mm' }}
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+
+    @if (pestanaActiva() === 'gestion' && esGestor()) {
+      <section class="seccion-gestion-checklist">
+        <h2 class="subtitulo-gestion">Nuevo paso</h2>
+        <div class="form-nuevo-paso">
+          <select [value]="nuevoTipoForm()" (change)="nuevoTipoForm.set($any($event.target).value)">
+            <option value="apertura">Apertura</option>
+            <option value="cierre">Cierre</option>
+          </select>
+          <input
+            type="text"
+            placeholder="Descripción del paso"
+            [value]="nuevaDescripcionForm()"
+            (input)="nuevaDescripcionForm.set($any($event.target).value)"
+          />
+          <button
+            type="button"
+            class="boton-agregar-paso"
+            [disabled]="creandoItem()"
+            (click)="crearItem()"
+          >
+            {{ creandoItem() ? 'Agregando...' : '+ Agregar' }}
+          </button>
+        </div>
+        @if (errorGestion()) {
+          <p class="mensaje-estado mensaje-error">{{ errorGestion() }}</p>
+        }
+
+        @if (cargandoGestion()) {
+          <p class="mensaje-estado">Cargando catálogo...</p>
+        } @else {
+          @for (tipo of tipos; track tipo) {
+            <h3 class="subtitulo-gestion">{{ tipo === 'apertura' ? 'Apertura' : 'Cierre' }}</h3>
+            <ul class="lista-pasos-gestion">
+              @for (item of itemsGestionDe(tipo); track item.id) {
+                <li class="item-paso-gestion" [class.item-paso-gestion-inactivo]="!item.activo">
+                  <span>{{ item.descripcion }}</span>
+                  <button type="button" class="boton-activar-paso" (click)="cambiarActivo(item)">
+                    {{ item.activo ? 'Desactivar' : 'Activar' }}
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        }
+      </section>
+    }
+  </div>
+</div>

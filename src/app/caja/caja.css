@@ -6,11 +6,13 @@
 
 /* Contenedor del componente. */
 :host {
+  --acento-modulo: var(--mod-caja);
   display: block;
   min-height: 100vh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
+  animation: aparecer 0.22s ease;
 }
 
 .caja-container {
@@ -94,6 +96,17 @@
 }
 
 /* Tarjetas base compartidas por los bloques de la pantalla. */
+.esqueleto-caja-titulo {
+  height: 16px;
+  width: 50%;
+  margin-bottom: 16px;
+}
+
+.esqueleto-caja-linea {
+  height: 14px;
+  margin-bottom: 12px;
+}
+
 .tarjeta-resumen,
 .tarjeta-contar,
 .tarjeta-corte-guardado,
@@ -210,7 +223,7 @@
 
 .campo-caja input:focus {
   outline: none;
-  border-color: var(--pos-text-secondary);
+  border-color: var(--acento-modulo);
 }
 
 /* Recuadro que se actualiza mientras se escriben los montos ("Cuadra exacto", "Sobran", "Faltan"). */
@@ -238,7 +251,7 @@
   min-height: 48px;
   border: none;
   border-radius: var(--pos-radio);
-  background: var(--action-primary);
+  background: var(--acento-modulo);
   color: #fff;
   font-size: 0.95rem;
   font-weight: 700;
@@ -247,7 +260,7 @@
 
 .boton-guardar-corte:hover:not(:disabled),
 .boton-nuevo-corte:hover {
-  background: var(--action-primary-hover);
+  background: color-mix(in srgb, var(--acento-modulo) 85%, black);
 }
 
 .boton-guardar-corte:disabled {
@@ -306,7 +319,7 @@
 .campo-filtro input:focus,
 .campo-filtro select:focus {
   outline: none;
-  border-color: var(--pos-text-secondary);
+  border-color: var(--acento-modulo);
 }
 
 .boton-limpiar-filtros {
@@ -323,7 +336,7 @@
 }
 
 .boton-limpiar-filtros:hover {
-  border-color: var(--pos-text-primary);
+  border-color: var(--acento-modulo);
   color: var(--pos-text-primary);
 }
 
@@ -402,6 +415,17 @@
   border-radius: var(--radio-lg);
   box-shadow: var(--sombra-suave);
   padding: 22px;
+}
+
+/* Borde superior dorado (color de Caja) en las tarjetas neutras — la de
+   retiro se queda sin él a propósito, ya tiene su propio lenguaje de rojo
+   (acción de dinero saliendo bajo supervisión) que no conviene mezclar con
+   otro color. */
+.tarjeta-resumen,
+.tarjeta-contar,
+.tarjeta-corte-guardado,
+.tarjeta-historial {
+  border-top: 3px solid var(--acento-modulo);
 }
 
 .tarjeta-resumen h2,
@@ -488,5 +512,223 @@
     flex: 0 0 340px;
     position: sticky;
     top: 84px;
+  }
+}
+
+/* ===================== Ticket "Listado de retiros" (2026-10-12) =====================
+   Mismas clases .comprobante-* que el comprobante de venta y el ticket de
+   retiro del POS (pos.css) — los estilos de Angular son por componente y no
+   se heredan entre archivos, así que se duplican aquí a propósito, igual
+   que ya se repitió este patrón varias veces en el proyecto. Incluye la
+   misma decoración (logo arriba, borde punteado, total con línea doble) y
+   el mismo @media print en blanco y negro. */
+.boton-listado-retiros {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 10px;
+  border: 1.5px dashed var(--acento-modulo);
+  border-radius: var(--pos-radio);
+  background: color-mix(in srgb, var(--acento-modulo) 8%, var(--pos-bg-main));
+  color: var(--pos-text-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.boton-listado-retiros:hover:not(:disabled) {
+  border-style: solid;
+  background: color-mix(in srgb, var(--acento-modulo) 18%, var(--pos-bg-main));
+}
+
+.boton-listado-retiros:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 8, 0, 0.6);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  z-index: 40;
+  animation: aparecer 0.2s ease;
+}
+
+.panel-cobro {
+  width: 100%;
+  max-width: 480px;
+  max-height: 92vh;
+  overflow-y: auto;
+  background: var(--pos-bg-card);
+  border-radius: 28px 28px 0 0;
+  padding: 28px 22px 24px;
+  color: var(--pos-text-primary);
+  box-shadow: var(--sombra-elevada);
+  animation: subir 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.comprobante-encabezado {
+  text-align: center;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 2px dashed var(--pos-border);
+}
+
+.comprobante-logo {
+  display: block;
+  width: 150px;
+  max-width: 70%;
+  height: auto;
+  margin: 0 auto 10px;
+}
+
+.venta-registrada-badge {
+  display: inline-flex;
+  margin: 0 0 6px;
+  padding: 5px 14px;
+  border-radius: var(--radio-pastilla);
+  background: color-mix(in srgb, var(--action-success) 22%, var(--pos-bg-card));
+  color: var(--exito-texto);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.comprobante-fecha {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: var(--pos-text-secondary);
+}
+
+.comprobante-items {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 14px 0;
+  border-top: 2px dashed var(--pos-border);
+  border-bottom: 2px dashed var(--pos-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.comprobante-item-linea {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.comprobante-item-notas {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+  font-style: italic;
+}
+
+.comprobante-totales {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 22px;
+}
+
+.comprobante-linea {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.comprobante-total-final {
+  font-family: var(--fuente-titulo);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--pos-text-primary);
+  padding-top: 10px;
+  margin-top: 2px;
+  border-top: 3px double var(--pos-border);
+}
+
+.comprobante-acciones {
+  display: flex;
+  gap: 10px;
+}
+
+.boton-cancelar {
+  flex: 1;
+  min-height: 56px;
+  border: none;
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  border-radius: var(--radio-md);
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.boton-cancelar:hover {
+  background: var(--acento-suave);
+}
+
+.boton-confirmar {
+  flex: 2;
+  min-height: 56px;
+  border: none;
+  background: var(--acento-modulo);
+  color: #fff;
+  border-radius: var(--radio-md);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 800;
+  box-shadow: var(--sombra-acento);
+}
+
+.boton-confirmar:hover {
+  background: color-mix(in srgb, var(--acento-modulo) 85%, black);
+}
+
+/* El ticket se imprime siempre en fondo claro y texto negro, sin importar
+   el tema activo — mismo criterio que el comprobante de venta del POS. */
+@media print {
+  .caja-header,
+  .caja-cuerpo {
+    display: none !important;
+  }
+
+  .overlay {
+    position: static;
+    background: none;
+    backdrop-filter: none;
+    padding: 0;
+    animation: none;
+  }
+
+  .panel-cobro {
+    --pos-bg-card: #fff;
+    --pos-bg-main: #fff;
+    --pos-text-primary: #000;
+    --pos-text-secondary: #333;
+    --pos-border: #888;
+    --exito-texto: #000;
+    box-shadow: none;
+    animation: none;
+    max-width: 100%;
+    max-height: none;
+    border-radius: 0;
+    background: #fff;
+    color: #000;
+  }
+
+  .venta-registrada-badge {
+    background: none;
+    border: 1px solid #000;
+  }
+
+  .comprobante-acciones {
+    display: none !important;
   }
 }
