@@ -266,14 +266,18 @@
         @if (subVistaHorario() === 'calendario') {
           <div class="campo-filtro campo-filtro-ancho campo-selector-horario">
             <label for="empleado-horario">Empleado</label>
+            <!-- Sin [value] (2026-10-17, mismo patrón corregido en el
+                 resto del proyecto) — por consistencia, aunque hoy este
+                 selector siempre arranca vacío. -->
             <select
               id="empleado-horario"
-              [value]="empleadoIdHorario() ?? ''"
               (change)="seleccionarEmpleadoHorario($any($event.target).value)"
             >
-              <option value="">Selecciona un empleado</option>
+              <option value="" [selected]="!empleadoIdHorario()">Selecciona un empleado</option>
               @for (empleado of empleadosActivos(); track empleado.id) {
-                <option [value]="empleado.id">{{ empleado.nombre }}</option>
+                <option [value]="empleado.id" [selected]="empleado.id === empleadoIdHorario()">
+                  {{ empleado.nombre }}
+                </option>
               }
             </select>
           </div>
@@ -495,14 +499,17 @@
           </div>
           <div class="campo-filtro campo-filtro-ancho">
             <label for="filtro-empleado">Empleado</label>
+            <!-- Sin [value] (2026-10-17, mismo patrón corregido en el
+                 resto del proyecto) — por consistencia. -->
             <select
               id="filtro-empleado"
-              [value]="filtroEmpleadoId() ?? ''"
               (change)="cambiarFiltroEmpleado($any($event.target).value)"
             >
-              <option value="">Todos</option>
+              <option value="" [selected]="!filtroEmpleadoId()">Todos</option>
               @for (empleado of empleados(); track empleado.id) {
-                <option [value]="empleado.id">{{ empleado.nombre }}</option>
+                <option [value]="empleado.id" [selected]="empleado.id === filtroEmpleadoId()">
+                  {{ empleado.nombre }}
+                </option>
               }
             </select>
           </div>
@@ -644,18 +651,26 @@
 
         <div class="campo">
           <label for="usuario-empleado-form">Cuenta de acceso (opcional)</label>
+          <!-- Sin [value] en el <select> (2026-10-17, mismo bug que se
+               encontró y corrigió en Recetario): al editar un empleado ya
+               ligado, usuariosDisponibles() y usuarioIdEmpleadoForm() se
+               resuelven en el mismo ciclo de detección de cambios que crea
+               este <select> por primera vez — Angular puede aplicar
+               [value] antes de que sus <option> existan en el DOM, y el
+               formulario mostraba "Ninguna" aunque el empleado SÍ tuviera
+               una cuenta vinculada. [selected] por <option> no tiene ese
+               problema. -->
           <select
             id="usuario-empleado-form"
-            [value]="usuarioIdEmpleadoForm() ?? ''"
             (change)="
               usuarioIdEmpleadoForm.set(
                 $any($event.target).value === '' ? null : +$any($event.target).value
               )
             "
           >
-            <option value="">Ninguna</option>
+            <option value="" [selected]="usuarioIdEmpleadoForm() === null">Ninguna</option>
             @for (usuario of usuariosDisponibles(); track usuario.id) {
-              <option [value]="usuario.id">
+              <option [value]="usuario.id" [selected]="usuario.id === usuarioIdEmpleadoForm()">
                 &#64;{{ usuario.usuario }} ({{ usuario.nombre }})
               </option>
             }

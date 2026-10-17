@@ -163,13 +163,15 @@
 
         <div class="campo">
           <label for="rol-form">Rol</label>
-          <select
-            id="rol-form"
-            [value]="rolIdForm()"
-            (change)="rolIdForm.set(+$any($event.target).value)"
-          >
+          <!-- Sin [value] en el <select> (2026-10-17): mismo bug que
+               "categoria-producto-form" en Recetario — sin opción vacía de
+               respaldo, al editar una cuenta existente el navegador caía
+               en el PRIMER rol de la lista en vez del real, una selección
+               incorrecta pero creíble (cambiar el rol de alguien sin
+               querer). [selected] por <option> lo evita. -->
+          <select id="rol-form" (change)="rolIdForm.set(+$any($event.target).value)">
             @for (rol of roles(); track rol.id) {
-              <option [value]="rol.id">{{ rol.nombre }}</option>
+              <option [value]="rol.id" [selected]="rol.id === rolIdForm()">{{ rol.nombre }}</option>
             }
           </select>
         </div>

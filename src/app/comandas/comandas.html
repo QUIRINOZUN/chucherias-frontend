@@ -128,15 +128,24 @@
                      selector corto ahí mismo. -->
                 @if (asignandoRepartidorPara() === orden.id) {
                   <div class="asignar-repartidor">
+                    <!-- Sin [value] en el <select> (2026-10-17, mismo bug
+                         de Recetario/Usuarios): al reasignar una orden que
+                         YA tiene repartidor, podía mostrar "Sin asignar"
+                         aunque sí tuviera uno — [selected] por <option>
+                         lo evita. -->
                     <select
                       [attr.aria-label]="'Repartidor de la orden ' + orden.numero_orden"
-                      [value]="orden.repartidor_id ?? ''"
                       (change)="confirmarRepartidor(orden.id, $any($event.target).value)"
                       [disabled]="guardandoRepartidor()"
                     >
-                      <option value="">Sin asignar</option>
+                      <option value="" [selected]="!orden.repartidor_id">Sin asignar</option>
                       @for (repartidor of repartidores(); track repartidor.id) {
-                        <option [value]="repartidor.id">{{ repartidor.nombre }}</option>
+                        <option
+                          [value]="repartidor.id"
+                          [selected]="repartidor.id === orden.repartidor_id"
+                        >
+                          {{ repartidor.nombre }}
+                        </option>
                       }
                     </select>
                     <button

@@ -515,6 +515,40 @@
   }
 }
 
+/* Pantallas anchas de verdad (2026-10-17): el usuario pidió ver toda la
+   información del corte sin tanto scroll. Con el quiebre de 860px de
+   arriba, `.caja-principal` seguía siendo una sola columna apilando
+   hasta 4 tarjetas (resumen, contar, movimientos, historial) en un
+   espacio de ~550px de ancho — mucho scroll vertical en un monitor de
+   escritorio normal, con bastante espacio horizontal sin usar.
+   A partir de 1180px, `.caja-cuerpo` se ensancha y `.caja-principal`
+   pasa a una cuadrícula de 2 columnas: "Lo que el sistema calculó" y
+   "Lo que contaste" quedan lado a lado (es justo lo que hay que
+   comparar para sacar la diferencia), y debajo "Movimientos de hoy" y
+   "Consultar cortes" también se emparejan. El acomodo es automático
+   (`display: grid` sin `grid-template-areas`) — cada tarjeta ocupa la
+   siguiente celda libre en el orden en que ya aparece en el HTML, así
+   que no hizo falta tocar la plantilla ni los `@if` que deciden qué
+   tarjetas existen cada vez (ej. cuando no hay movimientos hoy, o
+   cuando el corte ya se guardó). "Corte guardado" es la excepción: esa
+   sí ocupa el ancho completo a propósito, es una confirmación, no algo
+   que deba competir por espacio con otra tarjeta al lado. */
+@media (min-width: 1180px) {
+  .caja-cuerpo {
+    max-width: 1240px;
+  }
+
+  .caja-principal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .tarjeta-corte-guardado {
+    grid-column: 1 / -1;
+  }
+}
+
 /* ===================== Ticket "Listado de retiros" (2026-10-12) =====================
    Mismas clases .comprobante-* que el comprobante de venta y el ticket de
    retiro del POS (pos.css) — los estilos de Angular son por componente y no

@@ -331,14 +331,16 @@
                 </div>
                 <div class="campo-filtro campo-filtro-ancho">
                   <label for="filtro-usuario">Usuario</label>
-                  <select
-                    id="filtro-usuario"
-                    [value]="filtroUsuarioId() ?? ''"
-                    (change)="cambiarUsuario($any($event.target).value)"
-                  >
-                    <option value="">Todos</option>
+                  <!-- Sin [value] (2026-10-17, mismo patrón corregido en
+                       el resto del proyecto) — este filtro hoy siempre
+                       arranca vacío, pero queda a prueba de que algún día
+                       se precargue un usuario. -->
+                  <select id="filtro-usuario" (change)="cambiarUsuario($any($event.target).value)">
+                    <option value="" [selected]="!filtroUsuarioId()">Todos</option>
                     @for (usuario of usuarios(); track usuario.id) {
-                      <option [value]="usuario.id">{{ usuario.nombre }}</option>
+                      <option [value]="usuario.id" [selected]="usuario.id === filtroUsuarioId()">
+                        {{ usuario.nombre }}
+                      </option>
                     }
                   </select>
                 </div>

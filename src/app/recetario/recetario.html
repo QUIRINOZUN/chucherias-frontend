@@ -381,10 +381,20 @@
           <ul class="lista-lineas-receta">
             @for (linea of lineasForm(); track $index) {
               <li class="linea-receta">
+                <!-- Sin [value] en el <select> (2026-10-17): con el <select>
+                     padre y sus <option> creados en el mismo ciclo de
+                     detección de cambios -como pasa aquí, porque
+                     insumosDisponiblesPara() depende de insumos() y
+                     lineasForm(), ambos cargados por API-, Angular puede
+                     aplicar [value] al <select> ANTES de que sus <option>
+                     existan en el DOM; el navegador entonces no encuentra
+                     con qué emparejarlo y la línea se queda en "Selecciona
+                     un insumo" aunque la receta sí tenga ese insumo
+                     cargado. [selected] en cada <option> no tiene ese
+                     problema — se resuelve al crear la opción misma. -->
                 <select
                   class="linea-receta-insumo"
                   [attr.aria-label]="'Insumo de la línea ' + ($index + 1)"
-                  [value]="linea.insumo_id ?? ''"
                   (change)="
                     actualizarInsumoLinea(
                       $index,
@@ -392,9 +402,13 @@
                     )
                   "
                 >
-                  <option value="">Selecciona un insumo</option>
+                  <option value="" [selected]="linea.insumo_id === null">
+                    Selecciona un insumo
+                  </option>
                   @for (insumo of insumosDisponiblesPara($index); track insumo.id) {
-                    <option [value]="insumo.id">{{ insumo.nombre }}</option>
+                    <option [value]="insumo.id" [selected]="insumo.id === linea.insumo_id">
+                      {{ insumo.nombre }}
+                    </option>
                   }
                 </select>
                 <input
@@ -823,13 +837,27 @@
           <label for="categoria-producto-form"
             >Categoría <span class="marca-requerido">*</span></label
           >
+          <!-- Sin [value] en el <select> (2026-10-17, mismo bug ya
+               corregido en Recetario/Asistencias/Inventario — aquí en su
+               variante más peligrosa): al editar un producto existente,
+               categorias() y categoriaIdProductoForm() se resuelven en el
+               mismo ciclo de detección de cambios que crea este <select>
+               — Angular puede fijar [value] antes de que existan sus
+               <option>. Como este select NO tiene una opción vacía
+               (la categoría es obligatoria), el navegador no se quedaba
+               en blanco: caía en la PRIMERA categoría de la lista
+               ("Alitas"), una selección incorrecta pero creíble — se
+               confirmó con Hamburguesa BBQ (categoría real "Hamburguesas")
+               mostrando "Alitas" en el formulario. [selected] por
+               <option> no tiene ese problema. -->
           <select
             id="categoria-producto-form"
-            [value]="categoriaIdProductoForm() ?? ''"
             (change)="categoriaIdProductoForm.set(+$any($event.target).value)"
           >
             @for (categoria of categorias(); track categoria.id) {
-              <option [value]="categoria.id">{{ categoria.nombre }}</option>
+              <option [value]="categoria.id" [selected]="categoria.id === categoriaIdProductoForm()">
+                {{ categoria.nombre }}
+              </option>
             }
           </select>
         </div>

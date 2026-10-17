@@ -352,16 +352,25 @@
 
         <div class="campo">
           <label for="categoria-insumo">Categoría</label>
+          <!-- Sin [value] en el <select> (2026-10-17, mismo bug ya
+               corregido en Recetario y Asistencias): al editar un insumo
+               que SÍ tiene categoría, categorias() y categoriaIdForm() se
+               resuelven en el mismo ciclo de detección de cambios que crea
+               este <select> — Angular puede fijar [value] antes de que
+               existan sus <option>, y el formulario mostraba "Sin
+               categoría" aunque el insumo tuviera una real. [selected]
+               por <option> no tiene ese problema. -->
           <select
             id="categoria-insumo"
-            [value]="categoriaIdForm()"
             (change)="
               categoriaIdForm.set($any($event.target).value ? +$any($event.target).value : null)
             "
           >
-            <option [value]="null">Sin categoría</option>
+            <option [value]="null" [selected]="categoriaIdForm() === null">Sin categoría</option>
             @for (categoria of categorias(); track categoria.id) {
-              <option [value]="categoria.id">{{ categoria.nombre }}</option>
+              <option [value]="categoria.id" [selected]="categoria.id === categoriaIdForm()">
+                {{ categoria.nombre }}
+              </option>
             }
           </select>
           @if (!mostrarNuevaCategoria()) {
@@ -422,16 +431,18 @@
 
         <div class="campo">
           <label for="proveedor-insumo">Proveedor (opcional)</label>
+          <!-- Mismo bug y mismo arreglo que "categoria-insumo" arriba. -->
           <select
             id="proveedor-insumo"
-            [value]="proveedorIdForm()"
             (change)="
               proveedorIdForm.set($any($event.target).value ? +$any($event.target).value : null)
             "
           >
-            <option [value]="null">Sin proveedor</option>
+            <option [value]="null" [selected]="proveedorIdForm() === null">Sin proveedor</option>
             @for (proveedor of proveedores(); track proveedor.id) {
-              <option [value]="proveedor.id">{{ proveedor.nombre }}</option>
+              <option [value]="proveedor.id" [selected]="proveedor.id === proveedorIdForm()">
+                {{ proveedor.nombre }}
+              </option>
             }
           </select>
           @if (!mostrarNuevoProveedor()) {
