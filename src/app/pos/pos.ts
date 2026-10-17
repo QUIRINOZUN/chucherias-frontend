@@ -1231,6 +1231,18 @@ export class PosComponent implements OnInit, OnDestroy {
     window.print();
   }
 
+  // Deriva 5 o 15 a partir del monto real que decidió el servidor — el
+  // ciclo de lealtad solo tiene esos dos porcentajes posibles (ver
+  // "5. Lealtad" en routes/ventas.js), así que no hace falta pedirle al
+  // backend el número de visita solo para saber cuál de los dos fue.
+  // Usado por la celebración del comprobante cuando descuentoLealtad > 0.
+  porcentajeLealtad(r: Recibo): number {
+    if (!r.subtotal) {
+      return 0;
+    }
+    return Math.round((r.descuentoLealtad / r.subtotal) * 100);
+  }
+
   // "Nueva venta": deja la pantalla lista para el siguiente cliente, con todos
   // los valores en su estado inicial.
   nuevaVenta(): void {

@@ -366,7 +366,7 @@
                 }
 
                 @if (quitarAbiertoPara() === item.id) {
-                  <div class="lista-ingredientes-quitar">
+                  <div class="lista-ingredientes-quitar lista-ingredientes-quitar-columnas">
                     @for (
                       ingrediente of ingredientesDisponibles(
                         item.productoNombre,
@@ -598,6 +598,15 @@
                 alt="Chucherías Mix"
                 class="comprobante-logo"
               />
+              <!-- Check animado (2026-10-17): el cajero ve este momento decenas de
+                   veces al día — se dibuja a sí mismo con stroke-dasharray en vez
+                   de ser un ícono estático. Ver pos.css para el detalle. -->
+              <div class="exito-venta" aria-hidden="true">
+                <svg class="exito-venta-svg" viewBox="0 0 52 52">
+                  <circle class="exito-venta-circulo" cx="26" cy="26" r="23" fill="none" />
+                  <path class="exito-venta-palomita" fill="none" d="M15 27l7 7 16-16" />
+                </svg>
+              </div>
               <p class="venta-registrada-badge">Venta registrada</p>
               <p class="comprobante-orden">Orden {{ r.venta.orden.numero_orden }}</p>
               <p class="comprobante-fecha">{{ r.fecha | date: 'dd/MM/yyyy HH:mm' }}</p>
@@ -632,6 +641,28 @@
                 <span>{{ r.subtotal | currency: 'MXN' }}</span>
               </div>
               @if (r.descuentoLealtad > 0) {
+                <!-- Celebración de lealtad (2026-10-17): momento más raro que
+                     "venta registrada" (solo la visita #5 o #10 del ciclo lo
+                     dispara), con su propio destello radial y el color de
+                     identidad de Clientes en vez del verde de éxito genérico. -->
+                <div class="lealtad-celebracion">
+                  <span class="lealtad-celebracion-icono-envoltorio" aria-hidden="true">
+                    <span class="lealtad-rayo" style="--angulo: 0deg"></span>
+                    <span class="lealtad-rayo" style="--angulo: 60deg"></span>
+                    <span class="lealtad-rayo" style="--angulo: 120deg"></span>
+                    <span class="lealtad-rayo" style="--angulo: 180deg"></span>
+                    <span class="lealtad-rayo" style="--angulo: 240deg"></span>
+                    <span class="lealtad-rayo" style="--angulo: 300deg"></span>
+                    <svg class="icono lealtad-celebracion-icono"><use href="#ic-corazon" /></svg>
+                  </span>
+                  <p class="lealtad-celebracion-texto">
+                    @if (porcentajeLealtad(r) >= 15) {
+                      ¡Ciclo de lealtad completado! 15% de descuento y el contador vuelve a 0.
+                    } @else {
+                      ¡Visita de premio! {{ porcentajeLealtad(r) }}% de descuento por lealtad.
+                    }
+                  </p>
+                </div>
                 <div class="comprobante-linea">
                   <span>Descuento por lealtad</span>
                   <span>-{{ r.descuentoLealtad | currency: 'MXN' }}</span>

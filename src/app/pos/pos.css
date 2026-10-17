@@ -1093,6 +1093,26 @@
   animation: aparecer 0.2s ease;
 }
 
+/* Checklist de "Quitar ingredientes" (2026-10-17): el usuario sintió las
+   opciones amontonadas con el flex-wrap de arriba (etiquetas de distinto
+   largo, ej. "Aros de cebolla empanizados", se envolvían de forma
+   despareja) y pidió 2 columnas explícitamente. `repeat(2, 1fr)` fijo en
+   vez de `auto-fit`: el panel del carrito en escritorio mide 340px fijos
+   (`.pos-carrito`, ver más abajo) — con un `minmax` el ancho disponible
+   real (~280px tras el padding) no alcanzaba para 2 columnas y la
+   cuadrícula colapsaba sola a 1, contra lo que se pidió. Con columnas
+   fijas, una etiqueta larga simplemente envuelve a 2 líneas dentro de su
+   celda en vez de forzar un ancho mínimo. Solo aplica a ESTE checklist,
+   no a los grupos de elección (salsa/topping/dip) que comparten la clase
+   base `.lista-ingredientes-quitar` — esos conservan el flex-wrap porque
+   mezclan avisos de texto completo (`.aviso-eleccion-multiple`) con filas
+   de contador +/-. */
+.lista-ingredientes-quitar-columnas {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 10px;
+}
+
 .opcion-ingrediente {
   display: flex;
   align-items: center;
@@ -1748,6 +1768,124 @@
   font-weight: 700;
 }
 
+/* Check animado de "Venta registrada" (2026-10-17): el círculo y la
+   palomita se dibujan a sí mismos con stroke-dasharray/stroke-dashoffset
+   en vez de ser un ícono de check estático — es el momento más repetido
+   del día para quien cobra, pensado como un remate propio en vez de un
+   checkmark genérico de alguna librería de animación. */
+.exito-venta {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+  animation: aparecer-exito 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.exito-venta-svg {
+  width: 52px;
+  height: 52px;
+}
+
+.exito-venta-circulo {
+  stroke: var(--action-success);
+  stroke-width: 3;
+  stroke-dasharray: 145;
+  stroke-dashoffset: 145;
+  animation: dibujar-trazo 0.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.exito-venta-palomita {
+  stroke: var(--exito-texto);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 36;
+  stroke-dashoffset: 36;
+  animation: dibujar-trazo 0.3s cubic-bezier(0.65, 0, 0.35, 1) 0.45s forwards;
+}
+
+@keyframes dibujar-trazo {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes aparecer-exito {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Celebración de lealtad (2026-10-17): solo aparece cuando la venta de
+   verdad aplicó un descuento (visita #5 o #10 del ciclo) — más rara que
+   "venta registrada", así que lleva su propio destello radial de 6 rayos
+   alrededor del ícono de corazón, en el color de identidad del módulo
+   Clientes (--mod-clientes) en vez del verde de éxito genérico. */
+.lealtad-celebracion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 0 12px;
+  padding: 10px 12px;
+  border-radius: var(--radio-md);
+  background: color-mix(in srgb, var(--mod-clientes) 16%, var(--pos-bg-card));
+  text-align: left;
+  animation: aparecer-exito 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.lealtad-celebracion-icono-envoltorio {
+  position: relative;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+}
+
+.lealtad-celebracion-icono {
+  width: 22px;
+  height: 22px;
+  color: var(--mod-clientes);
+  animation: rebote 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+}
+
+.lealtad-celebracion-texto {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--pos-text-primary);
+}
+
+.lealtad-rayo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--mod-clientes);
+  opacity: 0;
+  animation: destello-rayo 0.5s ease-out 0.15s both;
+}
+
+@keyframes destello-rayo {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--angulo)) translateY(-14px) scale(0);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--angulo)) translateY(-24px) scale(1);
+  }
+}
+
 .comprobante-orden {
   font-weight: 700;
   margin: 4px 0 0;
@@ -1928,6 +2066,34 @@
   .venta-registrada-badge {
     background: none;
     border: 1px solid #000;
+  }
+
+  /* El check y el destello de lealtad nunca se imprimen a medias: se
+     fuerzan a su estado final (trazo completo, sin animación) en vez de
+     dejar que el navegador capture un fotograma intermedio. */
+  .exito-venta,
+  .lealtad-celebracion,
+  .lealtad-celebracion-icono {
+    animation: none;
+  }
+
+  .exito-venta-circulo,
+  .exito-venta-palomita {
+    stroke: #000;
+    stroke-dashoffset: 0;
+  }
+
+  .lealtad-celebracion {
+    background: none;
+    border: 1px solid #000;
+  }
+
+  .lealtad-celebracion-icono {
+    color: #000;
+  }
+
+  .lealtad-rayo {
+    display: none;
   }
 
   .comprobante-acciones {
