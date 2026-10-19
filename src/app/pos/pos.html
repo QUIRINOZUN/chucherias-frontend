@@ -677,6 +677,17 @@
                   <span>Cliente de lealtad</span>
                   <span>{{ r.clienteLealtadNombre }}</span>
                 </div>
+                <!-- Avance del ciclo (2026-10-17): 10 casillas, para que el
+                     ticket se sienta una tarjeta de colección que vale la
+                     pena conservar, no solo un comprobante de cobro. Se
+                     muestra SIEMPRE que hay cliente de lealtad ligado, no
+                     solo cuando esta compra dio descuento. -->
+                <div class="avance-lealtad" aria-hidden="true">
+                  @for (llena of avanceLealtad(r); track $index) {
+                    <span class="avance-lealtad-casilla" [class.llena]="llena"></span>
+                  }
+                </div>
+                <p class="avance-lealtad-texto">{{ textoAvanceLealtad(r) }}</p>
               }
               <div class="comprobante-linea">
                 <span>Entrega</span>
@@ -717,6 +728,24 @@
                 </div>
               }
             </div>
+
+            <!-- Despedida cálida (2026-10-17): el usuario pidió que el
+                 comprobante se sintiera más entrañable, ya que es lo que el
+                 cliente se lleva y conserva. Personalizada si hay un
+                 cliente de lealtad ligado a la venta (reutiliza el mismo
+                 ic-corazon que ya identifica el módulo Clientes), genérica
+                 si no. Fuera de `.comprobante-totales` a propósito: no es
+                 un dato de la venta, es el cierre del ticket. -->
+            <div class="comprobante-despedida">
+              <svg class="icono" aria-hidden="true"><use href="#ic-corazon" /></svg>
+              <p>{{ despedidaCalida(r) }}</p>
+            </div>
+
+            <!-- Borde de "papel cortado" (2026-10-17, "potenciar ticket"):
+                 el cierre físico del ticket, para que de verdad se sienta
+                 como el extremo de un rollo de papel térmico. Puramente
+                 decorativo (aria-hidden), ver pos.css. -->
+            <div class="comprobante-borde-cortado" aria-hidden="true"></div>
 
             <!-- Acciones del comprobante: imprimir (diálogo del navegador) o iniciar una nueva venta.
                  Se ocultan al imprimir. -->

@@ -58,6 +58,10 @@ export interface RespuestaVenta {
     total: string;
     metodo_pago: MetodoPago;
   };
+  // Solo si la venta llevaba cliente_id: la visita del ciclo (0-9) en la que
+  // quedó DESPUÉS de esta compra — alimenta el avance "X de 10" del ticket.
+  // Nunca se usa para calcular dinero, eso ya lo decidió venta.descuento_lealtad.
+  visitas_lealtad: number | null;
 }
 
 // Un renglón de producto dentro de una venta del historial. Puede cancelarse

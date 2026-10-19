@@ -1742,11 +1742,33 @@
    y el header del POS) y un borde punteado abajo, a juego con el que ya
    separa la lista de productos, para que de verdad se sienta como un
    ticket y no como un panel más de la app. */
+/* Textura de puntos (2026-10-17): mismo recurso que ya usan los
+   encabezados de pantalla (styles.css) y las tarjetas de producto sin
+   foto (.imagen-marcador más abajo) — nunca un motivo nuevo sin
+   precedente en la app. Solo en pantalla: en `@media print` se apaga
+   (background-image: none) para que el ticket impreso se quede siempre
+   en blanco y negro, como ya garantiza el resto de este archivo. */
 .comprobante-encabezado {
+  position: relative;
   text-align: center;
-  margin-bottom: 18px;
-  padding-bottom: 16px;
+  margin: -28px -22px 18px;
+  padding: 24px 22px 16px;
   border-bottom: 2px dashed var(--pos-border);
+  border-radius: 28px 28px 0 0;
+  background-image:
+    radial-gradient(
+      circle at 2px 2px,
+      color-mix(in srgb, var(--acento-modulo, var(--action-primary)) 30%, transparent) 1.5px,
+      transparent 0
+    ),
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--acento-modulo, var(--action-primary)) 14%, var(--pos-bg-card)) 0%,
+      var(--pos-bg-card) 70%
+    );
+  background-size:
+    16px 16px,
+    100% 100%;
 }
 
 .comprobante-logo {
@@ -1948,6 +1970,92 @@
   border-top: 3px double var(--pos-border);
 }
 
+/* Despedida cálida (2026-10-17): Fraunces con SOFT/WONK a mano (la regla
+   global h1-h3 de styles.css no alcanza aquí, es un <p>) para que se
+   sienta escrita a mano, no como una línea más del recibo. El ícono
+   hereda currentColor, así que en modo claro/oscuro y en impresión toma
+   el color de texto correcto sin reglas aparte. */
+.comprobante-despedida {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 4px 0 20px;
+  padding-top: 16px;
+  border-top: 2px dashed var(--pos-border);
+  text-align: center;
+}
+
+/* Avance del ciclo de lealtad (2026-10-17, "potenciar ticket"): 10
+   casillas redondas, llenas de izquierda a derecha — mismo lenguaje visual
+   que los chips de nivel de stock de Inventario (un color sólido = lleno),
+   pero en el tono de identidad de Clientes (--mod-clientes) para que el
+   cliente reconozca de un vistazo que es "su" progreso de lealtad. */
+.avance-lealtad {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin: 2px 0 2px;
+}
+
+.avance-lealtad-casilla {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--mod-clientes);
+  background: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.avance-lealtad-casilla.llena {
+  background: var(--mod-clientes);
+}
+
+.avance-lealtad-texto {
+  margin: 2px 0 12px;
+  font-size: 0.76rem;
+  color: var(--pos-text-secondary);
+  text-align: center;
+}
+
+.comprobante-despedida .icono {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--acento-modulo, var(--action-primary));
+}
+
+.comprobante-despedida p {
+  margin: 0;
+  font-family: var(--fuente-titulo);
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-variation-settings:
+    'SOFT' 80,
+    'WONK' 1;
+}
+
+/* Borde de "papel cortado" (2026-10-17, "potenciar ticket"): una línea en
+   zigzag, como la que deja una guillotina de ticketera al cortar el rollo
+   de papel térmico — el cierre físico del comprobante, entre la despedida
+   y los botones de acción (que nunca se imprimen). Se dibuja con DOS
+   repeating-linear-gradient en ángulos opuestos usando el color de borde
+   de siempre (--pos-border), NO con un truco de "revelar el fondo de
+   atrás" (ese truco solo funciona en el borde real de una tarjeta, no a
+   media tarjeta) — así se ve igual de bien en pantalla y al imprimir. */
+.comprobante-borde-cortado {
+  height: 11px;
+  margin: 0 -22px 20px;
+  background-image:
+    repeating-linear-gradient(135deg, var(--pos-border) 0 2px, transparent 2px 11px),
+    repeating-linear-gradient(45deg, var(--pos-border) 0 2px, transparent 2px 11px);
+  background-size: 15.5px 11px;
+  background-repeat: repeat-x;
+  background-position:
+    0 0,
+    7.75px 0;
+}
+
 .comprobante-acciones {
   display: flex;
   gap: 10px;
@@ -2017,6 +2125,18 @@
     padding: 32px 30px 28px;
   }
 
+  /* El margen negativo que hace sangrar el encabezado del comprobante
+     hasta el borde del panel debe seguir el padding de ESTE breakpoint
+     (32px/30px), distinto al de .panel-cobro por default (28px/22px). */
+  .panel-cobro-ancho .comprobante-encabezado {
+    margin: -32px -30px 18px;
+    padding: 26px 30px 16px;
+  }
+
+  .panel-cobro-ancho .comprobante-borde-cortado {
+    margin: 0 -30px 20px;
+  }
+
   .panel-detalle-producto {
     max-width: 420px;
     border-radius: var(--radio-lg);
@@ -2068,6 +2188,15 @@
     border: 1px solid #000;
   }
 
+  /* Bug real encontrado al verificar visualmente el print preview
+     (2026-10-17): el comentario sobre .comprobante-encabezado (más abajo
+     en este archivo) ya prometía que la textura de puntos se apagaba al
+     imprimir, pero nunca existió esta regla — la textura se imprimía
+     teñida de rosa sobre fondo blanco. Corregido aquí. */
+  .comprobante-encabezado {
+    background-image: none;
+  }
+
   /* El check y el destello de lealtad nunca se imprimen a medias: se
      fuerzan a su estado final (trazo completo, sin animación) en vez de
      dejar que el navegador capture un fotograma intermedio. */
@@ -2094,6 +2223,19 @@
 
   .lealtad-rayo {
     display: none;
+  }
+
+  /* Avance de lealtad (2026-10-17): pasa de --mod-clientes a negro sólido
+     — el color de módulo es un acento de pantalla, no algo que deba
+     imprimirse a color. El borde cortado ya usa --pos-border, que esta
+     misma regla de arriba reescribe a #888, así que no necesita ajuste
+     aparte. */
+  .avance-lealtad-casilla {
+    border-color: #000;
+  }
+
+  .avance-lealtad-casilla.llena {
+    background: #000;
   }
 
   .comprobante-acciones {

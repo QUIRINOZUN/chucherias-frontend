@@ -123,6 +123,10 @@ interface Recibo {
   // si el cliente ya tenía una visita contada hoy por otra compra.
   clienteLealtadNombre: string | null;
   descuentoLealtad: number;
+  // Avance del ciclo de lealtad (0-9) DESPUÉS de esta compra, o null si no
+  // había cliente de lealtad ligado — alimenta el "X de 10" del ticket
+  // (2026-10-17, ver "potenciar ticket"). Nunca decide dinero.
+  visitasLealtad: number | null;
   montoRecibido: number | null;
   cambio: number | null;
   cajero: string;
@@ -1211,6 +1215,7 @@ export class PosComponent implements OnInit, OnDestroy {
           repartidorNombre: this.repartidores().find((r) => r.id === repartidorId)?.nombre || null,
           clienteLealtadNombre: clienteLealtad?.nombre_completo || null,
           descuentoLealtad: descuentoReal,
+          visitasLealtad: respuesta.visitas_lealtad,
           montoRecibido: metodoPago === 'efectivo' ? montoRecibido : null,
           cambio: metodoPago === 'efectivo' ? (montoRecibido ?? 0) - totalReal : null,
           cajero: this.authService.usuarioActual()?.nombre || '',
@@ -1241,6 +1246,57 @@ export class PosComponent implements OnInit, OnDestroy {
       return 0;
     }
     return Math.round((r.descuentoLealtad / r.subtotal) * 100);
+  }
+
+  // Avance del ciclo de lealtad para el ticket (2026-10-17, "potenciar
+  // ticket"): 10 casillas, llenas de izquierda a derecha según
+  // visitasLealtad. Si esta compra completó el ciclo (15%), el contador ya
+  // volvió a 0 en el servidor — aquí se muestran las 10 llenas en vez de 0,
+  // para que el ticket celebre el ciclo completo en vez de parecer que no
+  // llevaba ningún avance.
+  avanceLealtad(r: Recibo): boolean[] {
+    if (r.visitasLealtad === null) {
+      return [];
+    }
+    const cicloCompletado = r.descuentoLealtad > 0 && this.porcentajeLealtad(r) >= 15;
+    const posicion = cicloCompletado ? 10 : r.visitasLealtad;
+    return Array.from({ length: 10 }, (_, i) => i < posicion);
+  }
+
+  // Pequeña variedad de despedidas cálidas (2026-10-17, "potenciar ticket"):
+  // en vez de una sola frase fija, se elige una de varias según el id de la
+  // venta — determinístico, así el mismo ticket siempre muestra la misma
+  // frase si se vuelve a abrir o a imprimir, pero un cliente que guarda
+  // varios tickets a lo largo del tiempo no ve siempre la misma línea.
+  private readonly DESPEDIDAS_GENERICAS = [
+    '¡Gracias por tu visita! Vuelve pronto por más antojitos.',
+    '¡Qué gusto tenerte por aquí! Te esperamos la próxima.',
+    'Gracias por elegirnos hoy. ¡Hasta pronto!',
+    'Esperamos que lo disfrutes mucho. ¡Vuelve cuando quieras!',
+  ];
+
+  private readonly DESPEDIDAS_LEALTAD = [
+    '¡Gracias, {nombre}! Nos encanta tenerte por aquí.',
+    '¡Hasta la próxima, {nombre}! Gracias por seguir eligiéndonos.',
+    '{nombre}, gracias por tu lealtad. ¡Nos vemos pronto!',
+  ];
+
+  // Texto bajo las 10 casillas de avance — separado de avanceLealtad()
+  // porque el caso "ciclo recién completado" necesita el mismo ajuste
+  // 0→10, pero aquí como número en vez de casillas llenas.
+  textoAvanceLealtad(r: Recibo): string {
+    const cicloCompletado = r.descuentoLealtad > 0 && this.porcentajeLealtad(r) >= 15;
+    const visita = cicloCompletado ? 10 : (r.visitasLealtad ?? 0);
+    return `${visita} de 10 visitas en tu ciclo actual`;
+  }
+
+  despedidaCalida(r: Recibo): string {
+    const id = r.venta.venta.id;
+    if (r.clienteLealtadNombre) {
+      const frase = this.DESPEDIDAS_LEALTAD[id % this.DESPEDIDAS_LEALTAD.length];
+      return frase.replace('{nombre}', r.clienteLealtadNombre);
+    }
+    return this.DESPEDIDAS_GENERICAS[id % this.DESPEDIDAS_GENERICAS.length];
   }
 
   // "Nueva venta": deja la pantalla lista para el siguiente cliente, con todos
