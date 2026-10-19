@@ -696,6 +696,10 @@ export class RecetarioComponent implements OnInit {
   nombreProductoForm = signal('');
   descripcionProductoForm = signal('');
   categoriaIdProductoForm = signal<number | null>(null);
+  // 2026-10-19: FALSE para productos que no pasan por cocina (bebidas
+  // embotelladas, botanas de bolsa) — TRUE por default, igual que la
+  // mayoría del catálogo real.
+  requierePreparacionProductoForm = signal(true);
   // Primera variante: SOLO se pide al CREAR (ver nota 2026-10-09 abajo); al
   // editar un producto existente estos dos campos no se usan ni se muestran.
   nombreVarianteInicialForm = signal('');
@@ -779,6 +783,7 @@ export class RecetarioComponent implements OnInit {
     this.nombreProductoForm.set('');
     this.descripcionProductoForm.set('');
     this.categoriaIdProductoForm.set(categoriaSugeridaId ?? this.categorias()[0]?.id ?? null);
+    this.requierePreparacionProductoForm.set(true);
     this.nombreVarianteInicialForm.set('');
     this.precioVarianteInicialForm.set(null);
     this.archivoImagenForm.set(null);
@@ -793,6 +798,7 @@ export class RecetarioComponent implements OnInit {
     this.nombreProductoForm.set(producto.nombre);
     this.descripcionProductoForm.set(producto.descripcion ?? '');
     this.categoriaIdProductoForm.set(producto.categoria_id);
+    this.requierePreparacionProductoForm.set(producto.requiere_preparacion);
     this.archivoImagenForm.set(null);
     this.previsualizacionImagenForm.set(producto.imagen_url);
     this.errorImagenProducto.set('');
@@ -847,6 +853,7 @@ export class RecetarioComponent implements OnInit {
           categoria_id: this.categoriaIdProductoForm()!,
           nombre: this.nombreProductoForm().trim(),
           descripcion: this.descripcionProductoForm().trim() || null,
+          requiere_preparacion: this.requierePreparacionProductoForm(),
         })
         .subscribe({
           next: () => {
@@ -869,6 +876,7 @@ export class RecetarioComponent implements OnInit {
         categoria_id: this.categoriaIdProductoForm()!,
         nombre: this.nombreProductoForm().trim(),
         descripcion: this.descripcionProductoForm().trim() || undefined,
+        requiere_preparacion: this.requierePreparacionProductoForm(),
       })
       .subscribe({
         next: (nuevoProducto) => {

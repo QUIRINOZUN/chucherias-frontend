@@ -935,6 +935,46 @@
   padding: 2px 8px;
 }
 
+/* "Sin cocina" (2026-10-19): informativo, no es éxito ni peligro — tinte del
+   color de identidad del módulo (mismo criterio ya establecido: el color de
+   módulo nunca es texto, solo fondo/borde, con --pos-text-primary encima
+   para que siga siendo legible). */
+.badge-sin-cocina {
+  background: color-mix(in srgb, var(--acento-modulo) 18%, var(--pos-bg-card));
+  color: var(--pos-text-primary);
+}
+
+/* Toggle Sí/No de "Requiere preparación" (2026-10-19) — mismo patrón visual
+   que .pastilla-unidad de Inventario (inactiva = borde neutro, activa =
+   relleno sólido del color de módulo). */
+.grupo-pastillas-si-no {
+  display: flex;
+  gap: 8px;
+}
+
+.boton-pastilla-si-no {
+  min-width: 64px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.boton-pastilla-si-no.pastilla-si-no-activa {
+  border-color: var(--acento-modulo);
+  background: var(--acento-modulo);
+  color: #fff;
+}
+
 .acciones-producto-menu {
   display: flex;
   flex-wrap: wrap;

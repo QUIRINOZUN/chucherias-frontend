@@ -46,6 +46,10 @@ export interface Producto {
   categoria_id: number;
   categoria: string;
   activo: boolean;
+  // 2026-10-19: FALSE para productos que no pasan por cocina (bebidas
+  // embotelladas, botanas de bolsa) — su orden salta directo a
+  // "por entregar" en vez de esperar en el tablero de comandas.
+  requiere_preparacion: boolean;
   variantes: Variante[];
 }
 
@@ -56,6 +60,7 @@ export interface DatosProducto {
   nombre?: string;
   descripcion?: string | null;
   imagen_url?: string | null;
+  requiere_preparacion?: boolean;
 }
 
 export interface DatosVariante {
@@ -107,6 +112,7 @@ export class CatalogoService {
     categoria_id: number;
     nombre: string;
     descripcion?: string;
+    requiere_preparacion?: boolean;
   }): Observable<Producto> {
     return this.http.post<Producto>(`${this.apiUrl}/productos`, datos);
   }

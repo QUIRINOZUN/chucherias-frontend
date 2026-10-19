@@ -19,6 +19,12 @@
 //     de personalización ("Sin: cebolla").
 //   - Una comanda con 15 minutos o más esperando se marca en rojo.
 //
+// COCINERO ASIGNADO (2026-10-19): el organigrama real tiene 2 auxiliares de
+// cocina, cada uno trabajando una orden independiente "en proceso" — un
+// selector (solo mientras la orden está 'preparando') indica cuál de los
+// dos la está trabajando. Mismo patrón que el selector de repartidor, sin
+// su restricción de tipo_entrega.
+//
 // AVISO SONORO (RF-07: "notificar al personal de cocina la llegada de una
 // nueva orden y notificar la orden lista para entrega o para el
 // repartidor"). Sin impresoras ni notificaciones push (fuera de alcance del
@@ -36,7 +42,7 @@ import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth';
-import { EmpleadosService, Repartidor } from '../core/empleados';
+import { Cocinero, EmpleadosService, Repartidor } from '../core/empleados';
 import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { EstadoOrden, ItemOrden, Orden, OrdenesService } from '../core/ordenes';
 import { PasoTutorial, RecetasService } from '../core/recetas';
@@ -60,6 +66,9 @@ const ROLES_QUE_AVANZAN = ['administrador', 'encargado', 'auxiliar'];
 // Asignar repartidor (2026-10-16): mismo criterio que registrar la venta
 // (routes/ordenes.js), no cocina.
 const ROLES_QUE_ASIGNAN_REPARTIDOR = ['administrador', 'encargado', 'cajero'];
+// Asignar cocinero (2026-10-19): SÍ es una decisión de cocina — mismos roles
+// que avanzan comandas.
+const ROLES_QUE_ASIGNAN_COCINERO = ['administrador', 'encargado', 'auxiliar'];
 
 // A qué estado pasa una comanda al tocar su botón. 'entregado' no aparece como
 // clave porque una orden entregada ya no se muestra ni se puede avanzar.
@@ -139,6 +148,14 @@ export class ComandasComponent implements OnInit, OnDestroy {
     return !!rol && ROLES_QUE_ASIGNAN_REPARTIDOR.includes(rol);
   });
 
+  // 2026-10-19: true si el rol puede asignar/cambiar el cocinero a cargo de
+  // una orden (los 2 auxiliares de cocina reales, cada uno con sus órdenes
+  // independientes en proceso).
+  puedeAsignarCocinero = computed(() => {
+    const rol = this.authService.usuarioActual()?.rol;
+    return !!rol && ROLES_QUE_ASIGNAN_COCINERO.includes(rol);
+  });
+
   // Órdenes agrupadas por columna del tablero.
   ordenesPorEstado = computed(() => {
     const grupos: Partial<Record<EstadoOrden, Orden[]>> = {};
@@ -178,6 +195,13 @@ export class ComandasComponent implements OnInit, OnDestroy {
   repartidores = signal<Repartidor[]>([]);
   guardandoRepartidor = signal(false);
 
+  // ASIGNAR COCINERO (2026-10-19): mismo patrón que repartidor, sin
+  // restricción de tipo_entrega — cualquier orden que requiere cocina puede
+  // tener un cocinero asignado.
+  asignandoCocineroPara = signal<number | null>(null);
+  cocineros = signal<Cocinero[]>([]);
+  guardandoCocinero = signal(false);
+
   constructor(
     private ordenesService: OrdenesService,
     private recetasService: RecetasService,
@@ -195,6 +219,13 @@ export class ComandasComponent implements OnInit, OnDestroy {
     if (this.puedeAsignarRepartidor()) {
       this.empleadosService.listarRepartidores().subscribe({
         next: (lista) => this.repartidores.set(lista),
+        error: () => {},
+      });
+    }
+
+    if (this.puedeAsignarCocinero()) {
+      this.empleadosService.listarCocineros().subscribe({
+        next: (lista) => this.cocineros.set(lista),
         error: () => {},
       });
     }
@@ -340,6 +371,34 @@ export class ComandasComponent implements OnInit, OnDestroy {
       error: (error: HttpErrorResponse) => {
         this.guardandoRepartidor.set(false);
         this.error.set(error.error?.error || 'No se pudo asignar el repartidor.');
+      },
+    });
+  }
+
+  // ===========================================================================
+  // ASIGNAR COCINERO (2026-10-19)
+  // ===========================================================================
+
+  abrirAsignarCocinero(orden: Orden): void {
+    this.asignandoCocineroPara.set(orden.id);
+  }
+
+  cerrarAsignarCocinero(): void {
+    this.asignandoCocineroPara.set(null);
+  }
+
+  confirmarCocinero(ordenId: number, valor: string): void {
+    const cocineroId = valor ? +valor : null;
+    this.guardandoCocinero.set(true);
+    this.ordenesService.asignarCocinero(ordenId, cocineroId).subscribe({
+      next: () => {
+        this.guardandoCocinero.set(false);
+        this.asignandoCocineroPara.set(null);
+        this.cargarOrdenes();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.guardandoCocinero.set(false);
+        this.error.set(error.error?.error || 'No se pudo asignar el cocinero.');
       },
     });
   }

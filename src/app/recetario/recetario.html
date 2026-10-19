@@ -323,6 +323,9 @@
                         <span class="item-producto-menu-detalle">
                           {{ producto.variantes.length }}
                           {{ producto.variantes.length === 1 ? 'variante' : 'variantes' }}
+                          @if (!producto.requiere_preparacion) {
+                            · Sin cocina
+                          }
                         </span>
                       </div>
                       <span class="badge-estado" [class.badge-inactivo]="!producto.activo">
@@ -710,6 +713,9 @@
             <span class="badge-estado" [class.badge-inactivo]="!producto.activo">
               {{ producto.activo ? 'Activo' : 'Inactivo' }}
             </span>
+            @if (!producto.requiere_preparacion) {
+              <span class="badge-estado badge-sin-cocina">Sin cocina</span>
+            }
           </div>
         </div>
 
@@ -855,7 +861,10 @@
             (change)="categoriaIdProductoForm.set(+$any($event.target).value)"
           >
             @for (categoria of categorias(); track categoria.id) {
-              <option [value]="categoria.id" [selected]="categoria.id === categoriaIdProductoForm()">
+              <option
+                [value]="categoria.id"
+                [selected]="categoria.id === categoriaIdProductoForm()"
+              >
                 {{ categoria.nombre }}
               </option>
             }
@@ -882,6 +891,32 @@
             [value]="descripcionProductoForm()"
             (input)="descripcionProductoForm.set($any($event.target).value)"
           />
+        </div>
+
+        <div class="campo">
+          <span class="campo-etiqueta-foto">Requiere preparación</span>
+          <div class="grupo-pastillas-si-no">
+            <button
+              type="button"
+              class="boton-pastilla-si-no"
+              [class.pastilla-si-no-activa]="requierePreparacionProductoForm()"
+              (click)="requierePreparacionProductoForm.set(true)"
+            >
+              Sí
+            </button>
+            <button
+              type="button"
+              class="boton-pastilla-si-no"
+              [class.pastilla-si-no-activa]="!requierePreparacionProductoForm()"
+              (click)="requierePreparacionProductoForm.set(false)"
+            >
+              No
+            </button>
+          </div>
+          <p class="campo-ayuda">
+            "No" es para productos que no pasan por cocina (bebidas embotelladas, botanas de bolsa)
+            — su orden salta directo a "Por entregar" en el tablero de Comandas.
+          </p>
         </div>
 
         <div class="campo">

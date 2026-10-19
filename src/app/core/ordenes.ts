@@ -45,6 +45,10 @@ export interface Orden {
   // se asigna. Se puede fijar al cobrar o después desde aquí mismo.
   repartidor_id: number | null;
   repartidor_nombre: string | null;
+  // Auxiliar de cocina a cargo de la orden (2026-10-19) — null si todavía no
+  // se asigna. A diferencia del repartidor, no depende de tipo_entrega.
+  cocinero_id: number | null;
+  cocinero_nombre: string | null;
   // Momento de la venta; sirve para calcular "hace X min" y resaltar demoras.
   fecha_creacion: string;
   items: ItemOrden[];
@@ -99,6 +103,18 @@ export class OrdenesService {
     return this.http.patch<{ id: number; repartidor_id: number | null }>(
       `${this.apiUrl}/ordenes/${ordenId}/repartidor`,
       { repartidor_id: repartidorId },
+    );
+  }
+
+  // PATCH /api/ordenes/:id/cocinero — asigna/cambia el auxiliar de cocina a
+  // cargo de la orden; `null` quita la asignación.
+  asignarCocinero(
+    ordenId: number,
+    cocineroId: number | null,
+  ): Observable<{ id: number; cocinero_id: number | null }> {
+    return this.http.patch<{ id: number; cocinero_id: number | null }>(
+      `${this.apiUrl}/ordenes/${ordenId}/cocinero`,
+      { cocinero_id: cocineroId },
     );
   }
 

@@ -42,6 +42,15 @@ export interface Repartidor {
   nombre: string;
 }
 
+// Auxiliar de cocina activo, lista ligera para el selector de "quién está
+// preparando esta orden" en Comandas (2026-10-19) — ver
+// GET /api/empleados/cocineros. Mismo criterio de "organigrama real" que
+// Repartidor: el organigrama tiene 2 auxiliares de cocina.
+export interface Cocinero {
+  id: number;
+  nombre: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class EmpleadosService {
   private readonly apiUrl = environment.apiUrl;
@@ -71,5 +80,11 @@ export class EmpleadosService {
   // a domicilio.
   listarRepartidores(): Observable<Repartidor[]> {
     return this.http.get<Repartidor[]>(`${this.apiUrl}/empleados/repartidores`);
+  }
+
+  // GET /api/empleados/cocineros (2026-10-19) — también la puede llamar el
+  // auxiliar (quien de verdad cocina), para asignarse una orden en Comandas.
+  listarCocineros(): Observable<Cocinero[]> {
+    return this.http.get<Cocinero[]>(`${this.apiUrl}/empleados/cocineros`);
   }
 }

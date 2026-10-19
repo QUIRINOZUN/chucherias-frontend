@@ -171,6 +171,51 @@
                 }
               }
 
+              <!-- COCINERO (2026-10-19): solo mientras la orden está "preparando"
+                   — es ahí donde de verdad importa saber qué auxiliar de cocina
+                   la está trabajando (el organigrama real tiene 2). Mismo patrón
+                   que el selector de repartidor de arriba. -->
+              @if (orden.estado === 'preparando') {
+                @if (asignandoCocineroPara() === orden.id) {
+                  <div class="asignar-cocinero">
+                    <select
+                      [attr.aria-label]="'Cocinero de la orden ' + orden.numero_orden"
+                      (change)="confirmarCocinero(orden.id, $any($event.target).value)"
+                      [disabled]="guardandoCocinero()"
+                    >
+                      <option value="" [selected]="!orden.cocinero_id">Sin asignar</option>
+                      @for (cocinero of cocineros(); track cocinero.id) {
+                        <option
+                          [value]="cocinero.id"
+                          [selected]="cocinero.id === orden.cocinero_id"
+                        >
+                          {{ cocinero.nombre }}
+                        </option>
+                      }
+                    </select>
+                    <button
+                      type="button"
+                      class="boton-cancelar-cocinero"
+                      (click)="cerrarAsignarCocinero()"
+                      aria-label="Cancelar"
+                    >
+                      <svg class="icono" aria-hidden="true"><use href="#ic-cerrar" /></svg>
+                    </button>
+                  </div>
+                } @else {
+                  <button
+                    type="button"
+                    class="dato-cocinero"
+                    [class.dato-cocinero-sin-asignar]="!orden.cocinero_nombre"
+                    (click)="puedeAsignarCocinero() && abrirAsignarCocinero(orden)"
+                    [disabled]="!puedeAsignarCocinero()"
+                  >
+                    <svg class="icono" aria-hidden="true"><use href="#ic-cocinar" /></svg>
+                    {{ orden.cocinero_nombre || 'Cocinero sin asignar' }}
+                  </button>
+                }
+              }
+
               <ul class="lista-items-orden">
                 @for (item of orden.items; track $index) {
                   <li>
