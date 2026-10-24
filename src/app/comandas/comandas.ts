@@ -11,8 +11,12 @@
 //   cajero queda en modo consulta. El servidor aplica la misma regla, así que
 //   ocultar el botón es comodidad, no la seguridad.
 //
-// ACTUALIZACIÓN: el tablero se vuelve a consultar solo cada 15 segundos
-// (sondeo periódico) para que aparezcan las ventas nuevas sin recargar.
+// ACTUALIZACIÓN: el tablero se vuelve a consultar solo cada 5 segundos
+// (sondeo periódico) para que aparezcan las ventas nuevas sin recargar. Además
+// se refresca AL INSTANTE cuando la pestaña vuelve a estar visible/en foco
+// (2026-10-24) — en una tablet de cocina con la pantalla apagada o cambiada de
+// app, el navegador pausa setInterval; sin este refresco extra, la comanda
+// nueva solo aparecía recargando la página manualmente al volver a mirarla.
 //
 // DETALLES ÚTILES PARA LA COCINA
 //   - Cada tarjeta indica si es presencial o a domicilio y resalta las notas
@@ -48,8 +52,8 @@ import { EstadoOrden, ItemOrden, Orden, OrdenesService } from '../core/ordenes';
 import { PasoTutorial, RecetasService } from '../core/recetas';
 import { ThemeService } from '../core/theme';
 
-// Cada cuántos milisegundos se vuelve a pedir el tablero al servidor (15 s).
-const INTERVALO_ACTUALIZACION_MS = 15000;
+// Cada cuántos milisegundos se vuelve a pedir el tablero al servidor (5 s).
+const INTERVALO_ACTUALIZACION_MS = 5000;
 
 // Una comanda con más de este tiempo esperando se resalta en el tablero.
 const MINUTOS_PARA_RESALTAR = 15;
@@ -168,6 +172,17 @@ export class ComandasComponent implements OnInit, OnDestroy {
   // Referencia al temporizador del sondeo, para poder detenerlo al salir.
   private intervaloId?: ReturnType<typeof setInterval>;
 
+  // Refresca al instante cuando la pestaña vuelve a estar visible o recibe
+  // el foco — ver nota de arriba. Guardado como propiedad para poder quitar
+  // los mismos listeners en ngOnDestroy (si no, seguirían disparando sobre
+  // un componente ya destruido).
+  private readonly alVolverVisible = () => {
+    if (document.visibilityState === 'visible') {
+      this.cargarOrdenes();
+    }
+  };
+  private readonly alRecibirFoco = () => this.cargarOrdenes();
+
   // Foto del último sondeo (id de orden -> su estado), para detectar qué
   // cambió desde la vez anterior y avisar solo UNA vez por cambio.
   private estadosAnteriores = new Map<number, EstadoOrden>();
@@ -215,6 +230,8 @@ export class ComandasComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.cargarOrdenes();
     this.intervaloId = setInterval(() => this.cargarOrdenes(), INTERVALO_ACTUALIZACION_MS);
+    document.addEventListener('visibilitychange', this.alVolverVisible);
+    window.addEventListener('focus', this.alRecibirFoco);
 
     if (this.puedeAsignarRepartidor()) {
       this.empleadosService.listarRepartidores().subscribe({
@@ -237,6 +254,8 @@ export class ComandasComponent implements OnInit, OnDestroy {
     if (this.intervaloId) {
       clearInterval(this.intervaloId);
     }
+    document.removeEventListener('visibilitychange', this.alVolverVisible);
+    window.removeEventListener('focus', this.alRecibirFoco);
     this.contextoAudio?.close();
   }
 
