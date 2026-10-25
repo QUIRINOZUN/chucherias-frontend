@@ -295,10 +295,66 @@
   width: 75%;
 }
 
+/* Fila compacta siempre visible (2026-10-25): orden + total + "Ver más" —
+   el resto del detalle (hora, cajero, estado, productos, auditoría,
+   tiempos, método/entrega, lealtad, cancelar) vive detrás de este toggle
+   para que la lista no se sienta saturada con muchos tickets. */
+.venta-resumen-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.venta-resumen-datos {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.venta-resumen-datos .venta-orden {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.venta-resumen-accion {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--acento-texto);
+}
+
+.icono-chevron {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.15s ease;
+}
+
+.icono-chevron-abierto {
+  transform: rotate(180deg);
+}
+
 .venta-encabezado {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--pos-border);
   margin-bottom: 8px;
 }
 

@@ -84,6 +84,28 @@ export class HistorialVentasComponent implements OnInit {
   cargando = signal(true);
   error = signal('');
 
+  // Cada tarjeta nace colapsada mostrando solo orden + total (2026-10-25,
+  // pedido directo: con muchos tickets la lista se sentía saturada con todo
+  // el detalle siempre visible). "Ver más" la expande; varias pueden estar
+  // abiertas a la vez, no es un patrón de "una sola ventana" como el POS.
+  ventasExpandidas = signal<Set<number>>(new Set());
+
+  estaExpandida(ventaId: number): boolean {
+    return this.ventasExpandidas().has(ventaId);
+  }
+
+  alternarExpansion(ventaId: number): void {
+    this.ventasExpandidas.update((set) => {
+      const nuevo = new Set(set);
+      if (nuevo.has(ventaId)) {
+        nuevo.delete(ventaId);
+      } else {
+        nuevo.add(ventaId);
+      }
+      return nuevo;
+    });
+  }
+
   // ---- Filtros (2026-10-22, ver cabecera del archivo) -----------------------
   // Sin ninguno, se consulta TODO el histórico — mismo criterio que
   // mermas.ts/ventas-especiales.ts.
