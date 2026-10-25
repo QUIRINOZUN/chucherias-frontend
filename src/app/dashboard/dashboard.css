@@ -296,7 +296,7 @@
 }
 
 /* Aviso de "N variantes sin receta" sobre la tarjeta de Recetario
-   (2026-10-09) — mismo lenguaje visual que el badge de "adentro ahora" de
+   (2026-10-09) — mismo lenguaje visual que el badge de "en turno ahora" de
    Asistencias, pero en tono de alerta porque significa que algo activo no
    descuenta inventario al venderse. */
 .modulo-badge-alerta {
