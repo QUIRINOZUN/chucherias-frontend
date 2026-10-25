@@ -66,7 +66,8 @@ export const routes: Routes = [
     component: CajaComponent,
     canActivate: [authGuard, rolGuard('administrador', 'encargado', 'cajero')],
   },
-  // Historial de ventas del día y cancelación.
+  // Consulta de tickets (filtros/búsqueda) y cancelación (2026-10-22; antes
+  // solo mostraba el día en curso — ver historial-ventas.ts).
   {
     path: 'ventas',
     component: HistorialVentasComponent,

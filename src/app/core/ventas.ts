@@ -136,6 +136,20 @@ export interface VentaHistorial {
   items: ItemVentaHistorial[];
 }
 
+// Filtros opcionales y combinables de GET /api/ventas (2026-10-22, módulo
+// "Ventas" — antes solo existía `fecha`, un único día; ahora es la consulta
+// general de tickets). Sin ninguno, el servidor devuelve TODO el histórico.
+export interface FiltrosVentas {
+  desde?: string;
+  hasta?: string;
+  estado?: 'completada' | 'cancelada';
+  metodoPago?: MetodoPago;
+  tipoEntrega?: TipoEntrega;
+  // Folio, cajero, cliente (lealtad o domicilio, nombre o teléfono) o
+  // nombre de producto/variante vendido — ver routes/ventas.js.
+  buscar?: string;
+}
+
 // Respuesta de PATCH /:id/cancelar. No es el mismo shape que el historial
 // (GET /api/ventas) — es la fila cruda de `ventas` más el resumen de lo que
 // se acaba de cancelar.
@@ -164,12 +178,18 @@ export class VentasService {
     return this.http.post<RespuestaVenta>(`${this.apiUrl}/ventas`, venta);
   }
 
-  // GET /api/ventas — ventas de un día (hoy si no se indica `fecha`).
-  // Solo administrador y encargado.
-  listar(fecha?: string): Observable<VentaHistorial[]> {
-    return this.http.get<VentaHistorial[]>(`${this.apiUrl}/ventas`, {
-      params: fecha ? { fecha } : {},
-    });
+  // GET /api/ventas — consulta de tickets con filtros opcionales y
+  // combinables (sin ninguno, todo el histórico). Solo administrador y
+  // encargado.
+  listar(filtros: FiltrosVentas = {}): Observable<VentaHistorial[]> {
+    const params: Record<string, string> = {};
+    if (filtros.desde) params['desde'] = filtros.desde;
+    if (filtros.hasta) params['hasta'] = filtros.hasta;
+    if (filtros.estado) params['estado'] = filtros.estado;
+    if (filtros.metodoPago) params['metodo_pago'] = filtros.metodoPago;
+    if (filtros.tipoEntrega) params['tipo_entrega'] = filtros.tipoEntrega;
+    if (filtros.buscar?.trim()) params['buscar'] = filtros.buscar.trim();
+    return this.http.get<VentaHistorial[]>(`${this.apiUrl}/ventas`, { params });
   }
 
   // PATCH /api/ventas/:id/cancelar — solo administrador y encargado.

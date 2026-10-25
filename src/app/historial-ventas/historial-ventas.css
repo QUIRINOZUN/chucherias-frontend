@@ -74,6 +74,138 @@
   color: var(--peligro-texto);
 }
 
+/* ===== Filtros (2026-10-22) — mismo patrón visual que reportes.css/caja.css,
+   duplicado aquí porque los estilos de Angular son por componente. ===== */
+.tarjeta-filtros-ventas {
+  background: var(--pos-bg-card);
+  border-top: 3px solid var(--acento-modulo);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.filtros-ventas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.campo-filtro {
+  flex: 1;
+  min-width: 130px;
+}
+
+.campo-filtro-ancho {
+  flex: 2;
+  min-width: 220px;
+}
+
+.campo-filtro label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pos-text-secondary);
+}
+
+.campo-filtro input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 10px;
+  font-size: 0.9rem;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.campo-filtro input:focus {
+  outline: none;
+  border-color: var(--acento-modulo);
+}
+
+.filtros-rapidos-ventas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.boton-filtro-rapido {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-filtro-rapido:hover {
+  border-color: var(--acento-modulo);
+  color: var(--acento-modulo);
+}
+
+.grupo-chips-ventas {
+  margin-bottom: 10px;
+}
+
+.etiqueta-grupo-chips {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--pos-text-secondary);
+}
+
+.fila-chips-ventas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip-filtro-ventas {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chip-filtro-ventas.chip-filtro-activa {
+  border-color: var(--acento-modulo);
+  background: color-mix(in srgb, var(--acento-modulo) 16%, var(--pos-bg-card));
+  color: var(--pos-text-primary);
+}
+
+.boton-limpiar-filtros {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: none;
+  color: var(--pos-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-limpiar-filtros:hover {
+  border-color: var(--acento-modulo);
+  color: var(--pos-text-primary);
+}
+
 /* RF-23 (2026-10-16): aviso de lealtad revertida tras cancelar. */
 .aviso-lealtad-revertida {
   display: flex;

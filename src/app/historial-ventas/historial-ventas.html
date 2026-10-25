@@ -1,9 +1,11 @@
 <!-- ============================================================================
-     historial-ventas.html — VENTAS DEL DÍA Y CANCELACIÓN (lógica en historial-ventas.ts)
+     historial-ventas.html — CONSULTA DE TICKETS Y CANCELACIÓN (lógica en historial-ventas.ts)
      ============================================================================
-     Solo administrador y encargado. Lista las ventas del día del negocio con sus
-     productos y permite cancelar, total o PARCIALMENTE, las que tengan algún
-     producto activo (RF-03 + ajuste de cancelación parcial del 2026-10-03).
+     Solo administrador y encargado. Consulta tickets con filtros de fecha/
+     estado/método de pago/entrega + búsqueda de texto (2026-10-22; antes solo
+     mostraba el día en curso — ver cabecera de historial-ventas.ts) y permite
+     cancelar, total o PARCIALMENTE, los que tengan algún producto activo
+     (RF-03 + ajuste de cancelación parcial del 2026-10-03).
      ============================================================================ -->
 <div class="historial-container">
   <!-- ENCABEZADO: volver, título y cambio de tema. -->
@@ -15,7 +17,7 @@
     <span class="insignia-pantalla" aria-hidden="true">
       <svg class="icono"><use href="#ic-recibo" /></svg>
     </span>
-    <h1>Ventas de hoy</h1>
+    <h1>Ventas</h1>
     <button
       type="button"
       class="boton-tema"
@@ -31,6 +33,148 @@
   </header>
 
   <div class="historial-cuerpo">
+    <!-- FILTROS (2026-10-22): rango de fecha + accesos rápidos, chips de
+         estado/método de pago/entrega, y búsqueda de texto — ver cabecera de
+         historial-ventas.ts. Sin ningún filtro se consulta TODO el histórico. -->
+    <section class="tarjeta-filtros-ventas">
+      <div class="filtros-ventas">
+        <div class="campo-filtro">
+          <label for="filtro-desde">Desde</label>
+          <input
+            id="filtro-desde"
+            type="date"
+            [value]="filtroDesde()"
+            (change)="cambiarDesde($any($event.target).value)"
+          />
+        </div>
+        <div class="campo-filtro">
+          <label for="filtro-hasta">Hasta</label>
+          <input
+            id="filtro-hasta"
+            type="date"
+            [value]="filtroHasta()"
+            (change)="cambiarHasta($any($event.target).value)"
+          />
+        </div>
+        <div class="campo-filtro campo-filtro-ancho">
+          <label for="filtro-buscar">Buscar ticket</label>
+          <input
+            id="filtro-buscar"
+            type="text"
+            placeholder="Folio, cliente, teléfono, cajero o producto"
+            [value]="busqueda()"
+            (input)="actualizarBusqueda($any($event.target).value)"
+          />
+        </div>
+      </div>
+
+      <div class="filtros-rapidos-ventas">
+        <button type="button" class="boton-filtro-rapido" (click)="seleccionarHoy()">Hoy</button>
+        <button type="button" class="boton-filtro-rapido" (click)="seleccionarSemana()">
+          Esta semana
+        </button>
+        <button type="button" class="boton-filtro-rapido" (click)="seleccionarMes()">
+          Este mes
+        </button>
+      </div>
+
+      <div class="grupo-chips-ventas">
+        <span class="etiqueta-grupo-chips">Estado</span>
+        <div class="fila-chips-ventas">
+          <button
+            type="button"
+            class="chip-filtro-ventas"
+            [class.chip-filtro-activa]="filtroEstado() === null"
+            (click)="seleccionarEstado(null)"
+          >
+            Todas
+          </button>
+          <button
+            type="button"
+            class="chip-filtro-ventas"
+            [class.chip-filtro-activa]="filtroEstado() === 'completada'"
+            (click)="seleccionarEstado('completada')"
+          >
+            Completadas
+          </button>
+          <button
+            type="button"
+            class="chip-filtro-ventas"
+            [class.chip-filtro-activa]="filtroEstado() === 'cancelada'"
+            (click)="seleccionarEstado('cancelada')"
+          >
+            Canceladas
+          </button>
+        </div>
+      </div>
+
+      <div class="grupo-chips-ventas">
+        <span class="etiqueta-grupo-chips">Método de pago</span>
+        <div class="fila-chips-ventas">
+          <button
+            type="button"
+            class="chip-filtro-ventas"
+            [class.chip-filtro-activa]="filtroMetodoPago() === null"
+            (click)="seleccionarMetodoPago(null)"
+          >
+            Todos
+          </button>
+          <button
+            type="button"
+            class="chip-filtro-ventas"
+            [class.chip-filtro-activa]="filtroMetodoPago() === 'efectivo'"
+            (click)="seleccionarMetodoPago('efectivo')"
+          >
+            Efectivo
+          </button>
+          <button
+            type="button"
+            class="chip-filtro-ventas"
+            [class.chip-filtro-activa]="filtroMetodoPago() === 'transferencia'"
+            (click)="seleccionarMetodoPago('transferencia')"
+          >
+            Transferencia
+          </button>
+        </div>
+      </div>
+
+      <div class="grupo-chips-ventas">
+        <span class="etiqueta-grupo-chips">Entrega</span>
+        <div class="fila-chips-ventas">
+          <button
+            type="button"
+            class="chip-filtro-ventas"
+            [class.chip-filtro-activa]="filtroTipoEntrega() === null"
+            (click)="seleccionarTipoEntrega(null)"
+          >
+            Todas
+          </button>
+          <button
+            type="button"
+            class="chip-filtro-ventas"
+            [class.chip-filtro-activa]="filtroTipoEntrega() === 'presencial'"
+            (click)="seleccionarTipoEntrega('presencial')"
+          >
+            Presencial
+          </button>
+          <button
+            type="button"
+            class="chip-filtro-ventas"
+            [class.chip-filtro-activa]="filtroTipoEntrega() === 'domicilio'"
+            (click)="seleccionarTipoEntrega('domicilio')"
+          >
+            A domicilio
+          </button>
+        </div>
+      </div>
+
+      @if (hayFiltros()) {
+        <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltros()">
+          Limpiar filtros
+        </button>
+      }
+    </section>
+
     <!-- RF-23 (2026-10-16): aviso breve si la venta recién cancelada había
          contado una visita de lealtad — el servidor ya la revirtió solo. -->
     @if (avisoLealtadRevertida()) {
@@ -65,17 +209,23 @@
         <p class="mensaje-estado mensaje-error">{{ error() }}</p>
       }
 
-      <!-- TOTAL DEL DÍA: suma solo las ventas completadas (las canceladas no cuentan). -->
+      <!-- TOTAL: suma solo las ventas completadas del resultado actual (las
+           canceladas no cuentan) — varía según los filtros aplicados. -->
       <div class="resumen-dia">
         <span
-          >Total del día ({{ ventas().length }}
-          {{ ventas().length === 1 ? 'venta' : 'ventas' }})</span
+          >Total ({{ ventas().length }} {{ ventas().length === 1 ? 'ticket' : 'tickets' }})</span
         >
-        <span class="resumen-dia-monto">{{ totalDelDia() | currency: 'MXN' }}</span>
+        <span class="resumen-dia-monto">{{ totalFiltrado() | currency: 'MXN' }}</span>
       </div>
 
       @if (ventas().length === 0) {
-        <p class="mensaje-estado">Todavía no hay ventas hoy.</p>
+        <p class="mensaje-estado">
+          {{
+            hayFiltros()
+              ? 'Ningún ticket coincide con estos filtros.'
+              : 'Todavía no hay ventas registradas.'
+          }}
+        </p>
       }
 
       <!-- LISTA DE VENTAS: más recientes primero. Las canceladas se muestran atenuadas y con su auditoría. -->

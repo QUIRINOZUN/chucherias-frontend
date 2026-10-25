@@ -4,7 +4,7 @@
 // Es la pantalla a la que se llega tras iniciar sesión. Muestra una tarjeta por
 // cada módulo al que el usuario tiene permiso. Cada rol ve solo lo suyo:
 //
-//   administrador → Punto de venta, Comandas, Corte de caja, Ventas de hoy,
+//   administrador → Punto de venta, Comandas, Corte de caja, Ventas,
 //                   Recetario, Inventario, Mermas, Usuarios, Asistencias,
 //                   Clientes, Reportes, Checklist
 //   encargado     → (los mismos 12 que administrador)
@@ -99,9 +99,9 @@ const MODULOS: Modulo[] = [
   },
   {
     ruta: '/ventas',
-    titulo: 'Ventas de hoy',
+    titulo: 'Ventas',
     icono: 'recibo',
-    descripcion: 'Historial y cancelación de ventas.',
+    descripcion: 'Consulta de tickets, filtros y cancelación.',
     roles: ['administrador', 'encargado'],
     colorVar: 'var(--mod-ventas)',
   },

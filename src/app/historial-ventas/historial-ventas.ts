@@ -1,11 +1,24 @@
 // =============================================================================
-// historial-ventas/historial-ventas.ts — VENTAS DEL DÍA Y CANCELACIÓN (RF-03)
+// historial-ventas/historial-ventas.ts — CONSULTA DE TICKETS Y CANCELACIÓN (RF-03)
 // =============================================================================
-// Pantalla "Ventas de hoy". Solo administrador y encargado (información
-// financiera, RNF-03). Muestra:
-//   - El total del día (solo ventas completadas).
+// Pantalla "Ventas" (2026-10-22; antes "Ventas de hoy" — ver FILTROS abajo).
+// Solo administrador y encargado (información financiera, RNF-03). Muestra:
+//   - Filtros de fecha/estado/método de pago/entrega + búsqueda de texto.
+//   - El total de las ventas completadas que caen dentro del filtro actual.
 //   - Cada venta con sus productos, método de pago, tipo de entrega y estado.
 //   - Un botón para cancelar una venta completada, con motivo opcional.
+//
+// FILTROS (2026-10-22): antes esta pantalla solo mostraba el día del negocio
+// en curso (sin ninguna forma de ver un ticket de ayer). Ahora es la consulta
+// general de tickets — sin ningún filtro, `GET /api/ventas` ya devuelve TODO
+// el histórico (mismo criterio que mermas.ts/ventas-especiales.ts), con un
+// rango de fecha opcional (+ accesos rápidos Hoy/Semana/Mes, igual que
+// reportes.ts), chips de Estado/Método de pago/Entrega, y una búsqueda de
+// texto con debounce de 300 ms (folio, cajero, cliente o producto — ver
+// routes/ventas.js). Cada cambio de filtro cancela la consulta anterior si
+// todavía no había respondido (mismo patrón `unsubscribe()` que ya usa
+// caja.ts/mermas.ts), para que una respuesta vieja y lenta no pise el
+// resultado del filtro actual.
 //
 // FLUJO DE CANCELACIÓN (total o PARCIAL, decisión de negocio del 2026-10-03)
 //   1. "Cancelar productos" abre un panel en esa tarjeta (cancelandoId). Por
@@ -26,10 +39,17 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { EstadoOrden, InsumoDescontado, OrdenesService, TiempoEstadoOrden } from '../core/ordenes';
 import { ThemeService } from '../core/theme';
-import { ItemVentaHistorial, VentaHistorial, VentasService } from '../core/ventas';
+import {
+  ItemVentaHistorial,
+  MetodoPago,
+  TipoEntrega,
+  VentaHistorial,
+  VentasService,
+} from '../core/ventas';
 
 // Etiqueta legible de cada estado para el detalle de tiempos (RF-08); mismos
 // nombres que ya usa el tablero de comandas.
@@ -41,6 +61,16 @@ const ETIQUETA_ESTADO: Record<EstadoOrden, string> = {
   cancelada: 'Cancelada',
 };
 
+// "AAAA-MM-DD" en hora LOCAL — nunca toISOString(), que corre la fecha un
+// día con el offset negativo de México (mismo criterio que reportes.ts/
+// ventas-especiales.ts).
+function formatoFechaLocal(fecha: Date): string {
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${anio}-${mes}-${dia}`;
+}
+
 @Component({
   selector: 'app-historial-ventas',
   standalone: true,
@@ -49,10 +79,33 @@ const ETIQUETA_ESTADO: Record<EstadoOrden, string> = {
   styleUrl: './historial-ventas.css',
 })
 export class HistorialVentasComponent implements OnInit {
-  // Ventas del día tal como las devolvió el servidor.
+  // Ventas que cumplen el filtro actual, tal como las devolvió el servidor.
   ventas = signal<VentaHistorial[]>([]);
   cargando = signal(true);
   error = signal('');
+
+  // ---- Filtros (2026-10-22, ver cabecera del archivo) -----------------------
+  // Sin ninguno, se consulta TODO el histórico — mismo criterio que
+  // mermas.ts/ventas-especiales.ts.
+  filtroDesde = signal('');
+  filtroHasta = signal('');
+  filtroEstado = signal<'completada' | 'cancelada' | null>(null);
+  filtroMetodoPago = signal<MetodoPago | null>(null);
+  filtroTipoEntrega = signal<TipoEntrega | null>(null);
+  busqueda = signal('');
+
+  hayFiltros = computed(
+    () =>
+      !!this.filtroDesde() ||
+      !!this.filtroHasta() ||
+      !!this.filtroEstado() ||
+      !!this.filtroMetodoPago() ||
+      !!this.filtroTipoEntrega() ||
+      !!this.busqueda(),
+  );
+
+  private consultaVentas?: Subscription;
+  private temporizadorBusqueda?: ReturnType<typeof setTimeout>;
 
   // id de la venta cuyo panel de cancelación está abierto (null = ninguno).
   cancelandoId = signal<number | null>(null);
@@ -80,9 +133,9 @@ export class HistorialVentasComponent implements OnInit {
   tiemposDetalle = signal<TiempoEstadoOrden[]>([]);
   cargandoTiempos = signal(false);
 
-  // Suma de las ventas COMPLETADAS; las canceladas no cuentan, igual que en el
-  // corte de caja.
-  totalDelDia = computed(() =>
+  // Suma de las ventas COMPLETADAS dentro del filtro actual; las canceladas
+  // no cuentan, igual que en el corte de caja.
+  totalFiltrado = computed(() =>
     this.ventas()
       .filter((v) => v.estado === 'completada')
       .reduce((suma, v) => suma + Number(v.total), 0),
@@ -95,28 +148,114 @@ export class HistorialVentasComponent implements OnInit {
     private router: Router,
   ) {}
 
-  // Al abrir la pantalla se cargan las ventas de hoy.
+  // Al abrir la pantalla se consulta con los filtros en blanco (todo el histórico).
   ngOnInit(): void {
     this.cargarVentas();
   }
 
   cargarVentas(): void {
+    // Si se cambia un filtro antes de que responda la consulta anterior, se
+    // cancela: una respuesta vieja y lenta no debe pisar el resultado actual
+    // (mismo criterio que ya usa caja.ts/mermas.ts con sus filtros de fecha).
+    this.consultaVentas?.unsubscribe();
     this.cargando.set(true);
-    this.ventasService.listar().subscribe({
-      next: (ventas) => {
-        this.ventas.set(ventas);
-        this.cargando.set(false);
-      },
-      error: (error: HttpErrorResponse) => {
-        // status 0 = sin respuesta (sin Internet o servidor gratuito dormido).
-        this.error.set(
-          error.status === 0
-            ? 'No se pudo conectar con el servidor. Verifica tu conexión a Internet.'
-            : 'No se pudieron cargar las ventas.',
-        );
-        this.cargando.set(false);
-      },
-    });
+    this.error.set('');
+    this.consultaVentas = this.ventasService
+      .listar({
+        desde: this.filtroDesde(),
+        hasta: this.filtroHasta(),
+        estado: this.filtroEstado() ?? undefined,
+        metodoPago: this.filtroMetodoPago() ?? undefined,
+        tipoEntrega: this.filtroTipoEntrega() ?? undefined,
+        buscar: this.busqueda(),
+      })
+      .subscribe({
+        next: (ventas) => {
+          this.ventas.set(ventas);
+          this.cargando.set(false);
+        },
+        error: (error: HttpErrorResponse) => {
+          // status 0 = sin respuesta (sin Internet o servidor gratuito dormido).
+          this.error.set(
+            error.status === 0
+              ? 'No se pudo conectar con el servidor. Verifica tu conexión a Internet.'
+              : error.error?.error || 'No se pudieron cargar las ventas.',
+          );
+          this.cargando.set(false);
+        },
+      });
+  }
+
+  // ---- Manejadores de los filtros (ver cabecera del archivo) ----------------
+  cambiarDesde(valor: string): void {
+    this.filtroDesde.set(valor);
+    this.cargarVentas();
+  }
+
+  cambiarHasta(valor: string): void {
+    this.filtroHasta.set(valor);
+    this.cargarVentas();
+  }
+
+  seleccionarEstado(estado: 'completada' | 'cancelada' | null): void {
+    this.filtroEstado.set(estado);
+    this.cargarVentas();
+  }
+
+  seleccionarMetodoPago(metodo: MetodoPago | null): void {
+    this.filtroMetodoPago.set(metodo);
+    this.cargarVentas();
+  }
+
+  seleccionarTipoEntrega(tipo: TipoEntrega | null): void {
+    this.filtroTipoEntrega.set(tipo);
+    this.cargarVentas();
+  }
+
+  // Espera 300 ms sin teclear antes de consultar (mismo criterio que el
+  // typeahead de clientes/ventas-especiales) — no se consulta en cada tecla.
+  actualizarBusqueda(valor: string): void {
+    this.busqueda.set(valor);
+    clearTimeout(this.temporizadorBusqueda);
+    this.temporizadorBusqueda = setTimeout(() => this.cargarVentas(), 300);
+  }
+
+  // Accesos rápidos de periodo (mismo patrón que reportes.ts).
+  seleccionarHoy(): void {
+    const hoy = formatoFechaLocal(new Date());
+    this.filtroDesde.set(hoy);
+    this.filtroHasta.set(hoy);
+    this.cargarVentas();
+  }
+
+  seleccionarSemana(): void {
+    const hoy = new Date();
+    // Lunes de esta semana: getDay() da 0=domingo..6=sábado; se retrocede al
+    // lunes más reciente (domingo retrocede 6 días, no 1).
+    const diasDesdeElLunes = (hoy.getDay() + 6) % 7;
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() - diasDesdeElLunes);
+    this.filtroDesde.set(formatoFechaLocal(lunes));
+    this.filtroHasta.set(formatoFechaLocal(hoy));
+    this.cargarVentas();
+  }
+
+  seleccionarMes(): void {
+    const hoy = new Date();
+    const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    this.filtroDesde.set(formatoFechaLocal(primerDia));
+    this.filtroHasta.set(formatoFechaLocal(hoy));
+    this.cargarVentas();
+  }
+
+  limpiarFiltros(): void {
+    this.filtroDesde.set('');
+    this.filtroHasta.set('');
+    this.filtroEstado.set(null);
+    this.filtroMetodoPago.set(null);
+    this.filtroTipoEntrega.set(null);
+    this.busqueda.set('');
+    this.cargarVentas();
   }
 
   // Productos de una venta que todavía se pueden cancelar (no cancelados ya).
