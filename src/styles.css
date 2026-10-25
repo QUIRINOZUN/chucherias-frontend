@@ -357,6 +357,42 @@ textarea:focus-visible {
     inset 0 -4px 0 0 var(--acento-modulo, transparent);
 }
 
+/* Título de cada encabezado, a prueba de títulos largos en pantallas angostas
+   (2026-10-23, auditoría de responsive): cada módulo fija su propio
+   `<nombre>-header h1 { flex: 1; font-size: ...; }`, pero ninguno fijaba
+   `min-width` — un flex item sin `min-width: 0` nunca se encoge más allá del
+   ancho de su palabra más larga sin partir ("especiales", "Reportes"...), así
+   que en "Ventas especiales" (320-375px) el título empujaba el botón de
+   tema fuera del encabezado, y como el encabezado tiene `overflow: hidden`
+   (arriba), el botón quedaba recortado en vez de solo verse apretado —
+   confirmado con Playwright que su `getBoundingClientRect().right` caía
+   más allá del viewport. `min-width: 0` deja que el título se encoja/envuelva
+   dentro del espacio real que le toca, y el límite de 2 líneas con elipsis
+   evita el otro síntoma (un título como "Corte de caja" partiéndose en 3
+   líneas, empujando el resto del encabezado hacia abajo) sin necesitar
+   tocar cada plantilla HTML. El encabezado del dashboard NO entra aquí —
+   su `<h1>` es el saludo ("Hola, X"), con su propio breakpoint ya resuelto
+   (ver dashboard.css, 480px). */
+.pos-header h1,
+.caja-header h1,
+.historial-header h1,
+.usuarios-header h1,
+.comandas-header h1,
+.mermas-header h1,
+.asistencias-header h1,
+.inventario-header h1,
+.recetario-header h1,
+.clientes-header h1,
+.reportes-header h1,
+.checklist-header h1 {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
 /* Franja arcoíris arriba de CADA encabezado (2026-10-13, tercera pasada):
    el usuario aclaró que quería el arcoíris consistente en todos los
    módulos, no solo en el login — así que es la misma --franja-arcoiris en
