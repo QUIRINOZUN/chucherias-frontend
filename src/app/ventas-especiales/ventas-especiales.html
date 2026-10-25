@@ -1,0 +1,455 @@
+<!-- ============================================================================
+     ventas-especiales.html — AGENDAR Y COTIZAR (lógica en ventas-especiales.ts)
+     ============================================================================
+     Administrador, encargado y cajero. Dos vistas: la agenda (lista) y el
+     formulario de crear/editar una cotización con el menú completo.
+     ============================================================================ -->
+<div class="ventas-especiales-container">
+  <header class="ventas-especiales-header">
+    <button
+      type="button"
+      class="boton-volver"
+      (click)="vista() === 'lista' ? volverAlDashboard() : volverALista()"
+    >
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      {{ vista() === 'lista' ? 'Volver' : 'Volver a la agenda' }}
+    </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-regalo" /></svg>
+    </span>
+    <h1>Ventas especiales</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
+    >
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
+    </button>
+  </header>
+
+  <div class="ventas-especiales-cuerpo">
+    @if (vista() === 'lista') {
+      <!-- ============================= AGENDA ============================= -->
+      <button type="button" class="boton-nueva-cotizacion" (click)="abrirNuevaCotizacion()">
+        <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
+        Nueva cotización
+      </button>
+
+      <section class="tarjeta-filtros-ve">
+        <div class="filtros-ve">
+          <div class="campo-filtro">
+            <label for="filtro-desde">Desde</label>
+            <input
+              id="filtro-desde"
+              type="date"
+              [value]="filtroDesde()"
+              (change)="cambiarDesde($any($event.target).value)"
+            />
+          </div>
+          <div class="campo-filtro">
+            <label for="filtro-hasta">Hasta</label>
+            <input
+              id="filtro-hasta"
+              type="date"
+              [value]="filtroHasta()"
+              (change)="cambiarHasta($any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <div class="campo-busqueda-ve">
+          <svg class="icono icono-busqueda" aria-hidden="true"><use href="#ic-buscar" /></svg>
+          <input
+            type="search"
+            aria-label="Buscar por nombre o teléfono del cliente"
+            placeholder="Buscar por cliente o teléfono..."
+            [value]="busqueda()"
+            (input)="actualizarBusqueda($any($event.target).value)"
+          />
+        </div>
+
+        <div class="chips-estado-ve">
+          <button
+            type="button"
+            class="chip-estado-ve"
+            [class.chip-estado-ve-activa]="filtroEstado() === null"
+            (click)="seleccionarEstado(null)"
+          >
+            Todas
+          </button>
+          @for (estado of estados; track estado.valor) {
+            <button
+              type="button"
+              class="chip-estado-ve"
+              [class.chip-estado-ve-activa]="filtroEstado() === estado.valor"
+              [attr.data-estado]="estado.valor"
+              (click)="seleccionarEstado(estado.valor)"
+            >
+              {{ estado.etiqueta }}
+            </button>
+          }
+        </div>
+
+        @if (hayFiltros()) {
+          <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltros()">
+            Limpiar filtros
+          </button>
+        }
+      </section>
+
+      @if (errorLista()) {
+        <p class="mensaje-estado mensaje-error">{{ errorLista() }}</p>
+      } @else if (cargandoLista()) {
+        <div class="esqueleto esqueleto-fila-ve" aria-hidden="true"></div>
+        <div class="esqueleto esqueleto-fila-ve" aria-hidden="true"></div>
+        <div class="esqueleto esqueleto-fila-ve" aria-hidden="true"></div>
+      } @else if (lista().length === 0) {
+        <div class="estado-vacio">
+          <span class="estado-vacio-icono" aria-hidden="true">
+            <svg class="icono"><use href="#ic-regalo" /></svg>
+          </span>
+          <p>No hay cotizaciones con estos filtros.</p>
+        </div>
+      } @else {
+        <ul class="lista-ve">
+          @for (venta of lista(); track venta.id) {
+            <li
+              class="tarjeta-ve"
+              role="button"
+              tabindex="0"
+              [attr.data-estado]="venta.estado"
+              (click)="abrirEditarCotizacion(venta)"
+              (keydown.enter)="abrirEditarCotizacion(venta)"
+              (keydown.space)="abrirEditarCotizacion(venta)"
+            >
+              <div class="ve-info">
+                <span class="ve-cliente">{{ venta.cliente_nombre }}</span>
+                <span class="ve-detalle">
+                  {{ etiquetaTipo(venta.tipo) }} · {{ venta.total_items }}
+                  {{ venta.total_items === 1 ? 'producto' : 'productos' }}
+                </span>
+                <span class="ve-fecha">
+                  {{ venta.fecha_evento | date: 'dd/MM/yyyy' }}
+                  @if (venta.hora_evento) {
+                    · {{ venta.hora_evento.slice(0, 5) }}
+                  }
+                </span>
+              </div>
+              <div class="ve-pago">
+                <span class="badge-estado-ve" [attr.data-estado]="venta.estado">
+                  {{ etiquetaEstado(venta.estado) }}
+                </span>
+                <span class="ve-subtotal">{{ venta.subtotal | currency: 'MXN' }}</span>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    } @else {
+      <!-- ========================= CREAR / EDITAR ========================= -->
+      <section class="tarjeta-datos-evento">
+        <h2>Datos del cliente y del evento</h2>
+
+        <!-- ESTADO (2026-10-23): antes era un <select> más, igual de chico y
+             apagado que "Tipo de evento", escondido a la mitad de la rejilla
+             de 8 campos — el usuario reportó que no encontraba cómo cambiar
+             el estado de una cotización. Ahora es lo PRIMERO que se ve al
+             abrir una cotización existente: pastillas grandes y a color
+             (mismo criterio de color que ya usan los chips de filtro de la
+             agenda y las insignias de la lista — cotizada=neutro,
+             confirmada=rosa del módulo, entregada=verde, cancelada=rojo),
+             nunca un <select> plano. Solo aparece al editar — una
+             cotización nueva siempre nace "cotizada", igual que antes. -->
+        @if (ventaEditando()) {
+          <div class="bloque-estado-form">
+            <span class="etiqueta-bloque-estado">Estado de la cotización</span>
+            <div class="chips-estado-form">
+              @for (estado of estados; track estado.valor) {
+                <button
+                  type="button"
+                  class="chip-estado-form"
+                  [class.chip-estado-form-activa]="estado.valor === estadoForm()"
+                  [attr.data-estado]="estado.valor"
+                  (click)="estadoForm.set(estado.valor)"
+                >
+                  {{ estado.etiqueta }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="rejilla-campos-evento">
+          <div class="campo">
+            <label for="cliente-nombre">Nombre del cliente *</label>
+            <input
+              id="cliente-nombre"
+              type="text"
+              [value]="clienteNombreForm()"
+              (input)="clienteNombreForm.set($any($event.target).value)"
+            />
+          </div>
+          <div class="campo">
+            <label for="cliente-telefono">Teléfono</label>
+            <input
+              id="cliente-telefono"
+              type="tel"
+              [value]="clienteTelefonoForm()"
+              (input)="clienteTelefonoForm.set($any($event.target).value)"
+            />
+          </div>
+          <div class="campo campo-ancho">
+            <label for="cliente-direccion">Dirección (opcional, si es a domicilio)</label>
+            <input
+              id="cliente-direccion"
+              type="text"
+              [value]="clienteDireccionForm()"
+              (input)="clienteDireccionForm.set($any($event.target).value)"
+            />
+          </div>
+          <div class="campo">
+            <label for="tipo-evento">Tipo de evento</label>
+            <select id="tipo-evento" (change)="tipoForm.set($any($event.target).value)">
+              @for (tipo of tipos; track tipo.valor) {
+                <option [value]="tipo.valor" [selected]="tipo.valor === tipoForm()">
+                  {{ tipo.etiqueta }}
+                </option>
+              }
+            </select>
+          </div>
+          <div class="campo">
+            <label for="fecha-evento">Fecha del evento *</label>
+            <input
+              id="fecha-evento"
+              type="date"
+              [value]="fechaEventoForm()"
+              (input)="fechaEventoForm.set($any($event.target).value)"
+            />
+          </div>
+          <div class="campo">
+            <label for="hora-evento">Hora (opcional)</label>
+            <input
+              id="hora-evento"
+              type="time"
+              [value]="horaEventoForm()"
+              (input)="horaEventoForm.set($any($event.target).value)"
+            />
+          </div>
+          <div class="campo campo-ancho">
+            <label for="notas-evento">Notas (alergias, instrucciones especiales...)</label>
+            <textarea
+              id="notas-evento"
+              rows="2"
+              [value]="notasForm()"
+              (input)="notasForm.set($any($event.target).value)"
+            ></textarea>
+          </div>
+        </div>
+        <p class="ayuda-campo">Los campos con * son obligatorios.</p>
+      </section>
+
+      <section class="tarjeta-agregar-productos">
+        <h2>Agregar productos del menú</h2>
+
+        <div class="campo-busqueda-ve">
+          <svg class="icono icono-busqueda" aria-hidden="true"><use href="#ic-buscar" /></svg>
+          <input
+            type="search"
+            aria-label="Buscar producto por nombre"
+            placeholder="Buscar producto por nombre..."
+            [value]="busquedaProducto()"
+            (input)="actualizarBusquedaProducto($any($event.target).value)"
+          />
+        </div>
+
+        <div
+          class="categorias-ve"
+          [class.categorias-ve-inactivas]="busquedaProducto().trim().length > 0"
+        >
+          <button
+            type="button"
+            class="chip-categoria-ve"
+            [class.chip-categoria-ve-activa]="categoriaSeleccionada() === null"
+            (click)="seleccionarCategoriaProducto(null)"
+          >
+            Todas
+          </button>
+          @for (categoria of categorias(); track categoria.id) {
+            <button
+              type="button"
+              class="chip-categoria-ve"
+              [class.chip-categoria-ve-activa]="categoriaSeleccionada() === categoria.id"
+              [style.--color-chip]="estiloCategoria(categoria.nombre).color"
+              (click)="seleccionarCategoriaProducto(categoria.id)"
+            >
+              <svg class="icono" aria-hidden="true">
+                <use [attr.href]="'#ic-' + estiloCategoria(categoria.nombre).icono" />
+              </svg>
+              {{ categoria.nombre }}
+            </button>
+          }
+        </div>
+
+        @if (!catalogoCargado()) {
+          <div class="esqueleto esqueleto-fila-ve" aria-hidden="true"></div>
+          <div class="esqueleto esqueleto-fila-ve" aria-hidden="true"></div>
+        } @else {
+          <ul class="lista-productos-menu-ve">
+            @for (producto of productosFiltrados(); track producto.id) {
+              <li
+                class="item-producto-menu-ve"
+                role="button"
+                tabindex="0"
+                (click)="abrirSelectorVariante(producto)"
+                (keydown.enter)="abrirSelectorVariante(producto)"
+                (keydown.space)="abrirSelectorVariante(producto)"
+              >
+                <span
+                  class="icono-producto-menu-ve"
+                  [style.--color-categoria]="estiloCategoria(producto.categoria).color"
+                >
+                  <svg class="icono" aria-hidden="true">
+                    <use [attr.href]="'#ic-' + estiloCategoria(producto.categoria).icono" />
+                  </svg>
+                </span>
+                <span class="nombre-producto-menu-ve">{{ producto.nombre }}</span>
+                <svg class="icono icono-chevron-ve" aria-hidden="true">
+                  <use href="#ic-chevron" />
+                </svg>
+              </li>
+            } @empty {
+              <p class="mensaje-estado">No se encontró ningún producto.</p>
+            }
+          </ul>
+        }
+      </section>
+
+      <section class="tarjeta-items-cotizados">
+        <h2>Productos cotizados</h2>
+
+        @if (itemsForm().length === 0) {
+          <div class="estado-vacio">
+            <span class="estado-vacio-icono" aria-hidden="true">
+              <svg class="icono"><use href="#ic-regalo" /></svg>
+            </span>
+            <p>Todavía no agregas ningún producto.</p>
+          </div>
+        } @else {
+          <ul class="lista-items-cotizados">
+            @for (item of itemsForm(); track item.id) {
+              <li class="item-cotizado">
+                <div class="item-cotizado-fila">
+                  <div class="item-cotizado-info">
+                    <span class="item-cotizado-nombre">{{ item.productoNombre }}</span>
+                    <span class="item-cotizado-variante">{{ item.varianteNombre }}</span>
+                  </div>
+                  <div class="item-cotizado-controles">
+                    <button type="button" (click)="decrementarItem(item)" aria-label="Quitar uno">
+                      <svg class="icono" aria-hidden="true"><use href="#ic-menos" /></svg>
+                    </button>
+                    <span class="item-cotizado-cantidad">{{ item.cantidad }}</span>
+                    <button type="button" (click)="incrementarItem(item)" aria-label="Agregar uno">
+                      <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
+                    </button>
+                  </div>
+                  <span class="item-cotizado-subtotal">{{
+                    item.precio * item.cantidad | currency: 'MXN'
+                  }}</span>
+                  <button
+                    type="button"
+                    class="boton-quitar-item-ve"
+                    (click)="quitarItem(item)"
+                    aria-label="Eliminar producto"
+                  >
+                    <svg class="icono" aria-hidden="true"><use href="#ic-cerrar" /></svg>
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  class="campo-nota-item-ve"
+                  placeholder="Nota (opcional) — ej. sin cebolla, extra queso..."
+                  [attr.aria-label]="'Nota para ' + item.productoNombre"
+                  [value]="item.notas"
+                  (input)="actualizarNotaItem(item, $any($event.target).value)"
+                />
+              </li>
+            }
+          </ul>
+
+          <div class="total-cotizacion">
+            <span>Total estimado</span>
+            <strong>{{ totalCotizacion() | currency: 'MXN' }}</strong>
+          </div>
+        }
+      </section>
+
+      @if (errorGuardar()) {
+        <p class="mensaje-estado mensaje-error">{{ errorGuardar() }}</p>
+      }
+
+      <div class="acciones-cotizacion">
+        <button type="button" class="boton-cancelar-ve" (click)="volverALista()">Cancelar</button>
+        <button
+          type="button"
+          class="boton-guardar-ve"
+          [disabled]="!puedeGuardar() || guardando()"
+          (click)="guardarCotizacion()"
+        >
+          {{
+            guardando()
+              ? 'Guardando...'
+              : ventaEditando()
+                ? 'Guardar cambios'
+                : 'Guardar cotización'
+          }}
+        </button>
+      </div>
+
+      <!-- VENTANA: elegir variante del producto tocado. -->
+      @if (productoAbierto(); as producto) {
+        <div class="overlay">
+          <div
+            class="panel-selector-variante-ve"
+            role="dialog"
+            aria-modal="true"
+            [attr.aria-label]="'Elegir presentación de ' + producto.nombre"
+            appFocoDialogo
+            (cerrarConEscape)="cerrarSelectorVariante()"
+          >
+            <button
+              type="button"
+              class="boton-cerrar-detalle-ve"
+              (click)="cerrarSelectorVariante()"
+              aria-label="Cerrar"
+            >
+              <svg class="icono" aria-hidden="true"><use href="#ic-cerrar" /></svg>
+            </button>
+            <h2>{{ producto.nombre }}</h2>
+            @if (producto.descripcion) {
+              <p class="descripcion-producto-ve">{{ producto.descripcion }}</p>
+            }
+            <div class="variantes-ve">
+              @for (variante of producto.variantes; track variante.id) {
+                @if (variante.activo) {
+                  <button
+                    type="button"
+                    class="boton-variante-ve"
+                    (click)="agregarVariante(producto, variante)"
+                  >
+                    <span>{{ variante.nombre }}</span>
+                    <span>{{ variante.precio | currency: 'MXN' }}</span>
+                  </button>
+                }
+              }
+            </div>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>
