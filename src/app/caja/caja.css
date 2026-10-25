@@ -1,8 +1,10 @@
 /* =============================================================================
    caja.css — CORTE DE CAJA
    =============================================================================
-   Bloques: encabezado, tarjetas (resumen / captura / corte guardado),
-   diferencia en vivo, y el historial con sus filtros. */
+   4 pestañas (2026-10-22): encabezado + barra de pestañas (mismo patrón que
+   reportes.css/asistencias.css) + tarjetas (resumen / captura / corte
+   guardado / retiro / historial), diferencia en vivo, y el historial con sus
+   filtros. */
 
 /* Contenedor del componente. */
 :host {
@@ -56,11 +58,14 @@
   font-size: 1.15rem;
 }
 
-/* Columna centrada de ancho máximo 480 px: es una pantalla de captura, no de tablero. */
+/* Columna centrada: es una pantalla de captura, no de tablero — cada
+   pestaña muestra solo lo suyo, así que no hace falta el ancho extra que
+   necesitaba la cuadrícula de 2 columnas de antes (ver nota de
+   "Pantallas anchas" más abajo, ya retirada). */
 .caja-cuerpo {
   flex: 1;
   padding: 16px;
-  max-width: 480px;
+  max-width: 560px;
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
@@ -69,21 +74,68 @@
   gap: 16px;
 }
 
-/* En móvil, retiro y el resto se apilan en una sola columna (retiro primero,
-   es la acción más urgente para el administrador); a partir de 860px se
-   separan en dos — ver el media query al final del archivo, donde `order`
-   pone el retiro a la derecha sin cambiar el orden del DOM. */
-.caja-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+/* ===================== Pestañas (2026-10-22) =====================
+   Mismo patrón que .tabs-reportes/.tabs-asistencias: envoltorio +
+   degradado para cuando las 4 no caben en un teléfono angosto. */
+.tabs-caja-envoltorio {
+  position: relative;
 }
 
-.caja-principal {
+.tabs-caja-desvanecido {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 1px;
+  width: 32px;
+  background: linear-gradient(to right, transparent, var(--pos-bg-main));
+  pointer-events: none;
+}
+
+.tabs-caja {
+  display: flex;
+  gap: 6px;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tab-caja {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-card);
+  box-shadow: var(--sombra-suave);
+  color: var(--pos-text-secondary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.tab-caja .icono {
+  width: 18px;
+  height: 18px;
+}
+
+.tab-caja-activa {
+  background: var(--acento-modulo);
+  color: #fff;
+  box-shadow: var(--sombra-acento);
+}
+
+.caja-pestana {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  min-width: 0;
+  animation: aparecer 0.2s ease;
 }
 
 .mensaje-estado {
@@ -487,64 +539,28 @@
   border-bottom-style: dashed;
 }
 
-/* A partir de aquí ya cabe el retiro como columna propia junto al resto
-   (mismo quiebre de 860px que usan inventario.css y pos.css). `order` pone
-   el retiro a la derecha sin tocar el orden del DOM (así en móvil sigue
-   apareciendo primero, antes que el resumen y el corte). */
+/* Pantallas anchas (2026-10-22): dentro de la pestaña "Corte de hoy", lo
+   que el sistema calculó y lo que se contó quedan lado a lado — es justo
+   lo que hay que comparar para sacar la diferencia. Ya no hace falta la
+   cuadrícula de 2 columnas que tenía toda la pantalla antes de separarla
+   en pestañas (RESUMEN/CONTAR/MOVIMIENTOS/HISTORIAL compitiendo por
+   espacio en una sola columna) — cada pestaña de hoy en adelante es
+   bastante más corta por sí sola. */
 @media (min-width: 860px) {
   .caja-cuerpo {
     max-width: 920px;
   }
 
-  .caja-layout {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 24px;
-  }
-
-  .caja-principal {
-    order: 1;
-    flex: 1;
-  }
-
-  .caja-lateral {
-    order: 2;
-    flex: 0 0 340px;
-    position: sticky;
-    top: 84px;
-  }
-}
-
-/* Pantallas anchas de verdad (2026-10-17): el usuario pidió ver toda la
-   información del corte sin tanto scroll. Con el quiebre de 860px de
-   arriba, `.caja-principal` seguía siendo una sola columna apilando
-   hasta 4 tarjetas (resumen, contar, movimientos, historial) en un
-   espacio de ~550px de ancho — mucho scroll vertical en un monitor de
-   escritorio normal, con bastante espacio horizontal sin usar.
-   A partir de 1180px, `.caja-cuerpo` se ensancha y `.caja-principal`
-   pasa a una cuadrícula de 2 columnas: "Lo que el sistema calculó" y
-   "Lo que contaste" quedan lado a lado (es justo lo que hay que
-   comparar para sacar la diferencia), y debajo "Movimientos de hoy" y
-   "Consultar cortes" también se emparejan. El acomodo es automático
-   (`display: grid` sin `grid-template-areas`) — cada tarjeta ocupa la
-   siguiente celda libre en el orden en que ya aparece en el HTML, así
-   que no hizo falta tocar la plantilla ni los `@if` que deciden qué
-   tarjetas existen cada vez (ej. cuando no hay movimientos hoy, o
-   cuando el corte ya se guardó). "Corte guardado" es la excepción: esa
-   sí ocupa el ancho completo a propósito, es una confirmación, no algo
-   que deba competir por espacio con otra tarjeta al lado. */
-@media (min-width: 1180px) {
-  .caja-cuerpo {
-    max-width: 1240px;
-  }
-
-  .caja-principal {
+  .caja-pestana-corte {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    align-items: start;
     gap: 20px;
   }
 
-  .tarjeta-corte-guardado {
+  /* "Corte guardado" reemplaza a las dos tarjetas de arriba cuando ya se
+     guardó — ocupa el ancho completo a propósito, es una confirmación. */
+  .caja-pestana-corte .tarjeta-corte-guardado {
     grid-column: 1 / -1;
   }
 }
@@ -687,6 +703,15 @@
   border-top: 3px double var(--pos-border);
 }
 
+/* Ticket en texto plano (2026-10-19, ver textoPlanoListadoRetiros() en
+   caja.ts): oculto en pantalla por default — el @media print de más abajo
+   lo muestra y oculta el resto del comprobante con diseño en su lugar,
+   SOLO para impresoras sin driver gráfico (controlador "Generic / Text
+   Only"). Mismo mecanismo que el comprobante de venta del POS (pos.css). */
+.comprobante-texto-plano {
+  display: none;
+}
+
 .comprobante-acciones {
   display: flex;
   gap: 10px;
@@ -764,5 +789,27 @@
 
   .comprobante-acciones {
     display: none !important;
+  }
+
+  /* Ticket en texto plano (2026-10-19): mismo respaldo que el comprobante
+     de venta del POS (ver pos.css) para una impresora térmica sin driver
+     gráfico (controlador "Generic / Text Only" de Windows) — se oculta
+     TODO el comprobante con diseño y se muestra en su lugar únicamente el
+     bloque de texto plano armado a mano (ver textoPlanoListadoRetiros() en
+     caja.ts). En pantalla, y en una impresora con driver gráfico real,
+     nada de esto se nota. */
+  .comprobante > *:not(.comprobante-texto-plano) {
+    display: none !important;
+  }
+
+  .comprobante-texto-plano {
+    display: block !important;
+    margin: 0;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: #000;
   }
 }

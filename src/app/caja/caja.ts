@@ -1,22 +1,28 @@
 // =============================================================================
 // caja/caja.ts — PANTALLA DE CORTE DE CAJA (RF-04)
 // =============================================================================
-// Tiene cuatro bloques:
-//   1. RESUMEN: lo que el sistema calculó que debería haber hoy, desglosado
-//      en ventas en efectivo, apertura, ingresos y retiros (efectivo),
-//      transferencia y total. Lo ven administrador, encargado y cajero.
-//   2. RETIRO DE EFECTIVO (solo administrador): registra un retiro para
-//      pagar proveedores o comprar insumos en el día. El cajero lo confirma
-//      del lado del POS, donde se le imprime su comprobante — aquí solo se
-//      emite.
-//   3. CAPTURA DEL CORTE: la persona escribe lo que contó físicamente; la
-//      pantalla muestra la diferencia EN VIVO ("Cuadra exacto", "Sobran $X",
-//      "Faltan $X") y al guardar se registra el corte.
+// Cuatro PESTAÑAS (2026-10-22; antes las 4 vivían todas en la misma pantalla,
+// apiladas o en una cuadrícula de 2 columnas en pantallas anchas — el usuario
+// pidió separar qué se puede HACER en cada una, mismo criterio que ya usan
+// Asistencias/Recetario/Reportes):
+//   1. CORTE DE HOY: lo que el sistema calculó que debería haber hoy
+//      (ventas en efectivo, apertura, ingresos y retiros, transferencia y
+//      total) + la captura de lo contado físicamente, con la diferencia EN
+//      VIVO ("Cuadra exacto", "Sobran $X", "Faltan $X"). Administrador,
+//      encargado y cajero.
+//   2. RETIROS: el formulario para emitir un retiro de efectivo (SOLO
+//      administrador — para pagar proveedores o comprar insumos en el día;
+//      el cajero lo confirma del lado del POS, donde se le imprime su
+//      comprobante) + el ticket "Listado de retiros" de hoy, disponible a
+//      los tres roles que hacen corte.
+//   3. MOVIMIENTOS DE HOY (solo administrador y encargado): apertura,
+//      ingresos y retiros del día.
 //   4. HISTORIAL (solo administrador y encargado): consulta de cortes
-//      anteriores con filtros por rango de fechas y por usuario, y los
-//      movimientos de caja (apertura/ingreso/retiro) del día.
+//      anteriores con filtros por rango de fechas y por usuario.
 //
 // El total del sistema lo calcula siempre el servidor; aquí solo se muestra.
+// Cambiar de pestaña no vuelve a pedir nada al servidor — los 4 bloques de
+// datos ya se cargan una sola vez en ngOnInit, igual que en reportes.ts.
 // =============================================================================
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
@@ -41,6 +47,13 @@ const ROLES_QUE_HACEN_CORTE = ['administrador', 'encargado', 'cajero'];
   styleUrl: './caja.css',
 })
 export class CajaComponent implements OnInit {
+  // ---- Pestañas (2026-10-22, ver cabecera del archivo) ----------------------
+  pestanaActiva = signal<'corte' | 'retiros' | 'movimientos' | 'historial'>('corte');
+
+  cambiarPestana(pestana: 'corte' | 'retiros' | 'movimientos' | 'historial'): void {
+    this.pestanaActiva.set(pestana);
+  }
+
   // ---- Bloque 1: resumen calculado por el sistema --------------------------
   resumen = signal<ResumenCaja | null>(null);
   cargando = signal(true);
@@ -197,6 +210,83 @@ export class CajaComponent implements OnInit {
 
   imprimirListadoRetiros(): void {
     window.print();
+  }
+
+  // Quita acentos/diacríticos y "¡"/"¿" — mismo motivo y misma técnica que
+  // quitarAcentos() en pos.ts (ver textoPlanoListadoRetiros() abajo): el
+  // controlador "Generic / Text Only" de Windows (impresoras térmicas sin
+  // driver gráfico) imprime estos caracteres mal codificados. Se duplica
+  // aquí porque vive en un componente distinto (mismo patrón ya repetido en
+  // el proyecto para estilos/markup compartido entre POS y Caja).
+  private quitarAcentos(texto: string): string {
+    return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[¡¿]/g, '');
+  }
+
+  // retiro.fecha llega como timestamp ISO completo (ver MovimientoCaja) —
+  // se extrae solo HH:mm sin pasar por el pipe `date` de Angular, porque
+  // textoPlanoListadoRetiros() ya arma el string completo a mano.
+  private horaCorta(fechaIso: string): string {
+    const fecha = new Date(fechaIso);
+    const dos = (n: number) => String(n).padStart(2, '0');
+    return `${dos(fecha.getHours())}:${dos(fecha.getMinutes())}`;
+  }
+
+  // listado.fecha llega como texto 'AAAA-MM-DD' (ver utils/fecha.js del
+  // backend, que ya devuelve las columnas DATE como texto a propósito para
+  // que el driver no las corra un día) — se reordena a dd/MM/yyyy con un
+  // simple split, sin pasar por Date (evitaría el mismo corrimiento de zona
+  // horaria ya documentado para otras fechas DATE en este proyecto).
+  private fechaCortaDesdeIso(fechaIso: string): string {
+    const [anio, mes, dia] = fechaIso.split('-');
+    return `${dia}/${mes}/${anio}`;
+  }
+
+  // Ticket "Listado de retiros" en TEXTO PLANO (2026-10-19): mismo respaldo
+  // que textoPlanoTicket() en pos.ts, para la misma impresora térmica sin
+  // driver gráfico — ver el comentario completo allá para el porqué. Oculto
+  // en pantalla, visible SOLO al imprimir (ver @media print en caja.css).
+  // Alineado a mano a 32 caracteres (ancho típico de una térmica de 58mm).
+  textoPlanoListadoRetiros(listado: ListadoRetiros): string {
+    const ANCHO = 32;
+    const linea = (izquierda: string, derecha: string): string => {
+      const i = this.quitarAcentos(izquierda);
+      const d = this.quitarAcentos(derecha);
+      const espacios = Math.max(1, ANCHO - i.length - d.length);
+      return i + ' '.repeat(espacios) + d;
+    };
+    const centrado = (texto: string): string => {
+      const t = this.quitarAcentos(texto);
+      const espacios = Math.max(0, Math.floor((ANCHO - t.length) / 2));
+      return ' '.repeat(espacios) + t;
+    };
+    const separador = '-'.repeat(ANCHO);
+    const money = (n: number) => `$${n.toFixed(2)}`;
+
+    const filas: string[] = [];
+    filas.push(centrado('CHUCHERIAS MIX'));
+    filas.push(centrado('Listado de retiros'));
+    filas.push(centrado(this.fechaCortaDesdeIso(listado.fecha)));
+    filas.push(separador);
+
+    if (listado.retiros.length === 0) {
+      filas.push(this.quitarAcentos('No hay retiros registrados hoy.'));
+    } else {
+      for (const retiro of listado.retiros) {
+        filas.push(this.quitarAcentos(`${this.horaCorta(retiro.fecha)} - ${retiro.responsable}`));
+        filas.push(linea('', money(+retiro.monto)));
+        if (retiro.motivo) {
+          filas.push(this.quitarAcentos(`  ${retiro.motivo}`));
+        }
+        if (!retiro.confirmado) {
+          filas.push(this.quitarAcentos('  Sin confirmar por el cajero'));
+        }
+      }
+      filas.push(separador);
+      filas.push(linea('Total retirado', money(listado.total)));
+    }
+    filas.push('');
+
+    return filas.join('\n');
   }
 
   // Habilita "Registrar retiro" solo con monto y motivo capturados y sin
