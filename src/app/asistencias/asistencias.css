@@ -186,7 +186,7 @@
   letter-spacing: 0.03em;
 }
 
-.chip-resumen-adentro .chip-resumen-numero {
+.chip-resumen-positivo .chip-resumen-numero {
   color: var(--exito-texto);
 }
 
@@ -281,7 +281,7 @@
   border-left: 4px solid var(--pos-border);
 }
 
-.tarjeta-hoy-adentro {
+.tarjeta-hoy-en-turno {
   border-left-color: var(--action-success);
 }
 
@@ -322,7 +322,7 @@
   background: var(--pos-border);
 }
 
-.tarjeta-hoy-adentro .hoy-punto {
+.tarjeta-hoy-en-turno .hoy-punto {
   background: var(--action-success);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--action-success) 25%, transparent);
 }
@@ -356,7 +356,7 @@
   margin-top: 2px;
 }
 
-.hoy-estado-adentro {
+.hoy-estado-en-turno {
   color: var(--exito-texto);
   font-weight: 600;
 }

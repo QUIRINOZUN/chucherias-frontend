@@ -22,7 +22,7 @@
 //
 // 2026-10-11: franja "Resumen de hoy" arriba de la rejilla de módulos —
 // ventas + efectivo esperado (administrador/encargado/cajero, mismos roles
-// que ya pueden consultar GET /api/caja/resumen) y personal adentro ahora
+// que ya pueden consultar GET /api/caja/resumen) y personal en turno ahora
 // mismo (administrador/encargado, mismos roles que GET /api/asistencias/hoy).
 // Antes esa franja de la pantalla era espacio vacío sin usar: .dashboard-cuerpo
 // centra verticalmente su contenido (`justify-content: center`), así que con
@@ -211,7 +211,7 @@ export class DashboardComponent implements OnInit {
     ['administrador', 'encargado', 'cajero'].includes(this.rol() ?? ''),
   );
   // Mismos roles que ya puede consultar GET /api/asistencias/hoy en el servidor.
-  puedeVerPersonalAdentro = computed(() =>
+  puedeVerPersonalEnTurno = computed(() =>
     ['administrador', 'encargado'].includes(this.rol() ?? ''),
   );
 
@@ -222,7 +222,7 @@ export class DashboardComponent implements OnInit {
   // esto es la cifra de ventas "limpia" para la tarjeta de un vistazo.
   resumenCaja = signal<ResumenCaja | null>(null);
 
-  personalAdentroHoy = signal<number | null>(null);
+  personalEnTurnoHoy = signal<number | null>(null);
 
   constructor(
     // `public` para que la plantilla muestre el nombre/rol y llame a logout().
@@ -244,8 +244,8 @@ export class DashboardComponent implements OnInit {
     if (this.puedeVerResumenCaja()) {
       this.cargarResumenCaja();
     }
-    if (this.puedeVerPersonalAdentro()) {
-      this.cargarPersonalAdentro();
+    if (this.puedeVerPersonalEnTurno()) {
+      this.cargarPersonalEnTurno();
     }
   }
 
@@ -271,12 +271,12 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  cargarPersonalAdentro(): void {
-    // "Adentro ahora" = tiene una entrada de hoy sin salida todavía (mismo
+  cargarPersonalEnTurno(): void {
+    // "En turno ahora" = tiene una entrada de hoy sin salida todavía (mismo
     // criterio que ya usa asistencias.ts para su tarjeta-resumen "Hoy").
     this.asistenciasService.listarHoy().subscribe({
       next: (asistencias) => {
-        this.personalAdentroHoy.set(asistencias.filter((a) => !a.hora_salida).length);
+        this.personalEnTurnoHoy.set(asistencias.filter((a) => !a.hora_salida).length);
       },
       error: () => {
         // El dato simplemente no aparece.

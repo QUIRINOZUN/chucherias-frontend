@@ -50,8 +50,8 @@
       >
         <svg class="icono" aria-hidden="true"><use href="#ic-reloj" /></svg>
         Hoy
-        @if (totalAdentroHoy() > 0) {
-          <span class="tab-badge">{{ totalAdentroHoy() }}</span>
+        @if (totalEnTurnoHoy() > 0) {
+          <span class="tab-badge">{{ totalEnTurnoHoy() }}</span>
         }
       </button>
       <button
@@ -97,13 +97,13 @@
       <section class="seccion-asistencias">
         @if (!cargandoHoy() && !cargandoEmpleados() && empleadosActivos().length > 0) {
           <div class="resumen-hoy">
-            <div class="chip-resumen chip-resumen-adentro">
-              <span class="chip-resumen-numero">{{ totalAdentroHoy() }}</span>
-              <span class="chip-resumen-etiqueta">adentro ahora</span>
+            <div class="chip-resumen chip-resumen-positivo">
+              <span class="chip-resumen-numero">{{ totalEnTurnoHoy() }}</span>
+              <span class="chip-resumen-etiqueta">en turno ahora</span>
             </div>
             <div class="chip-resumen">
               <span class="chip-resumen-numero">{{ totalPorLlegarHoy() }}</span>
-              <span class="chip-resumen-etiqueta">por llegar</span>
+              <span class="chip-resumen-etiqueta">sin marcar</span>
             </div>
           </div>
         }
@@ -130,7 +130,7 @@
             @for (empleado of empleadosActivos(); track empleado.id) {
               <li
                 class="tarjeta-hoy"
-                [class.tarjeta-hoy-adentro]="abiertaPorEmpleado().has(empleado.id)"
+                [class.tarjeta-hoy-en-turno]="abiertaPorEmpleado().has(empleado.id)"
                 [class.tarjeta-hoy-completo]="
                   !abiertaPorEmpleado().has(empleado.id) && turnosCompletadosHoy(empleado.id) > 0
                 "
@@ -140,7 +140,7 @@
                   <span class="hoy-nombre">{{ empleado.nombre }}</span>
                   <span class="hoy-puesto">{{ empleado.puesto }}</span>
                   @if (abiertaPorEmpleado().get(empleado.id); as abierta) {
-                    <span class="hoy-estado hoy-estado-adentro">
+                    <span class="hoy-estado hoy-estado-en-turno">
                       Entró a las {{ abierta.hora_entrada?.slice(0, 5) }}
                     </span>
                   } @else if (turnosCompletadosHoy(empleado.id) > 0) {

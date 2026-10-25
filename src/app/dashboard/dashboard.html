@@ -38,9 +38,9 @@
     <!-- RESUMEN DE HOY: antes este espacio quedaba vacío (.dashboard-cuerpo
          centra verticalmente su contenido). "Ventas de hoy" y "Efectivo en
          caja" para quien puede consultar GET /api/caja/resumen (admin/
-         encargado/cajero); "Personal adentro" solo admin/encargado, que son
+         encargado/cajero); "Personal en turno" solo admin/encargado, que son
          los únicos que pueden consultar GET /api/asistencias/hoy. -->
-    @if (puedeVerResumenCaja() || puedeVerPersonalAdentro()) {
+    @if (puedeVerResumenCaja() || puedeVerPersonalEnTurno()) {
       <div class="dashboard-resumen">
         @if (puedeVerResumenCaja()) {
           @if (resumenCaja(); as resumen) {
@@ -70,10 +70,10 @@
             </div>
           }
         }
-        @if (puedeVerPersonalAdentro()) {
+        @if (puedeVerPersonalEnTurno()) {
           <div class="resumen-stat">
-            <span class="resumen-stat-valor">{{ personalAdentroHoy() ?? '—' }}</span>
-            <span class="resumen-stat-etiqueta">Personal adentro</span>
+            <span class="resumen-stat-valor">{{ personalEnTurnoHoy() ?? '—' }}</span>
+            <span class="resumen-stat-etiqueta">Personal en turno</span>
           </div>
         }
       </div>

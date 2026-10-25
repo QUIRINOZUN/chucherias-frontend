@@ -237,8 +237,8 @@ export class AsistenciasComponent implements OnInit {
   });
 
   // Para la tarjeta-resumen visual de "Hoy": cuántos activos están
-  // adentro en este momento vs. cuántos aún no marcan nada.
-  totalAdentroHoy = computed(() => this.abiertaPorEmpleado().size);
+  // en turno en este momento vs. cuántos aún no marcan nada.
+  totalEnTurnoHoy = computed(() => this.abiertaPorEmpleado().size);
   totalPorLlegarHoy = computed(
     () =>
       this.empleadosActivos().filter(
