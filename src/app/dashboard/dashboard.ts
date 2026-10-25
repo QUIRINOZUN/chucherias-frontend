@@ -252,7 +252,11 @@ export class DashboardComponent implements OnInit {
   cargarVariantesSinReceta(): void {
     this.recetasService.listarVariantes().subscribe({
       next: (variantes) => {
-        this.variantesSinRecetaCount.set(variantes.filter((v) => !v.tiene_receta).length);
+        // Solo cuenta las que de verdad necesitan receta (2026-10-22) — una
+        // bebida embotellada sin receta capturada no es una alerta real.
+        this.variantesSinRecetaCount.set(
+          variantes.filter((v) => !v.tiene_receta && v.requiere_preparacion).length,
+        );
       },
       error: () => {
         // El badge simplemente no aparece; el resto del dashboard sigue
