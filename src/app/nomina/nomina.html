@@ -1,0 +1,234 @@
+<!-- ============================================================================
+     nomina.html — NÓMINA POR HORAS TRABAJADAS (lógica en nomina.ts)
+     ============================================================================
+     Solo administrador y encargado. Filtros de fecha compartidos (arriba,
+     fuera de la lista) + un total del periodo + una fila por empleado con
+     sus horas reales, su tarifa (o un aviso si todavía no se capturó) y el
+     pago resultante. Mismo patrón de filtros/accesos-rápidos que Reportes.
+     ============================================================================ -->
+<div class="nomina-container">
+  <header class="nomina-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      Volver
+    </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-calculadora" /></svg>
+    </span>
+    <h1>Nómina</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
+    >
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
+    </button>
+  </header>
+
+  <div class="nomina-cuerpo">
+    <!-- FILTROS: rango de fechas opcional (sin filtros, todo el histórico) +
+         incluir empleados dados de baja (para pagar un periodo en el que
+         todavía trabajaban). -->
+    <section class="tarjeta-filtros-nomina">
+      <div class="filtros-nomina">
+        <div class="campo-filtro">
+          <label for="filtro-desde">Desde</label>
+          <input
+            id="filtro-desde"
+            type="date"
+            [value]="filtroDesde()"
+            (change)="cambiarDesde($any($event.target).value)"
+          />
+        </div>
+        <div class="campo-filtro">
+          <label for="filtro-hasta">Hasta</label>
+          <input
+            id="filtro-hasta"
+            type="date"
+            [value]="filtroHasta()"
+            (change)="cambiarHasta($any($event.target).value)"
+          />
+        </div>
+      </div>
+      <div class="filtros-rapidos-nomina">
+        <button type="button" class="boton-filtro-rapido" (click)="seleccionarHoy()">Hoy</button>
+        <button type="button" class="boton-filtro-rapido" (click)="seleccionarSemana()">
+          Esta semana
+        </button>
+        <button type="button" class="boton-filtro-rapido" (click)="seleccionarMes()">
+          Este mes
+        </button>
+      </div>
+      <label class="campo-checkbox">
+        <input
+          type="checkbox"
+          [checked]="incluirInactivos()"
+          (change)="alternarIncluirInactivos($any($event.target).checked)"
+        />
+        Incluir empleados dados de baja
+      </label>
+      @if (hayFiltros()) {
+        <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltros()">
+          Limpiar filtros
+        </button>
+      }
+    </section>
+
+    @if (error()) {
+      <p class="mensaje-estado mensaje-error">{{ error() }}</p>
+    } @else if (cargando()) {
+      <div class="esqueleto esqueleto-resumen-nomina" aria-hidden="true"></div>
+      <div class="esqueleto esqueleto-fila-nomina" aria-hidden="true"></div>
+      <div class="esqueleto esqueleto-fila-nomina" aria-hidden="true"></div>
+      <div class="esqueleto esqueleto-fila-nomina" aria-hidden="true"></div>
+    } @else if (resumen(); as r) {
+      <!-- RESUMEN DEL PERIODO: la cifra "hero" es el total a pagar — es lo
+           que de verdad importa en esta pantalla. -->
+      <div class="hero-nomina">
+        <span class="hero-nomina-etiqueta">Total a pagar en el periodo</span>
+        <span class="hero-nomina-valor">{{ totalAPagar() | currency: 'MXN' }}</span>
+        <span class="hero-nomina-detalle">{{ totalHoras() }} horas trabajadas en total</span>
+      </div>
+
+      @if (empleadosSinTarifa() > 0 || turnosSinCerrarTotal() > 0) {
+        <div class="franja-atencion-nomina">
+          <ul class="lista-atencion-nomina">
+            @if (empleadosSinTarifa() > 0) {
+              <li>
+                {{ empleadosSinTarifa() }}
+                {{ empleadosSinTarifa() === 1 ? 'empleado sin' : 'empleados sin' }} tarifa capturada
+                — su pago no se puede calcular todavía.
+              </li>
+            }
+            @if (turnosSinCerrarTotal() > 0) {
+              <li>
+                {{ turnosSinCerrarTotal() }}
+                {{ turnosSinCerrarTotal() === 1 ? 'turno sin cerrar' : 'turnos sin cerrar' }} en el
+                periodo — corrígelos desde Asistencias antes de pagar.
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (r.empleados.length === 0) {
+        <div class="estado-vacio">
+          <span class="estado-vacio-icono" aria-hidden="true">
+            <svg class="icono"><use href="#ic-calculadora" /></svg>
+          </span>
+          <p>No hay empleados que mostrar con estos filtros.</p>
+        </div>
+      } @else {
+        <ul class="lista-nomina">
+          @for (empleado of r.empleados; track empleado.empleado_id) {
+            <li
+              class="tarjeta-empleado-nomina"
+              [class.tarjeta-empleado-inactivo]="!empleado.activo"
+            >
+              <div class="empleado-nomina-info">
+                <span class="empleado-nomina-nombre">
+                  {{ empleado.nombre }}
+                  @if (!empleado.activo) {
+                    <span class="badge-inactivo-nomina">Dado de baja</span>
+                  }
+                </span>
+                <span class="empleado-nomina-puesto">{{ empleado.puesto }}</span>
+                <span class="empleado-nomina-horas">
+                  {{ empleado.horas_trabajadas }} h trabajadas
+                  @if (empleado.turnos_sin_cerrar > 0) {
+                    <span class="aviso-turnos-sin-cerrar">
+                      · {{ empleado.turnos_sin_cerrar }}
+                      {{
+                        empleado.turnos_sin_cerrar === 1 ? 'turno sin cerrar' : 'turnos sin cerrar'
+                      }}
+                    </span>
+                  }
+                </span>
+              </div>
+
+              <div class="empleado-nomina-pago">
+                @if (empleado.pago_por_hora !== null) {
+                  <span class="empleado-nomina-total">{{
+                    empleado.total_a_pagar | currency: 'MXN'
+                  }}</span>
+                  <span class="empleado-nomina-tarifa">
+                    {{ empleado.pago_por_hora | currency: 'MXN' }}/hora
+                  </span>
+                } @else {
+                  <span class="badge-sin-tarifa">Sin tarifa capturada</span>
+                }
+                <button
+                  type="button"
+                  class="boton-editar-tarifa"
+                  (click)="abrirEdicionTarifa(empleado)"
+                >
+                  {{ empleado.pago_por_hora !== null ? 'Editar tarifa' : 'Capturar tarifa' }}
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    }
+  </div>
+
+  <!-- VENTANA EMERGENTE: capturar o corregir la tarifa por hora de un
+       empleado. Vaciar el campo y guardar quita la tarifa capturada. -->
+  @if (empleadoEditando(); as empleado) {
+    <div class="overlay">
+      <div
+        class="panel-formulario-nomina"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="'Tarifa por hora de ' + empleado.nombre"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarEdicionTarifa()"
+      >
+        <h2>Tarifa por hora</h2>
+        <p class="texto-empleado-tarifa">{{ empleado.nombre }} · {{ empleado.puesto }}</p>
+
+        <div class="campo">
+          <label for="tarifa-form">Pago por hora (MXN)</label>
+          <input
+            id="tarifa-form"
+            type="number"
+            min="0.01"
+            step="0.5"
+            placeholder="Ej. 25.00"
+            [value]="tarifaForm()"
+            (input)="tarifaForm.set($any($event.target).value)"
+          />
+          <p class="ayuda-campo">Deja el campo vacío y guarda para quitar la tarifa capturada.</p>
+        </div>
+
+        @if (errorTarifa()) {
+          <p class="mensaje-error">{{ errorTarifa() }}</p>
+        }
+
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarEdicionTarifa()"
+            [disabled]="guardandoTarifa()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar"
+            (click)="guardarTarifa()"
+            [disabled]="!puedeGuardarTarifa() || guardandoTarifa()"
+          >
+            {{ guardandoTarifa() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
