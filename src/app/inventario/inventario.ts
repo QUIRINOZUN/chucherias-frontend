@@ -38,6 +38,11 @@
 //     "de compra" (kg/L) distinta a la unidad "de consumo" del insumo
 //     (g/ml, la que usa la receta): se convierte antes de enviarla al
 //     servidor (ver opcionesSurtido) — la unidad de consumo NUNCA cambia.
+//   - Gramaje (2026-10-22): en cada tarjeta, tocar la unidad de la
+//     existencia (g/kg/ml/L) la cambia a su par natural — SOLO para
+//     mostrarla, nunca toca `existencia`/`cantidad_minima`/`unidad_medida`
+//     reales, ni manda nada al servidor. Mismo patrón de `Set<id>` que ya
+//     usa `categoriasColapsadas` para un toggle por fila.
 // =============================================================================
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
@@ -119,6 +124,23 @@ function opcionesSurtido(unidadBase: string): OpcionUnidadSurtido[] {
     ];
   }
   return [{ valor: unidadBase, etiqueta: unidadBase, factor: 1 }];
+}
+
+// Gramaje (2026-10-22): el par "natural" de cada unidad, para MOSTRAR la
+// existencia/mínimo ya capturados en la otra unidad, sin tocar el valor
+// guardado (`unidad_medida` del insumo nunca cambia). `u`/`porción` no
+// tienen un par natural — no se les ofrece el toggle.
+const UNIDAD_ALTERNA: Record<string, { unidad: string; factor: number }> = {
+  g: { unidad: 'kg', factor: 1 / 1000 },
+  kg: { unidad: 'g', factor: 1000 },
+  ml: { unidad: 'l', factor: 1 / 1000 },
+  l: { unidad: 'ml', factor: 1000 },
+};
+
+// Redondea a 3 decimales (suficiente para no arrastrar errores de punto
+// flotante, ej. 2.5 kg → 2500 g → de vuelta 2.5, no 2.4999999999999996).
+function redondear(valor: number): number {
+  return Math.round(valor * 1000) / 1000;
 }
 
 @Component({
@@ -285,6 +307,54 @@ export class InventarioComponent implements OnInit {
 
   estaColapsada(id: number): boolean {
     return this.categoriasColapsadas().has(id);
+  }
+
+  // ---- Gramaje (2026-10-22, ver cabecera del archivo) -----------------------
+  // Ids de insumo que se están mostrando en su unidad ALTERNA (g⇄kg, ml⇄L)
+  // — puramente de pantalla, nunca toca `existencia`/`cantidad_minima`/
+  // `unidad_medida` reales ni manda nada al servidor.
+  unidadAlternaActiva = signal<Set<number>>(new Set());
+
+  tieneUnidadAlterna(insumo: Insumo): boolean {
+    return insumo.unidad_medida in UNIDAD_ALTERNA;
+  }
+
+  alternarUnidadMostrada(id: number): void {
+    this.unidadAlternaActiva.update((set) => {
+      const nuevo = new Set(set);
+      if (nuevo.has(id)) {
+        nuevo.delete(id);
+      } else {
+        nuevo.add(id);
+      }
+      return nuevo;
+    });
+  }
+
+  // La unidad que se pinta en la tarjeta: la real, o su par alterno si se
+  // activó el toggle de esa fila.
+  unidadMostrada(insumo: Insumo): string {
+    if (!this.unidadAlternaActiva().has(insumo.id)) {
+      return insumo.unidad_medida;
+    }
+    return UNIDAD_ALTERNA[insumo.unidad_medida]?.unidad ?? insumo.unidad_medida;
+  }
+
+  // La unidad a la que se pasaría al volver a tocar el botón — para el
+  // aria-label ("Ver en gramos" cuando ahora mismo se muestra en kg, etc.).
+  unidadSiguiente(insumo: Insumo): string {
+    return UNIDAD_ALTERNA[this.unidadMostrada(insumo)]?.unidad ?? insumo.unidad_medida;
+  }
+
+  // Convierte un valor (existencia o mínimo) a la unidad que se está
+  // mostrando — las dos cifras de la misma tarjeta siempre viajan juntas,
+  // para no mezclar "existencia en g" con "mínimo en kg".
+  valorMostrado(insumo: Insumo, valor: number): number {
+    if (!this.unidadAlternaActiva().has(insumo.id)) {
+      return valor;
+    }
+    const alterna = UNIDAD_ALTERNA[insumo.unidad_medida];
+    return alterna ? redondear(valor * alterna.factor) : valor;
   }
 
   alternarColapso(id: number): void {

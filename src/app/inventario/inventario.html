@@ -204,7 +204,8 @@
                         <div class="insumo-info">
                           <span class="insumo-nombre">{{ insumo.nombre }}</span>
                           <span class="insumo-detalle-secundario">
-                            mín. {{ insumo.cantidad_minima }} {{ insumo.unidad_medida }}
+                            mín. {{ valorMostrado(insumo, insumo.cantidad_minima) }}
+                            {{ unidadMostrada(insumo) }}
                             @if (insumo.proveedor) {
                               · {{ insumo.proveedor }}
                             }
@@ -219,7 +220,7 @@
 
                         <div class="insumo-stat">
                           <span class="stat-numero" [class.stat-numero-alerta]="insumo.alerta">{{
-                            insumo.existencia
+                            valorMostrado(insumo, insumo.existencia)
                           }}</span>
                           <span class="stat-unidad-fila">
                             <span
@@ -227,7 +228,23 @@
                               [class]="'indicador-nivel-' + nivelDe(insumo)"
                               aria-hidden="true"
                             ></span>
-                            <span class="stat-unidad">{{ insumo.unidad_medida }}</span>
+                            <!-- Gramaje (2026-10-22): si la unidad tiene un par
+                                 natural (g⇄kg, ml⇄L), tocarla solo cambia cómo
+                                 se PINTA esta tarjeta — nunca la existencia real. -->
+                            @if (tieneUnidadAlterna(insumo)) {
+                              <button
+                                type="button"
+                                class="boton-unidad-alterna"
+                                [attr.aria-label]="
+                                  'Ver existencia y mínimo en ' + unidadSiguiente(insumo)
+                                "
+                                (click)="alternarUnidadMostrada(insumo.id)"
+                              >
+                                {{ unidadMostrada(insumo) }}
+                              </button>
+                            } @else {
+                              <span class="stat-unidad">{{ insumo.unidad_medida }}</span>
+                            }
                           </span>
                         </div>
                       </div>

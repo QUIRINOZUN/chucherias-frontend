@@ -467,6 +467,27 @@
   text-transform: uppercase;
 }
 
+/* Gramaje (2026-10-22): mismo tamaño/peso que .stat-unidad, pero con el
+   subrayado punteado que ya usa el resto de la app (ej. .boton-listado-
+   retiros de caja.css) para marcar "esto se puede tocar" sin verse como un
+   botón grande — es un toggle secundario, nunca una acción primaria. */
+.boton-unidad-alterna {
+  border: none;
+  border-bottom: 1px dashed var(--acento-modulo);
+  background: none;
+  padding: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--pos-text-secondary);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.boton-unidad-alterna:hover {
+  color: var(--acento-modulo);
+  border-bottom-style: solid;
+}
+
 /* Punto de color con el nivel de stock del insumo (bajo/medio/alto) — mismos
    colores que sus chips de filtro equivalentes (.chip-nivel-*), para que la
    tarjeta se reconozca de un vistazo sin tener que leer el número. */
