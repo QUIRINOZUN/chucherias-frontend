@@ -20,6 +20,11 @@ export interface VarianteConReceta {
   precio: number;
   producto_id: number;
   producto_nombre: string;
+  // 2026-10-22: FALSE para productos que no pasan por cocina (bebidas
+  // embotelladas, botanas de bolsa) — separa en Recetario lo que de
+  // verdad necesita una receta de lo que no, misma bandera que ya decide
+  // si la orden salta el tablero de Comandas (ver core/catalogo.ts).
+  requiere_preparacion: boolean;
   categoria: string;
   tiene_receta: boolean;
   total_insumos: number;

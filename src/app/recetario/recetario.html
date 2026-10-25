@@ -57,19 +57,6 @@
 
   <div class="recetario-cuerpo">
     @if (pestanaActiva() === 'recetas') {
-      @if (!cargando() && variantes().length > 0) {
-        <div class="resumen-recetario">
-          <div class="chip-resumen chip-resumen-adentro">
-            <span class="chip-resumen-numero">{{ totalConReceta() }}</span>
-            <span class="chip-resumen-etiqueta">con receta</span>
-          </div>
-          <div class="chip-resumen" [class.chip-resumen-alerta]="totalSinReceta() > 0">
-            <span class="chip-resumen-numero">{{ totalSinReceta() }}</span>
-            <span class="chip-resumen-etiqueta">sin receta</span>
-          </div>
-        </div>
-      }
-
       <div class="campo-busqueda">
         <svg class="icono" aria-hidden="true"><use href="#ic-buscar" /></svg>
         <input
@@ -106,67 +93,174 @@
             </section>
           }
         </div>
-      } @else if (grupos().length === 0) {
-        <p class="mensaje-estado">No hay productos que coincidan con la búsqueda.</p>
       } @else {
-        @for (grupo of grupos(); track grupo.categoria) {
-          <section class="grupo-categoria">
-            <h2 class="titulo-categoria">{{ grupo.categoria }}</h2>
-            @if (grupo.productos.length === 0) {
-              <p class="mensaje-estado mensaje-estado-chico">
-                Sin productos todavía — créalos desde la pestaña "Menú".
-              </p>
-            }
-            @for (producto of grupo.productos; track producto.producto_id) {
-              <div class="tarjeta-producto">
-                <span class="producto-nombre">{{ producto.producto_nombre }}</span>
-                @if (producto.variantes.length === 0) {
-                  <p class="mensaje-estado mensaje-estado-chico">
-                    Sin variantes todavía — agrégale una desde la pestaña "Menú".
-                  </p>
-                } @else {
-                  <ul class="lista-variantes">
-                    @for (variante of producto.variantes; track variante.variante_id) {
-                      <li
-                        class="item-variante"
-                        role="button"
-                        tabindex="0"
-                        (click)="abrirEditor(variante)"
-                        (keydown.enter)="abrirEditor(variante)"
-                        (keydown.space)="$event.preventDefault(); abrirEditor(variante)"
-                      >
-                        <div class="variante-info">
-                          <span class="variante-nombre">{{ variante.variante_nombre }}</span>
-                          <span class="variante-precio">{{
-                            variante.precio | currency: 'MXN'
-                          }}</span>
-                        </div>
-                        <span
-                          class="badge-receta"
-                          [class.badge-receta-vacia]="!variante.tiene_receta"
-                        >
-                          {{
-                            variante.tiene_receta
-                              ? variante.total_insumos +
-                                (variante.total_insumos === 1 ? ' insumo' : ' insumos')
-                              : 'Sin receta'
-                          }}
-                        </span>
-                        @if (variante.tiene_tutorial) {
-                          <span class="badge-tutorial" title="Ya tiene tutorial de elaboración">
-                            <svg class="icono" aria-hidden="true"><use href="#ic-cocinar" /></svg>
-                          </span>
-                        }
-                        @if (variante.tiene_imagen_referencia) {
-                          <span class="badge-tutorial" title="Ya tiene foto de referencia">
-                            <svg class="icono" aria-hidden="true"><use href="#ic-camara" /></svg>
-                          </span>
-                        }
-                      </li>
-                    }
-                  </ul>
-                }
+        <!-- ===== CON PREPARACIÓN: platillos que de verdad se cocinan — ===
+             llevan receta completa (insumos + tutorial opcional). Separado
+             de "Sin preparación" (2026-10-22): una bebida embotellada no
+             necesita "una receta" como tal, solo el insumo que se
+             descuenta al venderse — mezclarlas en la misma lista y la
+             misma alerta de "sin receta" confundía ambos conceptos. -->
+        <section class="grupo-preparacion">
+          <div class="encabezado-grupo-preparacion">
+            <h2 class="titulo-grupo-preparacion">Con preparación</h2>
+            <p class="subtitulo-grupo-preparacion">
+              Platillos que se preparan en cocina — llevan receta completa.
+            </p>
+          </div>
+          @if (variantes().length > 0) {
+            <div class="resumen-recetario">
+              <div class="chip-resumen chip-resumen-positivo">
+                <span class="chip-resumen-numero">{{ totalConReceta() }}</span>
+                <span class="chip-resumen-etiqueta">con receta</span>
               </div>
+              <div class="chip-resumen" [class.chip-resumen-alerta]="totalSinReceta() > 0">
+                <span class="chip-resumen-numero">{{ totalSinReceta() }}</span>
+                <span class="chip-resumen-etiqueta">sin receta</span>
+              </div>
+            </div>
+          }
+
+          @if (gruposConPreparacion().length === 0) {
+            <p class="mensaje-estado">No hay productos que coincidan con la búsqueda.</p>
+          } @else {
+            @for (grupo of gruposConPreparacion(); track grupo.categoria) {
+              <section class="grupo-categoria">
+                <h3 class="titulo-categoria">{{ grupo.categoria }}</h3>
+                @if (grupo.productos.length === 0) {
+                  <p class="mensaje-estado mensaje-estado-chico">
+                    Sin productos todavía — créalos desde la pestaña "Menú".
+                  </p>
+                }
+                @for (producto of grupo.productos; track producto.producto_id) {
+                  <div class="tarjeta-producto">
+                    <span class="producto-nombre">{{ producto.producto_nombre }}</span>
+                    @if (producto.variantes.length === 0) {
+                      <p class="mensaje-estado mensaje-estado-chico">
+                        Sin variantes todavía — agrégale una desde la pestaña "Menú".
+                      </p>
+                    } @else {
+                      <ul class="lista-variantes">
+                        @for (variante of producto.variantes; track variante.variante_id) {
+                          <li
+                            class="item-variante"
+                            role="button"
+                            tabindex="0"
+                            (click)="abrirEditor(variante)"
+                            (keydown.enter)="abrirEditor(variante)"
+                            (keydown.space)="$event.preventDefault(); abrirEditor(variante)"
+                          >
+                            <div class="variante-info">
+                              <span class="variante-nombre">{{ variante.variante_nombre }}</span>
+                              <span class="variante-precio">{{
+                                variante.precio | currency: 'MXN'
+                              }}</span>
+                            </div>
+                            <span
+                              class="badge-receta"
+                              [class.badge-receta-vacia]="!variante.tiene_receta"
+                            >
+                              {{
+                                variante.tiene_receta
+                                  ? variante.total_insumos +
+                                    (variante.total_insumos === 1 ? ' insumo' : ' insumos')
+                                  : 'Sin receta'
+                              }}
+                            </span>
+                            @if (variante.tiene_tutorial) {
+                              <span class="badge-tutorial" title="Ya tiene tutorial de elaboración">
+                                <svg class="icono" aria-hidden="true">
+                                  <use href="#ic-cocinar" />
+                                </svg>
+                              </span>
+                            }
+                            @if (variante.tiene_imagen_referencia) {
+                              <span class="badge-tutorial" title="Ya tiene foto de referencia">
+                                <svg class="icono" aria-hidden="true">
+                                  <use href="#ic-camara" />
+                                </svg>
+                              </span>
+                            }
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </div>
+                }
+              </section>
+            }
+          }
+        </section>
+
+        <!-- ===== SIN PREPARACIÓN: productos directos (bebidas embotelladas,
+             botanas de bolsa) — no pasan por cocina, así que no necesitan
+             tutorial ni foto de referencia; solo el insumo (normalmente
+             ellos mismos) que se descuenta del inventario al venderse. ===== -->
+        @if (variantesSinPreparacionExisten()) {
+          <section class="grupo-preparacion grupo-preparacion-simple">
+            <div class="encabezado-grupo-preparacion">
+              <h2 class="titulo-grupo-preparacion">Sin preparación</h2>
+              <p class="subtitulo-grupo-preparacion">
+                Bebidas embotelladas y productos similares — no necesitan receta, solo el insumo que
+                se descuenta al venderse.
+              </p>
+            </div>
+            <div class="resumen-recetario">
+              <div class="chip-resumen chip-resumen-positivo">
+                <span class="chip-resumen-numero">{{ totalConInsumo() }}</span>
+                <span class="chip-resumen-etiqueta">con insumo asociado</span>
+              </div>
+              <div class="chip-resumen">
+                <span class="chip-resumen-numero">{{ totalSinInsumo() }}</span>
+                <span class="chip-resumen-etiqueta">sin insumo asociado</span>
+              </div>
+            </div>
+
+            @if (gruposSinPreparacion().length === 0) {
+              <p class="mensaje-estado">No hay productos que coincidan con la búsqueda.</p>
+            } @else {
+              @for (grupo of gruposSinPreparacion(); track grupo.categoria) {
+                <section class="grupo-categoria">
+                  <h3 class="titulo-categoria">{{ grupo.categoria }}</h3>
+                  @for (producto of grupo.productos; track producto.producto_id) {
+                    <div class="tarjeta-producto">
+                      <span class="producto-nombre">{{ producto.producto_nombre }}</span>
+                      @if (producto.variantes.length === 0) {
+                        <p class="mensaje-estado mensaje-estado-chico">
+                          Sin variantes todavía — agrégale una desde la pestaña "Menú".
+                        </p>
+                      } @else {
+                        <ul class="lista-variantes">
+                          @for (variante of producto.variantes; track variante.variante_id) {
+                            <li
+                              class="item-variante"
+                              role="button"
+                              tabindex="0"
+                              (click)="abrirEditor(variante)"
+                              (keydown.enter)="abrirEditor(variante)"
+                              (keydown.space)="$event.preventDefault(); abrirEditor(variante)"
+                            >
+                              <div class="variante-info">
+                                <span class="variante-nombre">{{ variante.variante_nombre }}</span>
+                                <span class="variante-precio">{{
+                                  variante.precio | currency: 'MXN'
+                                }}</span>
+                              </div>
+                              <span
+                                class="badge-receta"
+                                [class.badge-receta-vacia]="!variante.tiene_receta"
+                              >
+                                {{
+                                  variante.tiene_receta ? 'Insumo asociado' : 'Sin insumo asociado'
+                                }}
+                              </span>
+                            </li>
+                          }
+                        </ul>
+                      }
+                    </div>
+                  }
+                </section>
+              }
             }
           </section>
         }

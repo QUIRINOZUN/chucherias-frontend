@@ -96,8 +96,29 @@ export class RecetarioComponent implements OnInit {
   error = signal('');
   busqueda = signal('');
 
-  totalConReceta = computed(() => this.variantes().filter((v) => v.tiene_receta).length);
-  totalSinReceta = computed(() => this.variantes().length - this.totalConReceta());
+  // 2026-10-22: separados por "Requiere preparación" (ver GrupoCategoria
+  // más abajo) — un platillo real cocina (con preparación) y un producto
+  // directo como una bebida embotellada (sin preparación) no se miden con
+  // la misma vara: el segundo no necesita "una receta", solo el insumo que
+  // se descuenta al venderse, así que no cuenta aquí ni en el aviso del
+  // dashboard ("N variantes sin receta").
+  private variantesConPreparacion = computed(() =>
+    this.variantes().filter((v) => v.requiere_preparacion),
+  );
+  private variantesSinPreparacion = computed(() =>
+    this.variantes().filter((v) => !v.requiere_preparacion),
+  );
+  totalConReceta = computed(
+    () => this.variantesConPreparacion().filter((v) => v.tiene_receta).length,
+  );
+  totalSinReceta = computed(() => this.variantesConPreparacion().length - this.totalConReceta());
+  totalConInsumo = computed(
+    () => this.variantesSinPreparacion().filter((v) => v.tiene_receta).length,
+  );
+  totalSinInsumo = computed(() => this.variantesSinPreparacion().length - this.totalConInsumo());
+  // Oculta la sección "Sin preparación" por completo si el catálogo no
+  // tiene ningún producto de ese tipo todavía (en vez de mostrarla vacía).
+  variantesSinPreparacionExisten = computed(() => this.variantesSinPreparacion().length > 0);
 
   // Estado de receta (tiene_receta/total_insumos) por variante, tal como lo
   // da GET /api/recetas — se usa para enriquecer la estructura de categoría
@@ -143,14 +164,23 @@ export class RecetarioComponent implements OnInit {
   // MUESTRAN siempre que no haya búsqueda activa, aunque todavía no tengan
   // nada adentro — con un aviso en vez de una lista vacía — y solo se
   // ocultan cuando el texto buscado no calza con nada dentro.
-  grupos = computed<GrupoCategoria[]>(() => {
+  // Arma el árbol categoría → producto → variante, filtrando los productos
+  // por "Requiere preparación" (2026-10-22: separa platillos reales de
+  // productos directos como bebidas embotelladas — ver más abajo los dos
+  // computed que llaman a esto con cada valor). Compartida en vez de
+  // duplicada dos veces completas: el único cambio real entre las dos
+  // secciones es ese filtro de producto.
+  private agruparPorPreparacion(requierePreparacion: boolean): GrupoCategoria[] {
     const texto = this.busqueda().trim().toLowerCase();
     const recetaInfo = this.recetaInfoPorVariante();
     const grupos: GrupoCategoria[] = [];
 
     for (const categoria of this.categorias()) {
       const productosDeCategoria = this.productosMenu().filter(
-        (p) => p.categoria_id === categoria.id && p.activo,
+        (p) =>
+          p.categoria_id === categoria.id &&
+          p.activo &&
+          p.requiere_preparacion === requierePreparacion,
       );
       const gruposProducto: GrupoProducto[] = [];
 
@@ -164,6 +194,7 @@ export class RecetarioComponent implements OnInit {
             precio: v.precio,
             producto_id: producto.id,
             producto_nombre: producto.nombre,
+            requiere_preparacion: producto.requiere_preparacion,
             categoria: categoria.nombre,
             tiene_receta: recetaInfo.get(v.id)?.tiene_receta ?? false,
             total_insumos: recetaInfo.get(v.id)?.total_insumos ?? 0,
@@ -187,17 +218,35 @@ export class RecetarioComponent implements OnInit {
         });
       }
 
-      // Categoría sin ningún producto (visible) todavía: se omite solo si
-      // hay una búsqueda activa (no tiene sentido mostrar un encabezado
-      // vacío en medio de un filtrado); sin búsqueda, se muestra siempre,
-      // con su propio aviso en la plantilla.
+      // Categoría sin ningún producto de ESTE tipo: se omite, SALVO que la
+      // categoría esté completamente vacía (ningún producto de ningún
+      // tipo) — ese caso se sigue mostrando, pero solo en "Con
+      // preparación" (la sección por default de un producto nuevo), para
+      // no duplicar el mismo aviso en las dos secciones a la vez. Mismo
+      // motivo original del 2026-10-09: una categoría recién creada sin
+      // productos todavía no debe desaparecer de esta pestaña.
+      const categoriaCompletamenteVacia = this.productosMenu().every(
+        (p) => p.categoria_id !== categoria.id || !p.activo,
+      );
+      if (
+        productosDeCategoria.length === 0 &&
+        !(requierePreparacion && categoriaCompletamenteVacia)
+      ) {
+        continue;
+      }
+      // Si sí tiene productos de este tipo (o la categoría está vacía de
+      // plano) pero una búsqueda activa no encontró nada, se omite solo
+      // mientras haya texto — sin búsqueda se muestra igual con su aviso.
       if (texto && gruposProducto.length === 0) {
         continue;
       }
       grupos.push({ categoria: categoria.nombre, productos: gruposProducto });
     }
     return grupos;
-  });
+  }
+
+  gruposConPreparacion = computed<GrupoCategoria[]>(() => this.agruparPorPreparacion(true));
+  gruposSinPreparacion = computed<GrupoCategoria[]>(() => this.agruparPorPreparacion(false));
 
   // ---- Editor de receta (ventana emergente) ----
   varianteEditando = signal<VarianteConReceta | null>(null);

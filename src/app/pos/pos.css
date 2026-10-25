@@ -404,6 +404,38 @@
     var(--sombra-elevada);
 }
 
+/* Producto agotado (2026-10-22): NINGUNA de sus variantes tiene insumos
+   suficientes (ver core/catalogo.ts, Variante.insumos_suficientes). La
+   tarjeta se puede seguir tocando (para que el cajero vea por qué, no para
+   ocultarle información) pero se ve claramente apagada — nunca se oculta
+   del menú, solo "aparece en gris". */
+.tarjeta-agotada {
+  opacity: 0.55;
+}
+
+@media (hover: hover) {
+  .tarjeta-agotada:hover {
+    transform: none;
+    box-shadow: var(--sombra-suave);
+  }
+}
+
+.insignia-agotado {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--pos-text-secondary);
+  color: var(--pos-bg-card);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  box-shadow: var(--sombra-suave);
+}
+
 /* Insignia "ya está en el carrito" (2026-10-11): verde porque es información
    positiva ("ya lo agregaste"), no una alerta — mismo verde que ya usa el
    resto de la app para éxito (cambio, venta registrada). z-index por encima
@@ -606,6 +638,28 @@
   font-family: var(--fuente-titulo);
   font-weight: 800;
   color: var(--pos-text-primary);
+}
+
+/* Variante agotada (2026-10-22): sin insumos suficientes para una unidad
+   más — deshabilitada (no se puede agregar al carrito), en gris, con
+   "Agotado" en vez del precio. */
+.boton-variante:disabled,
+.boton-variante-agotada {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.boton-variante:disabled:hover {
+  border-color: transparent;
+  background: var(--pos-bg-main);
+}
+
+.etiqueta-agotado {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--pos-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 /* ===================== Ventana de detalle de producto =====================
@@ -1041,6 +1095,21 @@
 .boton-extra-pizza:hover {
   border-style: solid;
   background: color-mix(in srgb, var(--action-primary) 16%, var(--pos-bg-main));
+}
+
+/* Ingrediente extra agotado (2026-10-22): mismo criterio gris que
+   .boton-variante:disabled — fuera del lenguaje naranja de "agregar". */
+.boton-extra-pizza:disabled {
+  border-color: var(--pos-border);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.boton-extra-pizza:disabled:hover {
+  border-style: dashed;
+  background: var(--pos-bg-main);
 }
 
 /* Botón de "elección" (salsa/topping/dip) — Fase 2 del recetario: rojo
@@ -2056,6 +2125,14 @@
     7.75px 0;
 }
 
+/* Ticket en texto plano (2026-10-19, ver textoPlanoTicket() en pos.ts):
+   oculto en pantalla por default — el @media print de más abajo lo muestra
+   y oculta el resto del comprobante con diseño en su lugar, SOLO para
+   impresoras sin driver gráfico (controlador "Generic / Text Only"). */
+.comprobante-texto-plano {
+  display: none;
+}
+
 .comprobante-acciones {
   display: flex;
   gap: 10px;
@@ -2240,6 +2317,34 @@
 
   .comprobante-acciones {
     display: none !important;
+  }
+
+  /* Ticket en texto plano (2026-10-19): para una impresora térmica sin
+     driver gráfico (controlador "Generic / Text Only" de Windows), todo lo
+     de arriba (logo, íconos, maquetación con CSS) no se imprime — el
+     controlador solo logra extraer el encabezado/pie que agrega el propio
+     navegador, perdiendo el contenido real. Se oculta TODO el comprobante
+     con diseño y se muestra en su lugar únicamente el bloque de texto
+     plano armado a mano (ver textoPlanoTicket() en pos.ts) — así la
+     impresora de texto sí tiene algo simple que sí puede imprimir. En
+     pantalla, y en una impresora CON driver gráfico real, nada de esto se
+     nota: seguiría viéndose/imprimiéndose el diseño completo si no fuera
+     por esta regla — es una decisión deliberada mientras no se consiga un
+     driver gráfico para la impresora real de prueba, no una limitación del
+     sistema en general. */
+  .comprobante > *:not(.comprobante-texto-plano) {
+    display: none !important;
+  }
+
+  .comprobante-texto-plano {
+    display: block !important;
+    margin: 0;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: #000;
   }
 }
 

@@ -520,6 +520,15 @@ export class PosComponent implements OnInit, OnDestroy {
       .reduce((total, item) => total + item.cantidad, 0);
   }
 
+  // Un producto se ve "agotado" en la rejilla (2026-10-22) cuando NINGUNA
+  // de sus variantes tiene insumos suficientes — con al menos una
+  // disponible, la tarjeta se queda normal (se elige esa al abrir el
+  // detalle). Un producto sin variantes todavía (estado válido, ver
+  // Recetario) nunca se marca agotado — no hay nada que verificar.
+  productoAgotado(producto: Producto): boolean {
+    return producto.variantes.length > 0 && producto.variantes.every((v) => !v.insumos_suficientes);
+  }
+
   // ===========================================================================
   // CARRITO
   // ===========================================================================
@@ -533,6 +542,13 @@ export class PosComponent implements OnInit, OnDestroy {
   // Agrega UNA unidad de una variante al carrito (al tocar una variante en
   // la ventana de detalle del producto).
   agregarAlCarrito(producto: Producto, variante: Variante): void {
+    // Segunda barrera (2026-10-22): el botón de esta variante ya debería
+    // estar deshabilitado en la plantilla si no hay insumos suficientes —
+    // esto solo evita que algo la agregue de todos modos (ej. un clic en
+    // vuelo justo cuando el stock cambió).
+    if (!variante.insumos_suficientes) {
+      return;
+    }
     this.carrito.update((items) => {
       // Solo se apila cantidad sobre una línea ya existente si esa línea
       // todavía no tiene ninguna personalización — si ya le quitaron algo
@@ -1297,6 +1313,127 @@ export class PosComponent implements OnInit, OnDestroy {
       return frase.replace('{nombre}', r.clienteLealtadNombre);
     }
     return this.DESPEDIDAS_GENERICAS[id % this.DESPEDIDAS_GENERICAS.length];
+  }
+
+  // Quita acentos/diacríticos y la ñ (los convierte a su letra base: á→a,
+  // ñ→n, etc.) — ver textoPlanoTicket() para el porqué: el controlador
+  // "Generic / Text Only" de Windows (impresoras térmicas sin driver
+  // gráfico propio) imprime estos caracteres mal codificados ("Página"
+  // salió como "PĂˇgina" en la prueba real), así que la versión de texto
+  // plano evita por completo los caracteres especiales en vez de arriesgarse
+  // a que salgan corridos. "¡"/"¿" no son diacríticos (no se separan con
+  // NFD, son su propio carácter) pero tampoco son ASCII — se quitan aparte
+  // para no arriesgar el mismo mal-codificado en las despedidas del ticket
+  // ("¡Gracias...!"), que es justo donde más aparecen.
+  private quitarAcentos(texto: string): string {
+    return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[¡¿]/g, '');
+  }
+
+  // Ticket en TEXTO PLANO, sin diseño (2026-10-19): la impresora térmica real
+  // que se probó (EC-PM-5890X, controlador genérico de Windows "Generic /
+  // Text Only", sin driver gráfico disponible) solo sabe imprimir texto
+  // simple — no interpreta HTML, imágenes ni maquetación con CSS. Al
+  // imprimir el comprobante normal (con logo, íconos, animaciones), el
+  // controlador solo lograba extraer el encabezado/pie que el propio
+  // navegador agrega a cualquier impresión (fecha, título, URL), perdiendo
+  // TODO el contenido real del ticket.
+  //
+  // Esta función arma un bloque de texto alineado a mano (con espacios, sin
+  // ninguna etiqueta HTML más que un <pre> alrededor — ver pos.html) que
+  // SOLO se muestra al imprimir (`@media print` en pos.css oculta el resto
+  // del comprobante con diseño y muestra únicamente este bloque) — la
+  // pantalla sigue viéndose exactamente igual que antes, con todo el diseño
+  // y las animaciones ya construidas. 32 caracteres de ancho: el ancho
+  // típico de una impresora térmica de 58mm con fuente normal.
+  textoPlanoTicket(r: Recibo): string {
+    const ANCHO = 32;
+    const linea = (izquierda: string, derecha: string): string => {
+      const i = this.quitarAcentos(izquierda);
+      const d = this.quitarAcentos(derecha);
+      const espacios = Math.max(1, ANCHO - i.length - d.length);
+      return i + ' '.repeat(espacios) + d;
+    };
+    const centrado = (texto: string): string => {
+      const t = this.quitarAcentos(texto);
+      const espacios = Math.max(0, Math.floor((ANCHO - t.length) / 2));
+      return ' '.repeat(espacios) + t;
+    };
+    const separador = '-'.repeat(ANCHO);
+    const money = (n: number) => `$${n.toFixed(2)}`;
+
+    const filas: string[] = [];
+    filas.push(centrado('CHUCHERIAS MIX'));
+    filas.push(centrado('Venta registrada'));
+    filas.push('');
+    filas.push(this.quitarAcentos(`Orden ${r.venta.orden.numero_orden}`));
+    filas.push(this.quitarAcentos(this.formatoFechaCorta(r.fecha)));
+    if (r.cajero) {
+      filas.push(this.quitarAcentos(`Atendio: ${r.cajero}`));
+    }
+    filas.push(separador);
+
+    for (const item of r.items) {
+      filas.push(
+        this.quitarAcentos(`${item.cantidad}x ${item.productoNombre} (${item.varianteNombre})`),
+      );
+      filas.push(linea('', money(this.subtotalLinea(item))));
+      const nota = this.notaCompleta(item);
+      if (nota) {
+        filas.push(this.quitarAcentos(`  ${nota}`));
+      }
+    }
+    filas.push(separador);
+
+    filas.push(linea('Subtotal', money(r.subtotal)));
+    if (r.descuentoLealtad > 0) {
+      filas.push(linea('Desc. lealtad', '-' + money(r.descuentoLealtad)));
+    }
+    filas.push(linea('TOTAL', money(r.total)));
+    if (r.clienteLealtadNombre) {
+      filas.push(this.quitarAcentos(`Cliente: ${r.clienteLealtadNombre}`));
+      // Mismo avance de las 10 casillas del comprobante con diseño (ver
+      // avanceLealtad()/textoAvanceLealtad()), pero con caracteres ASCII
+      // puros ('#'/'.') en vez de los círculos llenos/vacíos de pantalla —
+      // el controlador "Generic / Text Only" ya mostró que mangla cualquier
+      // caracter fuera de ASCII, no solo acentos.
+      const avance = this.avanceLealtad(r);
+      if (avance.length) {
+        filas.push(avance.map((llena) => (llena ? '#' : '.')).join(''));
+        filas.push(this.quitarAcentos(this.textoAvanceLealtad(r)));
+      }
+    }
+    filas.push(linea('Entrega', r.tipoEntrega === 'presencial' ? 'Presencial' : 'Domicilio'));
+    if (r.tipoEntrega === 'domicilio') {
+      filas.push(this.quitarAcentos(`A: ${r.clienteNombre}`));
+      filas.push(this.quitarAcentos(r.clienteDireccion));
+      filas.push(this.quitarAcentos(`Tel: ${r.clienteTelefono}`));
+      if (r.repartidorNombre) {
+        filas.push(this.quitarAcentos(`Repartidor: ${r.repartidorNombre}`));
+      }
+    }
+    filas.push(linea('Pago', r.metodoPago === 'efectivo' ? 'Efectivo' : 'Transferencia'));
+    if (r.metodoPago === 'efectivo') {
+      filas.push(linea('Recibido', money(r.montoRecibido ?? 0)));
+      filas.push(linea('Cambio', money(r.cambio ?? 0)));
+    }
+    filas.push(separador);
+    // Misma despedida con variedad del comprobante con diseño (no un texto
+    // fijo) — determinística por el id de la venta, así el mismo ticket
+    // siempre muestra la misma frase si se reimprime.
+    filas.push(centrado(this.despedidaCalida(r)));
+    filas.push('');
+
+    return filas.join('\n');
+  }
+
+  // dd/MM/yyyy HH:mm sin depender del pipe `date` de Angular (que no se usa
+  // aquí porque textoPlanoTicket ya arma el string completo a mano).
+  private formatoFechaCorta(fecha: Date): string {
+    const dos = (n: number) => String(n).padStart(2, '0');
+    return (
+      `${dos(fecha.getDate())}/${dos(fecha.getMonth() + 1)}/${fecha.getFullYear()} ` +
+      `${dos(fecha.getHours())}:${dos(fecha.getMinutes())}`
+    );
   }
 
   // "Nueva venta": deja la pantalla lista para el siguiente cliente, con todos

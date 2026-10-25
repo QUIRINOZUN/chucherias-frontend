@@ -110,11 +110,43 @@
   letter-spacing: 0.03em;
 }
 
-.chip-resumen-adentro .chip-resumen-numero {
+.chip-resumen-positivo .chip-resumen-numero {
   color: var(--exito-texto);
 }
 
 .chip-resumen-alerta .chip-resumen-numero {
+  color: var(--pos-text-secondary);
+}
+
+/* ---- Grupos por preparación (2026-10-22): "Con preparación" (platillos
+   reales, llevan receta) vs "Sin preparación" (bebidas embotelladas y
+   similares, solo necesitan su insumo asociado) ---- */
+.grupo-preparacion {
+  margin-bottom: 28px;
+  /* Entrada suave al cambiar a la pestaña "Recetas" — ver el comentario
+     junto a `.seccion-menu` para la misma animación del lado de "Menú". */
+  animation: aparecer 0.2s ease;
+}
+
+.encabezado-grupo-preparacion {
+  margin-bottom: 14px;
+}
+
+.titulo-grupo-preparacion {
+  font-family: var(--fuente-titulo);
+  font-size: 1.05rem;
+  margin: 0 0 2px;
+}
+
+.subtitulo-grupo-preparacion {
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+  margin: 0;
+}
+
+/* Tono más calmo a propósito: aquí "sin insumo asociado" es un pendiente
+   menor, no la misma alerta que una receta real faltante. */
+.grupo-preparacion-simple .titulo-grupo-preparacion {
   color: var(--pos-text-secondary);
 }
 
@@ -585,12 +617,6 @@
 /* ---- Pestaña Menú: encabezados de sub-sección y lista de categorías ---- */
 .seccion-menu {
   display: block;
-  animation: aparecer 0.2s ease;
-}
-
-/* Misma entrada suave para la pestaña "Recetas" (sin un <section> propio
-   que envolver, se anima el primer bloque visible de esa pestaña). */
-.resumen-recetario {
   animation: aparecer 0.2s ease;
 }
 

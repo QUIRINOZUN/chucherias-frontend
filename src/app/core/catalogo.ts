@@ -33,6 +33,12 @@ export interface Variante {
   // cuándo — null si nunca se ha editado desde que esto se agregó.
   editado_por_nombre: string | null;
   fecha_edicion: string | null;
+  // 2026-10-22: FALSE si algún insumo FIJO de la receta de esta variante
+  // está en 0 o negativo (ver routes/catalogo.js) — true también cuando la
+  // variante no tiene receta capturada todavía (nada que verificar, mismo
+  // criterio ya establecido de que "sin receta" no es un error). El POS la
+  // usa para mostrarla en gris y bloquear agregarla al carrito.
+  insumos_suficientes: boolean;
 }
 
 // Un producto del menú con todas sus variantes ya incluidas.

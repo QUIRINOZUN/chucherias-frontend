@@ -138,8 +138,12 @@
               <article
                 class="tarjeta-producto"
                 [class.tarjeta-expandida]="estaAbierto(producto.id)"
+                [class.tarjeta-agotada]="productoAgotado(producto)"
                 [style.--color-categoria]="estiloCategoria(producto.categoria).color"
               >
+                @if (productoAgotado(producto)) {
+                  <span class="insignia-agotado">Agotado</span>
+                }
                 @if (cantidadEnCarrito(producto); as cantidad) {
                   <!-- Insignia "ya está en el carrito" (2026-10-11): cuántas
                        unidades de este producto (cualquier variante) ya se
@@ -345,9 +349,14 @@
                             <button
                               type="button"
                               class="boton-extra-pizza"
+                              [disabled]="!variante.insumos_suficientes"
                               (click)="agregarIngredienteExtraPizza(variante)"
                             >
-                              + {{ variante.nombre }} ({{ variante.precio | currency: 'MXN' }})
+                              @if (variante.insumos_suficientes) {
+                                + {{ variante.nombre }} ({{ variante.precio | currency: 'MXN' }})
+                              } @else {
+                                {{ variante.nombre }} — Agotado
+                              }
                             </button>
                           }
                         </div>
@@ -564,10 +573,16 @@
               <button
                 type="button"
                 class="boton-variante"
+                [class.boton-variante-agotada]="!variante.insumos_suficientes"
+                [disabled]="!variante.insumos_suficientes"
                 (click)="agregarAlCarrito(producto, variante)"
               >
                 <span>{{ variante.nombre }}</span>
-                <span class="precio-variante">{{ variante.precio | currency: 'MXN' }}</span>
+                @if (variante.insumos_suficientes) {
+                  <span class="precio-variante">{{ variante.precio | currency: 'MXN' }}</span>
+                } @else {
+                  <span class="etiqueta-agotado">Agotado</span>
+                }
               </button>
             }
           </div>
@@ -746,6 +761,16 @@
                  como el extremo de un rollo de papel térmico. Puramente
                  decorativo (aria-hidden), ver pos.css. -->
             <div class="comprobante-borde-cortado" aria-hidden="true"></div>
+
+            <!-- TICKET EN TEXTO PLANO (2026-10-19): oculto en pantalla,
+                 visible SOLO al imprimir (ver @media print en pos.css) —
+                 para impresoras térmicas sin driver gráfico (controlador
+                 "Generic / Text Only" de Windows), que no pueden interpretar
+                 el diseño de arriba (logo, íconos, maquetación) y solo
+                 logran imprimir texto simple. Ver textoPlanoTicket() en
+                 pos.ts. aria-hidden porque es un duplicado puramente visual
+                 del mismo contenido de arriba, no información nueva. -->
+            <pre class="comprobante-texto-plano" aria-hidden="true">{{ textoPlanoTicket(r) }}</pre>
 
             <!-- Acciones del comprobante: imprimir (diálogo del navegador) o iniciar una nueva venta.
                  Se ocultan al imprimir. -->
