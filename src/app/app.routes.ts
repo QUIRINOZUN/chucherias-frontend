@@ -21,6 +21,8 @@
 //   /clientes   → administrador, encargado                (Sprint 4: clientes y lealtad)
 //   /reportes   → administrador, encargado                (RF-26: reporte consolidado)
 //   /checklist  → todos los roles operativos               (checklist de apertura/cierre)
+//   /nomina     → administrador, encargado                (nómina por horas trabajadas)
+//   /ventas-especiales → administrador, encargado, cajero   (agendar y cotizar)
 //
 // Estas reglas deben coincidir con las del backend (requiereRol en routes/*.js)
 // y con la lista de módulos del dashboard (dashboard/dashboard.ts).
@@ -40,6 +42,8 @@ import { RecetarioComponent } from './recetario/recetario';
 import { ClientesComponent } from './clientes/clientes';
 import { ReportesComponent } from './reportes/reportes';
 import { ChecklistComponent } from './checklist/checklist';
+import { NominaComponent } from './nomina/nomina';
+import { VentasEspecialesComponent } from './ventas-especiales/ventas-especiales';
 import { authGuard, rolGuard } from './core/auth-guard';
 
 export const routes: Routes = [
@@ -121,6 +125,20 @@ export const routes: Routes = [
     path: 'checklist',
     component: ChecklistComponent,
     canActivate: [authGuard, rolGuard('administrador', 'encargado', 'cajero', 'auxiliar')],
+  },
+  // Nómina por horas trabajadas — información salarial, igual criterio que
+  // Reportes/Caja/Asistencias (RNF-03).
+  {
+    path: 'nomina',
+    component: NominaComponent,
+    canActivate: [authGuard, rolGuard('administrador', 'encargado')],
+  },
+  // Ventas especiales: agendar y cotizar desayunos, comidas y sorpresas con
+  // el menú completo — mismos roles que ya cobran en el POS.
+  {
+    path: 'ventas-especiales',
+    component: VentasEspecialesComponent,
+    canActivate: [authGuard, rolGuard('administrador', 'encargado', 'cajero')],
   },
   // La raíz del sitio y cualquier URL desconocida llevan al login. (La pantalla
   // de login no redirige sola al dashboard si ya hay sesión: quien tenga la

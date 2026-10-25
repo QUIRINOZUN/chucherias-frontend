@@ -116,6 +116,19 @@
      para que los dos módulos sin color propio en el círculo (Reportes y
      Checklist) tampoco se confundan entre sí. */
   --mod-checklist: #78716c;
+  /* verde pino/petróleo — Nómina: con 10 tonos ya repartidos, el único
+     hueco libre que queda sin acercarse a otro significado es la franja
+     angosta entre el verde de éxito (~142°, --exito-texto) y el teal de
+     Comandas (~175°) — se evitó a propósito ir más abajo, hacia el verde
+     puro, por la misma razón que ya documentó Clientes. */
+  --mod-nomina: #0f6b52;
+  /* rosa frambuesa — Ventas especiales: con 13 tonos ya repartidos, el
+     hueco que queda entre el fucsia de Recetario (~300°) y el carmín de
+     Mermas (~350°) es angosto, pero misma densidad que ya conviven
+     Inventario/Ventas/Usuarios (200°-245°) sin confundirse — el ícono de
+     regalo + el nombre visible siguen siendo quienes de verdad distinguen
+     al módulo, el color nunca es el único identificador. */
+  --mod-ventas-especiales: #be185d;
 
   /* Franja arcoíris (2026-10-13, tercera pasada): el usuario pidió que el
      "arcoíris" (el guiño al logotipo real multicolor, antes solo en el
@@ -334,7 +347,9 @@ textarea:focus-visible {
 .recetario-header,
 .clientes-header,
 .reportes-header,
-.checklist-header {
+.checklist-header,
+.nomina-header,
+.ventas-especiales-header {
   position: relative;
   overflow: hidden;
   border-bottom: 0 !important;
@@ -384,7 +399,9 @@ textarea:focus-visible {
 .recetario-header h1,
 .clientes-header h1,
 .reportes-header h1,
-.checklist-header h1 {
+.checklist-header h1,
+.nomina-header h1,
+.ventas-especiales-header h1 {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -410,7 +427,9 @@ textarea:focus-visible {
 .recetario-header::before,
 .clientes-header::before,
 .reportes-header::before,
-.checklist-header::before {
+.checklist-header::before,
+.nomina-header::before,
+.ventas-especiales-header::before {
   content: '';
   position: absolute;
   inset: 0 0 auto 0;

@@ -5,10 +5,12 @@
 // cada módulo al que el usuario tiene permiso. Cada rol ve solo lo suyo:
 //
 //   administrador → Punto de venta, Comandas, Corte de caja, Ventas,
-//                   Recetario, Inventario, Mermas, Usuarios, Asistencias,
-//                   Clientes, Reportes, Checklist
-//   encargado     → (los mismos 12 que administrador)
-//   cajero        → Punto de venta, Comandas (consulta), Corte de caja, Checklist
+//                   Ventas especiales, Recetario, Inventario, Mermas,
+//                   Usuarios, Asistencias, Nómina, Clientes, Reportes,
+//                   Checklist
+//   encargado     → (los mismos 14 que administrador)
+//   cajero        → Punto de venta, Comandas (consulta), Corte de caja,
+//                   Ventas especiales, Checklist
 //   auxiliar      → Comandas, Checklist
 //
 // PARA AGREGAR UN MÓDULO NUEVO: añade su entrada a MODULOS (ruta, título,
@@ -65,12 +67,20 @@ interface Modulo {
 // relacionados queden contiguos en la rejilla (que los pinta en orden de
 // lectura, fila por fila — ver `modulosVisibles`, un simple `.filter()`
 // que conserva el orden de este arreglo):
-//   1-4  Ventas y caja    — la operación del día a día en el mostrador.
-//   5-7  Cocina e inventario — lo que sostiene lo que se vende (receta →
+//   1-5  Ventas y caja    — la operación del día a día en el mostrador y
+//        por teléfono. Ventas especiales (2026-10-22) se agregó al final de
+//        este grupo — es agendar/cotizar, no una venta ya cobrada, pero
+//        sigue siendo la misma operación de atender a un cliente.
+//   6-8  Cocina e inventario — lo que sostiene lo que se vende (receta →
 //        insumo → merma).
-//   8-10 Personas         — empleados (Usuarios, Asistencias) y clientes.
-// Para el cajero (solo ve 1-3) y el auxiliar (solo ve 2) esto no cambia
-// nada — esos 3 módulos ya eran los primeros antes de este reordenamiento.
+//   9-12 Personas         — empleados (Usuarios, Asistencias, Nómina) y
+//        clientes. Nómina (2026-10-22) se agregó junto a Asistencias — es
+//        el mismo dominio (personal), solo que mira el pago en vez del
+//        reloj.
+// Para el cajero (ve 1, 2, 3 y 5) y el auxiliar (solo ve 2) esto no cambia
+// casi nada — esos módulos ya eran los primeros antes de este
+// reordenamiento, Ventas especiales es la única incorporación nueva al
+// menú del cajero.
 const MODULOS: Modulo[] = [
   // ---- Ventas y caja ----
   {
@@ -104,6 +114,14 @@ const MODULOS: Modulo[] = [
     descripcion: 'Consulta de tickets, filtros y cancelación.',
     roles: ['administrador', 'encargado'],
     colorVar: 'var(--mod-ventas)',
+  },
+  {
+    ruta: '/ventas-especiales',
+    titulo: 'Ventas especiales',
+    icono: 'regalo',
+    descripcion: 'Agendar y cotizar desayunos, comidas y sorpresas.',
+    roles: ['administrador', 'encargado', 'cajero'],
+    colorVar: 'var(--mod-ventas-especiales)',
   },
   // ---- Cocina e inventario ----
   {
@@ -146,6 +164,14 @@ const MODULOS: Modulo[] = [
     descripcion: 'Personal, entradas, salidas e historial.',
     roles: ['administrador', 'encargado'],
     colorVar: 'var(--mod-asistencias)',
+  },
+  {
+    ruta: '/nomina',
+    titulo: 'Nómina',
+    icono: 'calculadora',
+    descripcion: 'Pago del personal por horas trabajadas.',
+    roles: ['administrador', 'encargado'],
+    colorVar: 'var(--mod-nomina)',
   },
   {
     ruta: '/clientes',
