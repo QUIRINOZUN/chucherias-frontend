@@ -1,10 +1,13 @@
 <!-- ============================================================================
      reportes.html — REPORTE CONSOLIDADO (lógica en reportes.ts)
      ============================================================================
-     Solo administrador y encargado. Un resumen por dominio (ventas,
-     inventario, personal, clientes/lealtad), cada uno con el color de
-     identidad del módulo al que pertenece esa información — así el
-     reporte "se parece" a las pantallas de donde salen esos datos.
+     Solo administrador y encargado. Pestañas (2026-10-22): "General" es un
+     dashboard condensado (una cifra principal + una tarjeta resumen por
+     dominio, navegable); "Ventas"/"Inventario"/"Personal"/"Clientes y
+     lealtad" muestran el detalle completo de su dominio, cada uno con el
+     color de identidad del módulo al que pertenece esa información — así
+     el reporte "se parece" a las pantallas de donde salen esos datos. Los
+     filtros de fecha son compartidos entre las 5 pestañas.
      ============================================================================ -->
 <div class="reportes-container">
   <header class="reportes-header">
@@ -74,18 +77,227 @@
       }
     </section>
 
+    <!-- PESTAÑAS: comparten los mismos datos (resumen()), ya cargados una
+         sola vez — cambiar de pestaña no vuelve a pedir nada al servidor.
+         Envoltorio + degradado (mismo patrón que Asistencias): en un
+         teléfono angosto las 5 no caben y la barra se desplaza sola. -->
+    <div class="tabs-reportes-envoltorio">
+      <nav class="tabs-reportes" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          class="tab-reportes"
+          [class.tab-reportes-activa]="pestanaActiva() === 'general'"
+          [attr.aria-selected]="pestanaActiva() === 'general'"
+          (click)="cambiarPestana('general')"
+        >
+          <svg class="icono" aria-hidden="true"><use href="#ic-grafica" /></svg>
+          General
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="tab-reportes"
+          [class.tab-reportes-activa]="pestanaActiva() === 'ventas'"
+          [attr.aria-selected]="pestanaActiva() === 'ventas'"
+          (click)="cambiarPestana('ventas')"
+        >
+          <svg class="icono" aria-hidden="true"><use href="#ic-recibo" /></svg>
+          Ventas
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="tab-reportes"
+          [class.tab-reportes-activa]="pestanaActiva() === 'inventario'"
+          [attr.aria-selected]="pestanaActiva() === 'inventario'"
+          (click)="cambiarPestana('inventario')"
+        >
+          <svg class="icono" aria-hidden="true"><use href="#ic-paquete" /></svg>
+          Inventario
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="tab-reportes"
+          [class.tab-reportes-activa]="pestanaActiva() === 'personal'"
+          [attr.aria-selected]="pestanaActiva() === 'personal'"
+          (click)="cambiarPestana('personal')"
+        >
+          <svg class="icono" aria-hidden="true"><use href="#ic-reloj" /></svg>
+          Personal
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="tab-reportes"
+          [class.tab-reportes-activa]="pestanaActiva() === 'clientes'"
+          [attr.aria-selected]="pestanaActiva() === 'clientes'"
+          (click)="cambiarPestana('clientes')"
+        >
+          <svg class="icono" aria-hidden="true"><use href="#ic-corazon" /></svg>
+          Clientes
+        </button>
+      </nav>
+      <div class="tabs-reportes-desvanecido" aria-hidden="true"></div>
+    </div>
+
     @if (error()) {
       <p class="mensaje-estado mensaje-error">{{ error() }}</p>
     } @else if (cargando()) {
-      <div class="grid-secciones-reportes" aria-hidden="true">
-        @for (i of [1, 2, 3, 4]; track i) {
-          <div class="esqueleto esqueleto-seccion-reporte"></div>
-        }
-      </div>
+      <div class="esqueleto esqueleto-seccion-reporte" aria-hidden="true"></div>
     } @else if (resumen(); as r) {
-      <div class="grid-secciones-reportes">
-        <!-- VENTAS -->
-        <section class="seccion-reporte" style="--acento-seccion: var(--mod-ventas)">
+      <!-- ========================= PESTAÑA: GENERAL ========================= -->
+      @if (pestanaActiva() === 'general') {
+        <section class="panel-general">
+          <!-- CIFRA PRINCIPAL: la única "hero" de todo el dashboard — el resto
+               de los números son tarjetas de apoyo, más chicas a propósito.
+               La miniatura de tendencia (2026-10-22) es un sparkline — ver
+               marks-and-anatomy.md del skill de dataviz: "trend (opcional;
+               sparkline de 12 puntos)" junto al valor principal, nunca su
+               propia gráfica con ejes — eso ya vive completo en "Ventas". -->
+          <div class="hero-reporte">
+            <div class="hero-reporte-texto">
+              <span class="hero-reporte-etiqueta">Ventas totales del periodo</span>
+              <span class="hero-reporte-valor">{{ r.ventas.monto_total | currency: 'MXN' }}</span>
+              <span class="hero-reporte-detalle">
+                {{ r.ventas.total_ventas }}
+                {{ r.ventas.total_ventas === 1 ? 'venta completada' : 'ventas completadas' }}
+              </span>
+            </div>
+            @if (serieVentas(); as s) {
+              <svg
+                class="sparkline-hero"
+                viewBox="0 0 300 100"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path [attr.d]="s.rutaArea" class="sparkline-hero-area" />
+                <path
+                  [attr.d]="s.rutaLinea"
+                  class="sparkline-hero-linea"
+                  vector-effect="non-scaling-stroke"
+                />
+              </svg>
+            }
+          </div>
+
+          <!-- FRANJA DE ATENCIÓN: solo aparece si hay algo que de verdad amerite
+               revisarse — nunca una fila vacía de "todo bien". -->
+          @if (r.ventas.canceladas > 0 || r.inventario.bajo_minimo > 0 || r.personal.retardos > 0) {
+            <div class="franja-atencion">
+              <span class="franja-atencion-titulo">Requiere atención</span>
+              <ul class="lista-atencion">
+                @if (r.ventas.canceladas > 0) {
+                  <li>
+                    <button type="button" (click)="cambiarPestana('ventas')">
+                      {{ r.ventas.canceladas }}
+                      {{ r.ventas.canceladas === 1 ? 'venta cancelada' : 'ventas canceladas' }} en
+                      el periodo
+                    </button>
+                  </li>
+                }
+                @if (r.inventario.bajo_minimo > 0) {
+                  <li>
+                    <button type="button" (click)="cambiarPestana('inventario')">
+                      {{ r.inventario.bajo_minimo }} insumos en o por debajo de su mínimo ahora
+                      mismo
+                    </button>
+                  </li>
+                }
+                @if (r.personal.retardos > 0) {
+                  <li>
+                    <button type="button" (click)="cambiarPestana('personal')">
+                      {{ r.personal.retardos }}
+                      {{ r.personal.retardos === 1 ? 'retardo' : 'retardos' }} en el periodo
+                    </button>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+
+          <!-- RESUMEN POR DOMINIO: una tarjeta por sección, cada una lleva
+               directo a su propia pestaña con el detalle completo. -->
+          <div class="grid-resumen-dominios">
+            <button
+              type="button"
+              class="tarjeta-dominio"
+              style="--acento-dominio: var(--mod-ventas)"
+              (click)="cambiarPestana('ventas')"
+            >
+              <span class="tarjeta-dominio-icono" aria-hidden="true">
+                <svg class="icono"><use href="#ic-recibo" /></svg>
+              </span>
+              <span class="tarjeta-dominio-cuerpo">
+                <span class="tarjeta-dominio-titulo">Ventas</span>
+                <span class="tarjeta-dominio-cifra">{{ r.ventas.total_ventas }}</span>
+                <span class="tarjeta-dominio-etiqueta">completadas en el periodo</span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              class="tarjeta-dominio"
+              style="--acento-dominio: var(--mod-inventario)"
+              (click)="cambiarPestana('inventario')"
+            >
+              <span class="tarjeta-dominio-icono" aria-hidden="true">
+                <svg class="icono"><use href="#ic-paquete" /></svg>
+              </span>
+              <span class="tarjeta-dominio-cuerpo">
+                <span class="tarjeta-dominio-titulo">Inventario</span>
+                <span
+                  class="tarjeta-dominio-cifra"
+                  [class.tarjeta-dominio-cifra-alerta]="r.inventario.bajo_minimo > 0"
+                >
+                  {{ r.inventario.bajo_minimo }}
+                </span>
+                <span class="tarjeta-dominio-etiqueta">insumos bajo su mínimo ahora</span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              class="tarjeta-dominio"
+              style="--acento-dominio: var(--mod-asistencias)"
+              (click)="cambiarPestana('personal')"
+            >
+              <span class="tarjeta-dominio-icono" aria-hidden="true">
+                <svg class="icono"><use href="#ic-reloj" /></svg>
+              </span>
+              <span class="tarjeta-dominio-cuerpo">
+                <span class="tarjeta-dominio-titulo">Personal</span>
+                <span class="tarjeta-dominio-cifra">{{ r.personal.empleados_activos }}</span>
+                <span class="tarjeta-dominio-etiqueta">empleados activos ahora</span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              class="tarjeta-dominio"
+              style="--acento-dominio: var(--mod-clientes)"
+              (click)="cambiarPestana('clientes')"
+            >
+              <span class="tarjeta-dominio-icono" aria-hidden="true">
+                <svg class="icono"><use href="#ic-corazon" /></svg>
+              </span>
+              <span class="tarjeta-dominio-cuerpo">
+                <span class="tarjeta-dominio-titulo">Clientes y lealtad</span>
+                <span class="tarjeta-dominio-cifra">{{ r.clientes.nuevos_en_periodo }}</span>
+                <span class="tarjeta-dominio-etiqueta">nuevos en el periodo</span>
+              </span>
+            </button>
+          </div>
+        </section>
+      }
+
+      <!-- ========================= PESTAÑA: VENTAS ========================= -->
+      @if (pestanaActiva() === 'ventas') {
+        <section
+          class="seccion-reporte seccion-reporte-completa"
+          style="--acento-seccion: var(--mod-ventas)"
+        >
           <div class="seccion-reporte-encabezado">
             <span class="seccion-reporte-icono" aria-hidden="true">
               <svg class="icono"><use href="#ic-recibo" /></svg>
@@ -124,10 +336,139 @@
               <span class="stat-reporte-etiqueta">Descuento por lealtad</span>
             </div>
           </div>
-        </section>
 
-        <!-- INVENTARIO -->
-        <section class="seccion-reporte" style="--acento-seccion: var(--mod-inventario)">
+          <!-- GRÁFICA DE TENDENCIA: ventas completadas por día del negocio,
+               dentro del periodo filtrado (hasta 30 días — ver
+               routes/reportes.js). Con menos de 2 días no hay tendencia que
+               mostrar (serieVentas() da null) — se avisa en vez de dibujar
+               una gráfica vacía o de un solo punto. -->
+          <h3 class="subtitulo-grafica-reporte">Ventas por día</h3>
+          @if (serieVentas(); as s) {
+            <div class="grafica-tendencia">
+              <p class="grafica-tendencia-pico">
+                Pico del periodo: <strong>{{ s.pico.monto | currency: 'MXN' }}</strong> el
+                {{ etiquetaFechaCorta(s.pico.dia) }}
+              </p>
+              <svg
+                class="svg-tendencia"
+                viewBox="0 0 300 100"
+                role="img"
+                [attr.aria-label]="
+                  'Ventas completadas por día, del ' +
+                  etiquetaFechaCorta(s.puntos[0].dia) +
+                  ' al ' +
+                  etiquetaFechaCorta(s.ultimo.dia)
+                "
+              >
+                <line
+                  x1="0"
+                  [attr.y1]="s.baseY"
+                  x2="300"
+                  [attr.y2]="s.baseY"
+                  class="linea-base-tendencia"
+                  vector-effect="non-scaling-stroke"
+                />
+                <path [attr.d]="s.rutaArea" class="area-tendencia" />
+                <path
+                  [attr.d]="s.rutaLinea"
+                  class="linea-tendencia"
+                  vector-effect="non-scaling-stroke"
+                />
+                @for (p of s.puntos; track p.dia) {
+                  <g>
+                    <circle [attr.cx]="p.x" [attr.cy]="p.y" r="10" class="punto-tendencia-hit">
+                      <title>
+                        {{ etiquetaFechaCorta(p.dia) }}: {{ p.ventas }}
+                        {{ p.ventas === 1 ? 'venta' : 'ventas' }} · {{ p.monto | currency: 'MXN' }}
+                      </title>
+                    </circle>
+                    <circle
+                      [attr.cx]="p.x"
+                      [attr.cy]="p.y"
+                      r="3"
+                      class="punto-tendencia-dot"
+                      vector-effect="non-scaling-stroke"
+                    />
+                  </g>
+                }
+              </svg>
+              <div class="grafica-tendencia-ejes">
+                <span>{{ etiquetaFechaCorta(s.puntos[0].dia) }}</span>
+                <span>{{ etiquetaFechaCorta(s.ultimo.dia) }}</span>
+              </div>
+              <button type="button" class="boton-enlace-grafica" (click)="alternarDetalleSerie()">
+                {{ detalleSerieAbierto() ? 'Ocultar detalle por día' : 'Ver detalle por día' }}
+              </button>
+              @if (detalleSerieAbierto()) {
+                <ul class="lista-detalle-serie">
+                  @for (p of s.puntos; track p.dia) {
+                    <li>
+                      <span>{{ etiquetaFechaCorta(p.dia) }}</span>
+                      <span>{{ p.ventas }} {{ p.ventas === 1 ? 'venta' : 'ventas' }}</span>
+                      <span>{{ p.monto | currency: 'MXN' }}</span>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          } @else {
+            <p class="mensaje-estado">
+              No hay suficientes días con ventas en este periodo para mostrar una tendencia.
+            </p>
+          }
+
+          <!-- BARRAS: dos comparaciones de magnitud — método de pago (mismo
+               color, son solo 2 montos) y completadas/canceladas (rojo/verde
+               funcional, nunca un color nuevo para "serie 2"). -->
+          <div class="grid-graficas-barras">
+            <div>
+              <h3 class="subtitulo-grafica-reporte">Método de pago</h3>
+              <div class="grafica-barras">
+                @for (fila of barrasPago(); track fila.etiqueta) {
+                  <div class="fila-barra">
+                    <span class="fila-barra-etiqueta">{{ fila.etiqueta }}</span>
+                    <div class="pista-barra">
+                      <div
+                        class="relleno-barra"
+                        [style.width.%]="fila.porcentaje"
+                        [style.background]="fila.color"
+                      ></div>
+                    </div>
+                    <span class="fila-barra-valor">{{
+                      fila.esMoneda ? (fila.valor | currency: 'MXN') : fila.valor
+                    }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+            <div>
+              <h3 class="subtitulo-grafica-reporte">Completadas vs. canceladas</h3>
+              <div class="grafica-barras">
+                @for (fila of barrasEstadoVenta(); track fila.etiqueta) {
+                  <div class="fila-barra">
+                    <span class="fila-barra-etiqueta">{{ fila.etiqueta }}</span>
+                    <div class="pista-barra">
+                      <div
+                        class="relleno-barra"
+                        [style.width.%]="fila.porcentaje"
+                        [style.background]="fila.color"
+                      ></div>
+                    </div>
+                    <span class="fila-barra-valor">{{ fila.valor }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </section>
+      }
+
+      <!-- ======================= PESTAÑA: INVENTARIO ======================= -->
+      @if (pestanaActiva() === 'inventario') {
+        <section
+          class="seccion-reporte seccion-reporte-completa"
+          style="--acento-seccion: var(--mod-inventario)"
+        >
           <div class="seccion-reporte-encabezado">
             <span class="seccion-reporte-icono" aria-hidden="true">
               <svg class="icono"><use href="#ic-paquete" /></svg>
@@ -157,10 +498,39 @@
               <span class="stat-reporte-etiqueta">Valor perdido</span>
             </div>
           </div>
-        </section>
 
-        <!-- PERSONAL -->
-        <section class="seccion-reporte" style="--acento-seccion: var(--mod-asistencias)">
+          <!-- MEDIDOR: una proporción contra un límite (insumos bajo mínimo
+               / total) — no una gráfica de barras, el skill de dataviz lo
+               marca explícitamente como el caso correcto para un medidor. -->
+          @if (medidorInventario(); as m) {
+            <h3 class="subtitulo-grafica-reporte">Insumos bajo su mínimo</h3>
+            <div class="medidor">
+              <div
+                class="medidor-pista"
+                [style.background]="'color-mix(in srgb, ' + m.color + ' 18%, var(--pos-bg-card))'"
+              >
+                <div
+                  class="medidor-relleno"
+                  [style.width.%]="m.porcentaje"
+                  [style.background]="m.color"
+                ></div>
+              </div>
+              <span class="medidor-etiqueta">
+                {{ r.inventario.bajo_minimo }} de {{ r.inventario.total_insumos }} ({{
+                  m.porcentaje | number: '1.0-0'
+                }}%)
+              </span>
+            </div>
+          }
+        </section>
+      }
+
+      <!-- ========================= PESTAÑA: PERSONAL ======================== -->
+      @if (pestanaActiva() === 'personal') {
+        <section
+          class="seccion-reporte seccion-reporte-completa"
+          style="--acento-seccion: var(--mod-asistencias)"
+        >
           <div class="seccion-reporte-encabezado">
             <span class="seccion-reporte-icono" aria-hidden="true">
               <svg class="icono"><use href="#ic-reloj" /></svg>
@@ -184,10 +554,34 @@
               <span class="stat-reporte-etiqueta">Retardos</span>
             </div>
           </div>
-        </section>
 
-        <!-- CLIENTES Y LEALTAD -->
-        <section class="seccion-reporte" style="--acento-seccion: var(--mod-clientes)">
+          @if (r.personal.asistencias_registradas > 0 || r.personal.retardos > 0) {
+            <h3 class="subtitulo-grafica-reporte">Asistencias vs. retardos</h3>
+            <div class="grafica-barras">
+              @for (fila of barrasPersonal(); track fila.etiqueta) {
+                <div class="fila-barra">
+                  <span class="fila-barra-etiqueta">{{ fila.etiqueta }}</span>
+                  <div class="pista-barra">
+                    <div
+                      class="relleno-barra"
+                      [style.width.%]="fila.porcentaje"
+                      [style.background]="fila.color"
+                    ></div>
+                  </div>
+                  <span class="fila-barra-valor">{{ fila.valor }}</span>
+                </div>
+              }
+            </div>
+          }
+        </section>
+      }
+
+      <!-- ===================== PESTAÑA: CLIENTES Y LEALTAD ================== -->
+      @if (pestanaActiva() === 'clientes') {
+        <section
+          class="seccion-reporte seccion-reporte-completa"
+          style="--acento-seccion: var(--mod-clientes)"
+        >
           <div class="seccion-reporte-encabezado">
             <span class="seccion-reporte-icono" aria-hidden="true">
               <svg class="icono"><use href="#ic-corazon" /></svg>
@@ -210,13 +604,24 @@
           </div>
           @if (r.clientes.top_clientes.length > 0) {
             <p class="subtitulo-top-clientes">Más cerca de su próximo descuento</p>
+            <!-- Barra fina (visitas del ciclo actual / 10) detrás del texto
+                 que ya existía — el texto sigue siendo la fuente de verdad,
+                 la barra solo refuerza la comparación entre clientes. -->
             <ul class="lista-top-clientes">
               @for (cliente of r.clientes.top_clientes; track cliente.id) {
                 <li class="item-top-cliente">
-                  <span>{{ cliente.nombre_completo }}</span>
-                  <span class="badge-visitas-reporte"
-                    >{{ cliente.visitas_acumuladas }} visitas</span
-                  >
+                  <div class="item-top-cliente-fila">
+                    <span>{{ cliente.nombre_completo }}</span>
+                    <span class="badge-visitas-reporte"
+                      >{{ cliente.visitas_acumuladas }} visitas</span
+                    >
+                  </div>
+                  <div class="barra-cliente-pista">
+                    <div
+                      class="barra-cliente-relleno"
+                      [style.width.%]="anchoBarraCliente(cliente.visitas_acumuladas)"
+                    ></div>
+                  </div>
                 </li>
               }
             </ul>
@@ -224,7 +629,7 @@
             <p class="mensaje-estado">Todavía no hay clientes con visitas acumuladas.</p>
           }
         </section>
-      </div>
+      }
     }
   </div>
 </div>

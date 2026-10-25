@@ -11,6 +11,16 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+// Un día del rango filtrado, para la gráfica de tendencia de la pestaña
+// Ventas (2026-10-22) — acotada por el servidor a los últimos 30 días que
+// caigan dentro del filtro, para que la consulta nunca crezca sin límite
+// (ver routes/reportes.js).
+export interface SerieDiaVenta {
+  dia: string;
+  ventas: number;
+  monto: string;
+}
+
 export interface ResumenVentas {
   total_ventas: number;
   monto_total: string;
@@ -18,6 +28,7 @@ export interface ResumenVentas {
   monto_transferencia: string;
   canceladas: number;
   descuento_lealtad_total: string;
+  serie_diaria: SerieDiaVenta[];
 }
 
 // `bajo_minimo`/`total_insumos` son una foto de AHORA (no del periodo

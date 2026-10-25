@@ -168,19 +168,312 @@
   color: var(--pos-text-primary);
 }
 
-/* ===================== Secciones ===================== */
-.grid-secciones-reportes {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 16px;
+/* ===================== Pestañas ===================== */
+/* Mismo patrón que .tabs-asistencias (asistencias.css): envoltorio +
+   degradado para cuando las 5 pestañas no caben en un teléfono angosto. */
+.tabs-reportes-envoltorio {
+  position: relative;
+  margin-bottom: 16px;
 }
 
+.tabs-reportes-desvanecido {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 1px;
+  width: 32px;
+  background: linear-gradient(to right, transparent, var(--pos-bg-main));
+  pointer-events: none;
+}
+
+.tabs-reportes {
+  display: flex;
+  gap: 6px;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tab-reportes {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-card);
+  box-shadow: var(--sombra-suave);
+  color: var(--pos-text-secondary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.tab-reportes .icono {
+  width: 18px;
+  height: 18px;
+}
+
+.tab-reportes-activa {
+  background: var(--acento-modulo);
+  color: #fff;
+  box-shadow: var(--sombra-acento);
+}
+
+/* ===================== Panel "General" (dashboard condensado) ===================== */
+.panel-general {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: aparecer 0.2s ease;
+}
+
+/* Cifra principal: la ÚNICA "hero" de toda la pantalla — el resto de los
+   números viven en tarjetas más chicas a propósito (ver marks-and-anatomy
+   del skill de dataviz: "exactamente una por vista"). Fraunces, no una
+   sans — es la misma tipografía que ya usa toda la app para cifras/
+   totales, nunca se cambia por pantalla. */
+.hero-reporte {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 22px 24px;
+  border-radius: var(--radio-lg);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--mod-ventas) 16%, var(--pos-bg-card)) 0%,
+    var(--pos-bg-card) 70%
+  );
+  border-top: 4px solid var(--mod-ventas);
+  box-shadow: var(--sombra-suave);
+}
+
+.hero-reporte-texto {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* Sparkline (2026-10-22): el 12-punto "trend" del contrato de stat-tile del
+   skill de dataviz, junto al valor principal — nunca su propia gráfica con
+   ejes, eso ya vive completo en la pestaña "Ventas". Ancho fijo pequeño a
+   propósito: es un acompañante del número, no el protagonista. */
+.sparkline-hero {
+  flex-shrink: 0;
+  width: 150px;
+  height: 46px;
+  display: block;
+}
+
+.sparkline-hero-area {
+  fill: var(--mod-ventas);
+  fill-opacity: 0.18;
+}
+
+.sparkline-hero-linea {
+  fill: none;
+  stroke: var(--mod-ventas);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+@media (max-width: 480px) {
+  .sparkline-hero {
+    width: 100%;
+    height: 36px;
+  }
+}
+
+.hero-reporte-etiqueta {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--pos-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.hero-reporte-valor {
+  font-family: var(--fuente-titulo);
+  font-weight: 800;
+  font-size: clamp(2rem, 6vw, 2.8rem);
+  line-height: 1.1;
+}
+
+.hero-reporte-detalle {
+  font-size: 0.85rem;
+  color: var(--pos-text-secondary);
+}
+
+/* Franja de atención: solo aparece si hay algo real que atender — nunca
+   una fila vacía de "todo bien" (eso no es información, es ruido). */
+.franja-atencion {
+  padding: 14px 16px;
+  border-radius: var(--radio-lg);
+  background: color-mix(in srgb, var(--action-danger) 10%, var(--pos-bg-card));
+  border-left: 4px solid var(--peligro-texto);
+}
+
+.franja-atencion-titulo {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--peligro-texto);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 8px;
+}
+
+.lista-atencion {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lista-atencion button {
+  width: 100%;
+  text-align: left;
+  /* 44px mínimo (ya establecido en toda la app): un área táctil real, no
+     solo la altura de una línea de texto. */
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  border: none;
+  background: none;
+  color: var(--pos-text-primary);
+  font-size: 0.86rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.15s ease;
+}
+
+.lista-atencion button:hover {
+  text-decoration-color: currentColor;
+}
+
+/* Tarjetas de dominio: resumen navegable de cada sección, mismo lenguaje
+   visual que las tarjetas de módulo del dashboard principal (borde
+   izquierdo de color + insignia circular), para que "General" se sienta
+   como el mismo tipo de pantalla que el menú principal de la app. */
+.grid-resumen-dominios {
+  display: grid;
+  /* 200px (no 220px): con el ancho real de .reportes-cuerpo (920px, menos
+     padding) 220px dejaba 3 tarjetas por fila y la cuarta sola en su
+     propia fila — 200px sí alcanzan las 4 en una sola fila en escritorio,
+     sin perder la propiedad de apilarse solas en pantallas angostas. */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.tarjeta-dominio {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: none;
+  border-left: 4px solid var(--acento-dominio, var(--acento-modulo));
+  border-radius: var(--radio-lg);
+  background: var(--pos-bg-card);
+  box-shadow: var(--sombra-suave);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+@media (hover: hover) {
+  .tarjeta-dominio:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--sombra-elevada);
+  }
+}
+
+.tarjeta-dominio-icono {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(
+    in srgb,
+    var(--acento-dominio, var(--acento-modulo)) 20%,
+    var(--pos-bg-card)
+  );
+  color: var(--acento-dominio, var(--acento-modulo));
+}
+
+.tarjeta-dominio-icono .icono {
+  width: 20px;
+  height: 20px;
+}
+
+.tarjeta-dominio-cuerpo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tarjeta-dominio-titulo {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--pos-text-secondary);
+}
+
+.tarjeta-dominio-cifra {
+  font-family: var(--fuente-titulo);
+  font-weight: 800;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.tarjeta-dominio-cifra-alerta {
+  color: var(--peligro-texto);
+}
+
+.tarjeta-dominio-etiqueta {
+  font-size: 0.72rem;
+  color: var(--pos-text-secondary);
+}
+
+/* ===================== Secciones de detalle (una por pestaña) ===================== */
 .seccion-reporte {
   background: var(--pos-bg-card);
   border-top: 4px solid var(--acento-seccion, var(--acento-modulo));
   border-radius: var(--radio-lg);
   box-shadow: var(--sombra-suave);
   padding: 18px;
+  animation: aparecer 0.2s ease;
+}
+
+/* Antes vivía en una rejilla de 2x2 compitiendo por espacio; ahora cada
+   una ocupa su propia pestaña completa — más aire, sin cambiar el resto
+   del lenguaje visual de la tarjeta. Con todo el ancho disponible, sus
+   tarjetas de cifra pueden ser más anchas que el mínimo de 145px que
+   necesitaba la rejilla apretada de antes. */
+.seccion-reporte-completa {
+  padding: 24px;
+}
+
+.seccion-reporte-completa .grid-stats-reporte {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
 }
 
 .seccion-reporte-encabezado {
@@ -224,7 +517,10 @@
 
 .grid-stats-reporte {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  /* 145px (no 110px): una cifra como "MX$3,315.00" necesita ~140px para
+     caber en una sola línea con esta tipografía — con 110px se desbordaba
+     de la celda y quedaba oculta detrás de la tarjeta vecina. */
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
   gap: 12px;
 }
 
@@ -241,7 +537,12 @@
   font-family: var(--fuente-titulo);
   font-weight: 800;
   font-size: 1.3rem;
-  line-height: 1.1;
+  line-height: 1.15;
+  /* Cifras de 4+ dígitos (ej. "MX$3,315.00") no tienen ningún espacio donde
+     partir — sin esto, el texto se desborda de la celda (minmax(110px, 1fr)
+     no crece con el contenido) y queda oculto detrás de la tarjeta vecina
+     en vez de visible. */
+  overflow-wrap: anywhere;
 }
 
 .stat-reporte-etiqueta {
@@ -275,13 +576,35 @@
 
 .item-top-cliente {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  flex-direction: column;
+  gap: 6px;
   padding: 8px 12px;
   border-radius: var(--radio-sm);
   background: var(--pos-bg-main);
   font-size: 0.85rem;
+}
+
+.item-top-cliente-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* Barra fina (2026-10-22): visitas del ciclo actual / 10, mismo patrón
+   exacto que .progreso-lealtad-barra/-relleno de clientes.css (track
+   pastilla + overflow:hidden, el relleno nunca lleva su propio radio). */
+.barra-cliente-pista {
+  height: 8px;
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-card);
+  overflow: hidden;
+}
+
+.barra-cliente-relleno {
+  height: 100%;
+  background: var(--mod-clientes);
+  transition: width 0.3s ease;
 }
 
 .badge-visitas-reporte {
@@ -293,6 +616,223 @@
   background: color-mix(in srgb, var(--mod-clientes) 20%, var(--pos-bg-card));
   color: var(--mod-clientes);
   white-space: nowrap;
+}
+
+/* ===================== Gráficas de detalle (2026-10-22) =====================
+   Título compartido por cada gráfica dentro de una pestaña de detalle —
+   mismo estilo que .subtitulo-top-clientes, reutilizado aquí también. */
+.subtitulo-grafica-reporte {
+  margin: 20px 0 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--pos-text-secondary);
+}
+
+/* ---- Gráfica de tendencia (línea, "Ventas por día") ---- */
+.grafica-tendencia {
+  padding: 14px 16px 10px;
+  border-radius: var(--radio-md);
+  background: var(--pos-bg-main);
+}
+
+.grafica-tendencia-pico {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  color: var(--pos-text-secondary);
+}
+
+.grafica-tendencia-pico strong {
+  color: var(--pos-text-primary);
+  font-family: var(--fuente-titulo);
+}
+
+/* viewBox fijo 300×100 (3:1) + aspect-ratio en vez de preserveAspectRatio
+   "none" — así los puntos no se deforman en elipses al estirarse (ver
+   reportes.ts, armarSerieVentas). */
+.svg-tendencia {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 1;
+  overflow: visible;
+}
+
+.linea-base-tendencia {
+  stroke: var(--pos-border);
+  stroke-width: 1;
+}
+
+.area-tendencia {
+  fill: var(--acento-seccion, var(--mod-ventas));
+  fill-opacity: 0.14;
+}
+
+.linea-tendencia {
+  fill: none;
+  stroke: var(--acento-seccion, var(--mod-ventas));
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.punto-tendencia-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.punto-tendencia-dot {
+  fill: var(--acento-seccion, var(--mod-ventas));
+  stroke: var(--pos-bg-main);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.grafica-tendencia-ejes {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: var(--pos-text-secondary);
+}
+
+.boton-enlace-grafica {
+  margin-top: 8px;
+  border: none;
+  background: none;
+  padding: 4px 0;
+  min-height: 32px;
+  color: var(--acento-seccion, var(--acento-modulo));
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Gemela accesible de la gráfica (ver cabecera de reportes.ts): la misma
+   serie en texto, siempre alcanzable con teclado. */
+.lista-detalle-serie {
+  list-style: none;
+  margin: 8px 0 4px;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lista-detalle-serie li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 8px;
+  border-radius: var(--radio-sm);
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+}
+
+.lista-detalle-serie li:nth-child(odd) {
+  background: var(--pos-bg-card);
+}
+
+/* ---- Barras horizontales de comparación de magnitud ---- */
+.grid-graficas-barras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-top: 4px;
+}
+
+.grafica-barras {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fila-barra {
+  display: grid;
+  grid-template-columns: minmax(90px, auto) 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+}
+
+.fila-barra-etiqueta {
+  color: var(--pos-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mismo patrón que .progreso-lealtad-barra (clientes.css) y
+   .barra-cliente-pista de arriba: track pastilla + overflow:hidden, el
+   relleno nunca lleva su propio radio — el track lo recorta. */
+.pista-barra {
+  height: 18px;
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-card);
+  overflow: hidden;
+}
+
+.relleno-barra {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.fila-barra-valor {
+  font-weight: 700;
+  font-family: var(--fuente-titulo);
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* ---- Medidor (insumos bajo mínimo / total) ---- */
+.medidor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.medidor-pista {
+  flex: 1;
+  height: 14px;
+  border-radius: var(--radio-pastilla);
+  overflow: hidden;
+}
+
+.medidor-relleno {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.medidor-etiqueta {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* En móvil, la etiqueta de cada barra ocupa su propia línea arriba de la
+   barra — con grid-template-columns fijo ya no cabía un nombre largo
+   ("Asistencias registradas") junto a la barra y el valor. */
+@media (max-width: 420px) {
+  .fila-barra {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .fila-barra-valor {
+    text-align: left;
+  }
+}
+
+/* En móvil (<480px) dos columnas de 145px ya no dejan suficiente ancho para
+   que una cifra como "MX$3,315.00" quepa en una línea — se parte en un
+   punto feo en vez del punto decimal. Una sola columna por fila le da a
+   cada cifra el ancho completo de la tarjeta, sin ese problema. */
+@media (max-width: 480px) {
+  .grid-stats-reporte {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ===================== Esqueleto de carga ===================== */
