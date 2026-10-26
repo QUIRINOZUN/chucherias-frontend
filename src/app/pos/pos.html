@@ -1030,29 +1030,91 @@
             </div>
 
             @if (metodoPago() === 'efectivo') {
-              <!-- EFECTIVO: botones rápidos con el total exacto y los billetes mayores al total;
-                   abajo se puede teclear un monto distinto. -->
-              <div class="sugerencias-efectivo">
-                @for (monto of sugerenciasEfectivo(); track monto) {
-                  <button
-                    type="button"
-                    class="boton-billete"
-                    [class.boton-billete-vector]="imagenBillete(monto)"
-                    [class.billete-activo]="montoRecibido() === monto"
-                    (click)="seleccionarMontoSugerido(monto)"
-                  >
-                    @if (imagenBillete(monto); as src) {
+              <!-- CONTEO DE EFECTIVO (2026-10-26): cada billete/moneda se toca las veces que
+                   corresponda y el total se suma solo — pensado para contar lo que de verdad
+                   entregó el cliente (ej. para pagar $45: 2 veces el billete de $20 + 1 vez la
+                   moneda de $5), no solo adivinar un total redondo. -->
+              <p class="etiqueta-denominaciones">Billetes</p>
+              <div class="grid-denominaciones">
+                @for (monto of denominacionesBilletes; track monto) {
+                  <div class="denominacion-efectivo">
+                    <div
+                      class="denominacion-visual-billete"
+                      [class.denominacion-con-conteo]="cantidadDenominacion(monto) > 0"
+                    >
                       <img
-                        [src]="src"
+                        [src]="imagenBillete(monto)"
                         [alt]="'Billete de ' + monto + ' pesos'"
                         class="billete-imagen"
                       />
-                    } @else {
-                      {{ monto | currency: 'MXN' : 'symbol' : '1.0-0' }}
-                    }
-                  </button>
+                    </div>
+                    <div class="opcion-contador-controles">
+                      <button
+                        type="button"
+                        (click)="quitarDenominacion(monto)"
+                        [disabled]="cantidadDenominacion(monto) === 0"
+                        [attr.aria-label]="'Quitar un billete de ' + monto + ' pesos'"
+                      >
+                        <svg class="icono" aria-hidden="true"><use href="#ic-menos" /></svg>
+                      </button>
+                      <span class="opcion-contador-cantidad">{{
+                        cantidadDenominacion(monto)
+                      }}</span>
+                      <button
+                        type="button"
+                        (click)="agregarDenominacion(monto)"
+                        [attr.aria-label]="'Agregar un billete de ' + monto + ' pesos'"
+                      >
+                        <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
+                      </button>
+                    </div>
+                  </div>
                 }
               </div>
+
+              <p class="etiqueta-denominaciones">Monedas</p>
+              <div class="grid-denominaciones">
+                @for (monto of denominacionesMonedas; track monto) {
+                  <div class="denominacion-efectivo">
+                    <div
+                      class="denominacion-visual-moneda"
+                      [class.denominacion-con-conteo]="cantidadDenominacion(monto) > 0"
+                    >
+                      {{ monto | currency: 'MXN' : 'symbol' : '1.0-0' }}
+                    </div>
+                    <div class="opcion-contador-controles">
+                      <button
+                        type="button"
+                        (click)="quitarDenominacion(monto)"
+                        [disabled]="cantidadDenominacion(monto) === 0"
+                        [attr.aria-label]="'Quitar una moneda de ' + monto + ' pesos'"
+                      >
+                        <svg class="icono" aria-hidden="true"><use href="#ic-menos" /></svg>
+                      </button>
+                      <span class="opcion-contador-cantidad">{{
+                        cantidadDenominacion(monto)
+                      }}</span>
+                      <button
+                        type="button"
+                        (click)="agregarDenominacion(monto)"
+                        [attr.aria-label]="'Agregar una moneda de ' + monto + ' pesos'"
+                      >
+                        <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              @if (hayConteoEfectivo()) {
+                <button
+                  type="button"
+                  class="boton-limpiar-conteo"
+                  (click)="limpiarConteoEfectivo()"
+                >
+                  Limpiar conteo
+                </button>
+              }
 
               <div class="campo-monto">
                 <label for="monto-recibido">O teclea el monto exacto</label>

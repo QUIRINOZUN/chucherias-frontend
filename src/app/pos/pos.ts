@@ -96,9 +96,11 @@ interface ItemCarrito {
   notasLibres: string;
 }
 
-// Billetes en circulación en México (excluye monedas: no tiene sentido
-// ofrecerlas como "monto entregado" de un vistazo).
-const DENOMINACIONES_MXN = [20, 50, 100, 200, 500, 1000];
+// Billetes y monedas en circulación en México que se ofrecen para "contar"
+// el efectivo entregado (2026-10-26) — separados porque se dibujan distinto
+// (los billetes tienen ilustración vectorial propia, las monedas no).
+const DENOMINACIONES_BILLETES_MXN = [20, 50, 100, 200, 500, 1000];
+const DENOMINACIONES_MONEDAS_MXN = [1, 2, 5, 10];
 
 // Foto de la venta ya registrada, con todo lo que muestra el comprobante.
 // Se arma con los datos LOCALES del momento de cobrar (carrito, monto
@@ -334,22 +336,71 @@ export class PosComponent implements OnInit, OnDestroy {
     return Math.round(total * (1 - preview.porcentaje / 100) * 100) / 100;
   });
 
-  // Botones rápidos de "con qué billete pagó": el total exacto (pago
-  // justo, sin cambio) + cada denominación real por encima del total. Si
-  // el cliente entrega una combinación que no calza con ningún billete
-  // (ej. $105), el cajero sigue pudiendo teclear el monto a mano.
-  sugerenciasEfectivo = computed(() => {
-    const total = this.totalAPagar();
-    return [total, ...DENOMINACIONES_MXN.filter((billete) => billete > total)];
-  });
+  // Denominaciones que dibuja la plantilla (billetes con su ilustración
+  // propia; monedas como chip circular con el número).
+  denominacionesBilletes = DENOMINACIONES_BILLETES_MXN;
+  denominacionesMonedas = DENOMINACIONES_MONEDAS_MXN;
+
+  // CONTEO DE EFECTIVO (2026-10-26, reemplaza los botones de "un solo
+  // toque" de antes): cada denominación se puede tocar varias veces —
+  // mismo patrón de contador +/- que ya usa la elección repetible de
+  // toppings (incrementarEleccionRepetible/decrementarEleccionRepetible) —
+  // y montoRecibido se recalcula solo como la suma de (denominación ×
+  // cuántas veces se tocó). Pensado para que el cajero cuente el efectivo
+  // real que le entregaron pieza por pieza, en vez de adivinar un total.
+  conteoEfectivo = signal<Map<number, number>>(new Map());
+
+  hayConteoEfectivo = computed(() => this.conteoEfectivo().size > 0);
+
+  cantidadDenominacion(monto: number): number {
+    return this.conteoEfectivo().get(monto) ?? 0;
+  }
+
+  agregarDenominacion(monto: number): void {
+    this.conteoEfectivo.update((mapa) => {
+      const nuevo = new Map(mapa);
+      nuevo.set(monto, (nuevo.get(monto) ?? 0) + 1);
+      return nuevo;
+    });
+    this.recalcularMontoDesdeConteo();
+  }
+
+  quitarDenominacion(monto: number): void {
+    this.conteoEfectivo.update((mapa) => {
+      const nuevo = new Map(mapa);
+      const actual = nuevo.get(monto) ?? 0;
+      if (actual <= 1) {
+        nuevo.delete(monto);
+      } else {
+        nuevo.set(monto, actual - 1);
+      }
+      return nuevo;
+    });
+    this.recalcularMontoDesdeConteo();
+  }
+
+  // "Me equivoqué, vuelvo a empezar" — borrar un conteo de varias
+  // denominaciones tocando "-" una por una sería tedioso.
+  limpiarConteoEfectivo(): void {
+    this.conteoEfectivo.set(new Map());
+    this.montoRecibido.set(null);
+  }
+
+  private recalcularMontoDesdeConteo(): void {
+    let suma = 0;
+    for (const [monto, cantidad] of this.conteoEfectivo()) {
+      suma += monto * cantidad;
+    }
+    this.montoRecibido.set(suma > 0 ? suma : null);
+  }
 
   // 2026-10-12: solo los billetes reales (20/50/100/200/500/1000) tienen una
-  // ilustración vectorial propia (public/img/billetes/); el "total exacto"
-  // de sugerenciasEfectivo casi siempre es un monto que no corresponde a
-  // ningún billete real (ej. $46), así que ese botón sigue mostrando solo
-  // el número.
+  // ilustración vectorial propia (public/img/billetes/); las monedas se
+  // dibujan como chip circular con el número, sin imagen.
   imagenBillete(monto: number): string | null {
-    return DENOMINACIONES_MXN.includes(monto) ? `/img/billetes/billete_${monto}.svg` : null;
+    return DENOMINACIONES_BILLETES_MXN.includes(monto)
+      ? `/img/billetes/billete_${monto}.svg`
+      : null;
   }
 
   // Cambio a devolver = monto recibido - total. Solo tiene sentido en
@@ -1087,6 +1138,7 @@ export class PosComponent implements OnInit, OnDestroy {
     this.errorVenta.set('');
     this.metodoPago.set('efectivo');
     this.montoRecibido.set(null);
+    this.conteoEfectivo.set(new Map());
     this.carritoAbierto.set(false);
     this.mostrarCobro.set(true);
   }
@@ -1100,18 +1152,18 @@ export class PosComponent implements OnInit, OnDestroy {
     this.metodoPago.set(metodo);
     if (metodo !== 'efectivo') {
       this.montoRecibido.set(null);
+      this.conteoEfectivo.set(new Map());
     }
   }
 
-  // Campo "O teclea el monto exacto": vacío o inválido = sin monto.
+  // Campo "O teclea el monto exacto": vacío o inválido = sin monto. Teclear
+  // aquí es una vía alterna al conteo de billetes/monedas de arriba, así
+  // que lo desconecta (si no, el conteo se vería "desactualizado" frente a
+  // un monto que ya no describe).
   actualizarMontoRecibido(valor: string): void {
     const numero = Number(valor);
     this.montoRecibido.set(valor === '' || Number.isNaN(numero) ? null : numero);
-  }
-
-  // Botones rápidos de billete: llenan el monto igual que si se tecleara.
-  seleccionarMontoSugerido(monto: number): void {
-    this.montoRecibido.set(monto);
+    this.conteoEfectivo.set(new Map());
   }
 
   // Decide si "Confirmar venta" está habilitado: hay carrito, no hay otra
@@ -1452,6 +1504,7 @@ export class PosComponent implements OnInit, OnDestroy {
     this.clienteTelefonoForm.set('');
     this.repartidorSeleccionadoId.set(null);
     this.montoRecibido.set(null);
+    this.conteoEfectivo.set(new Map());
     this.clienteLealtadSeleccionado.set(null);
     this.clienteLealtadQuery.set('');
     this.resultadosClienteLealtad.set([]);
