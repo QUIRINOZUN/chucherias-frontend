@@ -597,6 +597,7 @@
     <div class="overlay">
       <div
         class="panel-cobro panel-cobro-ancho"
+        [class.panel-cobro-horizontal]="!recibo()"
         role="dialog"
         aria-modal="true"
         [attr.aria-label]="recibo() ? 'Comprobante de venta' : 'Cobro'"
@@ -808,341 +809,349 @@
             }
           }
 
-          <!-- ENTREGA -->
-          <section class="seccion-cobro">
-            <div class="seccion-cobro-encabezado">
-              <span class="seccion-cobro-icono" aria-hidden="true">
-                <svg class="icono"><use href="#ic-paquete" /></svg>
-              </span>
-              <span class="seccion-cobro-titulo">Entrega</span>
-            </div>
-            <div class="metodos-pago">
-              <button
-                type="button"
-                class="boton-metodo"
-                [class.metodo-activo]="tipoEntrega() === 'presencial'"
-                (click)="seleccionarTipoEntrega('presencial')"
-              >
-                Presencial
-              </button>
-              <button
-                type="button"
-                class="boton-metodo"
-                [class.metodo-activo]="tipoEntrega() === 'domicilio'"
-                (click)="seleccionarTipoEntrega('domicilio')"
-              >
-                A domicilio
-              </button>
-            </div>
+          <!-- COLUMNAS DEL COBRO (2026-10-26): en pantallas anchas, Entrega +
+               Cliente de lealtad caen en una columna y Método de pago (la
+               sección más alta, con la grilla de billetes/monedas) en la
+               otra, para que la ventana quede casi horizontal en vez de un
+               solo scroll vertical largo. En móvil sigue siendo una sola
+               columna apilada (ver pos.css, min-width: 860px). -->
+          <div class="cobro-secciones">
+            <!-- ENTREGA -->
+            <section class="seccion-cobro">
+              <div class="seccion-cobro-encabezado">
+                <span class="seccion-cobro-icono" aria-hidden="true">
+                  <svg class="icono"><use href="#ic-paquete" /></svg>
+                </span>
+                <span class="seccion-cobro-titulo">Entrega</span>
+              </div>
+              <div class="metodos-pago">
+                <button
+                  type="button"
+                  class="boton-metodo"
+                  [class.metodo-activo]="tipoEntrega() === 'presencial'"
+                  (click)="seleccionarTipoEntrega('presencial')"
+                >
+                  Presencial
+                </button>
+                <button
+                  type="button"
+                  class="boton-metodo"
+                  [class.metodo-activo]="tipoEntrega() === 'domicilio'"
+                  (click)="seleccionarTipoEntrega('domicilio')"
+                >
+                  A domicilio
+                </button>
+              </div>
 
-            <!-- DATOS DEL CLIENTE: solo para domicilio, obligatorios para poder cobrar. -->
-            @if (tipoEntrega() === 'domicilio') {
-              <div class="campo-cliente-domicilio">
-                <label for="cliente-nombre">Nombre del cliente</label>
-                <input
-                  id="cliente-nombre"
-                  type="text"
-                  placeholder="Nombre de quien recibe"
-                  [value]="clienteNombreForm()"
-                  (input)="clienteNombreForm.set($any($event.target).value)"
-                />
-              </div>
-              <div class="campo-cliente-domicilio">
-                <label for="cliente-direccion">Dirección de entrega</label>
-                <input
-                  id="cliente-direccion"
-                  type="text"
-                  placeholder="Calle, número, colonia..."
-                  [value]="clienteDireccionForm()"
-                  (input)="clienteDireccionForm.set($any($event.target).value)"
-                />
-              </div>
-              <div class="campo-cliente-domicilio">
-                <label for="cliente-telefono">Teléfono de contacto</label>
-                <input
-                  id="cliente-telefono"
-                  type="tel"
-                  placeholder="Número de celular"
-                  [value]="clienteTelefonoForm()"
-                  (input)="clienteTelefonoForm.set($any($event.target).value)"
-                />
-              </div>
-              <!-- Repartidor (2026-10-16): opcional — si todavía no se sabe
+              <!-- DATOS DEL CLIENTE: solo para domicilio, obligatorios para poder cobrar. -->
+              @if (tipoEntrega() === 'domicilio') {
+                <div class="campo-cliente-domicilio">
+                  <label for="cliente-nombre">Nombre del cliente</label>
+                  <input
+                    id="cliente-nombre"
+                    type="text"
+                    placeholder="Nombre de quien recibe"
+                    [value]="clienteNombreForm()"
+                    (input)="clienteNombreForm.set($any($event.target).value)"
+                  />
+                </div>
+                <div class="campo-cliente-domicilio">
+                  <label for="cliente-direccion">Dirección de entrega</label>
+                  <input
+                    id="cliente-direccion"
+                    type="text"
+                    placeholder="Calle, número, colonia..."
+                    [value]="clienteDireccionForm()"
+                    (input)="clienteDireccionForm.set($any($event.target).value)"
+                  />
+                </div>
+                <div class="campo-cliente-domicilio">
+                  <label for="cliente-telefono">Teléfono de contacto</label>
+                  <input
+                    id="cliente-telefono"
+                    type="tel"
+                    placeholder="Número de celular"
+                    [value]="clienteTelefonoForm()"
+                    (input)="clienteTelefonoForm.set($any($event.target).value)"
+                  />
+                </div>
+                <!-- Repartidor (2026-10-16): opcional — si todavía no se sabe
                    quién la va a llevar, se puede asignar después desde
                    Comandas. Sin repartidores activos capturados, no se
                    muestra el selector (nada que elegir). -->
-              @if (repartidores().length > 0) {
-                <div class="campo-cliente-domicilio">
-                  <label for="repartidor-venta">Repartidor (opcional)</label>
-                  <select
-                    id="repartidor-venta"
-                    [value]="repartidorSeleccionadoId() ?? ''"
-                    (change)="seleccionarRepartidor($any($event.target).value)"
-                  >
-                    <option value="">Sin asignar todavía</option>
-                    @for (repartidor of repartidores(); track repartidor.id) {
-                      <option [value]="repartidor.id">{{ repartidor.nombre }}</option>
-                    }
-                  </select>
-                </div>
-              }
-            }
-          </section>
-
-          <!-- CLIENTE DE LEALTAD (RF-21/RF-22): opcional, independiente de si es
-               presencial o a domicilio. Buscar por nombre o teléfono; si no
-               existe, se puede crear ahí mismo. -->
-          <section class="seccion-cobro">
-            <div class="seccion-cobro-encabezado">
-              <span class="seccion-cobro-icono" aria-hidden="true">
-                <svg class="icono"><use href="#ic-corazon" /></svg>
-              </span>
-              <span class="seccion-cobro-titulo">Cliente de lealtad</span>
-              <span class="seccion-cobro-opcional">Opcional</span>
-            </div>
-            @if (clienteLealtadSeleccionado(); as cliente) {
-              <div class="cliente-lealtad-seleccionado">
-                <div>
-                  <strong>{{ cliente.nombre_completo }}</strong>
-                  @if (cliente.telefono) {
-                    <span class="cliente-lealtad-telefono"> · {{ cliente.telefono }}</span>
-                  }
-                  <p class="cliente-lealtad-visitas">
-                    {{ cliente.visitas_acumuladas }} visita(s) acumulada(s) en el ciclo
-                  </p>
-                </div>
-                <button type="button" class="boton-enlace-chico" (click)="quitarClienteLealtad()">
-                  Quitar
-                </button>
-              </div>
-            } @else {
-              <div class="campo-busqueda campo-busqueda-lealtad">
-                <input
-                  type="text"
-                  placeholder="Buscar por nombre o teléfono..."
-                  aria-label="Buscar cliente de lealtad"
-                  [value]="clienteLealtadQuery()"
-                  (input)="buscarClienteLealtad($any($event.target).value)"
-                />
-              </div>
-              @if (buscandoClienteLealtad()) {
-                <p class="cliente-lealtad-estado">Buscando...</p>
-              } @else if (clienteLealtadQuery().trim().length >= 2) {
-                @if (resultadosClienteLealtad().length > 0) {
-                  <ul class="resultados-cliente-lealtad">
-                    @for (resultado of resultadosClienteLealtad(); track resultado.id) {
-                      <li>
-                        <button
-                          type="button"
-                          class="boton-resultado-cliente-lealtad"
-                          (click)="seleccionarClienteLealtad(resultado)"
-                        >
-                          <strong>{{ resultado.nombre_completo }}</strong>
-                          @if (resultado.telefono) {
-                            <span> · {{ resultado.telefono }}</span>
-                          }
-                          <span class="cliente-lealtad-visitas-chico"
-                            >{{ resultado.visitas_acumuladas }} visitas</span
-                          >
-                        </button>
-                      </li>
-                    }
-                  </ul>
-                } @else if (!mostrarNuevoClienteLealtad()) {
-                  <p class="cliente-lealtad-estado">
-                    Sin resultados.
-                    <button
-                      type="button"
-                      class="boton-enlace-chico"
-                      (click)="abrirNuevoClienteLealtad()"
+                @if (repartidores().length > 0) {
+                  <div class="campo-cliente-domicilio">
+                    <label for="repartidor-venta">Repartidor (opcional)</label>
+                    <select
+                      id="repartidor-venta"
+                      [value]="repartidorSeleccionadoId() ?? ''"
+                      (change)="seleccionarRepartidor($any($event.target).value)"
                     >
-                      + Nuevo cliente
-                    </button>
-                  </p>
+                      <option value="">Sin asignar todavía</option>
+                      @for (repartidor of repartidores(); track repartidor.id) {
+                        <option [value]="repartidor.id">{{ repartidor.nombre }}</option>
+                      }
+                    </select>
+                  </div>
                 }
               }
-              @if (mostrarNuevoClienteLealtad()) {
-                <div class="nuevo-cliente-lealtad">
+            </section>
+
+            <!-- CLIENTE DE LEALTAD (RF-21/RF-22): opcional, independiente de si es
+               presencial o a domicilio. Buscar por nombre o teléfono; si no
+               existe, se puede crear ahí mismo. -->
+            <section class="seccion-cobro">
+              <div class="seccion-cobro-encabezado">
+                <span class="seccion-cobro-icono" aria-hidden="true">
+                  <svg class="icono"><use href="#ic-corazon" /></svg>
+                </span>
+                <span class="seccion-cobro-titulo">Cliente de lealtad</span>
+                <span class="seccion-cobro-opcional">Opcional</span>
+              </div>
+              @if (clienteLealtadSeleccionado(); as cliente) {
+                <div class="cliente-lealtad-seleccionado">
+                  <div>
+                    <strong>{{ cliente.nombre_completo }}</strong>
+                    @if (cliente.telefono) {
+                      <span class="cliente-lealtad-telefono"> · {{ cliente.telefono }}</span>
+                    }
+                    <p class="cliente-lealtad-visitas">
+                      {{ cliente.visitas_acumuladas }} visita(s) acumulada(s) en el ciclo
+                    </p>
+                  </div>
+                  <button type="button" class="boton-enlace-chico" (click)="quitarClienteLealtad()">
+                    Quitar
+                  </button>
+                </div>
+              } @else {
+                <div class="campo-busqueda campo-busqueda-lealtad">
                   <input
                     type="text"
-                    placeholder="Nombre completo *"
-                    aria-label="Nombre del nuevo cliente"
-                    [value]="nuevoClienteLealtadNombre()"
-                    (input)="nuevoClienteLealtadNombre.set($any($event.target).value)"
+                    placeholder="Buscar por nombre o teléfono..."
+                    aria-label="Buscar cliente de lealtad"
+                    [value]="clienteLealtadQuery()"
+                    (input)="buscarClienteLealtad($any($event.target).value)"
                   />
-                  <input
-                    type="tel"
-                    placeholder="Teléfono (opcional)"
-                    aria-label="Teléfono del nuevo cliente"
-                    [value]="nuevoClienteLealtadTelefono()"
-                    (input)="nuevoClienteLealtadTelefono.set($any($event.target).value)"
-                  />
-                  @if (errorClienteLealtad()) {
-                    <p class="error-cliente-lealtad">{{ errorClienteLealtad() }}</p>
-                  }
-                  <div class="nuevo-cliente-lealtad-acciones">
-                    <button
-                      type="button"
-                      class="boton-cancelar"
-                      (click)="cancelarNuevoClienteLealtad()"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="button"
-                      class="boton-confirmar"
-                      [disabled]="creandoClienteLealtad()"
-                      (click)="crearClienteLealtad()"
-                    >
-                      {{ creandoClienteLealtad() ? 'Creando...' : 'Crear y seleccionar' }}
-                    </button>
-                  </div>
                 </div>
+                @if (buscandoClienteLealtad()) {
+                  <p class="cliente-lealtad-estado">Buscando...</p>
+                } @else if (clienteLealtadQuery().trim().length >= 2) {
+                  @if (resultadosClienteLealtad().length > 0) {
+                    <ul class="resultados-cliente-lealtad">
+                      @for (resultado of resultadosClienteLealtad(); track resultado.id) {
+                        <li>
+                          <button
+                            type="button"
+                            class="boton-resultado-cliente-lealtad"
+                            (click)="seleccionarClienteLealtad(resultado)"
+                          >
+                            <strong>{{ resultado.nombre_completo }}</strong>
+                            @if (resultado.telefono) {
+                              <span> · {{ resultado.telefono }}</span>
+                            }
+                            <span class="cliente-lealtad-visitas-chico"
+                              >{{ resultado.visitas_acumuladas }} visitas</span
+                            >
+                          </button>
+                        </li>
+                      }
+                    </ul>
+                  } @else if (!mostrarNuevoClienteLealtad()) {
+                    <p class="cliente-lealtad-estado">
+                      Sin resultados.
+                      <button
+                        type="button"
+                        class="boton-enlace-chico"
+                        (click)="abrirNuevoClienteLealtad()"
+                      >
+                        + Nuevo cliente
+                      </button>
+                    </p>
+                  }
+                }
+                @if (mostrarNuevoClienteLealtad()) {
+                  <div class="nuevo-cliente-lealtad">
+                    <input
+                      type="text"
+                      placeholder="Nombre completo *"
+                      aria-label="Nombre del nuevo cliente"
+                      [value]="nuevoClienteLealtadNombre()"
+                      (input)="nuevoClienteLealtadNombre.set($any($event.target).value)"
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Teléfono (opcional)"
+                      aria-label="Teléfono del nuevo cliente"
+                      [value]="nuevoClienteLealtadTelefono()"
+                      (input)="nuevoClienteLealtadTelefono.set($any($event.target).value)"
+                    />
+                    @if (errorClienteLealtad()) {
+                      <p class="error-cliente-lealtad">{{ errorClienteLealtad() }}</p>
+                    }
+                    <div class="nuevo-cliente-lealtad-acciones">
+                      <button
+                        type="button"
+                        class="boton-cancelar"
+                        (click)="cancelarNuevoClienteLealtad()"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        class="boton-confirmar"
+                        [disabled]="creandoClienteLealtad()"
+                        (click)="crearClienteLealtad()"
+                      >
+                        {{ creandoClienteLealtad() ? 'Creando...' : 'Crear y seleccionar' }}
+                      </button>
+                    </div>
+                  </div>
+                }
               }
-            }
-          </section>
+            </section>
 
-          <!-- MÉTODO DE PAGO: efectivo o transferencia. -->
-          <section class="seccion-cobro">
-            <div class="seccion-cobro-encabezado">
-              <span class="seccion-cobro-icono" aria-hidden="true">
-                <svg class="icono"><use href="#ic-billetes" /></svg>
-              </span>
-              <span class="seccion-cobro-titulo">Método de pago</span>
-            </div>
-            <div class="metodos-pago">
-              <button
-                type="button"
-                class="boton-metodo"
-                [class.metodo-activo]="metodoPago() === 'efectivo'"
-                (click)="seleccionarMetodoPago('efectivo')"
-              >
-                Efectivo
-              </button>
-              <button
-                type="button"
-                class="boton-metodo"
-                [class.metodo-activo]="metodoPago() === 'transferencia'"
-                (click)="seleccionarMetodoPago('transferencia')"
-              >
-                Transferencia
-              </button>
-            </div>
+            <!-- MÉTODO DE PAGO: efectivo o transferencia. -->
+            <section class="seccion-cobro">
+              <div class="seccion-cobro-encabezado">
+                <span class="seccion-cobro-icono" aria-hidden="true">
+                  <svg class="icono"><use href="#ic-billetes" /></svg>
+                </span>
+                <span class="seccion-cobro-titulo">Método de pago</span>
+              </div>
+              <div class="metodos-pago">
+                <button
+                  type="button"
+                  class="boton-metodo"
+                  [class.metodo-activo]="metodoPago() === 'efectivo'"
+                  (click)="seleccionarMetodoPago('efectivo')"
+                >
+                  Efectivo
+                </button>
+                <button
+                  type="button"
+                  class="boton-metodo"
+                  [class.metodo-activo]="metodoPago() === 'transferencia'"
+                  (click)="seleccionarMetodoPago('transferencia')"
+                >
+                  Transferencia
+                </button>
+              </div>
 
-            @if (metodoPago() === 'efectivo') {
-              <!-- CONTEO DE EFECTIVO (2026-10-26): cada billete/moneda se toca las veces que
+              @if (metodoPago() === 'efectivo') {
+                <!-- CONTEO DE EFECTIVO (2026-10-26): cada billete/moneda se toca las veces que
                    corresponda y el total se suma solo — pensado para contar lo que de verdad
                    entregó el cliente (ej. para pagar $45: 2 veces el billete de $20 + 1 vez la
                    moneda de $5), no solo adivinar un total redondo. -->
-              <p class="etiqueta-denominaciones">Billetes</p>
-              <div class="grid-denominaciones">
-                @for (monto of denominacionesBilletes; track monto) {
-                  <div class="denominacion-efectivo">
-                    <div
-                      class="denominacion-visual-billete"
-                      [class.denominacion-con-conteo]="cantidadDenominacion(monto) > 0"
-                    >
-                      <img
-                        [src]="imagenBillete(monto)"
-                        [alt]="'Billete de ' + monto + ' pesos'"
-                        class="billete-imagen"
-                      />
-                    </div>
-                    <div class="opcion-contador-controles">
-                      <button
-                        type="button"
-                        (click)="quitarDenominacion(monto)"
-                        [disabled]="cantidadDenominacion(monto) === 0"
-                        [attr.aria-label]="'Quitar un billete de ' + monto + ' pesos'"
+                <p class="etiqueta-denominaciones">Billetes</p>
+                <div class="grid-denominaciones">
+                  @for (monto of denominacionesBilletes; track monto) {
+                    <div class="denominacion-efectivo">
+                      <div
+                        class="denominacion-visual-billete"
+                        [class.denominacion-con-conteo]="cantidadDenominacion(monto) > 0"
                       >
-                        <svg class="icono" aria-hidden="true"><use href="#ic-menos" /></svg>
-                      </button>
-                      <span class="opcion-contador-cantidad">{{
-                        cantidadDenominacion(monto)
-                      }}</span>
-                      <button
-                        type="button"
-                        (click)="agregarDenominacion(monto)"
-                        [attr.aria-label]="'Agregar un billete de ' + monto + ' pesos'"
-                      >
-                        <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
-                      </button>
+                        <img
+                          [src]="imagenBillete(monto)"
+                          [alt]="'Billete de ' + monto + ' pesos'"
+                          class="billete-imagen"
+                        />
+                      </div>
+                      <div class="opcion-contador-controles">
+                        <button
+                          type="button"
+                          (click)="quitarDenominacion(monto)"
+                          [disabled]="cantidadDenominacion(monto) === 0"
+                          [attr.aria-label]="'Quitar un billete de ' + monto + ' pesos'"
+                        >
+                          <svg class="icono" aria-hidden="true"><use href="#ic-menos" /></svg>
+                        </button>
+                        <span class="opcion-contador-cantidad">{{
+                          cantidadDenominacion(monto)
+                        }}</span>
+                        <button
+                          type="button"
+                          (click)="agregarDenominacion(monto)"
+                          [attr.aria-label]="'Agregar un billete de ' + monto + ' pesos'"
+                        >
+                          <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                }
-              </div>
-
-              <p class="etiqueta-denominaciones">Monedas</p>
-              <div class="grid-denominaciones">
-                @for (monto of denominacionesMonedas; track monto) {
-                  <div class="denominacion-efectivo">
-                    <div
-                      class="denominacion-visual-moneda"
-                      [class.denominacion-con-conteo]="cantidadDenominacion(monto) > 0"
-                    >
-                      {{ monto | currency: 'MXN' : 'symbol' : '1.0-0' }}
-                    </div>
-                    <div class="opcion-contador-controles">
-                      <button
-                        type="button"
-                        (click)="quitarDenominacion(monto)"
-                        [disabled]="cantidadDenominacion(monto) === 0"
-                        [attr.aria-label]="'Quitar una moneda de ' + monto + ' pesos'"
-                      >
-                        <svg class="icono" aria-hidden="true"><use href="#ic-menos" /></svg>
-                      </button>
-                      <span class="opcion-contador-cantidad">{{
-                        cantidadDenominacion(monto)
-                      }}</span>
-                      <button
-                        type="button"
-                        (click)="agregarDenominacion(monto)"
-                        [attr.aria-label]="'Agregar una moneda de ' + monto + ' pesos'"
-                      >
-                        <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
-                      </button>
-                    </div>
-                  </div>
-                }
-              </div>
-
-              @if (hayConteoEfectivo()) {
-                <button
-                  type="button"
-                  class="boton-limpiar-conteo"
-                  (click)="limpiarConteoEfectivo()"
-                >
-                  Limpiar conteo
-                </button>
-              }
-
-              <div class="campo-monto">
-                <label for="monto-recibido">O teclea el monto exacto</label>
-                <input
-                  id="monto-recibido"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  [value]="montoRecibido() ?? ''"
-                  (input)="actualizarMontoRecibido($any($event.target).value)"
-                />
-              </div>
-
-              @if (montoRecibido() != null) {
-                <!-- CAMBIO EN VIVO: verde si alcanza ("Cambio: $X"), rojo si falta dinero.
-                     "Confirmar venta" solo se habilita con cambio ≥ 0. -->
-                <div class="cambio" [class.cambio-invalido]="(cambio() ?? -1) < 0">
-                  @if ((cambio() ?? -1) < 0) {
-                    <span
-                      >Falta {{ totalAPagar() - (montoRecibido() ?? 0) | currency: 'MXN' }}</span
-                    >
-                  } @else {
-                    <span>Cambio: {{ cambio() | currency: 'MXN' }}</span>
                   }
                 </div>
+
+                <p class="etiqueta-denominaciones">Monedas</p>
+                <div class="grid-denominaciones">
+                  @for (monto of denominacionesMonedas; track monto) {
+                    <div class="denominacion-efectivo">
+                      <div
+                        class="denominacion-visual-moneda"
+                        [class.denominacion-con-conteo]="cantidadDenominacion(monto) > 0"
+                      >
+                        {{ monto | currency: 'MXN' : 'symbol' : '1.0-0' }}
+                      </div>
+                      <div class="opcion-contador-controles">
+                        <button
+                          type="button"
+                          (click)="quitarDenominacion(monto)"
+                          [disabled]="cantidadDenominacion(monto) === 0"
+                          [attr.aria-label]="'Quitar una moneda de ' + monto + ' pesos'"
+                        >
+                          <svg class="icono" aria-hidden="true"><use href="#ic-menos" /></svg>
+                        </button>
+                        <span class="opcion-contador-cantidad">{{
+                          cantidadDenominacion(monto)
+                        }}</span>
+                        <button
+                          type="button"
+                          (click)="agregarDenominacion(monto)"
+                          [attr.aria-label]="'Agregar una moneda de ' + monto + ' pesos'"
+                        >
+                          <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                @if (hayConteoEfectivo()) {
+                  <button
+                    type="button"
+                    class="boton-limpiar-conteo"
+                    (click)="limpiarConteoEfectivo()"
+                  >
+                    Limpiar conteo
+                  </button>
+                }
+
+                <div class="campo-monto">
+                  <label for="monto-recibido">O teclea el monto exacto</label>
+                  <input
+                    id="monto-recibido"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    [value]="montoRecibido() ?? ''"
+                    (input)="actualizarMontoRecibido($any($event.target).value)"
+                  />
+                </div>
+
+                @if (montoRecibido() != null) {
+                  <!-- CAMBIO EN VIVO: verde si alcanza ("Cambio: $X"), rojo si falta dinero.
+                     "Confirmar venta" solo se habilita con cambio ≥ 0. -->
+                  <div class="cambio" [class.cambio-invalido]="(cambio() ?? -1) < 0">
+                    @if ((cambio() ?? -1) < 0) {
+                      <span
+                        >Falta {{ totalAPagar() - (montoRecibido() ?? 0) | currency: 'MXN' }}</span
+                      >
+                    } @else {
+                      <span>Cambio: {{ cambio() | currency: 'MXN' }}</span>
+                    }
+                  </div>
+                }
               }
-            }
-          </section>
+            </section>
+          </div>
 
           @if (errorVenta()) {
             <p class="mensaje-error">{{ errorVenta() }}</p>
