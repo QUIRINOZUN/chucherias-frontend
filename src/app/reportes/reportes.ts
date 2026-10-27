@@ -177,9 +177,13 @@ export class ReportesComponent implements OnInit {
   filtroDesde = signal('');
   filtroHasta = signal('');
 
-  pestanaActiva = signal<'general' | 'ventas' | 'inventario' | 'personal' | 'clientes'>('general');
+  pestanaActiva = signal<
+    'general' | 'ventas' | 'inventario' | 'personal' | 'clientes' | 'rentabilidad'
+  >('general');
 
-  cambiarPestana(pestana: 'general' | 'ventas' | 'inventario' | 'personal' | 'clientes'): void {
+  cambiarPestana(
+    pestana: 'general' | 'ventas' | 'inventario' | 'personal' | 'clientes' | 'rentabilidad',
+  ): void {
     this.pestanaActiva.set(pestana);
   }
 
@@ -280,6 +284,28 @@ export class ReportesComponent implements OnInit {
   anchoBarraCliente(visitas: number): number {
     return Math.min(100, (visitas / 10) * 100);
   }
+
+  // Costeo y rentabilidad (2026-10-27): mismo patrón que medidorInventario
+  // — una proporción contra un límite, nunca una gráfica de barras. Rojo
+  // mientras falte CUALQUIER insumo por capturar (foto de ahora, no del
+  // periodo): mide avance de captura, no es un error del sistema.
+  // Ancho de la barra fina de cada producto del "top margen bajo" — un
+  // margen % puede ser negativo (el costo supera el precio); la barra se
+  // recorta a 0 en ese caso, el texto sigue mostrando el número real.
+  anchoBarraMargen(margenPorcentaje: number): number {
+    return Math.max(0, Math.min(100, margenPorcentaje));
+  }
+
+  medidorCostoCapturado = computed<{ porcentaje: number; color: string } | null>(() => {
+    const rent = this.resumen()?.rentabilidad;
+    if (!rent || rent.total_insumos === 0) {
+      return null;
+    }
+    return {
+      porcentaje: Math.min(100, (rent.insumos_sin_costo / rent.total_insumos) * 100),
+      color: rent.insumos_sin_costo > 0 ? 'var(--peligro-texto)' : 'var(--exito-texto)',
+    };
+  });
 
   private consulta?: Subscription;
 

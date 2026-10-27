@@ -138,6 +138,17 @@
           <svg class="icono" aria-hidden="true"><use href="#ic-corazon" /></svg>
           Clientes
         </button>
+        <button
+          type="button"
+          role="tab"
+          class="tab-reportes"
+          [class.tab-reportes-activa]="pestanaActiva() === 'rentabilidad'"
+          [attr.aria-selected]="pestanaActiva() === 'rentabilidad'"
+          (click)="cambiarPestana('rentabilidad')"
+        >
+          <svg class="icono" aria-hidden="true"><use href="#ic-calculadora" /></svg>
+          Rentabilidad
+        </button>
       </nav>
       <div class="tabs-reportes-desvanecido" aria-hidden="true"></div>
     </div>
@@ -210,6 +221,14 @@
                     <button type="button" (click)="cambiarPestana('personal')">
                       {{ r.personal.retardos }}
                       {{ r.personal.retardos === 1 ? 'retardo' : 'retardos' }} en el periodo
+                    </button>
+                  </li>
+                }
+                @if (r.rentabilidad.insumos_sin_costo > 0) {
+                  <li>
+                    <button type="button" (click)="cambiarPestana('rentabilidad')">
+                      {{ r.rentabilidad.insumos_sin_costo }} de {{ r.rentabilidad.total_insumos }}
+                      insumos sin costo capturado — el costo de venta mostrado es parcial
                     </button>
                   </li>
                 }
@@ -286,6 +305,24 @@
                 <span class="tarjeta-dominio-titulo">Clientes y lealtad</span>
                 <span class="tarjeta-dominio-cifra">{{ r.clientes.nuevos_en_periodo }}</span>
                 <span class="tarjeta-dominio-etiqueta">nuevos en el periodo</span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              class="tarjeta-dominio"
+              style="--acento-dominio: var(--mod-reportes)"
+              (click)="cambiarPestana('rentabilidad')"
+            >
+              <span class="tarjeta-dominio-icono" aria-hidden="true">
+                <svg class="icono"><use href="#ic-calculadora" /></svg>
+              </span>
+              <span class="tarjeta-dominio-cuerpo">
+                <span class="tarjeta-dominio-titulo">Rentabilidad</span>
+                <span class="tarjeta-dominio-cifra">{{
+                  r.rentabilidad.utilidad_bruta | currency: 'MXN'
+                }}</span>
+                <span class="tarjeta-dominio-etiqueta">utilidad bruta del periodo</span>
               </span>
             </button>
           </div>
@@ -627,6 +664,111 @@
             </ul>
           } @else {
             <p class="mensaje-estado">Todavía no hay clientes con visitas acumuladas.</p>
+          }
+        </section>
+      }
+
+      <!-- ======================= PESTAÑA: RENTABILIDAD ====================== -->
+      @if (pestanaActiva() === 'rentabilidad') {
+        <section
+          class="seccion-reporte seccion-reporte-completa"
+          style="--acento-seccion: var(--mod-reportes)"
+        >
+          <div class="seccion-reporte-encabezado">
+            <span class="seccion-reporte-icono" aria-hidden="true">
+              <svg class="icono"><use href="#ic-calculadora" /></svg>
+            </span>
+            <h2>Rentabilidad</h2>
+          </div>
+          <p class="seccion-reporte-aviso">
+            Ingresos y costo de lo vendido en el periodo seleccionado (costo REAL, no el teórico del
+            catálogo); insumos sin costo capturado y margen por producto son del catálogo de ahora
+            mismo.
+          </p>
+          <div class="grid-stats-reporte">
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{
+                r.rentabilidad.ingresos | currency: 'MXN'
+              }}</span>
+              <span class="stat-reporte-etiqueta">Ingresos</span>
+            </div>
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{
+                r.rentabilidad.costo_ventas | currency: 'MXN'
+              }}</span>
+              <span class="stat-reporte-etiqueta">Costo de venta</span>
+            </div>
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{
+                r.rentabilidad.utilidad_bruta | currency: 'MXN'
+              }}</span>
+              <span class="stat-reporte-etiqueta">Utilidad bruta</span>
+            </div>
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{
+                r.rentabilidad.margen_porcentaje !== null
+                  ? r.rentabilidad.margen_porcentaje + '%'
+                  : '—'
+              }}</span>
+              <span class="stat-reporte-etiqueta">Margen</span>
+            </div>
+          </div>
+
+          @if (r.rentabilidad.lineas_sin_costo > 0) {
+            <p class="seccion-reporte-aviso">
+              {{ r.rentabilidad.lineas_sin_costo }} de
+              {{ r.rentabilidad.lineas_con_costo + r.rentabilidad.lineas_sin_costo }} productos
+              vendidos en el periodo todavía no tienen costo capturado — el costo de venta de arriba
+              es parcial, no el real completo.
+            </p>
+          }
+
+          <!-- MEDIDOR: insumos sin costo capturado / total — mismo patrón que
+               el medidor de Inventario (proporción contra un límite). -->
+          @if (medidorCostoCapturado(); as m) {
+            <h3 class="subtitulo-grafica-reporte">Insumos sin costo capturado</h3>
+            <div class="medidor">
+              <div
+                class="medidor-pista"
+                [style.background]="'color-mix(in srgb, ' + m.color + ' 18%, var(--pos-bg-card))'"
+              >
+                <div
+                  class="medidor-relleno"
+                  [style.width.%]="m.porcentaje"
+                  [style.background]="m.color"
+                ></div>
+              </div>
+              <span class="medidor-etiqueta">
+                {{ r.rentabilidad.insumos_sin_costo }} de {{ r.rentabilidad.total_insumos }} ({{
+                  m.porcentaje | number: '1.0-0'
+                }}%)
+              </span>
+            </div>
+          }
+
+          @if (r.rentabilidad.top_margen_bajo.length > 0) {
+            <p class="subtitulo-top-clientes">Menor margen en el catálogo actual</p>
+            <ul class="lista-top-clientes">
+              @for (producto of r.rentabilidad.top_margen_bajo; track producto.variante_id) {
+                <li class="item-top-cliente">
+                  <div class="item-top-cliente-fila">
+                    <span>{{ producto.producto_nombre }} ({{ producto.variante_nombre }})</span>
+                    <span class="badge-visitas-reporte">{{ producto.margen_porcentaje }}%</span>
+                  </div>
+                  <div class="barra-cliente-pista">
+                    <div
+                      class="barra-cliente-relleno"
+                      [style.width.%]="anchoBarraMargen(producto.margen_porcentaje)"
+                    ></div>
+                  </div>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="mensaje-estado">
+              Todavía no hay suficientes costos capturados para calcular márgenes por producto —
+              captúralos desde Inventario.
+            </p>
           }
         </section>
       }

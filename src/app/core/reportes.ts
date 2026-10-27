@@ -66,12 +66,42 @@ export interface ResumenClientes {
   top_clientes: ClienteTop[];
 }
 
+// Una variante del catálogo actual con el margen % más bajo (2026-10-27) —
+// "foto de ahora" (precio y costo de hoy), no del periodo filtrado.
+export interface ProductoMargenBajo {
+  variante_id: number;
+  variante_nombre: string;
+  producto_nombre: string;
+  precio: number;
+  costo: number;
+  margen_porcentaje: number;
+}
+
+// Costeo y rentabilidad (2026-10-27). `ingresos`/`costo_ventas`/
+// `utilidad_bruta`/`margen_porcentaje`/`lineas_con_costo`/
+// `lineas_sin_costo` SÍ se acotan al periodo filtrado (costo REAL de lo
+// que se vendió, no el teórico del catálogo). `insumos_sin_costo`/
+// `total_insumos`/`top_margen_bajo` son una foto de AHORA (el catálogo
+// actual), igual criterio que `ResumenInventario.bajo_minimo`.
+export interface ResumenRentabilidad {
+  ingresos: number;
+  costo_ventas: number;
+  utilidad_bruta: number;
+  margen_porcentaje: number | null;
+  lineas_con_costo: number;
+  lineas_sin_costo: number;
+  insumos_sin_costo: number;
+  total_insumos: number;
+  top_margen_bajo: ProductoMargenBajo[];
+}
+
 export interface ResumenReportes {
   periodo: { desde: string | null; hasta: string | null };
   ventas: ResumenVentas;
   inventario: ResumenInventario;
   personal: ResumenPersonal;
   clientes: ResumenClientes;
+  rentabilidad: ResumenRentabilidad;
 }
 
 export interface FiltrosReporte {
