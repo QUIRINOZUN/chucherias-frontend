@@ -212,6 +212,11 @@
                             @if (insumo.costo_extra) {
                               · +{{ insumo.costo_extra | currency: 'MXN' }} por elección
                             }
+                            @if (insumo.costo_unitario) {
+                              · costo {{ insumo.costo_unitario | currency: 'MXN' }}/{{
+                                insumo.unidad_medida
+                              }}
+                            }
                           </span>
                           @if (insumo.alerta) {
                             <span class="badge-alerta">Bajo mínimo</span>
@@ -440,6 +445,26 @@
             [value]="costoExtraForm() ?? ''"
             (input)="
               costoExtraForm.set(
+                $any($event.target).value === '' ? null : +$any($event.target).value
+              )
+            "
+          />
+        </div>
+
+        <div class="campo">
+          <label for="costo-unitario-insumo">
+            Costo unitario (opcional) — cuánto cuesta UNA {{ unidadForm() }} de este insumo, para
+            calcular el margen de cada receta en Recetario y Reportes
+          </label>
+          <input
+            id="costo-unitario-insumo"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Sin capturar"
+            [value]="costoUnitarioForm() ?? ''"
+            (input)="
+              costoUnitarioForm.set(
                 $any($event.target).value === '' ? null : +$any($event.target).value
               )
             "

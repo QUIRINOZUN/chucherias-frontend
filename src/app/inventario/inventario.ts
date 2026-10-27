@@ -380,6 +380,9 @@ export class InventarioComponent implements OnInit {
   // RF-16 (2026-10-13): cargo extra cuando este insumo se elige como opción
   // con costo en el POS (ej. "cacahuate diferente" +$5) — null = sin cargo.
   costoExtraForm = signal<number | null>(null);
+  // Costeo y rentabilidad (2026-10-27): costo de una unidad de este insumo
+  // — null = todavía sin capturar.
+  costoUnitarioForm = signal<number | null>(null);
   procesandoForm = signal(false);
   errorFormulario = signal('');
 
@@ -498,6 +501,7 @@ export class InventarioComponent implements OnInit {
     // común es dar de alta un insumo mientras se navega esa misma sección.
     this.categoriaIdForm.set(this.categoriaFiltroId());
     this.costoExtraForm.set(null);
+    this.costoUnitarioForm.set(null);
     this.mostrarNuevoProveedor.set(false);
     this.nombreProveedorForm.set('');
     this.mostrarNuevaCategoria.set(false);
@@ -514,6 +518,9 @@ export class InventarioComponent implements OnInit {
     this.proveedorIdForm.set(insumo.proveedor_id);
     this.categoriaIdForm.set(insumo.categoria_id);
     this.costoExtraForm.set(insumo.costo_extra != null ? Number(insumo.costo_extra) : null);
+    this.costoUnitarioForm.set(
+      insumo.costo_unitario != null ? Number(insumo.costo_unitario) : null,
+    );
     this.mostrarNuevoProveedor.set(false);
     this.nombreProveedorForm.set('');
     this.mostrarNuevaCategoria.set(false);
@@ -550,6 +557,7 @@ export class InventarioComponent implements OnInit {
       proveedor_id: this.proveedorIdForm(),
       categoria_id: this.categoriaIdForm(),
       costo_extra: this.costoExtraForm(),
+      costo_unitario: this.costoUnitarioForm(),
     };
 
     const peticion =

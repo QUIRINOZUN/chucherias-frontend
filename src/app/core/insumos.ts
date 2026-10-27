@@ -38,6 +38,11 @@ export interface Insumo {
   // opción con costo en el POS (ej. "cacahuate diferente" +$5). null = sin
   // cargo (la gran mayoría de los insumos).
   costo_extra: number | null;
+  // Costeo y rentabilidad (2026-10-27): costo de UNA unidad de este insumo
+  // (en su propia unidad_medida) — null = todavía sin capturar. Alimenta el
+  // costo/margen de cada receta en Recetario y la pestaña Rentabilidad de
+  // Reportes.
+  costo_unitario: number | null;
 }
 
 // Datos para crear/editar un insumo.
@@ -48,6 +53,7 @@ export interface DatosInsumo {
   proveedor_id: number | null;
   categoria_id: number | null;
   costo_extra: number | null;
+  costo_unitario: number | null;
 }
 
 // Un insumo con cargo extra activo — lo que consulta el POS (ver
