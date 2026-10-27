@@ -136,6 +136,9 @@ export class RecetarioComponent implements OnInit {
         tiene_imagen_referencia: boolean;
         editado_por_nombre: string | null;
         fecha_edicion: string | null;
+        costo_receta: number | null;
+        margen: number | null;
+        margen_porcentaje: number | null;
       }
     >();
     for (const v of this.variantes()) {
@@ -147,6 +150,9 @@ export class RecetarioComponent implements OnInit {
         tiene_imagen_referencia: v.tiene_imagen_referencia,
         editado_por_nombre: v.editado_por_nombre,
         fecha_edicion: v.fecha_edicion,
+        costo_receta: v.costo_receta,
+        margen: v.margen,
+        margen_porcentaje: v.margen_porcentaje,
       });
     }
     return mapa;
@@ -203,6 +209,9 @@ export class RecetarioComponent implements OnInit {
             tiene_imagen_referencia: recetaInfo.get(v.id)?.tiene_imagen_referencia ?? false,
             editado_por_nombre: recetaInfo.get(v.id)?.editado_por_nombre ?? null,
             fecha_edicion: recetaInfo.get(v.id)?.fecha_edicion ?? null,
+            costo_receta: recetaInfo.get(v.id)?.costo_receta ?? null,
+            margen: recetaInfo.get(v.id)?.margen ?? null,
+            margen_porcentaje: recetaInfo.get(v.id)?.margen_porcentaje ?? null,
           }));
 
         // Con búsqueda activa, un producto sin ninguna coincidencia (ni su
@@ -429,6 +438,40 @@ export class RecetarioComponent implements OnInit {
     );
     return this.insumos().filter((i) => !usadosEnOtras.has(i.id));
   }
+
+  // Costeo y rentabilidad (2026-10-27): costo de una línea del formulario,
+  // calculado en el cliente contra el costo_unitario ya cargado en
+  // insumos() — null si falta el insumo, la cantidad, o ese insumo
+  // todavía no tiene costo capturado. Vive aquí (no en el servidor) porque
+  // es solo una vista previa mientras se edita, antes de guardar.
+  costoLinea(linea: LineaFormulario): number | null {
+    if (linea.insumo_id == null || linea.cantidad == null) {
+      return null;
+    }
+    const insumo = this.insumos().find((i) => i.id === linea.insumo_id);
+    if (!insumo || insumo.costo_unitario == null) {
+      return null;
+    }
+    return linea.cantidad * insumo.costo_unitario;
+  }
+
+  // Total de la receta en construcción — null si falta costo en CUALQUIER
+  // línea (no se suma un total parcial que confundiría).
+  costoTotalRecetaForm = computed(() => {
+    const lineas = this.lineasForm();
+    if (lineas.length === 0) {
+      return null;
+    }
+    let total = 0;
+    for (const linea of lineas) {
+      const costo = this.costoLinea(linea);
+      if (costo === null) {
+        return null;
+      }
+      total += costo;
+    }
+    return total;
+  });
 
   // Al elegir insumo se autocompleta su unidad base — ver nota del
   // encabezado sobre por qué no se deja editar.

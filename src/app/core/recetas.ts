@@ -36,6 +36,12 @@ export interface VarianteConReceta {
   // la variante todavía no tiene receta capturada.
   editado_por_nombre: string | null;
   fecha_edicion: string | null;
+  // Costeo y rentabilidad (2026-10-27): null si no tiene receta, o si
+  // algún insumo de su receta todavía no tiene costo_unitario capturado —
+  // nunca un costo parcial engañoso.
+  costo_receta: number | null;
+  margen: number | null;
+  margen_porcentaje: number | null;
 }
 
 // Un paso del tutorial de elaboración (GET/PUT .../tutorial).
@@ -55,6 +61,11 @@ export interface LineaReceta {
   insumo_unidad_base: string;
   cantidad: number;
   unidad_medida: string;
+  // Costeo (2026-10-27): costo de una unidad de este insumo y, ya
+  // multiplicado por `cantidad`, el costo de esta línea — ambos null si el
+  // insumo todavía no tiene costo_unitario capturado.
+  costo_unitario: number | null;
+  costo_linea: number | null;
 }
 
 // Una línea tal como la arma el formulario antes de guardar.

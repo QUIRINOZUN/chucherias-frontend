@@ -295,6 +295,25 @@
   height: 13px;
 }
 
+/* Costeo y rentabilidad (2026-10-27): solo visible cuando la receta tiene
+   costo completo — verde normal, rojo si el margen es bajo (<40%, umbral
+   razonable para comida: un food cost sano ronda 25-35% del precio). */
+.badge-margen {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--action-success) 16%, var(--pos-bg-card));
+  color: var(--exito-texto);
+  white-space: nowrap;
+}
+
+.badge-margen-bajo {
+  background: color-mix(in srgb, var(--action-danger) 16%, var(--pos-bg-card));
+  color: var(--peligro-texto);
+}
+
 /* ---- Ventana emergente: editor de receta ---- */
 .overlay {
   position: fixed;
@@ -395,6 +414,37 @@
   font-size: 0.78rem;
   color: var(--pos-text-secondary);
   text-align: center;
+}
+
+/* Costeo (2026-10-27): subtotal de la línea, vista previa mientras se
+   edita — "—" (color apagado, igual que .linea-receta-unidad) si falta
+   algún dato para calcularlo. */
+.linea-receta-costo {
+  flex-shrink: 0;
+  width: 64px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--pos-text-secondary);
+  text-align: right;
+}
+
+.costo-total-receta {
+  margin: 4px 0 12px;
+  font-size: 0.85rem;
+  color: var(--pos-text-secondary);
+}
+
+.costo-total-receta strong {
+  color: var(--pos-text-primary);
+  font-family: var(--fuente-titulo);
+}
+
+.costo-total-margen {
+  margin-left: 4px;
+}
+
+.costo-total-incompleto {
+  font-style: italic;
 }
 
 .boton-quitar-linea {

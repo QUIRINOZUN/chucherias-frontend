@@ -180,6 +180,20 @@
                                 </svg>
                               </span>
                             }
+                            <!-- Costeo y rentabilidad (2026-10-27): solo aparece cuando TODOS
+                                 los insumos de la receta ya tienen costo_unitario capturado —
+                                 nunca un margen calculado con datos incompletos. -->
+                            @if (variante.margen_porcentaje !== null) {
+                              <span
+                                class="badge-margen"
+                                [class.badge-margen-bajo]="variante.margen_porcentaje < 40"
+                                title="Costo {{
+                                  variante.costo_receta | currency: 'MXN'
+                                }} · Margen {{ variante.margen | currency: 'MXN' }}"
+                              >
+                                {{ variante.margen_porcentaje }}% margen
+                              </span>
+                            }
                           </li>
                         }
                       </ul>
@@ -519,6 +533,12 @@
                   (input)="actualizarCantidadLinea($index, $any($event.target).value)"
                 />
                 <span class="linea-receta-unidad">{{ linea.unidad_medida || '—' }}</span>
+                <!-- Costeo (2026-10-27): subtotal de esta línea, vista previa en el
+                     cliente — "—" si falta el insumo, la cantidad, o ese insumo
+                     todavía no tiene costo_unitario capturado. -->
+                <span class="linea-receta-costo">
+                  {{ costoLinea(linea) !== null ? (costoLinea(linea) | currency: 'MXN') : '—' }}
+                </span>
                 <button
                   type="button"
                   class="boton-quitar-linea"
@@ -530,6 +550,30 @@
               </li>
             }
           </ul>
+
+          @if (lineasForm().length > 0) {
+            <p class="costo-total-receta">
+              Costo total de la receta:
+              @if (costoTotalRecetaForm() !== null) {
+                <strong>{{ costoTotalRecetaForm() | currency: 'MXN' }}</strong>
+                @if (variante.precio > 0) {
+                  <span class="costo-total-margen">
+                    (margen
+                    {{
+                      (
+                        ((variante.precio - costoTotalRecetaForm()!) / variante.precio) *
+                        100
+                      ).toFixed(1)
+                    }}%)
+                  </span>
+                }
+              } @else {
+                <span class="costo-total-incompleto"
+                  >sin calcular — falta capturar el costo de algún insumo</span
+                >
+              }
+            </p>
+          }
 
           <button type="button" class="boton-agregar-linea" (click)="agregarLinea()">
             <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
