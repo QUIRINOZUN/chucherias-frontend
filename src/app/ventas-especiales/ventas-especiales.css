@@ -734,6 +734,48 @@
   box-shadow: none;
 }
 
+.boton-eliminar-cotizacion-ve {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 10px;
+  border: 1px solid var(--action-danger);
+  background: transparent;
+  color: var(--action-danger);
+  border-radius: var(--radio-md);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.boton-eliminar-cotizacion-ve:hover {
+  background: var(--action-danger);
+  color: #fff;
+}
+
+.texto-confirmacion-ve {
+  margin: 0 0 16px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--pos-text-primary);
+}
+
+.boton-confirmar-eliminar-ve {
+  flex: 1;
+  min-height: 52px;
+  border: none;
+  background: var(--action-danger);
+  color: #fff;
+  border-radius: var(--radio-md);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.boton-confirmar-eliminar-ve:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ===================== Ventana: elegir variante ===================== */
 .overlay {
   position: fixed;

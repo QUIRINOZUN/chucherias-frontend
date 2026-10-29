@@ -141,6 +141,12 @@ export class VentasEspecialesComponent implements OnInit {
   guardando = signal(false);
   errorGuardar = signal('');
 
+  // Eliminar (solo al editar una cotización ya guardada, sin importar su
+  // estado — se puede borrar lo mismo una "cotizada" que una "cancelada").
+  mostrarConfirmarEliminar = signal(false);
+  eliminando = signal(false);
+  errorEliminarCotizacion = signal('');
+
   // ---- Catálogo (todos los productos del menú, igual fuente que el POS) ----
   categorias = signal<Categoria[]>([]);
   productos = signal<Producto[]>([]);
@@ -458,5 +464,39 @@ export class VentasEspecialesComponent implements OnInit {
 
   volverAlDashboard(): void {
     this.router.navigate(['/dashboard']);
+  }
+
+  // ---------------------------------------------------------------------------
+  // DETALLE: eliminar
+  // ---------------------------------------------------------------------------
+  abrirConfirmarEliminar(): void {
+    this.mostrarConfirmarEliminar.set(true);
+    this.errorEliminarCotizacion.set('');
+  }
+
+  cerrarConfirmarEliminar(): void {
+    if (this.eliminando()) return;
+    this.mostrarConfirmarEliminar.set(false);
+  }
+
+  confirmarEliminar(): void {
+    const venta = this.ventaEditando();
+    if (!venta || this.eliminando()) return;
+
+    this.eliminando.set(true);
+    this.errorEliminarCotizacion.set('');
+    this.ventasEspecialesService.eliminar(venta.id).subscribe({
+      next: () => {
+        this.eliminando.set(false);
+        this.mostrarConfirmarEliminar.set(false);
+        this.volverALista();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.eliminando.set(false);
+        this.errorEliminarCotizacion.set(
+          error.error?.error || 'No se pudo eliminar la cotización.',
+        );
+      },
+    });
   }
 }

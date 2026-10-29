@@ -123,4 +123,9 @@ export class VentasEspecialesService {
   editar(id: number, datos: DatosEdicionVentaEspecial): Observable<VentaEspecialDetalle> {
     return this.http.patch<VentaEspecialDetalle>(`${this.apiUrl}/ventas-especiales/${id}`, datos);
   }
+
+  // DELETE /api/ventas-especiales/:id — sin importar el estado de la cotización.
+  eliminar(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/ventas-especiales/${id}`);
+  }
 }

@@ -410,6 +410,16 @@
         </button>
       </div>
 
+      <!-- Eliminar: solo al editar una cotización ya guardada, sin importar
+           su estado (una "entregada" o "cancelada" se puede borrar igual que
+           una "cotizada") — separado de Cancelar/Guardar por ser la única
+           acción irreversible de esta pantalla. -->
+      @if (ventaEditando()) {
+        <button type="button" class="boton-eliminar-cotizacion-ve" (click)="abrirConfirmarEliminar()">
+          Eliminar cotización
+        </button>
+      }
+
       <!-- VENTANA: elegir variante del producto tocado. -->
       @if (productoAbierto(); as producto) {
         <div class="overlay">
@@ -446,6 +456,49 @@
                   </button>
                 }
               }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- VENTANA: confirmar eliminar la cotización completa. -->
+      @if (mostrarConfirmarEliminar()) {
+        <div class="overlay">
+          <div
+            class="panel-selector-variante-ve"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Eliminar cotización"
+            appFocoDialogo
+            (cerrarConEscape)="cerrarConfirmarEliminar()"
+          >
+            <h2>Eliminar cotización</h2>
+            <p class="texto-confirmacion-ve">
+              ¿Eliminar la cotización de <strong>{{ clienteNombreForm() }}</strong>? Esta acción no
+              se puede deshacer.
+            </p>
+
+            @if (errorEliminarCotizacion()) {
+              <p class="mensaje-estado mensaje-error">{{ errorEliminarCotizacion() }}</p>
+            }
+
+            <div class="acciones-cotizacion">
+              <button
+                type="button"
+                class="boton-cancelar-ve"
+                [disabled]="eliminando()"
+                (click)="cerrarConfirmarEliminar()"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                class="boton-confirmar-eliminar-ve"
+                [disabled]="eliminando()"
+                (click)="confirmarEliminar()"
+              >
+                {{ eliminando() ? 'Eliminando...' : 'Sí, eliminar' }}
+              </button>
             </div>
           </div>
         </div>
