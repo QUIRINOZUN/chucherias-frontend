@@ -47,6 +47,12 @@
   /* Defensa adicional: un nombre largo nunca debe forzar scroll horizontal,
      sin importar qué tan angosta sea la pantalla. */
   overflow-wrap: anywhere;
+  /* SOFT 85, un poco más que el 60 global (2026-10-27, "taller artesanal"):
+     mismo criterio que .modulo-titulo, aplicado también al saludo para que
+     la pantalla se sienta consistente. */
+  font-variation-settings:
+    'SOFT' 85,
+    'WONK' 1;
 }
 
 /* En el renglón angosto (logo + botón), el saludo se manda a su propio
@@ -235,14 +241,22 @@
   gap: 8px;
   min-height: 44px;
   padding: 22px 20px;
-  background: var(--pos-bg-card);
+  background-color: var(--pos-bg-card);
+  /* Textura de papel (2026-10-27, dirección "taller artesanal"): puntos
+     casi imperceptibles (3% de opacidad) sobre la tarjeta — da sensación
+     de papel/cartulina en vez de un bloque de color plano. Deliberadamente
+     sutil: nunca debe competir con el texto ni con el borde de color. */
+  background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0);
+  background-size: 4px 4px;
   animation: subir 0.3s ease both;
-  /* Esquina inferior izquierda a propósito sin redondear (2026-10-13): una
-     tarjeta perfectamente simétrica en sus 4 esquinas es el molde más
-     genérico posible — esta pequeña irregularidad, junto al borde de color
-     del lado izquierdo, hace que la tarjeta se sienta más una "etiqueta"
-     recortada que un bloque de plantilla. */
-  border-radius: var(--radio-lg) var(--radio-lg) var(--radio-lg) 4px;
+  /* Esquina inferior izquierda a propósito sin redondear (2026-10-13) +
+     recorte diagonal (2026-10-27, dirección "taller artesanal"): el
+     clip-path corta esa misma esquina en diagonal en vez de un ángulo
+     recto — se siente más una esquina de papel doblado/recortado a mano
+     que un corte limpio de CSS. Coordenadas en % a propósito: se adapta
+     solo sin importar el tamaño real de la tarjeta (varía por columna). */
+  border-radius: var(--radio-lg) var(--radio-lg) var(--radio-lg) 6px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 8% 100%, 0 92%);
   border-left: 4px solid var(--acento-modulo, var(--action-primary));
   box-shadow: var(--sombra-suave);
   text-decoration: none;
@@ -345,7 +359,14 @@
   display: grid;
   place-items: center;
   margin-bottom: 8px;
-  border-radius: 50%;
+  /* Sello de hule (2026-10-27, dirección "taller artesanal"): el círculo
+     perfecto se reemplaza por un contorno ligeramente irregular (radios
+     distintos por esquina, en vez de 50% uniforme) + una ligera inclinación
+     en reposo — imita un sello estampado a mano en vez de un ícono de
+     plantilla. El giro mayor al pasar el cursor (regla @media hover: hover
+     de abajo) ya existía, sin cambios. */
+  border-radius: 48% 52% 45% 55% / 55% 45% 52% 48%;
+  transform: rotate(-1deg);
   background: color-mix(
     in srgb,
     var(--acento-modulo, var(--action-primary)) 20%,
@@ -373,8 +394,12 @@
   font-family: var(--fuente-titulo);
   font-weight: 800;
   font-size: 1.15rem;
+  /* SOFT 100, no el 60 global (2026-10-27, dirección "taller artesanal"):
+     más presencia de las alternas "chuecas" de Fraunces en el título de
+     cada módulo — es el elemento que más levanta "hecho a mano" sobre
+     "plantilla genérica". Acotado a esta clase, no al h1/h2/h3 global. */
   font-variation-settings:
-    'SOFT' 60,
+    'SOFT' 100,
     'WONK' 1;
 }
 
