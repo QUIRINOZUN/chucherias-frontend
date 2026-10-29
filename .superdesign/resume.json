@@ -184,6 +184,53 @@
         }
       },
       "updatedAt": "2026-10-28T08:00:00Z"
+    },
+    "/ventas-especiales": {
+      "targetKind": "existing-ui",
+      "projectId": "9eda39df-a714-407d-b83d-03e5462f3b90",
+      "baselineDraftId": "2fd4ddcf-b0c8-441e-851b-878a9e92b702",
+      "activeDraftId": "2fd4ddcf-b0c8-441e-851b-878a9e92b702",
+      "designSystemPath": ".superdesign/design-system.md",
+      "referenceIds": [],
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "src/styles.css",
+        "src/index.html",
+        "src/app/pos/categoria-estilos.ts",
+        "src/app/ventas-especiales/ventas-especiales.ts",
+        "src/app/ventas-especiales/ventas-especiales.html",
+        "src/app/ventas-especiales/ventas-especiales.css"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "d77a2b1c5c3989328853b7f1ddb35b3ab2e26489271364fcd628528d6412d0d3",
+        "src/styles.css": "8d09781c1f6d063a200efc925a9062897d25d0b084f6a938c614f5fc2824a8eb",
+        "src/index.html": "349f4e2a0c6dead4a34b6a84a1cd3e30f1fef2a065ef34aeabf93cf5c693c9e7",
+        "src/app/pos/categoria-estilos.ts": "6021dfc9e82ae600b332b833289d50f96f99ae4f112d39db6fed65e64964661d",
+        "src/app/ventas-especiales/ventas-especiales.ts": "7ec182f3a91be4b10bbbad5769db6e46d99d1fedb7a441b61a4fd50b11aa89d6",
+        "src/app/ventas-especiales/ventas-especiales.html": "ed7615fc11a2f6a21d866c7b6f85df061eeb701c0b122e519a3f8d63971d707a",
+        "src/app/ventas-especiales/ventas-especiales.css": "0addcc0af2b867c2fe84737f11f0bccbe745e25eaba3e41af18529888a9cafbc"
+      },
+      "components": [],
+      "drafts": {
+        "2fd4ddcf-b0c8-441e-851b-878a9e92b702": {
+          "title": "Ventas especiales — estado actual",
+          "visualDirection": "pixel-perfect reproduction of current UI (ground truth) — both views (agenda + crear/editar) reproduced stacked on canvas, no logo position on this screen",
+          "currentVersion": 1
+        },
+        "98484a98-4eca-4ea1-9315-739af047d37e": {
+          "title": "Ventas Especiales - Agenda de Celebración",
+          "visualDirection": "agenda de celebración — filas de la agenda como tarjeta de evento con bloque de fecha tipo calendario de escritorio (día grande + mes abreviado, Fraunces, cuadro tintado del color del módulo) en vez de solo texto de fecha; 'Total estimado' con tratamiento hero (fondo tintado + cifra grande) en vez de fila plana de texto; chips de categoría con íconos un poco más grandes — NO aplicada todavía",
+          "parentDraftId": "2fd4ddcf-b0c8-441e-851b-878a9e92b702",
+          "currentVersion": 1
+        },
+        "7c87b6dc-9383-4be3-b121-1cabba6d78e9": {
+          "title": "Chucherías Mix - Ventas Especiales Documental",
+          "visualDirection": "cotización tipo documento — lista de la agenda más tabular/tipo libro de reservas (fecha/estado/subtotal alineados en columna, fila más compacta); 'Productos cotizados' como líneas de factura (nombre + 'cantidad × precio unitario' + subtotal alineado a la derecha) con un bloque de totales final con línea divisoria doble (mismo tratamiento ya usado en otros totales finales de la app); más espacio/estructura entre las 3 secciones del formulario — NO aplicada todavía",
+          "parentDraftId": "2fd4ddcf-b0c8-441e-851b-878a9e92b702",
+          "currentVersion": 1
+        }
+      },
+      "updatedAt": "2026-10-29T21:00:00Z"
     }
   }
 }
