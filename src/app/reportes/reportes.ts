@@ -71,6 +71,54 @@ function etiquetaFechaCorta(dia: string): string {
   return `${diaNum}/${mes}`;
 }
 
+// "AAAA-MM-DD" -> Date en hora LOCAL de medianoche. `new Date('AAAA-MM-DD')`
+// (sin hora) lo interpreta el motor de JS como UTC medianoche — el mismo
+// corrimiento de zona horaria de siempre en una zona con offset negativo
+// (México); agregar "T00:00:00" fuerza a que se parsee en hora LOCAL.
+function parsearFechaLocal(fecha: string): Date {
+  return new Date(`${fecha}T00:00:00`);
+}
+
+// Comparación con el periodo anterior (2026-10-29): el periodo anterior
+// SIEMPRE es "el mismo número de días, justo antes" del rango actual —
+// funciona igual de bien para Hoy/Esta semana/Este mes (los accesos
+// rápidos) que para un rango capturado a mano, sin necesitar casos
+// especiales por tipo de filtro.
+function periodoAnterior(desde: string, hasta: string): { desde: string; hasta: string } {
+  const inicio = parsearFechaLocal(desde);
+  const fin = parsearFechaLocal(hasta);
+  const dias = Math.round((fin.getTime() - inicio.getTime()) / 86400000) + 1;
+
+  const hastaAnterior = new Date(inicio);
+  hastaAnterior.setDate(hastaAnterior.getDate() - 1);
+  const desdeAnterior = new Date(hastaAnterior);
+  desdeAnterior.setDate(desdeAnterior.getDate() - (dias - 1));
+
+  return { desde: formatoFechaLocal(desdeAnterior), hasta: formatoFechaLocal(hastaAnterior) };
+}
+
+// Delta entre el valor actual y el del periodo anterior — null si el
+// anterior fue 0 (un porcentaje de "+infinito" no dice nada útil; la
+// plantilla muestra el monto absoluto en ese caso, nunca un porcentaje).
+interface Comparacion {
+  actual: number;
+  anterior: number;
+  diferencia: number;
+  porcentaje: number | null;
+  mejor: boolean;
+}
+
+function compararValores(actual: number, anterior: number): Comparacion {
+  const diferencia = actual - anterior;
+  return {
+    actual,
+    anterior,
+    diferencia,
+    porcentaje: anterior > 0 ? Math.round((diferencia / anterior) * 1000) / 10 : null,
+    mejor: diferencia >= 0,
+  };
+}
+
 // Una fila de las barras horizontales de comparación (ver cabecera del
 // archivo). `esMoneda` decide si la plantilla la formatea con el pipe de
 // moneda o la muestra como un entero plano (conteos vs montos).
@@ -307,7 +355,46 @@ export class ReportesComponent implements OnInit {
     };
   });
 
+  // ---- Comparación con el periodo anterior (2026-10-29) ---------------------
+  // Solo tiene sentido con un rango acotado (desde Y hasta) — "todo el
+  // histórico" no tiene un "periodo anterior" razonable con qué comparar.
+  // Se resuelve con una SEGUNDA llamada al mismo endpoint (sin tocar el
+  // backend): el rango anterior se calcula en el cliente (periodoAnterior,
+  // cabecera del archivo) y se le pide a GET /reportes/resumen otra vez.
+  resumenAnterior = signal<ResumenReportes | null>(null);
+  cargandoComparacion = signal(false);
+
+  puedeComparar = computed(() => !!this.filtroDesde() && !!this.filtroHasta());
+
+  // monto_total llega como STRING (columna NUMERIC vía el driver `pg`,
+  // mismo motivo ya documentado para nomina.ts) — Number(...) antes de
+  // comparar, nunca restar strings directo.
+  comparacionVentas = computed<Comparacion | null>(() => {
+    const actual = this.resumen()?.ventas.monto_total;
+    const anterior = this.resumenAnterior()?.ventas.monto_total;
+    if (actual === undefined || anterior === undefined) return null;
+    return compararValores(Number(actual), Number(anterior));
+  });
+
+  comparacionUtilidadNeta = computed<Comparacion | null>(() => {
+    const actual = this.resumen()?.rentabilidad.utilidad_neta;
+    const anterior = this.resumenAnterior()?.rentabilidad.utilidad_neta;
+    if (actual === undefined || anterior === undefined) return null;
+    return compararValores(actual, anterior);
+  });
+
+  // Rango de fechas del periodo anterior, para que el chip de comparación
+  // diga CONTRA QUÉ fechas compara (nunca solo "periodo anterior" a secas).
+  etiquetaPeriodoAnterior = computed(() => {
+    if (!this.puedeComparar()) return '';
+    const { desde, hasta } = periodoAnterior(this.filtroDesde(), this.filtroHasta());
+    return desde === hasta
+      ? etiquetaFechaCorta(desde)
+      : `${etiquetaFechaCorta(desde)}–${etiquetaFechaCorta(hasta)}`;
+  });
+
   private consulta?: Subscription;
+  private consultaComparacion?: Subscription;
 
   constructor(
     private reportesService: ReportesService,
@@ -343,6 +430,34 @@ export class ReportesComponent implements OnInit {
           this.cargando.set(false);
         },
       });
+
+    this.cargarComparacion();
+  }
+
+  // Pide el mismo resumen, pero del periodo INMEDIATAMENTE anterior (mismo
+  // número de días) — falla en silencio: si la comparación no carga, las
+  // cifras principales de arriba siguen funcionando igual, la comparación
+  // simplemente no aparece (nunca bloquea el reporte principal).
+  cargarComparacion(): void {
+    this.consultaComparacion?.unsubscribe();
+    if (!this.puedeComparar()) {
+      this.resumenAnterior.set(null);
+      this.cargandoComparacion.set(false);
+      return;
+    }
+
+    const anterior = periodoAnterior(this.filtroDesde(), this.filtroHasta());
+    this.cargandoComparacion.set(true);
+    this.consultaComparacion = this.reportesService.obtenerResumen(anterior).subscribe({
+      next: (resumen) => {
+        this.resumenAnterior.set(resumen);
+        this.cargandoComparacion.set(false);
+      },
+      error: () => {
+        this.resumenAnterior.set(null);
+        this.cargandoComparacion.set(false);
+      },
+    });
   }
 
   cambiarDesde(valor: string): void {

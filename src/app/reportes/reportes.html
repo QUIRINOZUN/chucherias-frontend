@@ -341,6 +341,43 @@
             </span>
             <h2>Ventas</h2>
           </div>
+
+          <!-- COMPARACIÓN CON EL PERIODO ANTERIOR (2026-10-29): solo con un
+               rango acotado (desde Y hasta) — "todo el histórico" no tiene
+               un periodo anterior razonable. El periodo anterior es siempre
+               el mismo número de días justo antes (ver periodoAnterior() en
+               reportes.ts), funciona igual para los accesos rápidos que
+               para un rango capturado a mano. -->
+          @if (puedeComparar()) {
+            @if (cargandoComparacion()) {
+              <p class="chip-comparacion chip-comparacion-cargando">
+                Comparando con el periodo anterior…
+              </p>
+            } @else if (comparacionVentas(); as c) {
+              <p
+                class="chip-comparacion"
+                [class.chip-comparacion-positiva]="c.mejor"
+                [class.chip-comparacion-negativa]="!c.mejor"
+              >
+                <svg
+                  class="icono icono-tendencia"
+                  [class.icono-tendencia-positiva]="c.mejor"
+                  aria-hidden="true"
+                >
+                  <use href="#ic-gastos" />
+                </svg>
+                <span>
+                  @if (c.porcentaje !== null) {
+                    {{ c.mejor ? '+' : '' }}{{ c.porcentaje }}%
+                  } @else {
+                    {{ c.mejor ? '+' : '' }}{{ c.diferencia | currency: 'MXN' }}
+                  }
+                  vs. {{ etiquetaPeriodoAnterior() }} ({{ c.anterior | currency: 'MXN' }})
+                </span>
+              </p>
+            }
+          }
+
           <div class="grid-stats-reporte">
             <div class="stat-reporte">
               <span class="stat-reporte-valor">{{ r.ventas.total_ventas }}</span>
@@ -745,6 +782,41 @@
               </span>
             </div>
           </div>
+
+          <!-- Mismo chip de comparación que la pestaña Ventas (ver su
+               comentario) — aquí sobre la utilidad neta en vez del monto
+               total de ventas. -->
+          @if (puedeComparar()) {
+            @if (cargandoComparacion()) {
+              <p class="chip-comparacion chip-comparacion-cargando">
+                Comparando con el periodo anterior…
+              </p>
+            } @else if (comparacionUtilidadNeta(); as c) {
+              <p
+                class="chip-comparacion"
+                [class.chip-comparacion-positiva]="c.mejor"
+                [class.chip-comparacion-negativa]="!c.mejor"
+              >
+                <svg
+                  class="icono icono-tendencia"
+                  [class.icono-tendencia-positiva]="c.mejor"
+                  aria-hidden="true"
+                >
+                  <use href="#ic-gastos" />
+                </svg>
+                <span>
+                  @if (c.porcentaje !== null) {
+                    {{ c.mejor ? '+' : '' }}{{ c.porcentaje }}%
+                  } @else {
+                    {{ c.mejor ? '+' : '' }}{{ c.diferencia | currency: 'MXN' }}
+                  }
+                  vs. {{ etiquetaPeriodoAnterior() }} ({{ c.anterior | currency: 'MXN' }} de
+                  utilidad neta)
+                </span>
+              </p>
+            }
+          }
+
           <div class="grid-stats-reporte">
             <div class="stat-reporte">
               <span class="stat-reporte-valor">{{

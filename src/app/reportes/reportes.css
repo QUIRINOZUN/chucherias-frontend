@@ -329,6 +329,47 @@
   color: var(--pos-text-secondary);
 }
 
+/* Chip de comparación con el periodo anterior (2026-10-29): verde si mejoró,
+   rojo si empeoró — reusa el mismo par de colores funcionales que ya usa
+   toda la app (nunca un color nuevo para "mejor"/"peor"). El ícono
+   ic-gastos (una flecha descendente) se reusa volteado verticalmente para
+   la variante "positiva" en vez de agregar un ícono nuevo al sprite. */
+.chip-comparacion {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: -4px 0 14px;
+  padding: 7px 14px;
+  border-radius: var(--radio-pastilla);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.chip-comparacion-cargando {
+  color: var(--pos-text-secondary);
+}
+
+.chip-comparacion-positiva {
+  background: color-mix(in srgb, var(--action-success) 16%, var(--pos-bg-card));
+  color: var(--exito-texto);
+}
+
+.chip-comparacion-negativa {
+  background: color-mix(in srgb, var(--action-danger) 14%, var(--pos-bg-card));
+  color: var(--peligro-texto);
+}
+
+.icono-tendencia {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  transform: scaleY(1);
+}
+
+.icono-tendencia-positiva {
+  transform: scaleY(-1);
+}
+
 /* Franja de atención: solo aparece si hay algo real que atender — nunca
    una fila vacía de "todo bien" (eso no es información, es ruido). */
 .franja-atencion {
