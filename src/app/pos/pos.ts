@@ -292,6 +292,23 @@ export class PosComponent implements OnInit, OnDestroy {
     return categoriaId ? productos.filter((p) => p.categoria_id === categoriaId) : productos;
   });
 
+  // Agrupa productosFiltrados() por categoría, en el mismo orden que
+  // categorias() (2026-10-27, dirección "menú editorial"): el catálogo ya no
+  // es una sola rejilla plana — cada categoría con al menos un producto tras
+  // el filtro se muestra como su propia sección, con el color/ícono real de
+  // esa categoría. Una categoría sin ningún producto filtrado (por búsqueda o
+  // por chip) no genera ninguna sección vacía.
+  productosAgrupados = computed(() => {
+    const productos = this.productosFiltrados();
+    return this.categorias()
+      .map((categoria) => ({
+        categoria,
+        estilo: obtenerEstiloCategoria(categoria.nombre),
+        productos: productos.filter((p) => p.categoria_id === categoria.id),
+      }))
+      .filter((grupo) => grupo.productos.length > 0);
+  });
+
   // Total a cobrar: (precio + cargos extra de elección, RF-16) × cantidad
   // de cada línea. El servidor vuelve a calcular esto él solo al registrar
   // la venta (ver routes/ventas.js) — este total es solo lo que se MUESTRA
@@ -394,12 +411,20 @@ export class PosComponent implements OnInit, OnDestroy {
     this.montoRecibido.set(suma > 0 ? suma : null);
   }
 
-  // 2026-10-12: solo los billetes reales (20/50/100/200/500/1000) tienen una
-  // ilustración vectorial propia (public/img/billetes/); las monedas se
-  // dibujan como chip circular con el número, sin imagen.
+  // 2026-10-12: los billetes reales (20/50/100/200/500/1000) tienen una
+  // ilustración vectorial propia (public/img/billetes/).
   imagenBillete(monto: number): string | null {
     return DENOMINACIONES_BILLETES_MXN.includes(monto)
       ? `/img/billetes/billete_${monto}.svg`
+      : null;
+  }
+
+  // 2026-10-28: las monedas (1/2/5/10) ganan su propia ilustración vectorial
+  // (public/img/monedas/), mismo patrón que los billetes — antes se
+  // dibujaban como un chip circular con el número, sin imagen.
+  imagenMoneda(monto: number): string | null {
+    return DENOMINACIONES_MONEDAS_MXN.includes(monto)
+      ? `/img/monedas/moneda_${monto}.svg`
       : null;
   }
 

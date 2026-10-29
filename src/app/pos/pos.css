@@ -662,6 +662,243 @@
   letter-spacing: 0.03em;
 }
 
+/* ===================== Catálogo por secciones de categoría (2026-10-27) =====================
+   Dirección "menú editorial", aprobada tras explorar 3 direcciones con
+   Superdesign (ver CLAUDE.md). Reemplaza la rejilla plana de .tarjeta-producto
+   (arriba — se deja intacta, el skeleton de carga la sigue usando) por
+   secciones por categoría con fondo tintado, encabezado grande y tarjetas de
+   tamaño variable. */
+
+.categoria-seccion {
+  position: relative;
+}
+
+/* Fondo tintado del color real de la categoría (--color-categoria, fijado
+   inline en pos.html) + una textura de puntos muy sutil del mismo color —
+   misma técnica de "dot texture" ya usada en .imagen-marcador y en el
+   Dashboard, aplicada aquí a un área mucho más grande por eso con opacidad
+   bastante más baja. */
+.categoria-seccion-fondo {
+  position: absolute;
+  inset: 0;
+  background-color: color-mix(in srgb, var(--color-categoria) 6%, transparent);
+  background-image: radial-gradient(
+    circle at 2px 2px,
+    color-mix(in srgb, var(--color-categoria) 35%, transparent) 1.5px,
+    transparent 0
+  );
+  background-size: 22px 22px;
+  pointer-events: none;
+}
+
+.categoria-seccion-contenido {
+  position: relative;
+  padding: 28px 2px 8px;
+}
+
+.categoria-seccion-encabezado {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.categoria-seccion-icono {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-categoria);
+  color: #fff;
+  box-shadow: var(--sombra-suave);
+}
+
+.categoria-seccion-icono .icono {
+  width: 26px;
+  height: 26px;
+}
+
+.categoria-seccion-encabezado h2 {
+  margin: 0;
+  font-family: var(--fuente-titulo);
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
+  font-variation-settings:
+    'SOFT' 60,
+    'WONK' 1;
+  color: var(--pos-text-primary);
+}
+
+/* `grid-auto-flow: dense` (2026-10-27, corrección): con tarjetas de ancho
+   mixto (horizontal = 2 columnas, cuadrada = 1) el flujo normal del grid
+   dejaría un hueco vacío cada vez que una horizontal no cupiera exacto en
+   lo que queda de una fila — "dense" deja que una tarjeta cuadrada más
+   abajo en el orden suba a rellenar ese hueco en vez de dejarlo vacío. */
+.grid-productos-categoria {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-auto-flow: dense;
+  gap: 18px;
+}
+
+.tarjeta-producto-categoria {
+  position: relative;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-lg);
+  overflow: hidden;
+  box-shadow: var(--sombra-suave);
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+@media (hover: hover) {
+  .tarjeta-producto-categoria:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--sombra-elevada);
+  }
+}
+
+.tarjeta-producto-categoria.tarjeta-expandida {
+  box-shadow:
+    0 0 0 2px var(--color-categoria, var(--pos-border)),
+    var(--sombra-elevada);
+}
+
+@media (hover: hover) {
+  .tarjeta-producto-categoria.tarjeta-agotada:hover {
+    transform: none;
+    box-shadow: var(--sombra-suave);
+  }
+}
+
+.cabecera-producto-categoria {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+/* Tarjeta VERTICAL/CUADRADA (sin variantes, un solo precio fijo): la foto
+   sigue sin recortarse nunca — mismo criterio ya documentado arriba
+   (2026-10-09) para .imagen-producto, solo que a mayor tamaño (200px en vez
+   de 132px, "fotos mucho más grandes" fue pedido explícito de esta ronda). */
+.imagen-producto-categoria {
+  width: 100%;
+  height: 200px;
+  object-fit: contain;
+  background: color-mix(in srgb, var(--color-categoria, var(--pos-text-muted)) 10%, var(--pos-bg-card));
+  display: block;
+}
+
+.imagen-marcador-categoria {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-categoria, var(--pos-text-muted));
+  background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.2) 1.5px, transparent 0);
+  background-size: 16px 16px;
+}
+
+.info-producto-categoria {
+  flex: 1;
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Nombre del producto mucho más protagónico (pedido explícito): sube de
+   1.05rem a 1.3rem y gana más presencia de las alternas de Fraunces (SOFT 70
+   en vez del 60 global de h1-h3) — mismo criterio ya aplicado en el
+   Dashboard artesanal. */
+.info-producto-categoria h3 {
+  margin: 0;
+  font-family: var(--fuente-titulo);
+  font-weight: 800;
+  font-size: 1.3rem;
+  line-height: 1.22;
+  font-variation-settings:
+    'SOFT' 70,
+    'WONK' 1;
+  color: var(--pos-text-primary);
+}
+
+.fila-precio-flecha-categoria {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Empuja el precio al fondo de la tarjeta sin importar cuántas líneas
+     ocupe el nombre arriba (2026-10-27) — así ninguna tarjeta, vertical ni
+     horizontal, deja un hueco vacío entre el nombre y el precio. */
+  margin-top: auto;
+  padding-top: 2px;
+}
+
+.precio-desde-categoria {
+  font-family: var(--fuente-titulo);
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--pos-text-primary);
+}
+
+/* Tarjeta HORIZONTAL (2026-10-27, reemplaza la "destacada" por posición de
+   la ronda anterior — el usuario reportó espacio vacío real: esa versión
+   ocupaba 2 filas del grid pero el contenido de la tarjeta no llegaba a
+   llenarlas). Ahora la regla es por CONTENIDO, no por posición: un producto
+   CON VARIANTES (`producto.variantes.length > 1`, la misma condición que ya
+   decide el prefijo "Desde" en el precio) ocupa 2 columnas en una sola
+   fila — foto a la izquierda, texto a la derecha — porque su precio suele
+   ser más largo ("Desde MX$XXX.XX") y una tarjeta angosta lo apretaría. Un
+   producto sin variantes (precio fijo, más corto) se queda en la tarjeta
+   vertical/cuadrada de 1 columna de arriba. */
+.tarjeta-horizontal {
+  grid-column: span 2;
+}
+
+.tarjeta-horizontal .cabecera-producto-categoria {
+  flex-direction: row;
+}
+
+.tarjeta-horizontal .imagen-producto-categoria,
+.tarjeta-horizontal .imagen-marcador-categoria {
+  width: 42%;
+  height: auto;
+  flex-shrink: 0;
+}
+
+/* El carrito la estira a la altura de la fila (normalmente la marca una
+   tarjeta vertical vecina, más alta por tener imagen+texto apilados) — con
+   solo 1 línea de título + precio, pegar el precio al fondo con
+   `margin-top: auto` (el comportamiento normal de .fila-precio-flecha-
+   categoria) dejaba un hueco vacío enorme arriba, que fue justo el bug que
+   reportó el usuario. Aquí en cambio el bloque título+precio se CENTRA como
+   grupo, usando el espacio de sobra a propósito en vez de dejarlo vacío. */
+.tarjeta-horizontal .info-producto-categoria {
+  justify-content: center;
+}
+
+.tarjeta-horizontal .fila-precio-flecha-categoria {
+  margin-top: 0;
+}
+
+.tarjeta-horizontal .info-producto-categoria h3 {
+  font-size: 1.4rem;
+}
+
 /* ===================== Ventana de detalle de producto =====================
    Se abre al tocar una tarjeta con más de una variante: antes esa lista se
    desplegaba dentro de la propia rejilla y, con varios tamaños/paquetes,
@@ -1644,16 +1881,31 @@
 
 /* Billetes con ilustración vectorial propia (2026-10-12,
    public/img/billetes/): sin relleno de color de fondo, con la proporción
-   real de un billete (2:1). */
+   real de un billete (2:1). 2026-10-28: la imagen misma es ahora el botón
+   de "agregar" (role="button" en el HTML) — cursor + retroalimentación al
+   tocar/pasar el cursor, igual que cualquier otro control de la app. */
 .denominacion-visual-billete {
   width: 100%;
   border-radius: var(--radio-sm);
   overflow: hidden;
-  transition: box-shadow 0.15s ease;
+  cursor: pointer;
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
 }
 
 .denominacion-visual-billete.denominacion-con-conteo {
   box-shadow: 0 0 0 3px var(--acento-texto);
+}
+
+.denominacion-visual-billete:hover,
+.denominacion-visual-moneda:hover {
+  transform: translateY(-2px);
+}
+
+.denominacion-visual-billete:active,
+.denominacion-visual-moneda:active {
+  transform: scale(0.94);
 }
 
 .billete-imagen {
@@ -1664,30 +1916,30 @@
   border-radius: inherit;
 }
 
-/* Monedas: sin ilustración propia, un chip circular con el número. */
+/* Monedas con ilustración vectorial propia (2026-10-28,
+   public/img/monedas/) — mismo patrón que los billetes: sin relleno de
+   fondo propio, el "aro" y el borde ya vienen dibujados en el SVG. */
 .denominacion-visual-moneda {
   width: 48px;
   height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   border-radius: 50%;
-  border: 2px solid var(--pos-border);
-  background: var(--pos-bg-main);
-  color: var(--pos-text-primary);
-  font-family: var(--fuente-titulo);
-  font-size: 0.85rem;
-  font-weight: 800;
+  overflow: hidden;
+  cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease,
-    color 0.15s ease;
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
 }
 
 .denominacion-visual-moneda.denominacion-con-conteo {
-  border-color: var(--acento-texto);
-  background: var(--acento-suave);
-  color: var(--acento-texto);
+  box-shadow: 0 0 0 3px var(--acento-texto);
+}
+
+.moneda-imagen {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: inherit;
 }
 
 .boton-limpiar-conteo {

@@ -127,75 +127,100 @@
           }
         </div>
 
-        @if (productosFiltrados().length === 0) {
+        @if (productosAgrupados().length === 0) {
           <p class="mensaje-estado">No hay productos en esta categoría.</p>
         } @else {
-          <!-- REJILLA DE PRODUCTOS: una tarjeta por producto filtrado. -->
-          <div class="grid-productos">
-            @for (producto of productosFiltrados(); track producto.id) {
-              <!-- TARJETA DE PRODUCTO: imagen (o bloque de color con ícono si no hay foto), categoría, nombre y precio "desde".
-                   Al tocarla se abre una ventana con sus variantes (tamaños/paquetes); tocar una variante la agrega al carrito. -->
-              <article
-                class="tarjeta-producto"
-                [class.tarjeta-expandida]="estaAbierto(producto.id)"
-                [class.tarjeta-agotada]="productoAgotado(producto)"
-                [style.--color-categoria]="estiloCategoria(producto.categoria).color"
-              >
-                @if (productoAgotado(producto)) {
-                  <span class="insignia-agotado">Agotado</span>
-                }
-                @if (cantidadEnCarrito(producto); as cantidad) {
-                  <!-- Insignia "ya está en el carrito" (2026-10-11): cuántas
-                       unidades de este producto (cualquier variante) ya se
-                       agregaron, para no tener que abrir el carrito para
-                       saberlo ni agregar por accidente dos veces. -->
-                  <span class="insignia-en-carrito" [attr.aria-label]="cantidad + ' en el carrito'">
-                    {{ cantidad }}
+          <!-- SECCIONES POR CATEGORÍA (2026-10-27, dirección "menú editorial"):
+               cada categoría con productos tras el filtro es su propia sección,
+               con fondo tintado de su color (--color-categoria) y un
+               encabezado grande — se hojea como un menú impreso, no una
+               rejilla plana de tarjetas idénticas. El chip de categoría de
+               arriba sigue filtrando igual que siempre; con "Todas" se ven
+               todas las secciones, con una categoría elegida solo queda esa. -->
+          @for (grupo of productosAgrupados(); track grupo.categoria.id) {
+            <section class="categoria-seccion" [style.--color-categoria]="grupo.estilo.color">
+              <div class="categoria-seccion-fondo" aria-hidden="true"></div>
+              <div class="categoria-seccion-contenido">
+                <div class="categoria-seccion-encabezado">
+                  <span class="categoria-seccion-icono">
+                    <svg class="icono" aria-hidden="true">
+                      <use [attr.href]="'#ic-' + grupo.estilo.icono" />
+                    </svg>
                   </span>
-                }
-                <button
-                  type="button"
-                  class="cabecera-producto"
-                  (click)="abrirDetalleProducto(producto)"
-                  aria-haspopup="dialog"
-                >
-                  @if (producto.imagen_url) {
-                    <img
-                      [src]="producto.imagen_url"
-                      [alt]="producto.nombre"
-                      class="imagen-producto"
-                    />
-                  } @else {
-                    <div class="imagen-marcador">
-                      <span class="imagen-marcador-icono">
-                        <svg class="icono" aria-hidden="true">
-                          <use [attr.href]="'#ic-' + estiloCategoria(producto.categoria).icono" />
-                        </svg>
-                      </span>
-                    </div>
+                  <h2>{{ grupo.categoria.nombre }}</h2>
+                </div>
+
+                <div class="grid-productos-categoria">
+                  @for (producto of grupo.productos; track producto.id) {
+                    <!-- TARJETA DE PRODUCTO: imagen (o bloque de color con ícono si no hay foto), nombre y precio "desde"
+                         (la insignia de categoría ya no se repite por tarjeta — el encabezado de la sección ya la da).
+                         Al tocarla se abre una ventana con sus variantes (tamaños/paquetes); tocar una variante la agrega al carrito.
+                         Un producto CON variantes (precio "Desde...") usa la tarjeta HORIZONTAL (2 columnas, foto+texto lado a
+                         lado) — su precio es más largo y una tarjeta angosta lo apretaría; sin variantes se queda vertical/
+                         cuadrada (2026-10-27, ver .tarjeta-horizontal en pos.css — corrige el hueco vacío de la versión
+                         anterior, que elegía la tarjeta grande por POSICIÓN en vez de por contenido). -->
+                    <article
+                      class="tarjeta-producto-categoria"
+                      [class.tarjeta-horizontal]="producto.variantes.length > 1"
+                      [class.tarjeta-expandida]="estaAbierto(producto.id)"
+                      [class.tarjeta-agotada]="productoAgotado(producto)"
+                      [style.--color-categoria]="estiloCategoria(producto.categoria).color"
+                    >
+                      @if (productoAgotado(producto)) {
+                        <span class="insignia-agotado">Agotado</span>
+                      }
+                      @if (cantidadEnCarrito(producto); as cantidad) {
+                        <!-- Insignia "ya está en el carrito" (2026-10-11): cuántas
+                             unidades de este producto (cualquier variante) ya se
+                             agregaron, para no tener que abrir el carrito para
+                             saberlo ni agregar por accidente dos veces. -->
+                        <span
+                          class="insignia-en-carrito"
+                          [attr.aria-label]="cantidad + ' en el carrito'"
+                        >
+                          {{ cantidad }}
+                        </span>
+                      }
+                      <button
+                        type="button"
+                        class="cabecera-producto-categoria"
+                        (click)="abrirDetalleProducto(producto)"
+                        aria-haspopup="dialog"
+                      >
+                        @if (producto.imagen_url) {
+                          <img
+                            [src]="producto.imagen_url"
+                            [alt]="producto.nombre"
+                            class="imagen-producto-categoria"
+                          />
+                        } @else {
+                          <div class="imagen-marcador-categoria">
+                            <span class="imagen-marcador-icono">
+                              <svg class="icono" aria-hidden="true">
+                                <use [attr.href]="'#ic-' + estiloCategoria(producto.categoria).icono" />
+                              </svg>
+                            </span>
+                          </div>
+                        }
+                        <div class="info-producto-categoria">
+                          <h3>{{ producto.nombre }}</h3>
+                          <div class="fila-precio-flecha-categoria">
+                            <span class="precio-desde-categoria">
+                              {{ producto.variantes.length > 1 ? 'Desde ' : ''
+                              }}{{ precioDesde(producto) | currency: 'MXN' }}
+                            </span>
+                            <span class="flecha-expandir" aria-hidden="true">
+                              <svg class="icono"><use href="#ic-chevron" /></svg>
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    </article>
                   }
-                  <div class="info-producto">
-                    <span class="insignia-categoria">
-                      <svg class="icono" aria-hidden="true">
-                        <use [attr.href]="'#ic-' + estiloCategoria(producto.categoria).icono" />
-                      </svg>
-                      {{ producto.categoria }}
-                    </span>
-                    <h3>{{ producto.nombre }}</h3>
-                    <div class="fila-precio-flecha">
-                      <span class="precio-desde">
-                        {{ producto.variantes.length > 1 ? 'Desde ' : ''
-                        }}{{ precioDesde(producto) | currency: 'MXN' }}
-                      </span>
-                      <span class="flecha-expandir" aria-hidden="true">
-                        <svg class="icono"><use href="#ic-chevron" /></svg>
-                      </span>
-                    </div>
-                  </div>
-                </button>
-              </article>
-            }
-          </div>
+                </div>
+              </div>
+            </section>
+          }
         }
       }
     </section>
@@ -1046,9 +1071,22 @@
                 <div class="grid-denominaciones">
                   @for (monto of denominacionesBilletes; track monto) {
                     <div class="denominacion-efectivo">
+                      <!-- 2026-10-28: el billete/moneda en sí ES el botón de
+                           "agregar" (tocarlo las veces que corresponda, mismo
+                           gesto que ya describía el comentario de arriba) — el
+                           control para restar/ver la cantidad solo aparece
+                           una vez que ya se tocó al menos una vez, en vez de
+                           mostrar siempre una fila "-/0/+" aunque no haya
+                           nada contado todavía. -->
                       <div
                         class="denominacion-visual-billete"
                         [class.denominacion-con-conteo]="cantidadDenominacion(monto) > 0"
+                        role="button"
+                        tabindex="0"
+                        (click)="agregarDenominacion(monto)"
+                        (keydown.enter)="agregarDenominacion(monto)"
+                        (keydown.space)="$event.preventDefault(); agregarDenominacion(monto)"
+                        [attr.aria-label]="'Agregar un billete de ' + monto + ' pesos'"
                       >
                         <img
                           [src]="imagenBillete(monto)"
@@ -1056,26 +1094,20 @@
                           class="billete-imagen"
                         />
                       </div>
-                      <div class="opcion-contador-controles">
-                        <button
-                          type="button"
-                          (click)="quitarDenominacion(monto)"
-                          [disabled]="cantidadDenominacion(monto) === 0"
-                          [attr.aria-label]="'Quitar un billete de ' + monto + ' pesos'"
-                        >
-                          <svg class="icono" aria-hidden="true"><use href="#ic-menos" /></svg>
-                        </button>
-                        <span class="opcion-contador-cantidad">{{
-                          cantidadDenominacion(monto)
-                        }}</span>
-                        <button
-                          type="button"
-                          (click)="agregarDenominacion(monto)"
-                          [attr.aria-label]="'Agregar un billete de ' + monto + ' pesos'"
-                        >
-                          <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
-                        </button>
-                      </div>
+                      @if (cantidadDenominacion(monto) > 0) {
+                        <div class="opcion-contador-controles">
+                          <button
+                            type="button"
+                            (click)="quitarDenominacion(monto)"
+                            [attr.aria-label]="'Quitar un billete de ' + monto + ' pesos'"
+                          >
+                            <svg class="icono" aria-hidden="true"><use href="#ic-menos" /></svg>
+                          </button>
+                          <span class="opcion-contador-cantidad">{{
+                            cantidadDenominacion(monto)
+                          }}</span>
+                        </div>
+                      }
                     </div>
                   }
                 </div>
@@ -1087,29 +1119,33 @@
                       <div
                         class="denominacion-visual-moneda"
                         [class.denominacion-con-conteo]="cantidadDenominacion(monto) > 0"
+                        role="button"
+                        tabindex="0"
+                        (click)="agregarDenominacion(monto)"
+                        (keydown.enter)="agregarDenominacion(monto)"
+                        (keydown.space)="$event.preventDefault(); agregarDenominacion(monto)"
+                        [attr.aria-label]="'Agregar una moneda de ' + monto + ' pesos'"
                       >
-                        {{ monto | currency: 'MXN' : 'symbol' : '1.0-0' }}
+                        <img
+                          [src]="imagenMoneda(monto)"
+                          [alt]="'Moneda de ' + monto + ' pesos'"
+                          class="moneda-imagen"
+                        />
                       </div>
-                      <div class="opcion-contador-controles">
-                        <button
-                          type="button"
-                          (click)="quitarDenominacion(monto)"
-                          [disabled]="cantidadDenominacion(monto) === 0"
-                          [attr.aria-label]="'Quitar una moneda de ' + monto + ' pesos'"
-                        >
-                          <svg class="icono" aria-hidden="true"><use href="#ic-menos" /></svg>
-                        </button>
-                        <span class="opcion-contador-cantidad">{{
-                          cantidadDenominacion(monto)
-                        }}</span>
-                        <button
-                          type="button"
-                          (click)="agregarDenominacion(monto)"
-                          [attr.aria-label]="'Agregar una moneda de ' + monto + ' pesos'"
-                        >
-                          <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
-                        </button>
-                      </div>
+                      @if (cantidadDenominacion(monto) > 0) {
+                        <div class="opcion-contador-controles">
+                          <button
+                            type="button"
+                            (click)="quitarDenominacion(monto)"
+                            [attr.aria-label]="'Quitar una moneda de ' + monto + ' pesos'"
+                          >
+                            <svg class="icono" aria-hidden="true"><use href="#ic-menos" /></svg>
+                          </button>
+                          <span class="opcion-contador-cantidad">{{
+                            cantidadDenominacion(monto)
+                          }}</span>
+                        </div>
+                      }
                     </div>
                   }
                 </div>
