@@ -23,6 +23,7 @@
 //   /checklist  → todos los roles operativos               (checklist de apertura/cierre)
 //   /nomina     → administrador, encargado                (nómina por horas trabajadas)
 //   /ventas-especiales → administrador, encargado, cajero   (agendar y cotizar)
+//   /gastos     → administrador, encargado                (gastos generales del negocio)
 //
 // Estas reglas deben coincidir con las del backend (requiereRol en routes/*.js)
 // y con la lista de módulos del dashboard (dashboard/dashboard.ts).
@@ -44,6 +45,7 @@ import { ReportesComponent } from './reportes/reportes';
 import { ChecklistComponent } from './checklist/checklist';
 import { NominaComponent } from './nomina/nomina';
 import { VentasEspecialesComponent } from './ventas-especiales/ventas-especiales';
+import { GastosComponent } from './gastos/gastos';
 import { authGuard, rolGuard } from './core/auth-guard';
 
 export const routes: Routes = [
@@ -139,6 +141,13 @@ export const routes: Routes = [
     path: 'ventas-especiales',
     component: VentasEspecialesComponent,
     canActivate: [authGuard, rolGuard('administrador', 'encargado', 'cajero')],
+  },
+  // Gastos generales del negocio — información financiera, igual criterio
+  // que Nómina/Caja/Reportes (RNF-03). Deliberadamente aparte de Caja.
+  {
+    path: 'gastos',
+    component: GastosComponent,
+    canActivate: [authGuard, rolGuard('administrador', 'encargado')],
   },
   // La raíz del sitio y cualquier URL desconocida llevan al login. (La pantalla
   // de login no redirige sola al dashboard si ya hay sesión: quien tenga la

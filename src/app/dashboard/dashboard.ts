@@ -6,9 +6,9 @@
 //
 //   administrador → Punto de venta, Comandas, Corte de caja, Ventas,
 //                   Ventas especiales, Recetario, Inventario, Mermas,
-//                   Usuarios, Asistencias, Nómina, Clientes, Reportes,
-//                   Checklist
-//   encargado     → (los mismos 14 que administrador)
+//                   Usuarios, Asistencias, Nómina, Clientes, Gastos,
+//                   Reportes, Checklist
+//   encargado     → (los mismos 15 que administrador)
 //   cajero        → Punto de venta, Comandas (consulta), Corte de caja,
 //                   Ventas especiales, Checklist
 //   auxiliar      → Comandas, Checklist
@@ -77,6 +77,11 @@ interface Modulo {
 //        clientes. Nómina (2026-10-22) se agregó junto a Asistencias — es
 //        el mismo dominio (personal), solo que mira el pago en vez del
 //        reloj.
+//   13   Finanzas         — Gastos generales (2026-10-28), su propio grupo
+//        de un solo módulo: no es "personas" ni "ventas y caja" (se
+//        mantiene aparte de Caja a propósito, ver routes/gastos.js), va
+//        justo antes de Reportes porque es lo que Reportes/Rentabilidad
+//        termina sintetizando.
 // Para el cajero (ve 1, 2, 3 y 5) y el auxiliar (solo ve 2) esto no cambia
 // casi nada — esos módulos ya eran los primeros antes de este
 // reordenamiento, Ventas especiales es la única incorporación nueva al
@@ -180,6 +185,16 @@ const MODULOS: Modulo[] = [
     descripcion: 'Catálogo de clientes y su historial de lealtad.',
     roles: ['administrador', 'encargado'],
     colorVar: 'var(--mod-clientes)',
+  },
+  // ---- Finanzas: renta, servicios, mantenimiento — deliberadamente aparte
+  // de Caja (ver routes/gastos.js para la decisión de alcance completa).
+  {
+    ruta: '/gastos',
+    titulo: 'Gastos',
+    icono: 'gastos',
+    descripcion: 'Renta, servicios, mantenimiento y otros gastos generales.',
+    roles: ['administrador', 'encargado'],
+    colorVar: 'var(--mod-gastos)',
   },
   // ---- Transversal: no pertenece a ninguno de los 3 grupos de arriba,
   // junta datos de todos ellos (RF-26) — por eso va al final, no mezclado

@@ -129,6 +129,14 @@
      regalo + el nombre visible siguen siendo quienes de verdad distinguen
      al módulo, el color nunca es el único identificador. */
   --mod-ventas-especiales: #be185d;
+  /* mostaza oscuro — Gastos generales (2026-10-28): el hueco más amplio que
+     queda en el círculo de color es entre el dorado de Caja (~35°) y el
+     oliva de Clientes (~86°) — un tono H~55° se distingue claramente de
+     ambos sin acercarse al verde de éxito (~142°). Oscurecido a L25% para
+     seguir pasando AA (5.15:1) con texto/ícono blanco encima, mismo
+     criterio ya validado para el resto de --mod-* que se usan como fondo
+     sólido de botón (no solo borde/acento). */
+  --mod-gastos: #786f08;
 
   /* Franja arcoíris (2026-10-13, tercera pasada): el usuario pidió que el
      "arcoíris" (el guiño al logotipo real multicolor, antes solo en el
@@ -349,7 +357,8 @@ textarea:focus-visible {
 .reportes-header,
 .checklist-header,
 .nomina-header,
-.ventas-especiales-header {
+.ventas-especiales-header,
+.gastos-header {
   position: relative;
   overflow: hidden;
   border-bottom: 0 !important;
@@ -401,7 +410,8 @@ textarea:focus-visible {
 .reportes-header h1,
 .checklist-header h1,
 .nomina-header h1,
-.ventas-especiales-header h1 {
+.ventas-especiales-header h1,
+.gastos-header h1 {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -429,7 +439,8 @@ textarea:focus-visible {
 .reportes-header::before,
 .checklist-header::before,
 .nomina-header::before,
-.ventas-especiales-header::before {
+.ventas-especiales-header::before,
+.gastos-header::before {
   content: '';
   position: absolute;
   inset: 0 0 auto 0;

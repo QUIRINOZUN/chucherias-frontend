@@ -1,0 +1,466 @@
+<!-- ============================================================================
+     gastos.html — GASTOS GENERALES DEL NEGOCIO (lógica en gastos.ts)
+     ============================================================================
+     Solo administrador y encargado. Filtros de fecha/categoría/forma de pago
+     + búsqueda, una cifra "hero" del total del periodo, y una lista editable
+     de gastos. Deliberadamente aparte de Caja — ver gastos.ts/routes/gastos.js.
+     ============================================================================ -->
+<div class="gastos-container">
+  <header class="gastos-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      Volver
+    </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-gastos" /></svg>
+    </span>
+    <h1>Gastos</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
+    >
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
+    </button>
+  </header>
+
+  <div class="gastos-cuerpo">
+    <!-- FILTROS: rango de fechas opcional (sin filtros, todo el histórico) +
+         accesos rápidos + categoría/forma de pago (chips, server-filtrados) +
+         búsqueda por concepto/nota. -->
+    <section class="tarjeta-filtros-gastos">
+      <div class="filtros-gastos">
+        <div class="campo-filtro">
+          <label for="filtro-desde">Desde</label>
+          <input
+            id="filtro-desde"
+            type="date"
+            [value]="filtroDesde()"
+            (change)="cambiarDesde($any($event.target).value)"
+          />
+        </div>
+        <div class="campo-filtro">
+          <label for="filtro-hasta">Hasta</label>
+          <input
+            id="filtro-hasta"
+            type="date"
+            [value]="filtroHasta()"
+            (change)="cambiarHasta($any($event.target).value)"
+          />
+        </div>
+        <div class="campo-filtro">
+          <label for="filtro-buscar">Buscar</label>
+          <input
+            id="filtro-buscar"
+            type="text"
+            placeholder="Concepto o nota"
+            [value]="busqueda()"
+            (input)="actualizarBusqueda($any($event.target).value)"
+          />
+        </div>
+      </div>
+
+      <div class="filtros-rapidos-gastos">
+        <button type="button" class="boton-filtro-rapido" (click)="seleccionarHoy()">Hoy</button>
+        <button type="button" class="boton-filtro-rapido" (click)="seleccionarSemana()">
+          Esta semana
+        </button>
+        <button type="button" class="boton-filtro-rapido" (click)="seleccionarMes()">
+          Este mes
+        </button>
+      </div>
+
+      <div class="grupo-chips-gastos">
+        <span class="etiqueta-grupo-chips">Categoría</span>
+        <div class="fila-chips-gastos">
+          <button
+            type="button"
+            class="chip-filtro-gastos"
+            [class.chip-filtro-activa]="categoriaFiltroId() === null"
+            (click)="seleccionarCategoriaFiltro(null)"
+          >
+            Todas
+          </button>
+          @for (categoria of categorias(); track categoria.id) {
+            <button
+              type="button"
+              class="chip-filtro-gastos"
+              [class.chip-filtro-activa]="categoriaFiltroId() === categoria.id"
+              (click)="seleccionarCategoriaFiltro(categoria.id)"
+            >
+              {{ categoria.nombre }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="grupo-chips-gastos">
+        <span class="etiqueta-grupo-chips">Forma de pago</span>
+        <div class="fila-chips-gastos">
+          <button
+            type="button"
+            class="chip-filtro-gastos"
+            [class.chip-filtro-activa]="formaPagoFiltro() === null"
+            (click)="seleccionarFormaPagoFiltro(null)"
+          >
+            Todas
+          </button>
+          <button
+            type="button"
+            class="chip-filtro-gastos"
+            [class.chip-filtro-activa]="formaPagoFiltro() === 'efectivo'"
+            (click)="seleccionarFormaPagoFiltro('efectivo')"
+          >
+            Efectivo
+          </button>
+          <button
+            type="button"
+            class="chip-filtro-gastos"
+            [class.chip-filtro-activa]="formaPagoFiltro() === 'transferencia'"
+            (click)="seleccionarFormaPagoFiltro('transferencia')"
+          >
+            Transferencia
+          </button>
+        </div>
+      </div>
+
+      @if (hayFiltros()) {
+        <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltros()">
+          Limpiar filtros
+        </button>
+      }
+    </section>
+
+    <div class="encabezado-seccion-gastos">
+      <h2 class="titulo-subseccion-gastos">Registro de gastos</h2>
+      <button type="button" class="boton-nuevo-gasto" (click)="abrirCreacion()">
+        + Nuevo gasto
+      </button>
+    </div>
+
+    @if (error()) {
+      <p class="mensaje-estado mensaje-error">{{ error() }}</p>
+    } @else if (cargando()) {
+      <div class="esqueleto esqueleto-resumen-gastos" aria-hidden="true"></div>
+      <div class="esqueleto esqueleto-fila-gastos" aria-hidden="true"></div>
+      <div class="esqueleto esqueleto-fila-gastos" aria-hidden="true"></div>
+      <div class="esqueleto esqueleto-fila-gastos" aria-hidden="true"></div>
+    } @else {
+      <!-- RESUMEN DEL PERIODO: la cifra "hero" es el total gastado — es lo
+           que de verdad importa en esta pantalla. -->
+      <div class="hero-gastos">
+        <span class="hero-gastos-etiqueta">Total gastado en el periodo</span>
+        <span class="hero-gastos-valor">{{ totalPeriodo() | currency: 'MXN' }}</span>
+        <span class="hero-gastos-detalle">
+          {{ cantidadGastos() }} {{ cantidadGastos() === 1 ? 'gasto' : 'gastos' }}
+          @if (cantidadRecurrentes() > 0) {
+            · {{ totalRecurrente() | currency: 'MXN' }} marcado como recurrente ({{
+              cantidadRecurrentes()
+            }})
+          }
+        </span>
+      </div>
+
+      @if (gastos().length === 0) {
+        <p class="mensaje-estado">
+          {{
+            hayFiltros()
+              ? 'Ningún gasto coincide con estos filtros.'
+              : 'Todavía no hay gastos registrados.'
+          }}
+        </p>
+      } @else {
+        <ul class="lista-gastos">
+          @for (gasto of gastos(); track gasto.id) {
+            <li class="tarjeta-gasto">
+              <div class="gasto-info">
+                <span class="gasto-concepto">{{ gasto.concepto }}</span>
+                <span class="gasto-detalle">
+                  {{ gasto.categoria }} · {{ gasto.fecha | date: 'dd/MM/yyyy' }}
+                  @if (gasto.proveedor_nombre) {
+                    · {{ gasto.proveedor_nombre }}
+                  }
+                </span>
+                <div class="gasto-badges">
+                  <span
+                    class="badge-forma-pago"
+                    [class.badge-transferencia]="gasto.forma_pago === 'transferencia'"
+                  >
+                    {{ gasto.forma_pago === 'efectivo' ? 'Efectivo' : 'Transferencia' }}
+                  </span>
+                  @if (gasto.es_recurrente) {
+                    <span class="badge-recurrente">Recurrente</span>
+                  }
+                </div>
+              </div>
+
+              <div class="gasto-acciones">
+                <span class="gasto-monto">{{ gasto.monto | currency: 'MXN' }}</span>
+                <div class="gasto-botones">
+                  <button type="button" class="boton-editar" (click)="abrirEdicion(gasto)">
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    class="boton-eliminar"
+                    (click)="abrirConfirmarEliminar(gasto)"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    }
+  </div>
+
+  <!-- VENTANA EMERGENTE: crear/editar un gasto. -->
+  @if (modoFormulario(); as modo) {
+    <div class="overlay">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="modo === 'crear' ? 'Nuevo gasto' : 'Editar gasto'"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarFormulario()"
+      >
+        <h2>{{ modo === 'crear' ? 'Nuevo gasto' : 'Editar gasto' }}</h2>
+
+        <div class="campo">
+          <label for="categoria-gasto">Categoría</label>
+          <!-- Sin [value] en el <select> (mismo bug/arreglo ya documentado en
+               Recetario/Usuarios/Inventario: [selected] por <option>, nunca
+               [value] en el padre, para que precargue bien al editar). -->
+          <select
+            id="categoria-gasto"
+            (change)="
+              categoriaIdForm.set($any($event.target).value ? +$any($event.target).value : null)
+            "
+          >
+            <option value="" [selected]="categoriaIdForm() === null">Selecciona una</option>
+            @for (categoria of categorias(); track categoria.id) {
+              <option [value]="categoria.id" [selected]="categoria.id === categoriaIdForm()">
+                {{ categoria.nombre }}
+              </option>
+            }
+          </select>
+          @if (!mostrarNuevaCategoria()) {
+            <button type="button" class="boton-enlace" (click)="mostrarNuevaCategoria.set(true)">
+              + Nueva categoría
+            </button>
+          } @else {
+            <div class="fila-alta-rapida">
+              <input
+                type="text"
+                placeholder="Nombre de la categoría"
+                [value]="nombreCategoriaForm()"
+                (input)="nombreCategoriaForm.set($any($event.target).value)"
+              />
+              <button
+                type="button"
+                class="boton-accion"
+                [disabled]="!nombreCategoriaForm().trim() || procesandoCategoria()"
+                (click)="crearCategoriaRapida()"
+              >
+                {{ procesandoCategoria() ? '...' : 'Agregar' }}
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="campo">
+          <label for="concepto-gasto">Concepto</label>
+          <input
+            id="concepto-gasto"
+            type="text"
+            placeholder="Ej. Recibo de luz CFE"
+            [value]="conceptoForm()"
+            (input)="conceptoForm.set($any($event.target).value)"
+          />
+        </div>
+
+        <div class="campo-fila">
+          <div class="campo">
+            <label for="monto-gasto">Monto (MXN)</label>
+            <input
+              id="monto-gasto"
+              type="number"
+              min="0.01"
+              step="0.01"
+              placeholder="0.00"
+              [value]="montoForm() ?? ''"
+              (input)="
+                montoForm.set($any($event.target).value === '' ? null : +$any($event.target).value)
+              "
+            />
+          </div>
+          <div class="campo">
+            <label for="fecha-gasto">Fecha</label>
+            <input
+              id="fecha-gasto"
+              type="date"
+              [value]="fechaForm()"
+              (change)="fechaForm.set($any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>Forma de pago</label>
+          <div class="selector-forma-pago">
+            <button
+              type="button"
+              class="pastilla-forma-pago"
+              [class.pastilla-activa]="formaPagoForm() === 'efectivo'"
+              (click)="formaPagoForm.set('efectivo')"
+            >
+              Efectivo
+            </button>
+            <button
+              type="button"
+              class="pastilla-forma-pago"
+              [class.pastilla-activa]="formaPagoForm() === 'transferencia'"
+              (click)="formaPagoForm.set('transferencia')"
+            >
+              Transferencia
+            </button>
+          </div>
+        </div>
+
+        <label class="campo-checkbox">
+          <input
+            type="checkbox"
+            [checked]="esRecurrenteForm()"
+            (change)="esRecurrenteForm.set($any($event.target).checked)"
+          />
+          Es un gasto recurrente (ej. renta mensual) — solo informativo, no genera nada
+          automáticamente.
+        </label>
+
+        <div class="campo">
+          <label for="proveedor-gasto">Proveedor (opcional)</label>
+          <select
+            id="proveedor-gasto"
+            (change)="
+              proveedorIdForm.set($any($event.target).value ? +$any($event.target).value : null)
+            "
+          >
+            <option [value]="null" [selected]="proveedorIdForm() === null">Sin proveedor</option>
+            @for (proveedor of proveedores(); track proveedor.id) {
+              <option [value]="proveedor.id" [selected]="proveedor.id === proveedorIdForm()">
+                {{ proveedor.nombre }}
+              </option>
+            }
+          </select>
+          @if (!mostrarNuevoProveedor()) {
+            <button type="button" class="boton-enlace" (click)="mostrarNuevoProveedor.set(true)">
+              + Nuevo proveedor
+            </button>
+          } @else {
+            <div class="fila-alta-rapida">
+              <input
+                type="text"
+                placeholder="Nombre del proveedor"
+                [value]="nombreProveedorForm()"
+                (input)="nombreProveedorForm.set($any($event.target).value)"
+              />
+              <button
+                type="button"
+                class="boton-accion"
+                [disabled]="!nombreProveedorForm().trim() || procesandoProveedor()"
+                (click)="crearProveedorRapido()"
+              >
+                {{ procesandoProveedor() ? '...' : 'Agregar' }}
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="campo">
+          <label for="nota-gasto">Nota (opcional)</label>
+          <textarea
+            id="nota-gasto"
+            rows="2"
+            placeholder="Cualquier detalle adicional..."
+            [value]="notaForm()"
+            (input)="notaForm.set($any($event.target).value)"
+          ></textarea>
+        </div>
+
+        @if (errorForm()) {
+          <p class="mensaje-error">{{ errorForm() }}</p>
+        }
+
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarFormulario()"
+            [disabled]="guardando()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar"
+            [disabled]="!puedeGuardar() || guardando()"
+            (click)="guardar()"
+          >
+            {{ guardando() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- VENTANA EMERGENTE: confirmar eliminar. -->
+  @if (gastoAEliminar(); as gasto) {
+    <div class="overlay">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Eliminar gasto"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarConfirmarEliminar()"
+      >
+        <h2>Eliminar gasto</h2>
+        <p class="texto-confirmacion">
+          ¿Eliminar <strong>{{ gasto.concepto }}</strong> ({{ gasto.monto | currency: 'MXN' }})?
+          Esta acción no se puede deshacer.
+        </p>
+
+        @if (errorEliminar()) {
+          <p class="mensaje-error">{{ errorEliminar() }}</p>
+        }
+
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarConfirmarEliminar()"
+            [disabled]="eliminando()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar-eliminar"
+            (click)="confirmarEliminar()"
+            [disabled]="eliminando()"
+          >
+            {{ eliminando() ? 'Eliminando...' : 'Sí, eliminar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
