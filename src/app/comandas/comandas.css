@@ -91,35 +91,36 @@
   min-width: 0;
 }
 
-/* Título de cada columna con su ícono y contador. */
+/* Título de cada columna con su ícono y contador (2026-10-27, dirección
+   "tablero KDS/semáforo"): antes era solo texto con una raya de color
+   debajo; ahora es un bloque SÓLIDO del color del módulo — más peso visual,
+   pensado para ubicar la columna correcta de un vistazo desde lejos, no
+   solo leer su nombre de cerca. */
 .columna-titulo {
   display: flex;
   align-items: center;
   gap: 10px;
   margin: 0;
+  padding: 12px 16px;
+  border-radius: var(--radio-md);
+  background: var(--acento-modulo);
+  color: #fff;
   font-size: 1.15rem;
+  box-shadow: var(--sombra-suave);
 }
 
-/* Ícono de columna en el color propio de Comandas (verde azulado,
-   --mod-comandas) en vez del acento naranja genérico — junto con el borde
-   de abajo del título, es el detalle que pidió el usuario ("mete detalles
-   en ese color en esa interfaz"). */
+/* Ícono de columna: antes tenía su propio tinte de --acento-modulo sobre
+   el fondo oscuro de la página; ahora vive DENTRO del bloque sólido de
+   arriba, así que necesita contraste contra ESE fondo (blanco translúcido +
+   ícono blanco) en vez de repetir el mismo color del bloque. */
 .columna-icono {
   width: 36px;
   height: 36px;
   display: grid;
   place-items: center;
   border-radius: var(--radio-sm);
-  background: color-mix(in srgb, var(--acento-modulo) 20%, var(--pos-bg-card));
-  color: var(--acento-modulo);
-}
-
-/* Banda de color bajo el título de cada columna — el mismo espíritu que
-   la decoración del encabezado, repetida en miniatura arriba de cada
-   sección del tablero. */
-.columna-titulo {
-  padding-bottom: 10px;
-  border-bottom: 3px solid color-mix(in srgb, var(--acento-modulo) 45%, transparent);
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
 .columna-contador {
@@ -130,11 +131,14 @@
   place-items: center;
   padding: 0 8px;
   border-radius: var(--radio-pastilla);
-  background: color-mix(in srgb, var(--acento-modulo) 16%, var(--pos-bg-card));
-  color: var(--pos-text-primary);
+  /* Blanco sólido + texto del color del módulo (en vez de un tinte sobre
+     --pos-bg-card): mismo motivo que .columna-icono, ahora vive sobre un
+     fondo sólido de color, no sobre la página. */
+  background: #fff;
+  color: var(--acento-modulo);
   font-family: var(--fuente-texto);
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .mensaje-vacio {
@@ -159,18 +163,22 @@
   height: 22px;
 }
 
-/* Tarjeta de una comanda: borde superior en el color del módulo (no el
-   izquierdo, que ya usan los anillos de atención/urgente para su propio
-   aviso — ver abajo, esos SÍ necesitan quedarse naranja/rojo sin
-   competencia de otro color). */
+/* Tarjeta de una comanda (2026-10-27, dirección "tablero KDS/semáforo"):
+   el borde pasa de arriba a la IZQUIERDA y se engrosa (3px → 8px) — antes
+   el izquierdo estaba reservado para el anillo de atención/urgente (ver
+   abajo), pero esa separación ya no hace falta: ahora es un solo semáforo
+   de un color (teal = normal, naranja = atención, rojo = urgente) en vez
+   de "borde de identidad arriba + anillo de aviso aparte", más legible de
+   un vistazo. Padding más ajustado (18px → 14px) para que quepan más
+   comandas visibles sin hacer scroll. */
 .tarjeta-orden {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 18px;
+  padding: 14px;
   background: var(--pos-bg-card);
-  border-radius: var(--radio-lg);
-  border-top: 3px solid var(--acento-modulo);
+  border-radius: var(--radio-md);
+  border-left: 8px solid var(--acento-modulo);
   box-shadow: var(--sombra-suave);
   animation: escalar 0.25s ease;
 }
@@ -208,27 +216,30 @@
    solo (2026-10-11): naranja de marca al acercarse al límite ("atención",
    MINUTOS_PARA_ATENCION) y rojo solo al pasarlo de verdad ("urgente", el
    umbral de siempre) — así cocina tiene aviso previo en vez de que una
-   comanda salte directo de "normal" a "roja" sin ninguna transición. */
+   comanda salte directo de "normal" a "roja" sin ninguna transición.
+   2026-10-27: el aviso, antes un anillo delgado (box-shadow de 2px), ahora
+   TOMA el borde izquierdo de la tarjeta (ver `.tarjeta-orden` arriba) y
+   suma un tinte de fondo — nada de esto compite ya con el color del módulo,
+   que vivía en ese mismo borde: aquí es donde gana la urgencia, siempre.
+   `!important` necesario porque ambas reglas comparten especificidad con
+   `.tarjeta-orden` y deben ganar sin importar el orden en que el CSS las
+   declare. */
 .tarjeta-atencion {
-  box-shadow:
-    0 0 0 2px var(--action-primary),
-    var(--sombra-suave);
+  border-left-color: var(--action-primary) !important;
+  background: color-mix(in srgb, var(--action-primary) 8%, var(--pos-bg-card));
 }
 
 .tarjeta-atencion .tiempo-transcurrido {
   color: var(--acento-texto);
-  font-weight: 700;
 }
 
 .tarjeta-urgente {
-  box-shadow:
-    0 0 0 2px var(--action-danger),
-    var(--sombra-suave);
+  border-left-color: var(--action-danger) !important;
+  background: color-mix(in srgb, var(--action-danger) 12%, var(--pos-bg-card));
 }
 
 .tarjeta-urgente .tiempo-transcurrido {
   color: var(--peligro-texto);
-  font-weight: 700;
 }
 
 .tarjeta-orden-encabezado {
@@ -238,14 +249,31 @@
   gap: 8px;
 }
 
+/* Número de orden (2026-10-27, "tablero KDS/semáforo"): es lo PRIMERO que
+   busca cocina al mirar una tarjeta — sube de 1.1rem a 1.5rem, el texto más
+   grande de toda la tarjeta. NO se probó en el draft de Superdesign con el
+   formato real (ahí se usó un "#1204" corto de ejemplo): el folio real es
+   `ORD-AAAAMMDD-####` (18 caracteres) y el primer intento a 2rem partía en
+   3 líneas dentro de una columna del tablero — verificado contra datos
+   reales, 1.5rem parte como máximo en 2 líneas (justo después del guion,
+   "ORD-AAAAMMDD-" / "####"), que se ve limpio y sigue siendo mucho más
+   grande que el 1.1rem original. */
 .numero-orden {
   font-family: var(--fuente-titulo);
-  font-size: 1.1rem;
+  font-size: 1.5rem;
   font-weight: 800;
+  line-height: 1.15;
 }
 
+/* Tiempo transcurrido: segundo elemento más prominente de la tarjeta (sube
+   de 0.8rem a 0.95rem, mayúsculas + más separación entre letras) — el
+   color de urgencia (normal/atención/rojo, ver .tarjeta-atencion/
+   .tarjeta-urgente abajo) ya no compite con un tamaño de texto chico. */
 .tiempo-transcurrido {
-  font-size: 0.8rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--pos-text-secondary);
   white-space: nowrap;
 }
