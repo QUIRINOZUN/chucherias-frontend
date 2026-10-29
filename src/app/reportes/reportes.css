@@ -264,6 +264,20 @@
   min-width: 0;
 }
 
+/* Variante neutra (2026-10-29): el hero de "General" es DE ventas (el color
+   sigue a la entidad, ver nota del skill de dataviz más arriba), pero el de
+   utilidad neta dentro de la pestaña Rentabilidad no pertenece a un solo
+   dominio — reusa --acento-seccion (ya fijado en el <section> ancestro,
+   --mod-reportes aquí) en vez del --mod-ventas fijo de .hero-reporte. */
+.hero-reporte-neutral {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--acento-seccion) 16%, var(--pos-bg-card)) 0%,
+    var(--pos-bg-card) 70%
+  );
+  border-top-color: var(--acento-seccion);
+}
+
 /* Sparkline (2026-10-22): el 12-punto "trend" del contrato de stat-tile del
    skill de dataviz, junto al valor principal — nunca su propia gráfica con
    ejes, eso ya vive completo en la pestaña "Ventas". Ancho fijo pequeño a

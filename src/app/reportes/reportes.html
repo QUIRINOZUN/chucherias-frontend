@@ -723,6 +723,69 @@
             </p>
           }
 
+          <!-- UTILIDAD NETA (2026-10-29): cierra el círculo que dejó abierto
+               el módulo Gastos — utilidad bruta menos mano de obra y gastos
+               generales del periodo. Es la cifra "hero" de esta pestaña, el
+               dato que de verdad responde "¿ganamos dinero o no?". -->
+          <h3 class="subtitulo-grafica-reporte">Utilidad neta del periodo</h3>
+          <div class="hero-reporte hero-reporte-neutral">
+            <div class="hero-reporte-texto">
+              <span class="hero-reporte-etiqueta">
+                Ingresos − costo de insumos − mano de obra − gastos generales
+              </span>
+              <span class="hero-reporte-valor">{{
+                r.rentabilidad.utilidad_neta | currency: 'MXN'
+              }}</span>
+              <span class="hero-reporte-detalle">
+                {{
+                  r.rentabilidad.utilidad_neta_porcentaje !== null
+                    ? r.rentabilidad.utilidad_neta_porcentaje + '% de margen neto'
+                    : 'Sin ingresos en el periodo'
+                }}
+              </span>
+            </div>
+          </div>
+          <div class="grid-stats-reporte">
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{
+                r.rentabilidad.costo_mano_obra | currency: 'MXN'
+              }}</span>
+              <span class="stat-reporte-etiqueta">Mano de obra</span>
+            </div>
+            <div class="stat-reporte">
+              <span class="stat-reporte-valor">{{
+                r.rentabilidad.gastos_generales | currency: 'MXN'
+              }}</span>
+              <span class="stat-reporte-etiqueta">Gastos generales</span>
+            </div>
+          </div>
+          @if (r.rentabilidad.turnos_sin_cerrar > 0 || r.rentabilidad.empleados_sin_tarifa > 0) {
+            <p class="seccion-reporte-aviso">
+              @if (r.rentabilidad.turnos_sin_cerrar > 0) {
+                {{ r.rentabilidad.turnos_sin_cerrar }}
+                {{
+                  r.rentabilidad.turnos_sin_cerrar === 1 ? 'turno sin cerrar' : 'turnos sin cerrar'
+                }}
+                en el periodo
+              }
+              @if (
+                r.rentabilidad.turnos_sin_cerrar > 0 && r.rentabilidad.empleados_sin_tarifa > 0
+              ) {
+                y
+              }
+              @if (r.rentabilidad.empleados_sin_tarifa > 0) {
+                {{ r.rentabilidad.empleados_sin_tarifa }}
+                {{
+                  r.rentabilidad.empleados_sin_tarifa === 1
+                    ? 'empleado activo sin tarifa capturada'
+                    : 'empleados activos sin tarifa capturada'
+                }}
+              }
+              — el costo de mano de obra de arriba es parcial, corrígelo desde Asistencias/Nómina
+              antes de confiar en la utilidad neta.
+            </p>
+          }
+
           <!-- MEDIDOR: insumos sin costo capturado / total — mismo patrón que
                el medidor de Inventario (proporción contra un límite). -->
           @if (medidorCostoCapturado(); as m) {

@@ -83,6 +83,12 @@ export interface ProductoMargenBajo {
 // que se vendió, no el teórico del catálogo). `insumos_sin_costo`/
 // `total_insumos`/`top_margen_bajo` son una foto de AHORA (el catálogo
 // actual), igual criterio que `ResumenInventario.bajo_minimo`.
+//
+// Utilidad neta (2026-10-29): cierra el círculo que dejó abierto el módulo
+// Gastos — `utilidad_neta` = utilidad_bruta − costo_mano_obra −
+// gastos_generales, los tres del periodo filtrado. `turnos_sin_cerrar`/
+// `empleados_sin_tarifa` avisan cuando el costo de mano de obra está
+// incompleto (mismo criterio que `lineas_sin_costo` para costo de insumos).
 export interface ResumenRentabilidad {
   ingresos: number;
   costo_ventas: number;
@@ -93,6 +99,12 @@ export interface ResumenRentabilidad {
   insumos_sin_costo: number;
   total_insumos: number;
   top_margen_bajo: ProductoMargenBajo[];
+  costo_mano_obra: number;
+  gastos_generales: number;
+  utilidad_neta: number;
+  utilidad_neta_porcentaje: number | null;
+  turnos_sin_cerrar: number;
+  empleados_sin_tarifa: number;
 }
 
 export interface ResumenReportes {
