@@ -1,0 +1,718 @@
+# CHUCHERIAS — theme.md
+
+> Fuente única de verdad del sistema de diseño: `src/styles.css` (569 líneas).
+> No hay un segundo archivo de tokens — cada componente SOLO añade `--acento-modulo`
+> en su propio `:host` (ver `layouts.md`/`components.md`), nunca redefine un token base.
+
+## Parte 1 — Resumen compacto
+
+### Tema por defecto: OSCURO (no claro)
+El tema oscuro vive en `:root` sin selector de atributo — es el que se aplica si
+nada más interviene. El tema claro vive en `:root[data-theme='light']` y se activa
+agregando `data-theme="light"` a `<html>` (lo hace un script inline en `index.html`
+antes de que arranque Angular, para no parpadear; `ThemeService` en
+`core/theme.ts` lo alterna después).
+
+### Paleta — Tema oscuro (default)
+| Token | Valor | Uso |
+|---|---|---|
+| `--pos-bg-main` | `#1d1511` | fondo de página (café tostado casi negro) |
+| `--pos-bg-card` | `#2b2019` | fondo de tarjeta/panel |
+| `--pos-bg-sidebar` | `#251b15` | fondo de barra lateral |
+| `--pos-border` | `#4a392e` | bordes de 1-2px |
+| `--pos-text-primary` | `#fbf0e2` | texto principal (crema) |
+| `--pos-text-secondary` | `#d2bfac` | texto secundario/etiquetas |
+| `--pos-text-muted` | `#ad9682` | texto apagado |
+
+### Paleta — Tema claro
+| Token | Valor |
+|---|---|
+| `--pos-bg-main` | `#fdf6ec` (crema) |
+| `--pos-bg-card` | `#fffbf5` |
+| `--pos-bg-sidebar` | `#f7ecdc` |
+| `--pos-border` | `#e6d6bf` |
+| `--pos-text-primary` | `#2a1c12` |
+| `--pos-text-secondary` | `#5c4a3b` |
+| `--pos-text-muted` | `#7a6553` |
+
+### Acción, éxito, peligro (regla dura: nunca texto crudo, solo las variantes `-texto`)
+| Token | Oscuro | Claro | Uso |
+|---|---|---|---|
+| `--action-primary` | `#c2410c` | igual | ÚNICA acción principal como FONDO + texto blanco (5.2:1). Solo vive en el POS (`--mod-pos: var(--action-primary)`) y en acciones globales (botón "Seguir conectado" del aviso de inactividad). |
+| `--action-primary-hover` | `#9a3412` | igual | hover del botón de acción primaria |
+| `--acento-texto` | `#ff9a62` | `#b0380a` | naranja como TEXTO/ícono sobre superficie (AA 4.5:1 por tema) |
+| `--acento-suave` | mezcla 22% naranja | mezcla 12% naranja | fondo tenue de hover/chip |
+| `--acento-foco` | `#ff9a62` | `#c2410c` | anillo de `:focus-visible` |
+| `--action-success` / `-hover` | `#15803d` / `#166534` | igual | fondo de éxito |
+| `--exito-texto` | `#6ee7a0` | `#166534` | texto/ícono de éxito (cambio correcto, venta registrada) |
+| `--action-danger` / `-hover` | `#dc2626` / `#b91c1c` | igual | fondo de peligro |
+| `--peligro-texto` | `#ff8f85` | `#b91c1c` | texto/ícono de peligro (cancelar, eliminar, alerta de mínimo) |
+
+### Identidad por MÓDULO — `--mod-*` (13 tokens, 2026-10-13 en adelante)
+Cada pantalla de gestión (no el POS) fija su propio `--acento-modulo: var(--mod-x)`
+en su `:host`. Regla dura: **nunca como color de texto de párrafo** — solo relleno
+de ícono/insignia/botón y borde/raya de acento (3:1 basta, son objetos gráficos).
+
+| Token | Hex | Módulo | Nota de elección |
+|---|---|---|---|
+| `--mod-pos` | `var(--action-primary)` | Punto de venta | el naranja de marca ES su color — módulo "central" |
+| `--mod-comandas` | `#0d9488` | Comandas | teal — tablero de cocina en movimiento |
+| `--mod-caja` | `#a16207` | Corte de caja | dorado — efectivo |
+| `--mod-ventas` | `#1d4ed8` | Ventas | azul — historial, confianza |
+| `--mod-usuarios` | `#4f46e5` | Usuarios | índigo — cuentas y permisos |
+| `--mod-inventario` | `#0369a1` | Inventario | azul cielo — insumos y bodega |
+| `--mod-mermas` | `#be123c` | Mermas | carmín — pérdida (cerca del rojo de peligro a propósito) |
+| `--mod-asistencias` | `#7c3aed` | Asistencias | violeta — calendario y horarios |
+| `--mod-recetario` | `#c026d3` | Recetario | fucsia — familia de postres |
+| `--mod-clientes` | `#4d7c0f` | Clientes | oliva — se evitó el verde puro (~140-170°, ya es "éxito") |
+| `--mod-reportes` | `#475569` | Reportes | pizarra DESATURADA — es transversal, no un dominio propio |
+| `--mod-checklist` | `#78716c` | Checklist | arena/taupe cálido — el otro módulo "neutro" |
+| `--mod-nomina` | `#0f6b52` | Nómina | verde pino/petróleo — hueco angosto entre éxito y Comandas |
+| `--mod-ventas-especiales` | `#be185d` | Ventas especiales | rosa frambuesa — entre Recetario y Mermas |
+
+### Franja arcoíris
+```css
+--franja-arcoiris: linear-gradient(
+  90deg,
+  var(--mod-caja), var(--mod-comandas), var(--mod-ventas),
+  var(--mod-recetario), var(--mod-mermas)
+);
+```
+Mismo orden SIEMPRE, en los 10 encabezados de pantalla (los 9 "de módulo" +
+login) vía un `::before` de 5px arriba del header.
+
+### Tipografía
+- `--fuente-titulo: 'Fraunces', Georgia, 'Times New Roman', serif` — SOLO en
+  `h1`/`h2`/`h3` globales (y en algunos `<span>` que imitan un título, ej.
+  `.modulo-titulo`). Lleva ejes variables activados globalmente:
+  `font-variation-settings: 'SOFT' 60, 'WONK' 1;` (remates suaves + alternas
+  "chuecas" a propósito — el lado juguetón de la tipografía). La URL de Google
+  Fonts en `index.html` DEBE pedir los ejes explícitos en la API v2
+  (`Fraunces:SOFT,WONK,opsz,wght@0..100,0..1,9..144,600..800`) o Google no
+  permite ajustarlos en runtime.
+- `--fuente-texto: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif`
+  — todo lo demás (cuerpo, datos, formularios, cifras de totales/precios).
+- `font-variant-numeric: tabular-nums` en `body` — los precios se alinean en columna.
+
+### Categorías del menú real — `--cat-*` (12 tokens, NO TOCAR — ya validados AA + daltonismo)
+4 familias por tema de categoría (nunca 12 tonos sueltos — la separación perceptual
+se degrada con >8 colores simultáneos):
+```
+--cat-hamburguesas #a93800   --cat-papas #007653          --cat-frutas-locas #a82e9f   --cat-bebidas-preparadas #006bc6
+--cat-pizzas       #c74400   --cat-snacks #008b62          --cat-crepas #d057c6         --cat-bebidas-embotelladas #188fff
+--cat-alitas       #e65000   --cat-tostitos #00a273
+--cat-boneless     #f45b17   --cat-botanas-sobre #00ae7c
+```
+El color nunca es el único identificador: siempre va con ícono + nombre visible.
+
+### Radios, sombras, breakpoints
+```css
+--radio-xs: 8px;  --radio-sm: 12px;  --radio-md: 16px;  --radio-lg: 22px;
+--radio-pastilla: 999px;  --pos-radio: var(--radio-sm);
+
+--sombra-suave:   0 1px 2px rgba(10,4,0,.4), 0 6px 18px rgba(10,4,0,.3);
+--sombra-elevada: 0 2px 4px rgba(10,4,0,.4), 0 16px 40px rgba(10,4,0,.5);
+--sombra-acento:  0 6px 20px rgba(194,65,12,.4);
+```
+Jerarquía de radio: chips/botones flotantes = pastilla; tarjetas/paneles = `lg`;
+controles = `md`/`sm`; detalles pequeños = `xs`. Muchas tarjetas de "módulo" usan
+una esquina SIN redondear a propósito (`var(--radio-lg) var(--radio-lg) var(--radio-lg) 4px`)
+junto a un borde de color — rompe la simetría perfecta "de plantilla".
+
+Breakpoints reales usados en todo el proyecto (no hay un solo archivo de breakpoints,
+cada componente repite el valor que necesita):
+- `480px` — encabezado del dashboard pasa de apilado a una fila.
+- `600px` — formularios de Inventario, fila cantidad+unidad deja de envolver.
+- `640px` — rejilla de módulos del dashboard pasa a 3 columnas fijas + identidad por columna.
+- `860px` — el quiebre MÁS repetido: POS pasa de carrito-hoja-deslizable a barra
+  lateral fija; Inventario pasa de controles-apilados a columna lateral `sticky`;
+  Caja tenía (hoy retirado) su layout de 2 columnas en "Corte de hoy".
+- `900px` — login pasa de una columna a panel de marca + formulario lado a lado.
+- `1180px` — (histórico, caja.css ya no lo usa tras volver a pestañas) layout ancho.
+
+### Íconos
+Sprite SVG inline en `index.html`, `<symbol id="ic-nombre">`, referenciado con
+`<svg class="icono"><use href="#ic-nombre" /></svg>`. `.icono` (en `styles.css`):
+`width/height: 1.25em; stroke: currentColor; stroke-width: 2; fill: none;` —
+hereda el color del texto, trazo de 2px, esquinas redondeadas, SIN librería externa.
+
+### Animaciones (todas respetan `prefers-reduced-motion`)
+`aparecer` (fade), `subir` (fade + translateY 24px), `escalar` (fade + scale 0.96),
+`rebote` (scale 1 → 1.22 → 1), `brillo-esqueleto` (shimmer del loading skeleton).
+Patrón: cada `:host` de pantalla lleva `animation: aparecer 0.22s ease` una sola vez
+(no se anima cada elemento interno por separado).
+
+---
+
+## Parte 2 — Dump completo de `src/styles.css`
+
+```css
+/* ============================================================================
+   CHUCHERIAS — sistema de diseño global
+   ============================================================================
+   Dirección: cálida y gastronómica (antojitos), no corporativa.
+
+   Decisiones de diseño (las ambiguas se resolvieron por lo más cálido):
+   - Tipografía: Fraunces (serif con carácter) para títulos, precios y totales;
+     DM Sans para texto e interfaz. Los números usan cifras tabulares para que
+     los precios se alineen.
+   - Paleta: oscuros cálidos (café tostado / carbón), crema para texto, y el
+     naranja quemado de la marca (#c2410c) como ÚNICO color de acción principal.
+     El verde queda solo para estados de éxito (cambio correcto, venta
+     registrada); el rojo, para peligro/cancelación.
+   - Contraste AA: los colores de acción se usan como FONDO con texto blanco
+     (5.2:1); cuando un color va como TEXTO sobre superficie se usan las
+     variantes --acento-texto / --exito-texto / --peligro-texto, elegidas por
+     tema para llegar a 4.5:1.
+   - Radios con jerarquía: chips y botones flotantes = pastilla; tarjetas y
+     paneles = radio grande; controles = medio; detalles pequeños = chico.
+   - Sombras con tinte café en vez de negro puro; menos bordes de 1px.
+   - Los 12 tokens --cat-* NO se tocan: ya están validados (AA y daltonismo).
+   ========================================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ===================== Tema oscuro (por defecto) ===================== */
+:root {
+  color-scheme: dark;
+
+  --fuente-titulo: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --fuente-texto: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* Superficies: café tostado / carbón cálido */
+  --pos-bg-main: #1d1511;
+  --pos-bg-card: #2b2019;
+  --pos-bg-sidebar: #251b15;
+  --pos-border: #4a392e;
+  --pos-text-primary: #fbf0e2;
+  --pos-text-secondary: #d2bfac;
+  --pos-text-muted: #ad9682;
+
+  /* 12 categorías reales, agrupadas en 4 familias por tono (más fácil de
+     recordar y de distinguir que 12 tonos sueltos — ver notas de la
+     búsqueda en OKLCH). El color nunca es el único identificador: siempre
+     va acompañado de ícono + nombre. */
+  --cat-hamburguesas: #a93800;
+  --cat-pizzas: #c74400;
+  --cat-alitas: #e65000;
+  --cat-boneless: #f45b17;
+
+  --cat-papas: #007653;
+  --cat-snacks: #008b62;
+  --cat-tostitos: #00a273;
+  --cat-botanas-sobre: #00ae7c;
+
+  --cat-frutas-locas: #a82e9f;
+  --cat-crepas: #d057c6;
+
+  --cat-bebidas-preparadas: #006bc6;
+  --cat-bebidas-embotelladas: #188fff;
+
+  /* Acción principal: naranja de la marca (texto blanco encima = 5.2:1) */
+  --action-primary: #c2410c;
+  --action-primary-hover: #9a3412;
+  --acento-texto: #ff9a62; /* acento cuando va como texto/ícono sobre superficie */
+  --acento-suave: color-mix(in srgb, #c2410c 22%, var(--pos-bg-card));
+  --acento-foco: #ff9a62;
+
+  /* Estados */
+  --action-success: #15803d;
+  --action-success-hover: #166534;
+  --exito-texto: #6ee7a0;
+  --action-danger: #dc2626;
+  --action-danger-hover: #b91c1c;
+  --peligro-texto: #ff8f85;
+
+  /* Identidad por MÓDULO (2026-10-13): cada pantalla de gestión (no el POS,
+     que ya lleva el naranja de marca como módulo "central") recibe un color
+     propio — mismo principio que ya usan los --cat-* del menú real: nunca
+     como texto de párrafo (no se pidió otra ronda de validación AA para
+     texto), solo como relleno de ícono/insignia y borde/raya de acento, que
+     solo necesitan 3:1 de contraste (objetos gráficos, no texto) — holgado
+     con tonos tan saturados contra las superficies café/crema de ambos
+     temas. 8 tonos repartidos en el círculo de color, evitando el naranja
+     de marca (~20°, reservado para acción), el verde de éxito (~142°) y el
+     rojo de peligro (~0°, aunque Mermas sí vive cerca a propósito: pérdida
+     ya es conceptualmente "rojo"). */
+  --mod-pos: var(--action-primary);
+  --mod-comandas: #0d9488; /* teal — tablero de cocina en movimiento */
+  --mod-caja: #a16207; /* dorado — efectivo */
+  --mod-ventas: #1d4ed8; /* azul — historial, confianza */
+  --mod-usuarios: #4f46e5; /* índigo — cuentas y permisos */
+  --mod-inventario: #0369a1; /* azul cielo — insumos y bodega */
+  --mod-mermas: #be123c; /* carmín — pérdida */
+  --mod-asistencias: #7c3aed; /* violeta — calendario y horarios */
+  --mod-recetario: #c026d3; /* fucsia — recetario, familia de postres */
+  /* oliva — clientes y lealtad; se evitó el verde puro (hue ~140-170°) a
+     propósito, porque ese rango ya significa "éxito" en toda la app (ver
+     --exito-texto); con 8 módulos ya repartidos en el círculo de color,
+     este hueco (~88°) es el más libre que queda sin tocar ningún otro
+     significado — pendiente de confirmar visualmente como el resto. */
+  --mod-clientes: #4d7c0f;
+  /* pizarra — Reportes: con 9 colores ya repartidos, el círculo de color
+     está demasiado lleno para un décimo tono vívido sin acercarse a algo
+     ya usado. Se resolvió distinto a propósito: en vez de otro matiz,
+     un gris-azulado DESATURADO — se distingue de los demás por ser el
+     único módulo "neutro" (tiene sentido: reúne datos de TODOS los
+     demás, no es un dominio propio). */
+  --mod-reportes: #475569;
+  /* arena/taupe cálido — Checklist: el otro módulo "neutro" (ver nota de
+     --mod-reportes); se eligió un tono cálido en vez de otro gris-azulado
+     para que los dos módulos sin color propio en el círculo (Reportes y
+     Checklist) tampoco se confundan entre sí. */
+  --mod-checklist: #78716c;
+  /* verde pino/petróleo — Nómina: con 10 tonos ya repartidos, el único
+     hueco libre que queda sin acercarse a otro significado es la franja
+     angosta entre el verde de éxito (~142°, --exito-texto) y el teal de
+     Comandas (~175°) — se evitó a propósito ir más abajo, hacia el verde
+     puro, por la misma razón que ya documentó Clientes. */
+  --mod-nomina: #0f6b52;
+  /* rosa frambuesa — Ventas especiales: con 13 tonos ya repartidos, el
+     hueco que queda entre el fucsia de Recetario (~300°) y el carmín de
+     Mermas (~350°) es angosto, pero misma densidad que ya conviven
+     Inventario/Ventas/Usuarios (200°-245°) sin confundirse — el ícono de
+     regalo + el nombre visible siguen siendo quienes de verdad distinguen
+     al módulo, el color nunca es el único identificador. */
+  --mod-ventas-especiales: #be185d;
+
+  /* Franja arcoíris (2026-10-13, tercera pasada): el usuario pidió que el
+     "arcoíris" (el guiño al logotipo real multicolor, antes solo en el
+     panel de marca del login) fuera CONSISTENTE en cada módulo, no un
+     adorno de una sola pantalla — así que es la MISMA secuencia de colores,
+     en el MISMO orden, en todas partes (login y los 9 encabezados de
+     pantalla). Nunca cambia de un módulo a otro; lo que sí cambia por
+     módulo es el acento sólido (--acento-modulo) que decora el resto de
+     esa pantalla. */
+  --franja-arcoiris: linear-gradient(
+    90deg,
+    var(--mod-caja),
+    var(--mod-comandas),
+    var(--mod-ventas),
+    var(--mod-recetario),
+    var(--mod-mermas)
+  );
+
+  /* Escala de radios */
+  --radio-xs: 8px;
+  --radio-sm: 12px;
+  --radio-md: 16px;
+  --radio-lg: 22px;
+  --radio-pastilla: 999px;
+  --pos-radio: var(--radio-sm);
+
+  /* Sombras cálidas */
+  --sombra-suave: 0 1px 2px rgba(10, 4, 0, 0.4), 0 6px 18px rgba(10, 4, 0, 0.3);
+  --sombra-elevada: 0 2px 4px rgba(10, 4, 0, 0.4), 0 16px 40px rgba(10, 4, 0, 0.5);
+  --sombra-acento: 0 6px 20px rgba(194, 65, 12, 0.4);
+}
+
+/* ===================== Tema claro ===================== */
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --pos-bg-main: #fdf6ec;
+  --pos-bg-card: #fffbf5;
+  --pos-bg-sidebar: #f7ecdc;
+  --pos-border: #e6d6bf;
+  --pos-text-primary: #2a1c12;
+  --pos-text-secondary: #5c4a3b;
+  --pos-text-muted: #7a6553;
+
+  --acento-texto: #b0380a;
+  --acento-suave: color-mix(in srgb, #c2410c 12%, var(--pos-bg-card));
+  --acento-foco: #c2410c;
+
+  --exito-texto: #166534;
+  --peligro-texto: #b91c1c;
+
+  --sombra-suave: 0 1px 2px rgba(74, 40, 15, 0.08), 0 6px 18px rgba(74, 40, 15, 0.09);
+  --sombra-elevada: 0 2px 4px rgba(74, 40, 15, 0.1), 0 16px 40px rgba(74, 40, 15, 0.18);
+  --sombra-acento: 0 6px 20px rgba(194, 65, 12, 0.32);
+}
+
+body {
+  margin: 0;
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  font-family: var(--fuente-texto);
+  /* Cifras de ancho fijo: los precios y totales se alinean en columna. */
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Títulos: Fraunces con sus ejes variables SOFT/WONK activados (ver la nota
+   en index.html) — remates más suaves y alternas "chuecas" a propósito, el
+   lado juguetón/hecho-a-mano de la tipografía en vez de un serif neutro
+   más. A propósito SOLO en h1-h3 (títulos de pantalla y de sección): el
+   cuerpo de texto, los datos de tablas, formularios y cifras (que si usan
+   Fraunces, como los totales del POS) se quedan sin estos ejes — ahí sí
+   importa la lectura exacta, no el carácter. */
+h1,
+h2,
+h3 {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variation-settings:
+    'SOFT' 60,
+    'WONK' 1;
+}
+
+/* Los controles nativos no heredan la tipografía por defecto. */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* Respuesta táctil global de cualquier botón (2026-10-13): un ligero
+   "hundido" al presionar, para que CUALQUIER botón de la app se sienta
+   receptivo, no solo los que ya tenían su propio :active. Es una regla de
+   baja especificidad (selector de elemento) — cualquier botón con su
+   propia animación de :active (la mayoría de los botones principales ya
+   la tiene, ej. .boton-confirmar, .boton-avanzar) la sigue ganando sin
+   conflicto; esta solo rellena los huecos. Se respeta
+   prefers-reduced-motion con la regla global de abajo. */
+button:not(:disabled) {
+  transition:
+    transform 0.1s ease,
+    background-color 0.15s ease;
+}
+
+button:not(:disabled):active {
+  transform: scale(0.96);
+}
+
+/* Foco visible con intención: un anillo acento, no solo un cambio de borde. */
+:focus-visible {
+  outline: 3px solid var(--acento-foco);
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--acento-foco) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--acento-foco) 30%, transparent);
+}
+
+/* ===================== Íconos SVG (sprite en index.html) ===================== */
+.icono {
+  width: 1.25em;
+  height: 1.25em;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: middle;
+}
+
+/* Estado vacío con ícono (2026-10-11): patrón compartido para "todavía no
+   hay nada que mostrar aquí" (carrito vacío, columna de comandas sin
+   órdenes, etc.) — antes era solo una línea de texto gris, sin ningún peso
+   visual que distinguiera "esto está vacío a propósito" de un error o un
+   placeholder olvidado. El ícono de cada pantalla se elige por contexto
+   (ej. el mismo ícono que ya tiene la columna/sección a la que pertenece,
+   para no inventar un ícono genérico nuevo sin relación). */
+.estado-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--pos-text-secondary);
+}
+
+.estado-vacio-icono {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--acento-suave);
+  color: var(--pos-text-secondary);
+}
+
+.estado-vacio-icono .icono {
+  width: 20px;
+  height: 20px;
+}
+
+.estado-vacio p {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+/* Botones de encabezado compartidos por todas las pantallas. */
+.boton-volver,
+.boton-tema {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.boton-volver:hover,
+.boton-tema:hover {
+  background: var(--acento-suave) !important;
+}
+
+.boton-volver:active,
+.boton-tema:active {
+  transform: scale(0.96);
+}
+
+/* Encabezados de pantalla, decorados con el color de identidad del módulo
+   (--acento-modulo, que cada componente fija en su :host — ver styles.css
+   arriba; el dashboard y el login no participan de este sistema, así que
+   ahí la variable no está definida y el fallback cae al naranja de marca).
+   2026-10-13, segunda pasada: se quitó el garabato bajo el título (no le
+   gustó al usuario) y se reemplazó por una decoración más presente arriba
+   de la pantalla — un degradado tintado del color del módulo + la MISMA
+   textura de puntos que ya usan las tarjetas de producto sin foto en el
+   POS (`.imagen-marcador`, `pos.css`), nunca un motivo nuevo sin
+   precedente en la app — y una raya de acento sólida de 4px abajo. */
+.pos-header,
+.caja-header,
+.historial-header,
+.usuarios-header,
+.comandas-header,
+.dashboard-header,
+.mermas-header,
+.asistencias-header,
+.inventario-header,
+.recetario-header,
+.clientes-header,
+.reportes-header,
+.checklist-header,
+.nomina-header,
+.ventas-especiales-header {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 0 !important;
+  background-image:
+    radial-gradient(
+      circle at 2px 2px,
+      color-mix(in srgb, var(--acento-modulo, var(--action-primary)) 35%, transparent) 1.5px,
+      transparent 0
+    ),
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, var(--acento-modulo, var(--action-primary)) 16%, var(--pos-bg-card)) 0%,
+      var(--pos-bg-card) 65%
+    );
+  background-size:
+    18px 18px,
+    100% 100%;
+  box-shadow:
+    var(--sombra-suave),
+    inset 0 -4px 0 0 var(--acento-modulo, transparent);
+}
+
+/* Título de cada encabezado, a prueba de títulos largos en pantallas angostas
+   (2026-10-23, auditoría de responsive): cada módulo fija su propio
+   `<nombre>-header h1 { flex: 1; font-size: ...; }`, pero ninguno fijaba
+   `min-width` — un flex item sin `min-width: 0` nunca se encoge más allá del
+   ancho de su palabra más larga sin partir ("especiales", "Reportes"...), así
+   que en "Ventas especiales" (320-375px) el título empujaba el botón de
+   tema fuera del encabezado, y como el encabezado tiene `overflow: hidden`
+   (arriba), el botón quedaba recortado en vez de solo verse apretado —
+   confirmado con Playwright que su `getBoundingClientRect().right` caía
+   más allá del viewport. `min-width: 0` deja que el título se encoja/envuelva
+   dentro del espacio real que le toca, y el límite de 2 líneas con elipsis
+   evita el otro síntoma (un título como "Corte de caja" partiéndose en 3
+   líneas, empujando el resto del encabezado hacia abajo) sin necesitar
+   tocar cada plantilla HTML. El encabezado del dashboard NO entra aquí —
+   su `<h1>` es el saludo ("Hola, X"), con su propio breakpoint ya resuelto
+   (ver dashboard.css, 480px). */
+.pos-header h1,
+.caja-header h1,
+.historial-header h1,
+.usuarios-header h1,
+.comandas-header h1,
+.mermas-header h1,
+.asistencias-header h1,
+.inventario-header h1,
+.recetario-header h1,
+.clientes-header h1,
+.reportes-header h1,
+.checklist-header h1,
+.nomina-header h1,
+.ventas-especiales-header h1 {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Franja arcoíris arriba de CADA encabezado (2026-10-13, tercera pasada):
+   el usuario aclaró que quería el arcoíris consistente en todos los
+   módulos, no solo en el login — así que es la misma --franja-arcoiris en
+   los 10 encabezados (los 9 de pantalla + login), siempre en el mismo
+   orden de colores. */
+.pos-header::before,
+.caja-header::before,
+.historial-header::before,
+.usuarios-header::before,
+.comandas-header::before,
+.dashboard-header::before,
+.mermas-header::before,
+.asistencias-header::before,
+.inventario-header::before,
+.recetario-header::before,
+.clientes-header::before,
+.reportes-header::before,
+.checklist-header::before,
+.nomina-header::before,
+.ventas-especiales-header::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 5px;
+  background: var(--franja-arcoiris);
+}
+
+/* Insignia de ícono junto al <h1> de cada pantalla de módulo: un "sello"
+   circular (2026-10-13: antes un cuadrado con esquinas redondeadas, el
+   mismo molde genérico de ícono-en-caja de cualquier plantilla) — círculo
+   lleno + un halo exterior más tenue, como un timbre/stamp, con el mismo
+   color + ícono que ya usan las insignias de categoría del menú real.
+   Cada componente fija --acento-modulo en su :host; sin esa variable cae
+   al naranja de marca. */
+.insignia-pantalla {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: color-mix(
+    in srgb,
+    var(--acento-modulo, var(--action-primary)) 22%,
+    var(--pos-bg-card)
+  );
+  color: var(--acento-modulo, var(--action-primary));
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--acento-modulo, var(--action-primary)) 14%, transparent);
+}
+
+.insignia-pantalla .icono {
+  width: 20px;
+  height: 20px;
+}
+
+/* Estados de carga tipo "skeleton" (2026-10-11): tarjetas fantasma con un
+   barrido de luz sutil en vez de solo texto "Cargando...". Sobre todo se
+   nota la primera carga del día, cuando Render/Neon pueden tardar hasta
+   ~90 s en responder (ver nota de planes gratuitos en CLAUDE.md) — un
+   placeholder con la forma real del contenido se siente mucho menos muerto
+   que una línea de texto durante esa espera. `.esqueleto` es el bloque base
+   (una barra o un bloque de imagen); el brillo respeta
+   prefers-reduced-motion igual que el resto de animaciones de este archivo
+   (la regla ya existente más abajo cubre cualquier animation-duration). */
+.esqueleto {
+  position: relative;
+  overflow: hidden;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-sm);
+}
+
+/* Variante para cuando el bloque fantasma vive DENTRO de una tarjeta que ya
+   tiene fondo var(--pos-bg-card) (ej. una fila de lista) — ahí `.esqueleto`
+   quedaría invisible contra su propio contenedor, así que esta usa un tono
+   translúcido sobre el texto en vez del fondo de tarjeta. */
+.esqueleto-en-tarjeta {
+  background: color-mix(in srgb, var(--pos-text-primary) 12%, transparent);
+}
+
+.esqueleto::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in srgb, var(--pos-text-primary) 8%, transparent) 50%,
+    transparent 70%
+  );
+  animation: brillo-esqueleto 1.6s ease-in-out infinite;
+}
+
+@keyframes brillo-esqueleto {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes subir {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+@keyframes escalar {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes rebote {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.22);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Sin animaciones para quien lo pide en su sistema. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Un recibo nunca debe imprimirse con fondo oscuro, sin importar el tema activo. */
+@media print {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    background: #fff;
+  }
+}
+```

@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "targets": {
+    "/dashboard": {
+      "targetKind": "existing-ui",
+      "projectId": "9eda39df-a714-407d-b83d-03e5462f3b90",
+      "baselineDraftId": "4376d3ab-5a77-4300-bc21-eafa95e47471",
+      "activeDraftId": "bdce7c45-98c4-41d5-a81c-600e9a850122",
+      "designSystemPath": ".superdesign/design-system.md",
+      "referenceIds": ["chucherias-marca-logo-color", "chucherias-marca-logo-blanco"],
+      "brandAssets": {
+        "logo": {
+          "assetKey": "chucherias-marca-logo-color",
+          "url": "https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/projects/9eda39df-a714-407d-b83d-03e5462f3b90/brand-assets/chucherias-marca-logo-color/logo-color.png",
+          "sourcePath": "src/app/dashboard/dashboard.html"
+        }
+      },
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "src/app/app.ts",
+        "src/app/app.html",
+        "src/app/app.css",
+        "src/app/dashboard/dashboard.ts",
+        "src/app/dashboard/dashboard.html",
+        "src/app/dashboard/dashboard.css",
+        "src/styles.css",
+        "src/index.html"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "d77a2b1c5c3989328853b7f1ddb35b3ab2e26489271364fcd628528d6412d0d3",
+        "src/app/app.ts": "cb4f40f671880a71f7b1dbcefe8030c6a50c151206a6b2fe06353083883643e6",
+        "src/app/app.html": "b30d4afa9a909660d5b19a6f2dc41d45597825daa404890175dd558b54a8c355",
+        "src/app/app.css": "2b8d2986cab7124f31383322ed037ab0134ad9b3ff41a2146b04bc84c9f7c470",
+        "src/app/dashboard/dashboard.ts": "771ed92473055b9a9e4890e108d4a444a2473b06d84b1a33b62a528d2081ef3d",
+        "src/app/dashboard/dashboard.html": "229377a26ce939939127ba0b92c088103b736491caa4dfdca50e0d8660e8b37b",
+        "src/app/dashboard/dashboard.css": "84f23c64c88ea61db155fa651ee1ffc4d629fe1585fe351cb50c07c10f262e32",
+        "src/styles.css": "60e0c92555cfb5e09b60faa886330c09e4fb767feee50ee6ec5d3ef9a88400a7",
+        "src/index.html": "b4f77bb7531da747d1d944139d42715df367ad4f953991e793072eab622f9105"
+      },
+      "components": [],
+      "drafts": {
+        "4376d3ab-5a77-4300-bc21-eafa95e47471": {
+          "title": "Dashboard — estado actual",
+          "visualDirection": "pixel-perfect reproduction of current UI (ground truth)",
+          "currentVersion": 1
+        },
+        "bdce7c45-98c4-41d5-a81c-600e9a850122": {
+          "title": "Chucherías — Dashboard Artesanal",
+          "visualDirection": "taller artesanal hecho a mano (rubber-stamp icon badges, organic card corner, warm paper texture, more WONK Fraunces) — APLICADO al código real (dashboard.css)",
+          "parentDraftId": "4376d3ab-5a77-4300-bc21-eafa95e47471",
+          "currentVersion": 1
+        }
+      },
+      "updatedAt": "2026-10-27T00:00:00Z"
+    },
+    "/pos": {
+      "targetKind": "existing-ui",
+      "projectId": "9eda39df-a714-407d-b83d-03e5462f3b90",
+      "baselineDraftId": "e0df6858-fd47-4bcb-a03e-bc1162dbe781",
+      "activeDraftId": "dee72bda-8964-446b-ba8e-6802fd9ec5f6",
+      "designSystemPath": ".superdesign/design-system.md",
+      "referenceIds": ["chucherias-marca-logo-color"],
+      "brandAssets": {
+        "logo": {
+          "assetKey": "chucherias-marca-logo-color",
+          "url": "https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/projects/9eda39df-a714-407d-b83d-03e5462f3b90/brand-assets/chucherias-marca-logo-color/logo-color.png",
+          "sourcePath": "src/app/pos/pos.html"
+        }
+      },
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "src/styles.css",
+        "src/index.html",
+        "src/app/pos/categoria-estilos.ts",
+        "src/app/pos/pos.html:1:593",
+        "src/app/pos/pos.css:1:1406",
+        "src/app/pos/pos.css:1409:1420"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "d77a2b1c5c3989328853b7f1ddb35b3ab2e26489271364fcd628528d6412d0d3",
+        "src/styles.css": "60e0c92555cfb5e09b60faa886330c09e4fb767feee50ee6ec5d3ef9a88400a7",
+        "src/index.html": "b4f77bb7531da747d1d944139d42715df367ad4f953991e793072eab622f9105",
+        "src/app/pos/categoria-estilos.ts": "6021dfc9e82ae600b332b833289d50f96f99ae4f112d39db6fed65e64964661d",
+        "src/app/pos/pos.html": "58db62567438713ed6e377f3ac932b0c7ef1ba3f5998e62aae4e6eb1117e3f0f",
+        "src/app/pos/pos.css": "55ab203a210e888bd7c8ff73de14d427cc174438532b027053c7fdb81c9e37c8"
+      },
+      "components": [],
+      "drafts": {
+        "e0df6858-fd47-4bcb-a03e-bc1162dbe781": {
+          "title": "POS — estado actual (catálogo + carrito)",
+          "visualDirection": "pixel-perfect reproduction of current UI (ground truth)",
+          "currentVersion": 1
+        },
+        "4f1716c7-b02b-4e37-979a-41892ea2723c": {
+          "title": "POS Digital Food-Hall Layout",
+          "visualDirection": "mostrador tipo food-hall digital — fotos a sangre completa, precio/nombre superpuestos con scrim oscuro, mínimo chrome, grid más denso (descartada por el usuario)",
+          "parentDraftId": "e0df6858-fd47-4bcb-a03e-bc1162dbe781",
+          "currentVersion": 1
+        },
+        "dee72bda-8964-446b-ba8e-6802fd9ec5f6": {
+          "title": "Editorial Menu Catalog",
+          "visualDirection": "menú editorial por categoría — secciones con fondo tintado por categoría, tarjetas variables en tamaño (1 de cada 4 destacada, foto a sangre completa con scrim), fotos mucho más grandes, nombres protagónicos — ELEGIDA por el usuario y APLICADA al código real (pos.ts: productosAgrupados; pos.html: secciones @for; pos.css: .categoria-seccion*/.tarjeta-producto-categoria/.tarjeta-destacada)",
+          "parentDraftId": "e0df6858-fd47-4bcb-a03e-bc1162dbe781",
+          "currentVersion": 1
+        }
+      },
+      "updatedAt": "2026-10-27T01:00:00Z"
+    },
+    "/comandas": {
+      "targetKind": "existing-ui",
+      "projectId": "9eda39df-a714-407d-b83d-03e5462f3b90",
+      "baselineDraftId": "78987cd3-a4d1-4cbe-b5ec-1f9c4acee5f8",
+      "activeDraftId": "89a01112-5c3a-4bc0-8fba-4128133b7705",
+      "designSystemPath": ".superdesign/design-system.md",
+      "referenceIds": ["chucherias-marca-logo-color"],
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "src/styles.css",
+        "src/index.html",
+        "src/app/comandas/comandas.ts",
+        "src/app/comandas/comandas.html",
+        "src/app/comandas/comandas.css"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "d77a2b1c5c3989328853b7f1ddb35b3ab2e26489271364fcd628528d6412d0d3",
+        "src/styles.css": "60e0c92555cfb5e09b60faa886330c09e4fb767feee50ee6ec5d3ef9a88400a7",
+        "src/index.html": "b4f77bb7531da747d1d944139d42715df367ad4f953991e793072eab622f9105",
+        "src/app/comandas/comandas.ts": "727c00d161d03204ddf4de7783639db91948d782a8bcf9b36c80e952fffe9d8f",
+        "src/app/comandas/comandas.html": "b411b4f36b39d9b1ff36e5b08a314efc796c3c6341b27e270c42f3c6b545f0a0",
+        "src/app/comandas/comandas.css": "c849a7fe8f98a15d1817e8ded0a802b3e99ab986fef687f3c70f30c39ff29ab6"
+      },
+      "components": [],
+      "drafts": {
+        "78987cd3-a4d1-4cbe-b5ec-1f9c4acee5f8": {
+          "title": "Comandas — estado actual",
+          "visualDirection": "pixel-perfect reproduction of current UI (ground truth) — no logo position on this screen",
+          "currentVersion": 1
+        },
+        "89a01112-5c3a-4bc0-8fba-4128133b7705": {
+          "title": "Kitchen Display System (KDS) View",
+          "visualDirection": "tablero tipo KDS/semáforo — número de orden mucho más grande, tiempo transcurrido más prominente con su color de urgencia amplificado, encabezados de columna con más peso visual, tarjetas más densas — APLICADO al código real (comandas.css, 100% CSS, sin tocar comandas.html/.ts). Ajustado tras verificar con datos reales: numero-orden bajó de 2rem a 1.5rem (el folio real ORD-AAAAMMDD-#### partía en 3 líneas con el tamaño del draft, que usaba un '#1204' ficticio corto)",
+          "parentDraftId": "78987cd3-a4d1-4cbe-b5ec-1f9c4acee5f8",
+          "currentVersion": 1
+        }
+      },
+      "updatedAt": "2026-10-27T03:00:00Z"
+    },
+    "/recetario": {
+      "targetKind": "existing-ui",
+      "projectId": "9eda39df-a714-407d-b83d-03e5462f3b90",
+      "baselineDraftId": "225446f1-d003-4713-99cf-45918037e7e4",
+      "activeDraftId": "350f39e1-8f0e-49f7-8092-f072925fca88",
+      "designSystemPath": ".superdesign/design-system.md",
+      "referenceIds": [],
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "src/styles.css",
+        "src/index.html",
+        "src/app/recetario/recetario.html:1:283",
+        "src/app/recetario/recetario.html:453:726",
+        "src/app/recetario/recetario.css:1:667",
+        "src/app/recetario/recetario.css:705:1210"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "d77a2b1c5c3989328853b7f1ddb35b3ab2e26489271364fcd628528d6412d0d3",
+        "src/styles.css": "60e0c92555cfb5e09b60faa886330c09e4fb767feee50ee6ec5d3ef9a88400a7",
+        "src/index.html": "b4f77bb7531da747d1d944139d42715df367ad4f953991e793072eab622f9105",
+        "src/app/recetario/recetario.html": "fe9fe5d1b1cb335cea6b0b5c022ea0660bd375cc0e93d99247aed85d7b7957fc",
+        "src/app/recetario/recetario.css": "9131e3909e079eb27ce56a3a99a241745b979addcc97413776658f723f5f4afa",
+        "src/app/recetario/recetario.ts": "90875b4e9b2f11d738c970d9a997d3784d59ddcc95e31f5aaba1d6a28e320f8c"
+      },
+      "components": [],
+      "drafts": {
+        "225446f1-d003-4713-99cf-45918037e7e4": {
+          "title": "Gestión de Recetario - Chucherías Mix",
+          "visualDirection": "pixel-perfect reproduction of current UI (pestaña Recetas + editor de receta — Menú y los modales de categoría/producto/variante quedaron fuera del alcance)",
+          "currentVersion": 1
+        },
+        "350f39e1-8f0e-49f7-8092-f072925fca88": {
+          "title": "Recetario - Libro de Cocina Digital",
+          "visualDirection": "libro de cocina — lista con foto real de producto junto al nombre (reusa fotos ya en Cloudinary), categorías como capítulos con color/ícono --cat-* real, insignias de tutorial/foto con fondo sólido; editor de receta con foto de referencia como portada grande arriba (ícono de cámara superpuesto, ya no un campo al final), ingredientes en formato 'lista de compras' (nombre protagónico en Fraunces, datos de apoyo y botón de quitar atenuados), pasos del tutorial con numeral circular grande y texto más grande — APLICADA al código real (recetario.ts: GrupoProducto.producto_imagen_url + obtenerEstiloCategoria reusado de pos/categoria-estilos.ts; recetario.html/.css: .titulo-capitulo/.capitulo-icono, .tarjeta-receta-libro/.producto-foto-receta, .receta-portada*, .linea-receta-datos, .paso-tutorial* agrandado). Desviación deliberada del draft: la portada usa object-fit:contain (nunca cover) por la regla ya establecida de no recortar fotos de platillos.",
+          "parentDraftId": "225446f1-d003-4713-99cf-45918037e7e4",
+          "currentVersion": 1
+        }
+      },
+      "updatedAt": "2026-10-28T08:00:00Z"
+    }
+  }
+}
