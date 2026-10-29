@@ -125,79 +125,110 @@
           } @else {
             @for (grupo of gruposConPreparacion(); track grupo.categoria) {
               <section class="grupo-categoria">
-                <h3 class="titulo-categoria">{{ grupo.categoria }}</h3>
+                <h3
+                  class="titulo-categoria titulo-capitulo"
+                  [style.--color-categoria]="obtenerEstiloCategoria(grupo.categoria).color"
+                >
+                  <span class="capitulo-icono" aria-hidden="true">
+                    <svg class="icono">
+                      <use [attr.href]="'#ic-' + obtenerEstiloCategoria(grupo.categoria).icono" />
+                    </svg>
+                  </span>
+                  {{ grupo.categoria }}
+                </h3>
                 @if (grupo.productos.length === 0) {
                   <p class="mensaje-estado mensaje-estado-chico">
                     Sin productos todavía — créalos desde la pestaña "Menú".
                   </p>
                 }
                 @for (producto of grupo.productos; track producto.producto_id) {
-                  <div class="tarjeta-producto">
-                    <span class="producto-nombre">{{ producto.producto_nombre }}</span>
-                    @if (producto.variantes.length === 0) {
-                      <p class="mensaje-estado mensaje-estado-chico">
-                        Sin variantes todavía — agrégale una desde la pestaña "Menú".
-                      </p>
-                    } @else {
-                      <ul class="lista-variantes">
-                        @for (variante of producto.variantes; track variante.variante_id) {
-                          <li
-                            class="item-variante"
-                            role="button"
-                            tabindex="0"
-                            (click)="abrirEditor(variante)"
-                            (keydown.enter)="abrirEditor(variante)"
-                            (keydown.space)="$event.preventDefault(); abrirEditor(variante)"
-                          >
-                            <div class="variante-info">
-                              <span class="variante-nombre">{{ variante.variante_nombre }}</span>
-                              <span class="variante-precio">{{
-                                variante.precio | currency: 'MXN'
-                              }}</span>
-                            </div>
-                            <span
-                              class="badge-receta"
-                              [class.badge-receta-vacia]="!variante.tiene_receta"
+                  <div class="tarjeta-producto tarjeta-receta-libro">
+                    <div class="producto-foto-receta" aria-hidden="true">
+                      @if (producto.producto_imagen_url) {
+                        <img [src]="producto.producto_imagen_url" alt="" />
+                      } @else {
+                        <span
+                          class="producto-foto-marcador"
+                          [style.--color-categoria]="obtenerEstiloCategoria(grupo.categoria).color"
+                        >
+                          <svg class="icono">
+                            <use
+                              [attr.href]="'#ic-' + obtenerEstiloCategoria(grupo.categoria).icono"
+                            />
+                          </svg>
+                        </span>
+                      }
+                    </div>
+                    <div class="producto-receta-cuerpo">
+                      <span class="producto-nombre">{{ producto.producto_nombre }}</span>
+                      @if (producto.variantes.length === 0) {
+                        <p class="mensaje-estado mensaje-estado-chico">
+                          Sin variantes todavía — agrégale una desde la pestaña "Menú".
+                        </p>
+                      } @else {
+                        <ul class="lista-variantes">
+                          @for (variante of producto.variantes; track variante.variante_id) {
+                            <li
+                              class="item-variante"
+                              role="button"
+                              tabindex="0"
+                              (click)="abrirEditor(variante)"
+                              (keydown.enter)="abrirEditor(variante)"
+                              (keydown.space)="$event.preventDefault(); abrirEditor(variante)"
                             >
-                              {{
-                                variante.tiene_receta
-                                  ? variante.total_insumos +
-                                    (variante.total_insumos === 1 ? ' insumo' : ' insumos')
-                                  : 'Sin receta'
-                              }}
-                            </span>
-                            @if (variante.tiene_tutorial) {
-                              <span class="badge-tutorial" title="Ya tiene tutorial de elaboración">
-                                <svg class="icono" aria-hidden="true">
-                                  <use href="#ic-cocinar" />
-                                </svg>
-                              </span>
-                            }
-                            @if (variante.tiene_imagen_referencia) {
-                              <span class="badge-tutorial" title="Ya tiene foto de referencia">
-                                <svg class="icono" aria-hidden="true">
-                                  <use href="#ic-camara" />
-                                </svg>
-                              </span>
-                            }
-                            <!-- Costeo y rentabilidad (2026-10-27): solo aparece cuando TODOS
-                                 los insumos de la receta ya tienen costo_unitario capturado —
-                                 nunca un margen calculado con datos incompletos. -->
-                            @if (variante.margen_porcentaje !== null) {
+                              <div class="variante-info">
+                                <span class="variante-nombre">{{ variante.variante_nombre }}</span>
+                                <span class="variante-precio">{{
+                                  variante.precio | currency: 'MXN'
+                                }}</span>
+                              </div>
                               <span
-                                class="badge-margen"
-                                [class.badge-margen-bajo]="variante.margen_porcentaje < 40"
-                                title="Costo {{
-                                  variante.costo_receta | currency: 'MXN'
-                                }} · Margen {{ variante.margen | currency: 'MXN' }}"
+                                class="badge-receta"
+                                [class.badge-receta-vacia]="!variante.tiene_receta"
                               >
-                                {{ variante.margen_porcentaje }}% margen
+                                {{
+                                  variante.tiene_receta
+                                    ? variante.total_insumos +
+                                      (variante.total_insumos === 1 ? ' insumo' : ' insumos')
+                                    : 'Sin receta'
+                                }}
                               </span>
-                            }
-                          </li>
-                        }
-                      </ul>
-                    }
+                              @if (variante.tiene_tutorial) {
+                                <span
+                                  class="badge-tutorial"
+                                  title="Ya tiene tutorial de elaboración"
+                                >
+                                  <svg class="icono" aria-hidden="true">
+                                    <use href="#ic-cocinar" />
+                                  </svg>
+                                </span>
+                              }
+                              @if (variante.tiene_imagen_referencia) {
+                                <span class="badge-tutorial" title="Ya tiene foto de referencia">
+                                  <svg class="icono" aria-hidden="true">
+                                    <use href="#ic-camara" />
+                                  </svg>
+                                </span>
+                              }
+                              <!-- Costeo y rentabilidad (2026-10-27): solo aparece cuando TODOS
+                                   los insumos de la receta ya tienen costo_unitario capturado —
+                                   nunca un margen calculado con datos incompletos. -->
+                              @if (variante.margen_porcentaje !== null) {
+                                <span
+                                  class="badge-margen"
+                                  [class.badge-margen-bajo]="variante.margen_porcentaje < 40"
+                                  title="Costo {{
+                                    variante.costo_receta | currency: 'MXN'
+                                  }} · Margen {{ variante.margen | currency: 'MXN' }}"
+                                >
+                                  {{ variante.margen_porcentaje }}% margen
+                                </span>
+                              }
+                            </li>
+                          }
+                        </ul>
+                      }
+                    </div>
                   </div>
                 }
               </section>
@@ -234,9 +265,36 @@
             } @else {
               @for (grupo of gruposSinPreparacion(); track grupo.categoria) {
                 <section class="grupo-categoria">
-                  <h3 class="titulo-categoria">{{ grupo.categoria }}</h3>
+                  <h3
+                    class="titulo-categoria titulo-capitulo"
+                    [style.--color-categoria]="obtenerEstiloCategoria(grupo.categoria).color"
+                  >
+                    <span class="capitulo-icono" aria-hidden="true">
+                      <svg class="icono">
+                        <use [attr.href]="'#ic-' + obtenerEstiloCategoria(grupo.categoria).icono" />
+                      </svg>
+                    </span>
+                    {{ grupo.categoria }}
+                  </h3>
                   @for (producto of grupo.productos; track producto.producto_id) {
-                    <div class="tarjeta-producto">
+                    <div class="tarjeta-producto tarjeta-receta-libro">
+                      <div class="producto-foto-receta" aria-hidden="true">
+                        @if (producto.producto_imagen_url) {
+                          <img [src]="producto.producto_imagen_url" alt="" />
+                        } @else {
+                          <span
+                            class="producto-foto-marcador"
+                            [style.--color-categoria]="obtenerEstiloCategoria(grupo.categoria).color"
+                          >
+                            <svg class="icono">
+                              <use
+                                [attr.href]="'#ic-' + obtenerEstiloCategoria(grupo.categoria).icono"
+                              />
+                            </svg>
+                          </span>
+                        }
+                      </div>
+                      <div class="producto-receta-cuerpo">
                       <span class="producto-nombre">{{ producto.producto_nombre }}</span>
                       @if (producto.variantes.length === 0) {
                         <p class="mensaje-estado mensaje-estado-chico">
@@ -271,6 +329,7 @@
                           }
                         </ul>
                       }
+                      </div>
                     </div>
                   }
                 </section>
@@ -373,6 +432,35 @@
             />
           </div>
 
+          <!-- CHIPS DE CATEGORÍA (2026-10-28): filtran la lista de abajo;
+               "Todas" es el default. Elegir un chip limpia el buscador
+               (mismo criterio ya usado en Inventario/POS). -->
+          <p class="etiqueta-filtro">Categoría</p>
+          <div class="fila-chips-envoltorio">
+            <div class="fila-chips">
+              <button
+                type="button"
+                class="chip-categoria"
+                [class.chip-activa]="categoriaFiltroMenuId() === null"
+                (click)="seleccionarCategoriaMenu(null)"
+              >
+                Todas <span class="chip-conteo">{{ contarCategoriaMenu(null) }}</span>
+              </button>
+              @for (categoria of categorias(); track categoria.id) {
+                <button
+                  type="button"
+                  class="chip-categoria"
+                  [class.chip-activa]="categoriaFiltroMenuId() === categoria.id"
+                  (click)="seleccionarCategoriaMenu(categoria.id)"
+                >
+                  {{ categoria.nombre }}
+                  <span class="chip-conteo">{{ contarCategoriaMenu(categoria.id) }}</span>
+                </button>
+              }
+            </div>
+            <div class="fila-chips-desvanecido" aria-hidden="true"></div>
+          </div>
+
           @if (errorMenu()) {
             <p class="mensaje-estado mensaje-error">{{ errorMenu() }}</p>
           }
@@ -454,7 +542,7 @@
   @if (varianteEditando(); as variante) {
     <div class="overlay">
       <div
-        class="panel-formulario panel-formulario-ancho"
+        class="panel-formulario panel-formulario-ancho panel-formulario-libro"
         role="dialog"
         aria-modal="true"
         [attr.aria-label]="
@@ -463,8 +551,68 @@
         appFocoDialogo
         (cerrarConEscape)="cerrarEditor()"
       >
-        <h2>{{ variante.producto_nombre }}</h2>
-        <p class="subtitulo-formulario">{{ variante.variante_nombre }}</p>
+        <!-- PORTADA (2026-10-28, dirección "libro de cocina"): la foto de
+             referencia ("así debe quedar" el platillo) ahora es lo primero
+             que se ve al abrir una receta — como la portada de una ficha de
+             cocina — en vez de un campo de subida chico casi al final del
+             formulario. El ícono de cámara es un botón chico encima de la
+             foto; sigue subiendo de inmediato al elegir un archivo (la
+             variante ya existe, no hay un "crear" pendiente). -->
+        <div
+          class="receta-portada"
+          [class.receta-portada-vacia]="!previsualizacionImagenRecetaForm()"
+        >
+          @if (previsualizacionImagenRecetaForm(); as previsualizacion) {
+            <img
+              [src]="previsualizacion"
+              alt="Foto de referencia — así debe quedar el platillo"
+              class="receta-portada-imagen"
+            />
+          }
+          <div class="receta-portada-titulo">
+            <h2>{{ variante.producto_nombre }}</h2>
+            <p class="subtitulo-formulario">{{ variante.variante_nombre }}</p>
+          </div>
+          <label
+            class="receta-portada-boton-foto"
+            [class.receta-portada-boton-foto-subiendo]="subiendoImagenReceta()"
+            [attr.aria-label]="
+              previsualizacionImagenRecetaForm()
+                ? 'Cambiar la foto de referencia'
+                : 'Subir foto de referencia'
+            "
+          >
+            <svg class="icono" aria-hidden="true"><use href="#ic-camara" /></svg>
+            <input
+              type="file"
+              accept="image/*"
+              class="selector-foto-producto-input"
+              [disabled]="subiendoImagenReceta()"
+              (change)="seleccionarArchivoImagenReceta($event)"
+            />
+          </label>
+        </div>
+
+        <p class="campo-ayuda receta-portada-ayuda">
+          @if (subiendoImagenReceta()) {
+            Subiendo foto...
+          } @else if (previsualizacionImagenRecetaForm()) {
+            Toca la cámara para cambiar la foto de referencia.
+            <button
+              type="button"
+              class="boton-enlace-chico boton-enlace-peligro"
+              (click)="quitarImagenReceta()"
+            >
+              Quitar foto
+            </button>
+          } @else {
+            Toca la cámara para subir una foto de "así debe quedar" el platillo (opcional).
+          }
+        </p>
+        @if (errorImagenReceta()) {
+          <p class="mensaje-error">{{ errorImagenReceta() }}</p>
+        }
+
         @if (variante.editado_por_nombre) {
           <!-- RNF-02: quién modificó esta receta por última vez. -->
           <p class="aviso-auditoria">
@@ -522,31 +670,38 @@
                     </option>
                   }
                 </select>
-                <input
-                  class="linea-receta-cantidad"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="Cantidad"
-                  [attr.aria-label]="'Cantidad del insumo de la línea ' + ($index + 1)"
-                  [value]="linea.cantidad ?? ''"
-                  (input)="actualizarCantidadLinea($index, $any($event.target).value)"
-                />
-                <span class="linea-receta-unidad">{{ linea.unidad_medida || '—' }}</span>
-                <!-- Costeo (2026-10-27): subtotal de esta línea, vista previa en el
-                     cliente — "—" si falta el insumo, la cantidad, o ese insumo
-                     todavía no tiene costo_unitario capturado. -->
-                <span class="linea-receta-costo">
-                  {{ costoLinea(linea) !== null ? (costoLinea(linea) | currency: 'MXN') : '—' }}
-                </span>
-                <button
-                  type="button"
-                  class="boton-quitar-linea"
-                  (click)="quitarLinea($index)"
-                  aria-label="Quitar insumo"
-                >
-                  <svg class="icono" aria-hidden="true"><use href="#ic-cerrar" /></svg>
-                </button>
+                <!-- "Lista de compras" (2026-10-28, dirección "libro de cocina"): el
+                     insumo es lo protagónico (arriba, grande); cantidad/unidad/costo y
+                     "quitar" son datos de apoyo, agrupados aparte y con menos peso
+                     visual — el botón de quitar además recede hasta pasar el cursor o
+                     enfocarlo con teclado, para no competir con la lectura de la receta. -->
+                <div class="linea-receta-datos">
+                  <input
+                    class="linea-receta-cantidad"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Cantidad"
+                    [attr.aria-label]="'Cantidad del insumo de la línea ' + ($index + 1)"
+                    [value]="linea.cantidad ?? ''"
+                    (input)="actualizarCantidadLinea($index, $any($event.target).value)"
+                  />
+                  <span class="linea-receta-unidad">{{ linea.unidad_medida || '—' }}</span>
+                  <!-- Costeo (2026-10-27): subtotal de esta línea, vista previa en el
+                       cliente — "—" si falta el insumo, la cantidad, o ese insumo
+                       todavía no tiene costo_unitario capturado. -->
+                  <span class="linea-receta-costo">
+                    {{ costoLinea(linea) !== null ? (costoLinea(linea) | currency: 'MXN') : '—' }}
+                  </span>
+                  <button
+                    type="button"
+                    class="boton-quitar-linea"
+                    (click)="quitarLinea($index)"
+                    aria-label="Quitar insumo"
+                  >
+                    <svg class="icono" aria-hidden="true"><use href="#ic-cerrar" /></svg>
+                  </button>
+                </div>
               </li>
             }
           </ul>
@@ -639,64 +794,6 @@
             <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
             Agregar paso
           </button>
-
-          <!-- FOTO DE REFERENCIA (2026-10-12): "así debe quedar" el
-               platillo, para que el auxiliar de cocina pueda comparar su
-               resultado — se muestra junto al tutorial en Comandas. Mismo
-               patrón del ícono de cámara que ya usa la foto de producto;
-               aquí siempre se sube de inmediato porque la variante ya
-               existe (no hay un "crear" pendiente como con un producto
-               nuevo). -->
-          <div class="campo">
-            <span class="campo-etiqueta-foto"
-              >Foto de referencia — "así debe quedar" (opcional)</span
-            >
-            <div class="selector-foto-producto-fila">
-              <label
-                class="selector-foto-producto"
-                [class.selector-foto-producto-con-imagen]="!!previsualizacionImagenRecetaForm()"
-              >
-                @if (previsualizacionImagenRecetaForm(); as previsualizacion) {
-                  <img [src]="previsualizacion" alt="Vista previa de la foto de referencia" />
-                }
-                <span class="selector-foto-producto-icono">
-                  <svg class="icono" aria-hidden="true"><use href="#ic-camara" /></svg>
-                </span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  class="selector-foto-producto-input"
-                  (change)="seleccionarArchivoImagenReceta($event)"
-                />
-              </label>
-              <div class="selector-foto-producto-texto">
-                <p class="campo-ayuda">
-                  @if (subiendoImagenReceta()) {
-                    Subiendo...
-                  } @else if (previsualizacionImagenRecetaForm()) {
-                    Toca el ícono para cambiarla. Se guarda de inmediato, sin esperar a "Guardar
-                    receta".
-                  } @else {
-                    Toca el ícono para subir una. Se guarda de inmediato, sin esperar a "Guardar
-                    receta".
-                  }
-                </p>
-                @if (previsualizacionImagenRecetaForm()) {
-                  <button
-                    type="button"
-                    class="boton-enlace-chico boton-enlace-peligro"
-                    [disabled]="subiendoImagenReceta()"
-                    (click)="quitarImagenReceta()"
-                  >
-                    Quitar foto
-                  </button>
-                }
-              </div>
-            </div>
-            @if (errorImagenReceta()) {
-              <p class="mensaje-error">{{ errorImagenReceta() }}</p>
-            }
-          </div>
         }
 
         @if (errorForm()) {

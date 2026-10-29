@@ -43,6 +43,7 @@ import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { LineaRecetaForm, RecetasService, VarianteConReceta } from '../core/recetas';
 import { Insumo, InsumosService } from '../core/insumos';
 import { CatalogoService, Categoria, Producto, Variante } from '../core/catalogo';
+import { obtenerEstiloCategoria } from '../pos/categoria-estilos';
 
 // Línea de receta tal como vive en el formulario (antes de guardarse).
 interface LineaFormulario {
@@ -54,6 +55,12 @@ interface LineaFormulario {
 interface GrupoProducto {
   producto_id: number;
   producto_nombre: string;
+  // 2026-10-28 (dirección "libro de cocina"): foto real del producto, para
+  // mostrarla junto al nombre en la lista — null si el producto no tiene
+  // ninguna foto subida (ver Cloudinary, módulo Menú). Nunca se inventa un
+  // marcador: sin foto, la plantilla cae al mismo bloque de color de
+  // categoría que ya usa el resto de la app cuando falta una imagen.
+  producto_imagen_url: string | null;
   variantes: VarianteConReceta[];
 }
 
@@ -89,6 +96,12 @@ export class RecetarioComponent implements OnInit {
   cambiarPestana(pestana: 'recetas' | 'menu'): void {
     this.pestanaActiva.set(pestana);
   }
+
+  // 2026-10-28 (dirección "libro de cocina"): color + ícono real de la
+  // categoría (mismos --cat-* ya validados de contraste/daltonismo que usa
+  // el POS, reutilizados aquí) para que cada encabezado de categoría se
+  // sienta como el capítulo de un libro de cocina, no solo texto en negritas.
+  obtenerEstiloCategoria = obtenerEstiloCategoria;
 
   variantes = signal<VarianteConReceta[]>([]);
   insumos = signal<Insumo[]>([]);
@@ -223,6 +236,7 @@ export class RecetarioComponent implements OnInit {
         gruposProducto.push({
           producto_id: producto.id,
           producto_nombre: producto.nombre,
+          producto_imagen_url: producto.imagen_url ?? null,
           variantes: variantesConReceta,
         });
       }
@@ -636,15 +650,48 @@ export class RecetarioComponent implements OnInit {
   // la pestaña "Recetas") — filtra por nombre de producto.
   busquedaMenu = signal('');
 
+  // Chips de categoría de "Productos" (null = "Todas") — mismo criterio de
+  // mutua exclusión que ya usan Inventario y el POS: mientras hay texto en
+  // el buscador, el chip activo se ignora (se ve seleccionado pero no
+  // filtra); elegir un chip limpia el buscador.
+  categoriaFiltroMenuId = signal<number | null>(null);
+
+  seleccionarCategoriaMenu(id: number | null): void {
+    this.categoriaFiltroMenuId.set(id);
+    this.busquedaMenu.set('');
+  }
+
+  // Cuántos productos tiene cada categoría en total (sin aplicar ningún
+  // filtro) — el número junto al chip siempre refleja el total real, igual
+  // que ya hace contarCategoria() en Inventario.
+  private conteoPorCategoriaMenu = computed(() => {
+    const mapa = new Map<number, number>();
+    for (const producto of this.productosMenu()) {
+      mapa.set(producto.categoria_id, (mapa.get(producto.categoria_id) ?? 0) + 1);
+    }
+    return mapa;
+  });
+
+  contarCategoriaMenu(id: number | null): number {
+    return id === null
+      ? this.productosMenu().length
+      : (this.conteoPorCategoriaMenu().get(id) ?? 0);
+  }
+
   // Productos agrupados por categoría, en el mismo orden en que ya llegan
   // (categoría, producto) — incluye categorías sin ningún producto todavía
   // NO, porque se arma a partir de productosMenu(); una categoría recién
   // creada y vacía se ve en la lista de "Categorías", no aquí.
   gruposMenu = computed<GrupoCategoriaMenu[]>(() => {
     const texto = this.busquedaMenu().trim().toLowerCase();
+    const categoriaId = this.categoriaFiltroMenuId();
     const grupos: GrupoCategoriaMenu[] = [];
     for (const producto of this.productosMenu()) {
-      if (texto && !producto.nombre.toLowerCase().includes(texto)) {
+      if (texto) {
+        if (!producto.nombre.toLowerCase().includes(texto)) {
+          continue;
+        }
+      } else if (categoriaId !== null && producto.categoria_id !== categoriaId) {
         continue;
       }
       let grupo = grupos.find((g) => g.categoriaId === producto.categoria_id);

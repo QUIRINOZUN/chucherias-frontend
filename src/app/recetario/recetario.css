@@ -191,6 +191,86 @@
   outline: none;
 }
 
+/* CHIPS DE CATEGORÍA de la pestaña Menú → Productos (2026-10-28): mismo
+   patrón ya usado en inventario.css — fila desplazable horizontalmente con
+   un degradado que avisa que sigue sin verse todo, "Todas" siempre
+   primero. */
+.etiqueta-filtro {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pos-text-secondary);
+}
+
+.fila-chips-envoltorio {
+  position: relative;
+}
+
+.fila-chips-desvanecido {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 4px;
+  width: 28px;
+  background: linear-gradient(to right, transparent, var(--pos-bg-main));
+  pointer-events: none;
+}
+
+.fila-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 16px;
+  scrollbar-width: thin;
+}
+
+.chip-categoria {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-card);
+  color: var(--pos-text-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.chip-categoria.chip-activa {
+  border-color: var(--acento-modulo);
+  background: var(--acento-modulo);
+  color: #fff;
+}
+
+.chip-conteo {
+  font-size: 0.72rem;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+@media (min-width: 860px) {
+  .fila-chips {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .fila-chips-desvanecido {
+    display: none;
+  }
+}
+
 /* ---- Lista agrupada: categoría → producto → variantes ---- */
 .grupo-categoria {
   margin-bottom: 20px;
@@ -314,6 +394,104 @@
   color: var(--peligro-texto);
 }
 
+/* CAPÍTULO DE CATEGORÍA (2026-10-28, dirección "libro de cocina"): el
+   encabezado de cada categoría gana el color + ícono reales de esa
+   categoría (mismos --cat-* ya validados de contraste/daltonismo que usa
+   el POS, vía obtenerEstiloCategoria() en recetario.ts) — se siente como
+   el capítulo de un libro de cocina, no solo texto en negritas. Va junto a
+   .titulo-categoria en el HTML; estas reglas (más abajo en el archivo)
+   ganan por orden sobre las de mayúsculas/tracking de arriba. */
+.titulo-capitulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0 10px;
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--pos-text-primary);
+  border-bottom: 2px solid color-mix(in srgb, var(--color-categoria) 45%, transparent);
+}
+
+.capitulo-icono {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radio-pastilla);
+  background: color-mix(in srgb, var(--color-categoria) 22%, var(--pos-bg-card));
+  color: var(--color-categoria);
+}
+
+.capitulo-icono .icono {
+  width: 16px;
+  height: 16px;
+}
+
+/* FOTO REAL JUNTO A CADA PRODUCTO (2026-10-28, misma dirección): reutiliza
+   las fotos ya subidas a Cloudinary (ver "Fotos reales del menú..." en
+   CLAUDE.md) — sin foto, cae al mismo color/ícono de categoría que ya usa
+   el POS para su marcador. object-fit: contain (nunca cover) por la misma
+   regla de "nunca recortar una foto de platillo" ya establecida. */
+.tarjeta-receta-libro {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.producto-foto-receta {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radio-md);
+  overflow: hidden;
+  background: var(--pos-bg-main);
+}
+
+.producto-foto-receta img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.producto-foto-marcador {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--color-categoria) 16%, var(--pos-bg-card));
+  color: var(--color-categoria);
+}
+
+.producto-foto-marcador .icono {
+  width: 24px;
+  height: 24px;
+}
+
+.producto-receta-cuerpo {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Insignias de tutorial/foto de referencia: fondo sólido (antes solo
+   tintado) + un poco más grandes, para que de verdad resalten como pedía
+   la dirección "más visibles, no iconitos chicos". */
+.badge-tutorial {
+  width: 24px;
+  height: 24px;
+  background: var(--acento-modulo);
+  color: #fff;
+}
+
+.badge-tutorial .icono {
+  width: 14px;
+  height: 14px;
+}
+
 /* ---- Ventana emergente: editor de receta ---- */
 .overlay {
   position: fixed;
@@ -345,6 +523,13 @@
   max-width: 480px;
 }
 
+/* La portada de receta (abajo) se sale del padding del panel con márgenes
+   negativos — overflow: hidden recorta sus esquinas de vuelta al radio
+   redondeado del panel en vez de que sobresalgan cuadradas. */
+.panel-formulario-libro {
+  overflow: hidden;
+}
+
 .panel-formulario h2 {
   margin: 0 0 2px;
   font-size: 1.3rem;
@@ -365,6 +550,111 @@
   color: var(--pos-text-secondary);
 }
 
+/* PORTADA DEL EDITOR DE RECETA (2026-10-28, dirección "libro de cocina"):
+   la foto de referencia pasa de un campo chico casi al final del formulario
+   a una portada grande arriba, como la de una ficha de receta impresa. Usa
+   márgenes negativos para salirse del padding de .panel-formulario en vez
+   de reestructurar el resto del formulario en un contenedor aparte — menos
+   riesgo de romper el resto del editor. object-fit: contain a propósito
+   (nunca cover): este proyecto ya decidió desde el 2026-10-09 no recortar
+   nunca una foto de platillo/producto, y esa regla aplica igual aquí aunque
+   el estudio visual original proponía recortarla a modo de "foto de
+   revista" — el fondo tintado + textura de puntos (mismo truco que ya usa
+   el POS para su marcador sin foto) rellena el espacio que sobra en vez de
+   cortar la imagen. */
+.receta-portada {
+  position: relative;
+  margin: -24px -24px 16px;
+  height: 190px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--acento-modulo) 16%, var(--pos-bg-main));
+  background-image: radial-gradient(
+    circle at 2px 2px,
+    color-mix(in srgb, var(--acento-modulo) 32%, transparent) 1.5px,
+    transparent 0
+  );
+  background-size: 16px 16px;
+}
+
+.receta-portada-imagen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.receta-portada::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--pos-bg-card) 88%, transparent) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.receta-portada-titulo {
+  position: relative;
+  z-index: 1;
+  padding: 14px 70px 14px 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.receta-portada-titulo h2 {
+  margin: 0 0 2px;
+  font-size: 1.5rem;
+}
+
+.receta-portada-titulo .subtitulo-formulario {
+  margin: 0;
+}
+
+.receta-portada-boton-foto {
+  position: absolute;
+  z-index: 2;
+  right: 16px;
+  bottom: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radio-pastilla);
+  background: var(--acento-modulo);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--sombra-acento);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.receta-portada-boton-foto:hover {
+  transform: scale(1.06);
+}
+
+.receta-portada-boton-foto-subiendo {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.receta-portada-boton-foto .icono {
+  width: 20px;
+  height: 20px;
+}
+
+.receta-portada-ayuda {
+  margin: 0 0 4px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .lista-lineas-receta {
   list-style: none;
   margin: 0 0 12px;
@@ -374,44 +664,79 @@
   gap: 8px;
 }
 
+/* "Lista de compras" (2026-10-28, dirección "libro de cocina"): el insumo
+   (el <select>) es el protagonista — más grande, en Fraunces, sin chrome
+   de formulario — y cantidad/unidad/costo/quitar quedan agrupados aparte
+   como datos de apoyo, con menos peso visual. Cada línea se separa con un
+   borde punteado (como el renglón de una lista de compras real) en vez de
+   solo un espacio entre filas. */
 .linea-receta {
   display: flex;
   align-items: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 2px;
+  border-bottom: 1px dashed var(--pos-border);
+}
+
+.linea-receta:last-child {
+  border-bottom: none;
 }
 
 .linea-receta-insumo {
-  flex: 1;
+  flex: 1 1 140px;
   min-width: 0;
+  min-height: 40px;
+  padding: 2px 4px;
+  font-family: var(--fuente-titulo);
+  font-size: 1.05rem;
+  font-variation-settings: 'SOFT' 50;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--pos-text-primary);
+}
+
+.linea-receta-insumo:hover {
+  border-bottom-color: var(--pos-border);
+}
+
+.linea-receta-insumo:focus {
+  outline: none;
+  border-bottom-color: var(--acento-modulo);
+}
+
+.linea-receta-datos {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
 }
 
 .linea-receta-cantidad {
   width: 72px;
   flex-shrink: 0;
-}
-
-.linea-receta-insumo,
-.linea-receta-cantidad {
   box-sizing: border-box;
-  min-height: 44px;
+  min-height: 36px;
   padding: 0 8px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   border: 2px solid var(--pos-border);
   border-radius: var(--radio-sm);
   background: var(--pos-bg-main);
-  color: var(--pos-text-primary);
+  color: var(--pos-text-secondary);
 }
 
-.linea-receta-insumo:focus,
 .linea-receta-cantidad:focus {
   outline: none;
   border-color: var(--acento-modulo);
+  color: var(--pos-text-primary);
 }
 
 .linea-receta-unidad {
   flex-shrink: 0;
-  width: 28px;
-  font-size: 0.78rem;
+  width: 26px;
+  font-size: 0.75rem;
   color: var(--pos-text-secondary);
   text-align: center;
 }
@@ -421,11 +746,26 @@
    algún dato para calcularlo. */
 .linea-receta-costo {
   flex-shrink: 0;
-  width: 64px;
-  font-size: 0.78rem;
+  width: 60px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--pos-text-secondary);
   text-align: right;
+}
+
+/* El botón de quitar es la única acción destructiva de la fila — se
+   mantiene atenuado hasta que la línea recibe el cursor o el foco de
+   teclado, para no competir con la lectura de la receta (nunca
+   display:none: con teclado, Tab hacia el botón lo revela igual vía
+   :focus-within). */
+.linea-receta-datos .boton-quitar-linea {
+  opacity: 0.4;
+  transition: opacity 0.15s ease;
+}
+
+.linea-receta:hover .boton-quitar-linea,
+.linea-receta:focus-within .boton-quitar-linea {
+  opacity: 1;
 }
 
 .costo-total-receta {
@@ -512,10 +852,17 @@
   gap: 8px;
 }
 
+/* Pasos como instrucciones de un libro de cocina impreso (2026-10-28,
+   dirección "libro de cocina"): el número es un numeral circular grande en
+   el color del módulo (en vez de una pastilla chica) y el texto crece en
+   tamaño/interlineado — se lee como una instrucción, no como una celda de
+   formulario. Reordenar/quitar se quedan, pero atenuados hasta que el paso
+   recibe el cursor o el foco de teclado (igual criterio que el botón de
+   quitar de cada insumo, arriba). */
 .paso-tutorial {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 14px;
 }
 
 .paso-tutorial-numero {
@@ -523,33 +870,41 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  margin-top: 8px;
+  width: 42px;
+  height: 42px;
+  margin-top: 2px;
   border-radius: var(--radio-pastilla);
   background: var(--acento-modulo);
   color: #fff;
-  font-size: 0.8rem;
+  font-family: var(--fuente-titulo);
+  font-size: 1.2rem;
   font-weight: 700;
+  box-shadow: var(--sombra-acento);
 }
 
 .paso-tutorial-texto {
   flex: 1;
   min-width: 0;
   box-sizing: border-box;
-  padding: 8px;
-  font-size: 0.85rem;
+  padding: 10px 2px;
+  font-size: 1.02rem;
+  line-height: 1.5;
   font-family: inherit;
   resize: vertical;
-  border: 2px solid var(--pos-border);
-  border-radius: var(--radio-sm);
-  background: var(--pos-bg-main);
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
   color: var(--pos-text-primary);
+}
+
+.paso-tutorial-texto:hover {
+  border-bottom-color: var(--pos-border);
 }
 
 .paso-tutorial-texto:focus {
   outline: none;
-  border-color: var(--acento-modulo);
+  border-bottom-color: var(--acento-modulo);
 }
 
 .paso-tutorial-acciones {
@@ -557,6 +912,14 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  margin-top: 2px;
+  opacity: 0.35;
+  transition: opacity 0.15s ease;
+}
+
+.paso-tutorial:hover .paso-tutorial-acciones,
+.paso-tutorial:focus-within .paso-tutorial-acciones {
+  opacity: 1;
 }
 
 .boton-mover-paso {
@@ -623,14 +986,16 @@
   box-shadow: none;
 }
 
-/* En pantallas angostas la línea de receta pasa a dos filas. */
+/* En pantallas angostas la línea de receta pasa a dos filas: el nombre del
+   insumo arriba a todo lo ancho, sus datos de apoyo abajo. */
 @media (max-width: 420px) {
-  .linea-receta {
-    flex-wrap: wrap;
-  }
-
   .linea-receta-insumo {
     flex: 1 1 100%;
+  }
+
+  .linea-receta-datos {
+    flex: 1 1 100%;
+    justify-content: flex-end;
   }
 }
 
