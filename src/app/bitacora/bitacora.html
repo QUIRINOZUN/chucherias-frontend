@@ -1,0 +1,123 @@
+<!-- ============================================================================
+     bitacora.html — BITÁCORA DE AUDITORÍA (lógica en bitacora.ts)
+     ============================================================================
+     Solo administrador. De solo lectura — filtros de fecha + tipo de acción,
+     y la lista de entradas (más reciente primero). -->
+<div class="bitacora-container">
+  <header class="bitacora-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      Volver
+    </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-bitacora" /></svg>
+    </span>
+    <h1>Bitácora</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
+    >
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
+    </button>
+  </header>
+
+  <div class="bitacora-cuerpo">
+    <p class="texto-ayuda-bitacora">
+      Quién hizo qué y cuándo, solo para acciones de alto riesgo — inicios de sesión y operaciones
+      irreversibles (eliminar historial, cancelar una venta, un retiro de caja, eliminar una cuenta
+      o una cotización). Sin filtros, las últimas 200.
+    </p>
+
+    <section class="tarjeta-filtros-bitacora">
+      <div class="filtros-bitacora">
+        <div class="campo-filtro">
+          <label for="filtro-desde">Desde</label>
+          <input
+            id="filtro-desde"
+            type="date"
+            [value]="filtroDesde()"
+            (change)="cambiarDesde($any($event.target).value)"
+          />
+        </div>
+        <div class="campo-filtro">
+          <label for="filtro-hasta">Hasta</label>
+          <input
+            id="filtro-hasta"
+            type="date"
+            [value]="filtroHasta()"
+            (change)="cambiarHasta($any($event.target).value)"
+          />
+        </div>
+      </div>
+
+      <div class="filtros-rapidos-bitacora">
+        <button type="button" class="boton-filtro-rapido" (click)="seleccionarHoy()">Hoy</button>
+        <button type="button" class="boton-filtro-rapido" (click)="seleccionarSemana()">
+          Esta semana
+        </button>
+        <button type="button" class="boton-filtro-rapido" (click)="seleccionarMes()">
+          Este mes
+        </button>
+      </div>
+
+      <p class="etiqueta-grupo-chips">Acción</p>
+      <div class="fila-chips-bitacora">
+        <button
+          type="button"
+          class="chip-filtro-bitacora"
+          [class.chip-filtro-activa]="filtroAccion() === null"
+          (click)="seleccionarAccion(null)"
+        >
+          Todas
+        </button>
+        @for (accionItem of acciones; track accionItem.valor) {
+          <button
+            type="button"
+            class="chip-filtro-bitacora"
+            [class.chip-filtro-activa]="filtroAccion() === accionItem.valor"
+            (click)="seleccionarAccion(accionItem.valor)"
+          >
+            {{ accionItem.etiqueta }}
+          </button>
+        }
+      </div>
+
+      @if (hayFiltros()) {
+        <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltros()">
+          Limpiar filtros
+        </button>
+      }
+    </section>
+
+    @if (error()) {
+      <p class="mensaje-estado mensaje-error">{{ error() }}</p>
+    } @else if (cargando()) {
+      <p class="mensaje-estado">Consultando bitácora...</p>
+    } @else if (entradas().length === 0) {
+      <p class="mensaje-estado">No hay entradas con esos filtros.</p>
+    } @else {
+      <ul class="lista-bitacora">
+        @for (entrada of entradas(); track entrada.id) {
+          <li class="item-bitacora" [class.item-bitacora-riesgo]="esAccionDeRiesgo(entrada.accion)">
+            <div class="item-bitacora-encabezado">
+              <span class="item-bitacora-accion">{{ etiquetaAccion(entrada.accion) }}</span>
+              <span class="item-bitacora-fecha">{{
+                entrada.fecha | date: 'dd/MM/yyyy HH:mm'
+              }}</span>
+            </div>
+            <div class="item-bitacora-usuario">{{ entrada.usuario_nombre }}</div>
+            @if (entrada.detalle) {
+              <div class="item-bitacora-detalle">{{ entrada.detalle }}</div>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</div>

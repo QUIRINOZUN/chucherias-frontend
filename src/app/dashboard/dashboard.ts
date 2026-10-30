@@ -7,8 +7,8 @@
 //   administrador → Punto de venta, Comandas, Corte de caja, Ventas,
 //                   Ventas especiales, Recetario, Inventario, Mermas,
 //                   Usuarios, Asistencias, Nómina, Clientes, Gastos,
-//                   Reportes, Checklist
-//   encargado     → (los mismos 15 que administrador)
+//                   Reportes, Checklist, Bitácora
+//   encargado     → (los mismos, menos Bitácora — solo administrador)
 //   cajero        → Punto de venta, Comandas (consulta), Corte de caja,
 //                   Ventas especiales, Checklist
 //   auxiliar      → Comandas, Checklist
@@ -217,6 +217,17 @@ const MODULOS: Modulo[] = [
     descripcion: 'Pasos de apertura y cierre del negocio.',
     roles: ['administrador', 'encargado', 'cajero', 'auxiliar'],
     colorVar: 'var(--mod-checklist)',
+  },
+  // Bitácora de auditoría (2026-10-30) — al final, SOLO administrador: no
+  // pertenece a ningún grupo temático (no es un dominio de negocio, es
+  // supervisión del sistema mismo), mismo criterio que ya aplica a Reportes.
+  {
+    ruta: '/bitacora',
+    titulo: 'Bitácora',
+    icono: 'bitacora',
+    descripcion: 'Quién hizo qué, para las acciones de alto riesgo.',
+    roles: ['administrador'],
+    colorVar: 'var(--mod-bitacora)',
   },
 ];
 

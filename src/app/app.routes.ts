@@ -24,6 +24,7 @@
 //   /nomina     → administrador, encargado                (nómina por horas trabajadas)
 //   /ventas-especiales → administrador, encargado, cajero   (agendar y cotizar)
 //   /gastos     → administrador, encargado                (gastos generales del negocio)
+//   /bitacora   → administrador                            (bitácora de auditoría)
 //
 // Estas reglas deben coincidir con las del backend (requiereRol en routes/*.js)
 // y con la lista de módulos del dashboard (dashboard/dashboard.ts).
@@ -46,6 +47,7 @@ import { ChecklistComponent } from './checklist/checklist';
 import { NominaComponent } from './nomina/nomina';
 import { VentasEspecialesComponent } from './ventas-especiales/ventas-especiales';
 import { GastosComponent } from './gastos/gastos';
+import { BitacoraComponent } from './bitacora/bitacora';
 import { authGuard, rolGuard } from './core/auth-guard';
 
 export const routes: Routes = [
@@ -148,6 +150,14 @@ export const routes: Routes = [
     path: 'gastos',
     component: GastosComponent,
     canActivate: [authGuard, rolGuard('administrador', 'encargado')],
+  },
+  // Bitácora de auditoría (2026-10-30) — solo administrador, de solo
+  // lectura. Nace motivada por "Eliminar historial": acciones de alto
+  // riesgo que antes no dejaban ningún rastro de quién las hizo.
+  {
+    path: 'bitacora',
+    component: BitacoraComponent,
+    canActivate: [authGuard, rolGuard('administrador')],
   },
   // La raíz del sitio y cualquier URL desconocida llevan al login. (La pantalla
   // de login no redirige sola al dashboard si ya hay sesión: quien tenga la

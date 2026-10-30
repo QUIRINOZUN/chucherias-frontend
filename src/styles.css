@@ -137,6 +137,14 @@
      criterio ya validado para el resto de --mod-* que se usan como fondo
      sólido de botón (no solo borde/acento). */
   --mod-gastos: #786f08;
+  /* grafito/tinta — Bitácora (2026-10-30): tercer módulo "neutro" (junto a
+     Reportes y Checklist) — un registro de auditoría no es un dominio de
+     negocio propio, así que sigue el mismo criterio de no sumar un tono
+     vívido más al círculo. Se diferencia de los otros dos neutros (azul-
+     grisáceo de Reportes, taupe cálido de Checklist) con un gris casi
+     negro, evocando tinta/sello — el lenguaje visual de un libro de
+     registro. */
+  --mod-bitacora: #1f2937;
 
   /* Franja arcoíris (2026-10-13, tercera pasada): el usuario pidió que el
      "arcoíris" (el guiño al logotipo real multicolor, antes solo en el
@@ -411,7 +419,8 @@ textarea:focus-visible {
 .checklist-header h1,
 .nomina-header h1,
 .ventas-especiales-header h1,
-.gastos-header h1 {
+.gastos-header h1,
+.bitacora-header h1 {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -440,7 +449,8 @@ textarea:focus-visible {
 .checklist-header::before,
 .nomina-header::before,
 .ventas-especiales-header::before,
-.gastos-header::before {
+.gastos-header::before,
+.bitacora-header::before {
   content: '';
   position: absolute;
   inset: 0 0 auto 0;

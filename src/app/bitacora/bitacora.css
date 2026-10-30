@@ -1,0 +1,245 @@
+/* =============================================================================
+   bitacora.css — BITÁCORA DE AUDITORÍA
+   ============================================================================= */
+:host {
+  --acento-modulo: var(--mod-bitacora);
+  display: block;
+}
+
+.bitacora-container {
+  min-height: 100vh;
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.bitacora-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--pos-bg-card);
+  border-bottom: 1px solid var(--pos-border);
+}
+
+.bitacora-header h1 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.boton-tema {
+  margin-left: auto;
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bitacora-cuerpo {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.texto-ayuda-bitacora {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--pos-text-secondary);
+  line-height: 1.5;
+}
+
+.mensaje-estado {
+  color: var(--pos-text-secondary);
+  font-size: 0.9rem;
+}
+
+.mensaje-error {
+  color: var(--peligro-texto);
+}
+
+.tarjeta-filtros-bitacora {
+  background: var(--pos-bg-card);
+  border-top: 3px solid var(--acento-modulo);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: 16px;
+}
+
+.filtros-bitacora {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.campo-filtro {
+  flex: 1;
+  min-width: 130px;
+}
+
+.campo-filtro label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pos-text-secondary);
+}
+
+.campo-filtro input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 10px;
+  font-size: 0.9rem;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.campo-filtro input:focus {
+  outline: none;
+  border-color: var(--acento-modulo);
+}
+
+.filtros-rapidos-bitacora {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.boton-filtro-rapido {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-filtro-rapido:hover {
+  border-color: var(--acento-modulo);
+  color: var(--acento-modulo);
+}
+
+.etiqueta-grupo-chips {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--pos-text-secondary);
+}
+
+.fila-chips-bitacora {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.chip-filtro-bitacora {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chip-filtro-bitacora.chip-filtro-activa {
+  border-color: var(--acento-modulo);
+  background: color-mix(in srgb, var(--acento-modulo) 16%, var(--pos-bg-card));
+  color: var(--pos-text-primary);
+}
+
+.boton-limpiar-filtros {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: none;
+  color: var(--pos-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-limpiar-filtros:hover {
+  border-color: var(--acento-modulo);
+  color: var(--pos-text-primary);
+}
+
+.lista-bitacora {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-bitacora {
+  background: var(--pos-bg-card);
+  border-left: 4px solid var(--acento-modulo);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-suave);
+  padding: 12px 14px;
+}
+
+/* Las acciones destructivas (todo menos inicio de sesión) resaltan en rojo
+   — mismo lenguaje de peligro que el resto de la app. */
+.item-bitacora-riesgo {
+  border-left-color: var(--peligro-texto);
+}
+
+.item-bitacora-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.item-bitacora-accion {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.item-bitacora-riesgo .item-bitacora-accion {
+  color: var(--peligro-texto);
+}
+
+.item-bitacora-fecha {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: var(--pos-text-secondary);
+  white-space: nowrap;
+}
+
+.item-bitacora-usuario {
+  font-size: 0.82rem;
+  color: var(--pos-text-secondary);
+  margin-top: 2px;
+}
+
+.item-bitacora-detalle {
+  font-size: 0.82rem;
+  margin-top: 4px;
+}
