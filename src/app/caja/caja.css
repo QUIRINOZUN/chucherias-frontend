@@ -223,12 +223,23 @@
   background: var(--action-danger-hover);
 }
 
-/* Renglón "etiqueta ........ monto" del resumen. */
+/* Renglón "etiqueta ........ monto" del resumen. Divisor punteado entre
+   renglones (2026-10-30, dirección "Comprobante Digital") — el último no
+   lo lleva, ya tiene su propio borde superior (.linea-corte-total). Montos
+   con cifras tabulares, para que una columna de pesos siempre alinee. */
 .linea-corte {
   display: flex;
   justify-content: space-between;
   font-size: 0.88rem;
   padding: 6px 0;
+}
+
+.linea-corte:not(:last-child) {
+  border-bottom: 1px dashed var(--pos-border);
+}
+
+.linea-corte span {
+  font-variant-numeric: tabular-nums;
 }
 
 .linea-corte-total {
@@ -278,22 +289,159 @@
   border-color: var(--acento-modulo);
 }
 
-/* Recuadro que se actualiza mientras se escriben los montos ("Cuadra exacto", "Sobran", "Faltan"). */
-.diferencia-en-vivo {
-  margin-bottom: 14px;
-  padding: 10px 12px;
+/* Total de efectivo contado (2026-10-30): de solo lectura — ya no se
+   teclea, se calcula solo a partir del conteo por denominación de abajo. */
+.total-efectivo-contado {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  font-family: var(--fuente-titulo);
+  font-size: 1.3rem;
+  font-weight: 700;
+  border: 1px solid var(--pos-border);
   border-radius: var(--pos-radio);
-  background: color-mix(in srgb, var(--action-success) 18%, var(--pos-bg-card));
-  border: 1px solid var(--action-success);
-  color: var(--exito-texto);
-  font-weight: 600;
-  font-size: 0.9rem;
+  background: color-mix(in srgb, var(--acento-modulo) 8%, var(--pos-bg-main));
 }
 
-.diferencia-en-vivo.diferencia-negativa {
-  background: color-mix(in srgb, var(--action-danger) 18%, var(--pos-bg-card));
+/* CONTEO DE EFECTIVO POR DENOMINACIÓN (2026-10-30): mismo patrón exacto ya
+   probado en el cobro del POS — se cuenta billete por billete y moneda por
+   moneda en vez de teclear un total estimado. Clases duplicadas de
+   pos.css (los estilos de Angular son por componente, no se heredan). */
+.etiqueta-denominaciones {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--pos-text-secondary);
+}
+
+.grid-denominaciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.denominacion-efectivo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-basis: 96px;
+  width: 96px;
+}
+
+.denominacion-visual-billete {
+  width: 100%;
+  border-radius: var(--radio-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
+}
+
+.denominacion-visual-billete.denominacion-con-conteo {
+  box-shadow: 0 0 0 3px var(--acento-modulo);
+}
+
+.denominacion-visual-billete:hover,
+.denominacion-visual-moneda:hover {
+  transform: translateY(-2px);
+}
+
+.denominacion-visual-billete:active,
+.denominacion-visual-moneda:active {
+  transform: scale(0.94);
+}
+
+.billete-imagen {
+  display: block;
+  width: 100%;
+  height: 48px;
+  object-fit: contain;
+  border-radius: inherit;
+}
+
+.denominacion-visual-moneda {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
+}
+
+.denominacion-visual-moneda.denominacion-con-conteo {
+  box-shadow: 0 0 0 3px var(--acento-modulo);
+}
+
+.moneda-imagen {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: inherit;
+}
+
+.boton-limpiar-conteo {
+  display: block;
+  min-height: 44px;
+  margin: 0 0 14px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--acento-modulo);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* "Sello de diferencia" (2026-10-30, dirección "Comprobante Digital"): un
+   sello circular — mismo lenguaje visual del contorno irregular + ligera
+   rotación que ya usa el resto de la app para íconos de módulo ("sello de
+   hule", styles.css) — en vez del recuadro rectangular de antes. Verde si
+   cuadra o sobra, rojo (.diferencia-negativa) si falta. */
+.sello-diferencia {
+  width: 128px;
+  height: 128px;
+  margin: 6px auto 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
+  border-radius: 48% 52% 45% 55% / 55% 45% 52% 48%;
+  transform: rotate(-4deg);
+  border: 3px double var(--action-success);
+  background: color-mix(in srgb, var(--action-success) 12%, var(--pos-bg-card));
+  color: var(--exito-texto);
+}
+
+.sello-diferencia.diferencia-negativa {
   border-color: var(--peligro-texto);
+  background: color-mix(in srgb, var(--action-danger) 12%, var(--pos-bg-card));
   color: var(--peligro-texto);
+}
+
+.sello-diferencia-texto {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.sello-diferencia-monto {
+  font-family: var(--fuente-titulo);
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Botón principal de la pantalla: guardar el corte / "Hecho". */
@@ -472,12 +620,39 @@
 /* Borde superior dorado (color de Caja) en las tarjetas neutras — la de
    retiro se queda sin él a propósito, ya tiene su propio lenguaje de rojo
    (acción de dinero saliendo bajo supervisión) que no conviene mezclar con
-   otro color. */
+   otro color. 2026-10-30, dirección "Comprobante Digital": en vez de una
+   línea plana, un borde perforado/picado — misma técnica exacta que ya usa
+   el ticket imprimible del POS (.comprobante-borde-cortado en pos.css, dos
+   repeating-linear-gradient en ángulos opuestos), solo que arriba de la
+   tarjeta y con el color del módulo en vez de --pos-border. */
 .tarjeta-resumen,
 .tarjeta-contar,
 .tarjeta-corte-guardado,
 .tarjeta-historial {
-  border-top: 3px solid var(--acento-modulo);
+  position: relative;
+  overflow: hidden;
+  border-top: none;
+  padding-top: 28px;
+}
+
+.tarjeta-resumen::before,
+.tarjeta-contar::before,
+.tarjeta-corte-guardado::before,
+.tarjeta-historial::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 11px;
+  background-image:
+    repeating-linear-gradient(135deg, var(--acento-modulo) 0 2px, transparent 2px 11px),
+    repeating-linear-gradient(45deg, var(--acento-modulo) 0 2px, transparent 2px 11px);
+  background-size: 15.5px 11px;
+  background-repeat: repeat-x;
+  background-position:
+    0 0,
+    7.75px 0;
 }
 
 .tarjeta-resumen h2,
@@ -523,12 +698,6 @@
 .boton-limpiar-filtros {
   border-radius: var(--radio-pastilla);
   min-height: 44px;
-}
-
-.diferencia-en-vivo {
-  border-radius: var(--radio-md);
-  font-family: var(--fuente-titulo);
-  font-size: 1.1rem;
 }
 
 .item-historial-diferencia {

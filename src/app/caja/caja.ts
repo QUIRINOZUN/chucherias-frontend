@@ -39,6 +39,12 @@ import { Usuario, UsuariosService } from '../core/usuarios';
 // que solo ellos tienen sentido como opción del filtro por usuario.
 const ROLES_QUE_HACEN_CORTE = ['administrador', 'encargado', 'cajero'];
 
+// Denominaciones reales de billetes y monedas MXN — mismas constantes que ya
+// usa pos.ts para el conteo de efectivo del cobro (2026-10-26/28, con su
+// propia ilustración vectorial en public/img/billetes|monedas/).
+const DENOMINACIONES_BILLETES_MXN = [20, 50, 100, 200, 500, 1000];
+const DENOMINACIONES_MONEDAS_MXN = [1, 2, 5, 10];
+
 @Component({
   selector: 'app-caja',
   standalone: true,
@@ -77,7 +83,75 @@ export class CajaComponent implements OnInit {
   retiroEmitido = signal<MovimientoCaja | null>(null);
 
   // ---- Bloque 3: captura de lo contado físicamente -------------------------
-  // null = todavía no se ha escrito nada en ese campo.
+  // null = todavía no se ha contado/escrito nada en ese campo.
+  //
+  // CONTEO DE EFECTIVO POR DENOMINACIÓN (2026-10-30): reemplaza el campo
+  // numérico libre de antes — en vez de teclear un total estimado, se cuenta
+  // billete por billete y moneda por moneda (el gesto real de un corte de
+  // caja físico), y `efectivoContado` se recalcula solo como la suma. Mismo
+  // patrón exacto que ya usa pos.ts para el cobro en efectivo
+  // (conteoEfectivo/agregarDenominacion/quitarDenominacion), adaptado aquí:
+  // alimenta efectivoContado en vez de montoRecibido. Transferencia sigue
+  // siendo un solo número (no hay "denominaciones" de una transferencia).
+  denominacionesBilletes = DENOMINACIONES_BILLETES_MXN;
+  denominacionesMonedas = DENOMINACIONES_MONEDAS_MXN;
+  conteoEfectivo = signal<Map<number, number>>(new Map());
+  hayConteoEfectivo = computed(() => this.conteoEfectivo().size > 0);
+
+  cantidadDenominacion(monto: number): number {
+    return this.conteoEfectivo().get(monto) ?? 0;
+  }
+
+  agregarDenominacion(monto: number): void {
+    this.conteoEfectivo.update((mapa) => {
+      const nuevo = new Map(mapa);
+      nuevo.set(monto, (nuevo.get(monto) ?? 0) + 1);
+      return nuevo;
+    });
+    this.recalcularEfectivoDesdeConteo();
+  }
+
+  quitarDenominacion(monto: number): void {
+    this.conteoEfectivo.update((mapa) => {
+      const nuevo = new Map(mapa);
+      const actual = nuevo.get(monto) ?? 0;
+      if (actual <= 1) {
+        nuevo.delete(monto);
+      } else {
+        nuevo.set(monto, actual - 1);
+      }
+      return nuevo;
+    });
+    this.recalcularEfectivoDesdeConteo();
+  }
+
+  // "Me equivoqué, vuelvo a empezar" — borrar un conteo de varias
+  // denominaciones tocando "-" una por una sería tedioso.
+  limpiarConteoEfectivo(): void {
+    this.conteoEfectivo.set(new Map());
+    this.efectivoContado.set(null);
+  }
+
+  private recalcularEfectivoDesdeConteo(): void {
+    let suma = 0;
+    for (const [monto, cantidad] of this.conteoEfectivo()) {
+      suma += monto * cantidad;
+    }
+    this.efectivoContado.set(suma > 0 ? suma : null);
+  }
+
+  // Billetes/monedas con ilustración vectorial propia — mismos archivos ya
+  // usados por el POS (public/img/billetes|monedas/).
+  imagenBillete(monto: number): string | null {
+    return DENOMINACIONES_BILLETES_MXN.includes(monto)
+      ? `/img/billetes/billete_${monto}.svg`
+      : null;
+  }
+
+  imagenMoneda(monto: number): string | null {
+    return DENOMINACIONES_MONEDAS_MXN.includes(monto) ? `/img/monedas/moneda_${monto}.svg` : null;
+  }
+
   efectivoContado = signal<number | null>(null);
   transferenciaContado = signal<number | null>(null);
   registrando = signal(false);
@@ -401,12 +475,10 @@ export class CajaComponent implements OnInit {
     this.cargarHistorial();
   }
 
-  // Convierten el texto del campo en número; vacío o inválido = null (sin capturar).
-  actualizarEfectivoContado(valor: string): void {
-    const numero = Number(valor);
-    this.efectivoContado.set(valor === '' || Number.isNaN(numero) ? null : numero);
-  }
-
+  // Convierte el texto del campo en número; vacío o inválido = null (sin
+  // capturar). "Efectivo contado" ya no se escribe a mano — se calcula solo
+  // desde el conteo por denominación (ver arriba) — este método se queda
+  // solo para Transferencias, que sí sigue siendo un monto libre.
   actualizarTransferenciaContado(valor: string): void {
     const numero = Number(valor);
     this.transferenciaContado.set(valor === '' || Number.isNaN(numero) ? null : numero);
@@ -457,6 +529,7 @@ export class CajaComponent implements OnInit {
   nuevoCorte(): void {
     this.corteGuardado.set(null);
     this.efectivoContado.set(null);
+    this.conteoEfectivo.set(new Map());
     this.transferenciaContado.set(null);
     this.errorRegistro.set('');
     this.cargarResumen();

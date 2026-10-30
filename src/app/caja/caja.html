@@ -179,17 +179,105 @@
             <!-- CAPTURA: lo que la persona contó físicamente (efectivo y transferencias). -->
             <section class="tarjeta-contar">
               <h2>Lo que contaste físicamente</h2>
+
+              <!-- CONTEO DE EFECTIVO POR DENOMINACIÓN (2026-10-30): se cuenta
+                   billete por billete y moneda por moneda — mismo patrón
+                   exacto que el cobro del POS — en vez de teclear un total
+                   estimado. El total se calcula solo y se muestra de solo
+                   lectura arriba de la cuadrícula. -->
               <div class="campo-caja">
-                <label for="efectivo-contado">Efectivo contado</label>
-                <input
-                  id="efectivo-contado"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  [value]="efectivoContado() ?? ''"
-                  (input)="actualizarEfectivoContado($any($event.target).value)"
-                />
+                <label>Efectivo contado</label>
+                <div class="total-efectivo-contado">
+                  {{ efectivoContado() ?? 0 | currency: 'MXN' }}
+                </div>
               </div>
+
+              <p class="etiqueta-denominaciones">Billetes</p>
+              <div class="grid-denominaciones">
+                @for (monto of denominacionesBilletes; track monto) {
+                  <div class="denominacion-efectivo">
+                    <div
+                      class="denominacion-visual-billete"
+                      [class.denominacion-con-conteo]="cantidadDenominacion(monto) > 0"
+                      role="button"
+                      tabindex="0"
+                      (click)="agregarDenominacion(monto)"
+                      (keydown.enter)="agregarDenominacion(monto)"
+                      (keydown.space)="$event.preventDefault(); agregarDenominacion(monto)"
+                      [attr.aria-label]="'Agregar un billete de ' + monto + ' pesos'"
+                    >
+                      <img
+                        [src]="imagenBillete(monto)"
+                        [alt]="'Billete de ' + monto + ' pesos'"
+                        class="billete-imagen"
+                      />
+                    </div>
+                    @if (cantidadDenominacion(monto) > 0) {
+                      <div class="opcion-contador-controles">
+                        <button
+                          type="button"
+                          (click)="quitarDenominacion(monto)"
+                          [attr.aria-label]="'Quitar un billete de ' + monto + ' pesos'"
+                        >
+                          <svg class="icono" aria-hidden="true"><use href="#ic-menos" /></svg>
+                        </button>
+                        <span class="opcion-contador-cantidad">{{
+                          cantidadDenominacion(monto)
+                        }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <p class="etiqueta-denominaciones">Monedas</p>
+              <div class="grid-denominaciones">
+                @for (monto of denominacionesMonedas; track monto) {
+                  <div class="denominacion-efectivo">
+                    <div
+                      class="denominacion-visual-moneda"
+                      [class.denominacion-con-conteo]="cantidadDenominacion(monto) > 0"
+                      role="button"
+                      tabindex="0"
+                      (click)="agregarDenominacion(monto)"
+                      (keydown.enter)="agregarDenominacion(monto)"
+                      (keydown.space)="$event.preventDefault(); agregarDenominacion(monto)"
+                      [attr.aria-label]="'Agregar una moneda de ' + monto + ' pesos'"
+                    >
+                      <img
+                        [src]="imagenMoneda(monto)"
+                        [alt]="'Moneda de ' + monto + ' pesos'"
+                        class="moneda-imagen"
+                      />
+                    </div>
+                    @if (cantidadDenominacion(monto) > 0) {
+                      <div class="opcion-contador-controles">
+                        <button
+                          type="button"
+                          (click)="quitarDenominacion(monto)"
+                          [attr.aria-label]="'Quitar una moneda de ' + monto + ' pesos'"
+                        >
+                          <svg class="icono" aria-hidden="true"><use href="#ic-menos" /></svg>
+                        </button>
+                        <span class="opcion-contador-cantidad">{{
+                          cantidadDenominacion(monto)
+                        }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              @if (hayConteoEfectivo()) {
+                <button
+                  type="button"
+                  class="boton-limpiar-conteo"
+                  (click)="limpiarConteoEfectivo()"
+                >
+                  Limpiar conteo
+                </button>
+              }
+
               <div class="campo-caja">
                 <label for="transferencia-contado">Transferencias contadas</label>
                 <input
@@ -202,16 +290,22 @@
                 />
               </div>
 
-              <!-- DIFERENCIA EN VIVO: contado - sistema. Cuadra exacto / Sobran $X / Faltan $X.
-               (Se compara con null porque una diferencia de 0 es un resultado válido.) -->
+              <!-- DIFERENCIA EN VIVO, como un sello circular (2026-10-30, dirección
+                   "comprobante digital"): contado - sistema. Cuadra exacto / Sobran
+                   $X / Faltan $X. (Se compara con null porque una diferencia de 0
+                   es un resultado válido.) -->
               @if (diferencia() !== null) {
-                <div class="diferencia-en-vivo" [class.diferencia-negativa]="diferencia()! < 0">
+                <div class="sello-diferencia" [class.diferencia-negativa]="diferencia()! < 0">
                   @if (diferencia() === 0) {
-                    <span>Cuadra exacto</span>
+                    <span class="sello-diferencia-texto">Cuadra</span>
                   } @else if (diferencia()! > 0) {
-                    <span>Sobran {{ diferencia() | currency: 'MXN' }}</span>
+                    <span class="sello-diferencia-texto">Sobran</span>
+                    <span class="sello-diferencia-monto">{{ diferencia() | currency: 'MXN' }}</span>
                   } @else {
-                    <span>Faltan {{ -diferencia()! | currency: 'MXN' }}</span>
+                    <span class="sello-diferencia-texto">Faltan</span>
+                    <span class="sello-diferencia-monto">{{
+                      -diferencia()! | currency: 'MXN'
+                    }}</span>
                   }
                 </div>
               }

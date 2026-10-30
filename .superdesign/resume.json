@@ -7,7 +7,10 @@
       "baselineDraftId": "4376d3ab-5a77-4300-bc21-eafa95e47471",
       "activeDraftId": "bdce7c45-98c4-41d5-a81c-600e9a850122",
       "designSystemPath": ".superdesign/design-system.md",
-      "referenceIds": ["chucherias-marca-logo-color", "chucherias-marca-logo-blanco"],
+      "referenceIds": [
+        "chucherias-marca-logo-color",
+        "chucherias-marca-logo-blanco"
+      ],
       "brandAssets": {
         "logo": {
           "assetKey": "chucherias-marca-logo-color",
@@ -59,7 +62,9 @@
       "baselineDraftId": "e0df6858-fd47-4bcb-a03e-bc1162dbe781",
       "activeDraftId": "dee72bda-8964-446b-ba8e-6802fd9ec5f6",
       "designSystemPath": ".superdesign/design-system.md",
-      "referenceIds": ["chucherias-marca-logo-color"],
+      "referenceIds": [
+        "chucherias-marca-logo-color"
+      ],
       "brandAssets": {
         "logo": {
           "assetKey": "chucherias-marca-logo-color",
@@ -112,7 +117,9 @@
       "baselineDraftId": "78987cd3-a4d1-4cbe-b5ec-1f9c4acee5f8",
       "activeDraftId": "89a01112-5c3a-4bc0-8fba-4128133b7705",
       "designSystemPath": ".superdesign/design-system.md",
-      "referenceIds": ["chucherias-marca-logo-color"],
+      "referenceIds": [
+        "chucherias-marca-logo-color"
+      ],
       "contextFiles": [
         ".superdesign/design-system.md",
         "src/styles.css",
@@ -231,6 +238,51 @@
         }
       },
       "updatedAt": "2026-10-29T21:00:00Z"
+    },
+    "/caja": {
+      "targetKind": "existing-ui",
+      "projectId": "9eda39df-a714-407d-b83d-03e5462f3b90",
+      "baselineDraftId": "6764acd0-c246-4c36-8962-ed4ef2be810a",
+      "activeDraftId": "99415b5b-23e3-4c85-91d0-14fa6355d0e9",
+      "designSystemPath": ".superdesign/design-system.md",
+      "referenceIds": [],
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "src/styles.css",
+        "src/app/caja/caja.ts",
+        "src/app/caja/caja.html:1:235",
+        "src/app/caja/caja.css:1:567",
+        "src/app/core/caja.ts"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "d77a2b1c5c3989328853b7f1ddb35b3ab2e26489271364fcd628528d6412d0d3",
+        "src/styles.css": "b74b316c1ebcc51c84cf3ea327591edbad73a7c2296d53d1f59e5dc3e00755fc",
+        "src/app/caja/caja.ts": "e3bb224ad8fce427499f5b8d7970f6c05c271a1f14c4b8774a38cdf223ab98c9",
+        "src/app/caja/caja.html": "077e9b913ef13ba0c0afeeb890341172ec9e8a90e208cef93aac8298feda482d",
+        "src/app/caja/caja.css": "4a33dc07fab719d580d6ef226b882526c8d59fe75afc17670c18db07fa79c666",
+        "src/app/core/caja.ts": "fe59ace1488f6c5e192bb6852be7ba4a46984cc17fb02173450f1ef105c232ee"
+      },
+      "components": [],
+      "drafts": {
+        "6764acd0-c246-4c36-8962-ed4ef2be810a": {
+          "title": "Corte de Caja - Chucherías Mix",
+          "visualDirection": "pixel-perfect reproduction of current UI (pestaña 'Corte de hoy', la que renderiza por default — Retiros/Movimientos/Historial y los 2 overlays (Listado de retiros, Eliminar historial) quedaron fuera del alcance; sin posición de logo en esta pestaña)",
+          "currentVersion": 1
+        },
+        "99415b5b-23e3-4c85-91d0-14fa6355d0e9": {
+          "title": "Corte de Caja - Comprobante Digital",
+          "visualDirection": "comprobante de caja registradora — borde superior de las tarjetas con efecto de papel perforado/dentado, cifras en columnas tabulares, divisores punteados entre renglones, 'Total sistema' con línea doble tipo subtotal de recibo, indicador de diferencia como sello circular ladeado ('CUADRA'/'SOBRAN'/'FALTAN') — APLICADA al código real (caja.css: borde perforado via ::before en .tarjeta-resumen/.tarjeta-contar/.tarjeta-corte-guardado/.tarjeta-historial reusando la técnica de .comprobante-borde-cortado de pos.css, .linea-corte con divisor punteado + cifras tabulares, .sello-diferencia circular rotado reemplaza a .diferencia-en-vivo rectangular; caja.html/.ts: conteo de efectivo por denominación — billetes+monedas, mismo patrón ya probado del cobro del POS — construido como función nueva real, no solo estilo, a pedido explícito del usuario; reemplaza el input numérico de 'Efectivo contado' por un total de solo lectura calculado del conteo). La variación 'Metáfora de Balanza' no se aplicó.",
+          "parentDraftId": "6764acd0-c246-4c36-8962-ed4ef2be810a",
+          "currentVersion": 1
+        },
+        "26bf44e3-415f-499e-bc2d-8c685f568168": {
+          "title": "Corte de Caja - Metáfora de Balanza",
+          "visualDirection": "balanza — las dos tarjetas (sistema/contado) como los platillos de una báscula con un conector hacia un punto de pivote central arriba, una aguja/barra horizontal entre ambas que se inclina según la diferencia en vivo (nivelada si cuadra, inclinada con flecha de color si sobra/falta), botón de guardar como la base de la balanza — NO aplicada todavía",
+          "parentDraftId": "6764acd0-c246-4c36-8962-ed4ef2be810a",
+          "currentVersion": 1
+        }
+      },
+      "updatedAt": "2026-10-30T19:00:00Z"
     }
   }
 }
