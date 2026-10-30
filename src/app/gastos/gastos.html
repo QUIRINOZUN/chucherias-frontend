@@ -129,11 +129,18 @@
         </div>
       </div>
 
-      @if (hayFiltros()) {
-        <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltros()">
-          Limpiar filtros
-        </button>
-      }
+      <div class="fila-acciones-filtros-gastos">
+        @if (hayFiltros()) {
+          <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltros()">
+            Limpiar filtros
+          </button>
+        }
+        @if (esAdministrador()) {
+          <button type="button" class="boton-eliminar-historial" (click)="abrirEliminarHistorial()">
+            Eliminar historial
+          </button>
+        }
+      </div>
     </section>
 
     <div class="encabezado-seccion-gastos">
@@ -460,6 +467,81 @@
             {{ eliminando() ? 'Eliminando...' : 'Sí, eliminar' }}
           </button>
         </div>
+      </div>
+    </div>
+  }
+
+  <!-- Eliminar historial (2026-10-29): solo administrador, acción irreversible
+       — borra TODOS los gastos del rango elegido. -->
+  @if (mostrarEliminarHistorial()) {
+    <div class="overlay">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Eliminar historial de gastos"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarEliminarHistorial()"
+      >
+        <h2>Eliminar historial de gastos</h2>
+        @if (!resultadoEliminarHistorial()) {
+          <p class="texto-confirmacion">
+            Esto borra <strong>todos los gastos</strong> del rango de fechas que elijas, de forma
+            permanente. No se puede deshacer.
+          </p>
+          <div class="campos-eliminar-historial">
+            <div class="campo-filtro">
+              <label for="eh-gastos-desde">Desde</label>
+              <input
+                id="eh-gastos-desde"
+                type="date"
+                [value]="desdeEliminarHistorial()"
+                (change)="desdeEliminarHistorial.set($any($event.target).value)"
+              />
+            </div>
+            <div class="campo-filtro">
+              <label for="eh-gastos-hasta">Hasta</label>
+              <input
+                id="eh-gastos-hasta"
+                type="date"
+                [value]="hastaEliminarHistorial()"
+                (change)="hastaEliminarHistorial.set($any($event.target).value)"
+              />
+            </div>
+          </div>
+          @if (errorEliminarHistorial()) {
+            <p class="mensaje-error">{{ errorEliminarHistorial() }}</p>
+          }
+          <div class="acciones-formulario">
+            <button
+              type="button"
+              class="boton-cancelar"
+              (click)="cerrarEliminarHistorial()"
+              [disabled]="eliminandoHistorial()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton-confirmar-eliminar"
+              [disabled]="!puedeEliminarHistorial()"
+              (click)="confirmarEliminarHistorial()"
+            >
+              {{ eliminandoHistorial() ? 'Eliminando...' : 'Sí, eliminar' }}
+            </button>
+          </div>
+        } @else {
+          <p class="texto-confirmacion">{{ resultadoEliminarHistorial() }}</p>
+          <div class="acciones-formulario">
+            <button
+              type="button"
+              class="boton-confirmar-eliminar"
+              (click)="cerrarEliminarHistorial()"
+            >
+              Cerrar
+            </button>
+          </div>
+        }
       </div>
     </div>
   }

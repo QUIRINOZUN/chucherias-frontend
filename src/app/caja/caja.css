@@ -750,6 +750,81 @@
   background: color-mix(in srgb, var(--acento-modulo) 85%, black);
 }
 
+/* "Eliminar historial" (2026-10-29): acción de alto riesgo, solo
+   administrador — mismo lenguaje de peligro que el resto de la app. */
+.fila-acciones-historial-caja {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.boton-eliminar-historial {
+  min-height: 44px;
+  padding: 0 14px;
+  margin-left: auto;
+  border: 1px solid var(--peligro-texto);
+  border-radius: var(--radio-pastilla);
+  background: none;
+  color: var(--peligro-texto);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-eliminar-historial:hover {
+  background: color-mix(in srgb, var(--peligro-texto) 12%, transparent);
+}
+
+.panel-eliminar-historial {
+  width: min(420px, 100%);
+  background: var(--pos-bg-card);
+  border-top: 3px solid var(--peligro-texto);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-elevada);
+  padding: 20px;
+}
+
+.panel-eliminar-historial h2 {
+  margin: 0 0 10px;
+}
+
+.texto-confirmacion {
+  color: var(--pos-text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.campos-eliminar-historial {
+  display: flex;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.acciones-formulario {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.boton-confirmar-eliminar {
+  flex: 1;
+  min-height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radio-md);
+  background: var(--peligro-texto);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.boton-confirmar-eliminar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* El ticket se imprime siempre en fondo claro y texto negro, sin importar
    el tema activo — mismo criterio que el comprobante de venta del POS. */
 @media print {

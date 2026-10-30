@@ -290,6 +290,101 @@
   cursor: pointer;
 }
 
+.fila-acciones-historial-checklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.boton-eliminar-historial {
+  min-height: 44px;
+  padding: 0 14px;
+  margin-bottom: 12px;
+  margin-left: auto;
+  border: 1px solid var(--peligro-texto);
+  border-radius: var(--radio-pastilla);
+  background: none;
+  color: var(--peligro-texto);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-eliminar-historial:hover {
+  background: color-mix(in srgb, var(--peligro-texto) 12%, transparent);
+}
+
+.overlay-checklist {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+
+.panel-eliminar-historial-checklist {
+  width: min(420px, 100%);
+  background: var(--pos-bg-card);
+  border-top: 3px solid var(--peligro-texto);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-elevada);
+  padding: 20px;
+}
+
+.panel-eliminar-historial-checklist h2 {
+  margin: 0 0 10px;
+}
+
+.texto-confirmacion-checklist {
+  color: var(--pos-text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.campos-eliminar-historial-checklist {
+  display: flex;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.acciones-eliminar-historial-checklist {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.boton-cancelar-checklist {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: none;
+  color: var(--pos-text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-confirmar-eliminar-checklist {
+  min-height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radio-sm);
+  background: var(--peligro-texto);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-confirmar-eliminar-checklist:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .boton-limpiar-filtros-checklist:hover {
   border-color: var(--acento-modulo);
   color: var(--pos-text-primary);

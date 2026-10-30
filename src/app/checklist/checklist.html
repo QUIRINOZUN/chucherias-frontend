@@ -175,15 +175,26 @@
             </select>
           </div>
         </div>
-        @if (hayFiltrosHistorial()) {
-          <button
-            type="button"
-            class="boton-limpiar-filtros-checklist"
-            (click)="limpiarFiltrosHistorial()"
-          >
-            Limpiar filtros
-          </button>
-        }
+        <div class="fila-acciones-historial-checklist">
+          @if (hayFiltrosHistorial()) {
+            <button
+              type="button"
+              class="boton-limpiar-filtros-checklist"
+              (click)="limpiarFiltrosHistorial()"
+            >
+              Limpiar filtros
+            </button>
+          }
+          @if (esAdministrador()) {
+            <button
+              type="button"
+              class="boton-eliminar-historial"
+              (click)="abrirEliminarHistorial()"
+            >
+              Eliminar historial
+            </button>
+          }
+        </div>
 
         @if (errorHistorial()) {
           <p class="mensaje-estado mensaje-error">{{ errorHistorial() }}</p>
@@ -262,4 +273,79 @@
       </section>
     }
   </div>
+
+  <!-- Eliminar historial (2026-10-29): solo administrador, acción irreversible
+       — borra las marcas de apertura/cierre del rango elegido. -->
+  @if (mostrarEliminarHistorial()) {
+    <div class="overlay-checklist">
+      <div
+        class="panel-eliminar-historial-checklist"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Eliminar historial del checklist"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarEliminarHistorial()"
+      >
+        <h2>Eliminar historial del checklist</h2>
+        @if (!resultadoEliminarHistorial()) {
+          <p class="texto-confirmacion-checklist">
+            Esto borra las <strong>marcas de apertura/cierre</strong> del rango de fechas que
+            elijas, de forma permanente. No se puede deshacer.
+          </p>
+          <div class="campos-eliminar-historial-checklist">
+            <div class="campo-filtro-checklist">
+              <label for="eh-check-desde">Desde</label>
+              <input
+                id="eh-check-desde"
+                type="date"
+                [value]="desdeEliminarHistorial()"
+                (change)="desdeEliminarHistorial.set($any($event.target).value)"
+              />
+            </div>
+            <div class="campo-filtro-checklist">
+              <label for="eh-check-hasta">Hasta</label>
+              <input
+                id="eh-check-hasta"
+                type="date"
+                [value]="hastaEliminarHistorial()"
+                (change)="hastaEliminarHistorial.set($any($event.target).value)"
+              />
+            </div>
+          </div>
+          @if (errorEliminarHistorial()) {
+            <p class="mensaje-error">{{ errorEliminarHistorial() }}</p>
+          }
+          <div class="acciones-eliminar-historial-checklist">
+            <button
+              type="button"
+              class="boton-cancelar-checklist"
+              (click)="cerrarEliminarHistorial()"
+              [disabled]="eliminandoHistorial()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton-confirmar-eliminar-checklist"
+              [disabled]="!puedeEliminarHistorial()"
+              (click)="confirmarEliminarHistorial()"
+            >
+              {{ eliminandoHistorial() ? 'Eliminando...' : 'Sí, eliminar' }}
+            </button>
+          </div>
+        } @else {
+          <p class="texto-confirmacion-checklist">{{ resultadoEliminarHistorial() }}</p>
+          <div class="acciones-eliminar-historial-checklist">
+            <button
+              type="button"
+              class="boton-confirmar-eliminar-checklist"
+              (click)="cerrarEliminarHistorial()"
+            >
+              Cerrar
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
 </div>

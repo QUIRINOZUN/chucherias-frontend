@@ -128,4 +128,13 @@ export class VentasEspecialesService {
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/ventas-especiales/${id}`);
   }
+
+  // DELETE /api/ventas-especiales/historial?desde=&hasta= — elimina TODAS
+  // las cotizaciones del rango (por fecha_evento), sin importar su estado.
+  // Irreversible. Solo administrador.
+  eliminarHistorial(desde: string, hasta: string): Observable<{ eliminados: number }> {
+    return this.http.delete<{ eliminados: number }>(`${this.apiUrl}/ventas-especiales/historial`, {
+      params: { desde, hasta },
+    });
+  }
 }

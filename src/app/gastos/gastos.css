@@ -203,6 +203,38 @@
   color: var(--pos-text-primary);
 }
 
+/* "Eliminar historial" (2026-10-29): acción de alto riesgo, solo
+   administrador — mismo lenguaje de peligro que el resto de la app. */
+.fila-acciones-filtros-gastos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.boton-eliminar-historial {
+  min-height: 44px;
+  padding: 0 14px;
+  margin-left: auto;
+  border: 1px solid var(--peligro-texto);
+  border-radius: var(--radio-pastilla);
+  background: none;
+  color: var(--peligro-texto);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-eliminar-historial:hover {
+  background: color-mix(in srgb, var(--peligro-texto) 12%, transparent);
+}
+
+.campos-eliminar-historial {
+  display: flex;
+  gap: 10px;
+  margin: 12px 0;
+}
+
 /* ===================== Encabezado de lista + alta ===================== */
 .encabezado-seccion-gastos {
   display: flex;

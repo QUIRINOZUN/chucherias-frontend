@@ -143,4 +143,12 @@ export class AsistenciasService {
     }
     return this.http.get<Retardo[]>(`${this.apiUrl}/asistencias/retardos`, { params });
   }
+
+  // DELETE /api/asistencias/historial?desde=&hasta= — elimina registros de
+  // asistencia del rango, irreversible. Solo administrador.
+  eliminarHistorial(desde: string, hasta: string): Observable<{ eliminados: number }> {
+    return this.http.delete<{ eliminados: number }>(`${this.apiUrl}/asistencias/historial`, {
+      params: { desde, hasta },
+    });
+  }
 }

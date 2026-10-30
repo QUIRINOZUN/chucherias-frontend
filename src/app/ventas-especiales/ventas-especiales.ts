@@ -24,6 +24,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
+import { AuthService } from '../core/auth';
 import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { CatalogoService, Categoria, Producto, Variante } from '../core/catalogo';
 import { obtenerEstiloCategoria } from '../pos/categoria-estilos';
@@ -176,9 +177,19 @@ export class VentasEspecialesComponent implements OnInit {
       this.itemsForm().length > 0,
   );
 
+  // ---- Eliminar historial (2026-10-29): solo administrador, irreversible ----
+  esAdministrador = computed(() => this.authService.usuarioActual()?.rol === 'administrador');
+  mostrarEliminarHistorial = signal(false);
+  desdeEliminarHistorial = signal('');
+  hastaEliminarHistorial = signal('');
+  eliminandoHistorial = signal(false);
+  errorEliminarHistorial = signal('');
+  resultadoEliminarHistorial = signal<string | null>(null);
+
   constructor(
     private ventasEspecialesService: VentasEspecialesService,
     private catalogoService: CatalogoService,
+    private authService: AuthService,
     public themeService: ThemeService,
     private router: Router,
   ) {}
@@ -498,5 +509,53 @@ export class VentasEspecialesComponent implements OnInit {
         );
       },
     });
+  }
+
+  // ---- Eliminar historial (solo administrador, acción irreversible) -------
+  // Borra TODAS las cotizaciones del rango (por fecha_evento), sin importar
+  // su estado — a diferencia de eliminar() de arriba (una a la vez).
+  abrirEliminarHistorial(): void {
+    this.mostrarEliminarHistorial.set(true);
+    this.desdeEliminarHistorial.set('');
+    this.hastaEliminarHistorial.set('');
+    this.errorEliminarHistorial.set('');
+    this.resultadoEliminarHistorial.set(null);
+  }
+
+  cerrarEliminarHistorial(): void {
+    if (this.eliminandoHistorial()) return;
+    this.mostrarEliminarHistorial.set(false);
+  }
+
+  puedeEliminarHistorial(): boolean {
+    return (
+      !!this.desdeEliminarHistorial() &&
+      !!this.hastaEliminarHistorial() &&
+      this.hastaEliminarHistorial() >= this.desdeEliminarHistorial() &&
+      !this.eliminandoHistorial()
+    );
+  }
+
+  confirmarEliminarHistorial(): void {
+    if (!this.puedeEliminarHistorial()) return;
+    this.eliminandoHistorial.set(true);
+    this.errorEliminarHistorial.set('');
+    this.ventasEspecialesService
+      .eliminarHistorial(this.desdeEliminarHistorial(), this.hastaEliminarHistorial())
+      .subscribe({
+        next: (respuesta) => {
+          this.eliminandoHistorial.set(false);
+          this.resultadoEliminarHistorial.set(
+            `Se eliminaron ${respuesta.eliminados} cotización(es) del rango indicado.`,
+          );
+          this.cargarLista();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.eliminandoHistorial.set(false);
+          this.errorEliminarHistorial.set(
+            error.error?.error || 'No se pudo eliminar el historial.',
+          );
+        },
+      });
   }
 }

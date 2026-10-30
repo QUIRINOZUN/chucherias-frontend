@@ -79,11 +79,18 @@
         </div>
       </div>
 
-      @if (hayFiltrosDeFecha() || filtroTipo()) {
-        <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltros()">
-          Limpiar filtros
-        </button>
-      }
+      <div class="fila-acciones-filtros-mermas">
+        @if (hayFiltrosDeFecha() || filtroTipo()) {
+          <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltros()">
+            Limpiar filtros
+          </button>
+        }
+        @if (esAdministrador()) {
+          <button type="button" class="boton-eliminar-historial" (click)="abrirEliminarHistorial()">
+            Eliminar historial
+          </button>
+        }
+      </div>
     </section>
 
     <!-- RESULTADOS: error, cargando, sin mermas o la lista. -->
@@ -121,4 +128,79 @@
       </ul>
     }
   </div>
+
+  <!-- Eliminar historial (2026-10-29): solo administrador, acción irreversible
+       — borra las mermas (producto o insumo) del rango elegido. -->
+  @if (mostrarEliminarHistorial()) {
+    <div class="overlay">
+      <div
+        class="panel-eliminar-historial"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Eliminar historial de mermas"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarEliminarHistorial()"
+      >
+        <h2>Eliminar historial de mermas</h2>
+        @if (!resultadoEliminarHistorial()) {
+          <p class="texto-confirmacion">
+            Esto borra las <strong>mermas</strong> (de producto o de insumo) del rango de fechas que
+            elijas, de forma permanente. No se puede deshacer.
+          </p>
+          <div class="campos-eliminar-historial">
+            <div class="campo-filtro">
+              <label for="eh-mermas-desde">Desde</label>
+              <input
+                id="eh-mermas-desde"
+                type="date"
+                [value]="desdeEliminarHistorial()"
+                (change)="desdeEliminarHistorial.set($any($event.target).value)"
+              />
+            </div>
+            <div class="campo-filtro">
+              <label for="eh-mermas-hasta">Hasta</label>
+              <input
+                id="eh-mermas-hasta"
+                type="date"
+                [value]="hastaEliminarHistorial()"
+                (change)="hastaEliminarHistorial.set($any($event.target).value)"
+              />
+            </div>
+          </div>
+          @if (errorEliminarHistorial()) {
+            <p class="mensaje-error">{{ errorEliminarHistorial() }}</p>
+          }
+          <div class="acciones-formulario">
+            <button
+              type="button"
+              class="boton-cancelar"
+              (click)="cerrarEliminarHistorial()"
+              [disabled]="eliminandoHistorial()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton-confirmar-eliminar"
+              [disabled]="!puedeEliminarHistorial()"
+              (click)="confirmarEliminarHistorial()"
+            >
+              {{ eliminandoHistorial() ? 'Eliminando...' : 'Sí, eliminar' }}
+            </button>
+          </div>
+        } @else {
+          <p class="texto-confirmacion">{{ resultadoEliminarHistorial() }}</p>
+          <div class="acciones-formulario">
+            <button
+              type="button"
+              class="boton-confirmar-eliminar"
+              (click)="cerrarEliminarHistorial()"
+            >
+              Cerrar
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
 </div>

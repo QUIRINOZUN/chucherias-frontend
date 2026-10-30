@@ -20,6 +20,7 @@ import {
   TipoChecklist,
 } from '../core/checklist';
 import { AuthService } from '../core/auth';
+import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { ThemeService } from '../core/theme';
 
 type Pestana = 'apertura' | 'cierre' | 'historial' | 'gestion';
@@ -31,7 +32,7 @@ const TIPOS: TipoChecklist[] = ['apertura', 'cierre'];
 @Component({
   selector: 'app-checklist',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, FocoDialogoDirective],
   templateUrl: './checklist.html',
   styleUrl: './checklist.css',
 })
@@ -55,6 +56,15 @@ export class ChecklistComponent implements OnInit {
     const rol = this.authService.usuarioActual()?.rol;
     return rol === 'administrador' || rol === 'encargado';
   });
+
+  // ---- Eliminar historial (2026-10-29): solo administrador, irreversible ----
+  esAdministrador = computed(() => this.authService.usuarioActual()?.rol === 'administrador');
+  mostrarEliminarHistorial = signal(false);
+  desdeEliminarHistorial = signal('');
+  hastaEliminarHistorial = signal('');
+  eliminandoHistorial = signal(false);
+  errorEliminarHistorial = signal('');
+  resultadoEliminarHistorial = signal<string | null>(null);
 
   // ---- Pestaña "Gestionar" (catálogo completo, solo administrador/encargado) ----
   itemsGestion = signal<ChecklistItem[]>([]);
@@ -256,5 +266,51 @@ export class ChecklistComponent implements OnInit {
 
   volverAlDashboard(): void {
     this.router.navigate(['/dashboard']);
+  }
+
+  // ---- Eliminar historial (solo administrador, acción irreversible) -------
+  abrirEliminarHistorial(): void {
+    this.mostrarEliminarHistorial.set(true);
+    this.desdeEliminarHistorial.set('');
+    this.hastaEliminarHistorial.set('');
+    this.errorEliminarHistorial.set('');
+    this.resultadoEliminarHistorial.set(null);
+  }
+
+  cerrarEliminarHistorial(): void {
+    if (this.eliminandoHistorial()) return;
+    this.mostrarEliminarHistorial.set(false);
+  }
+
+  puedeEliminarHistorial(): boolean {
+    return (
+      !!this.desdeEliminarHistorial() &&
+      !!this.hastaEliminarHistorial() &&
+      this.hastaEliminarHistorial() >= this.desdeEliminarHistorial() &&
+      !this.eliminandoHistorial()
+    );
+  }
+
+  confirmarEliminarHistorial(): void {
+    if (!this.puedeEliminarHistorial()) return;
+    this.eliminandoHistorial.set(true);
+    this.errorEliminarHistorial.set('');
+    this.checklistService
+      .eliminarHistorial(this.desdeEliminarHistorial(), this.hastaEliminarHistorial())
+      .subscribe({
+        next: (respuesta) => {
+          this.eliminandoHistorial.set(false);
+          this.resultadoEliminarHistorial.set(
+            `Se eliminaron ${respuesta.eliminados} marca(s) del rango indicado.`,
+          );
+          this.cargarHistorial();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.eliminandoHistorial.set(false);
+          this.errorEliminarHistorial.set(
+            error.error?.error || 'No se pudo eliminar el historial.',
+          );
+        },
+      });
   }
 }

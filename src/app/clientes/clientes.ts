@@ -11,11 +11,12 @@
 // El contador de visitas y los descuentos NUNCA se editan desde aquí: eso
 // solo lo calcula el servidor al registrar una venta (routes/ventas.js).
 // =============================================================================
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { DatePipe, CurrencyPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
+import { AuthService } from '../core/auth';
 import { Cliente, ClienteDetalle, ClientesService } from '../core/clientes';
 import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { ThemeService } from '../core/theme';
@@ -48,8 +49,18 @@ export class ClientesComponent implements OnInit {
   guardandoEdicion = signal(false);
   errorEdicion = signal('');
 
+  // ---- Eliminar historial (2026-10-29): solo administrador, irreversible ----
+  esAdministrador = computed(() => this.authService.usuarioActual()?.rol === 'administrador');
+  mostrarEliminarHistorial = signal(false);
+  desdeEliminarHistorial = signal('');
+  hastaEliminarHistorial = signal('');
+  eliminandoHistorial = signal(false);
+  errorEliminarHistorial = signal('');
+  resultadoEliminarHistorial = signal<string | null>(null);
+
   constructor(
     private clientesService: ClientesService,
+    private authService: AuthService,
     public themeService: ThemeService,
     private router: Router,
   ) {}
@@ -163,5 +174,58 @@ export class ClientesComponent implements OnInit {
 
   volverAlDashboard(): void {
     this.router.navigate(['/dashboard']);
+  }
+
+  // ---- Eliminar historial (solo administrador, acción irreversible) -------
+  // Borra el historial de LEALTAD (visitas/descuentos) — no toca
+  // visitas_acumuladas de cada cliente, solo el registro de lo que pasó.
+  abrirEliminarHistorial(): void {
+    this.mostrarEliminarHistorial.set(true);
+    this.desdeEliminarHistorial.set('');
+    this.hastaEliminarHistorial.set('');
+    this.errorEliminarHistorial.set('');
+    this.resultadoEliminarHistorial.set(null);
+  }
+
+  cerrarEliminarHistorial(): void {
+    if (this.eliminandoHistorial()) return;
+    this.mostrarEliminarHistorial.set(false);
+  }
+
+  puedeEliminarHistorial(): boolean {
+    return (
+      !!this.desdeEliminarHistorial() &&
+      !!this.hastaEliminarHistorial() &&
+      this.hastaEliminarHistorial() >= this.desdeEliminarHistorial() &&
+      !this.eliminandoHistorial()
+    );
+  }
+
+  confirmarEliminarHistorial(): void {
+    if (!this.puedeEliminarHistorial()) return;
+    this.eliminandoHistorial.set(true);
+    this.errorEliminarHistorial.set('');
+    this.clientesService
+      .eliminarHistorial(this.desdeEliminarHistorial(), this.hastaEliminarHistorial())
+      .subscribe({
+        next: (respuesta) => {
+          this.eliminandoHistorial.set(false);
+          this.resultadoEliminarHistorial.set(
+            `Se eliminaron ${respuesta.eliminados} evento(s) de lealtad del rango indicado.`,
+          );
+          // Si había un detalle abierto, su historial de lealtad podría
+          // haber cambiado — se vuelve a cargar para reflejarlo.
+          if (this.clienteDetalleId() != null) {
+            const cliente = this.clientes().find((c) => c.id === this.clienteDetalleId());
+            if (cliente) this.abrirDetalle(cliente);
+          }
+        },
+        error: (error: HttpErrorResponse) => {
+          this.eliminandoHistorial.set(false);
+          this.errorEliminarHistorial.set(
+            error.error?.error || 'No se pudo eliminar el historial.',
+          );
+        },
+      });
   }
 }

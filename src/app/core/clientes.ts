@@ -106,4 +106,13 @@ export class ClientesService {
       telefono: telefono || null,
     });
   }
+
+  // DELETE /api/clientes/historial?desde=&hasta= — elimina el historial de
+  // lealtad (visitas/descuentos) del rango, irreversible. Solo
+  // administrador. No toca visitas_acumuladas de cada cliente.
+  eliminarHistorial(desde: string, hasta: string): Observable<{ eliminados: number }> {
+    return this.http.delete<{ eliminados: number }>(`${this.apiUrl}/clientes/historial`, {
+      params: { desde, hasta },
+    });
+  }
 }

@@ -104,4 +104,12 @@ export class GastosService {
   eliminar(id: number): Observable<{ ok: boolean }> {
     return this.http.delete<{ ok: boolean }>(`${this.apiUrl}/gastos/${id}`);
   }
+
+  // DELETE /api/gastos/historial?desde=&hasta= — elimina TODOS los gastos
+  // del rango de una vez, irreversible. Solo administrador.
+  eliminarHistorial(desde: string, hasta: string): Observable<{ eliminados: number }> {
+    return this.http.delete<{ eliminados: number }>(`${this.apiUrl}/gastos/historial`, {
+      params: { desde, hasta },
+    });
+  }
 }

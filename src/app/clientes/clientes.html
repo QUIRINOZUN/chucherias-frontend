@@ -31,14 +31,21 @@
   </header>
 
   <div class="clientes-cuerpo">
-    <div class="campo-busqueda">
-      <input
-        type="text"
-        placeholder="Buscar por nombre o teléfono..."
-        aria-label="Buscar cliente"
-        [value]="busqueda()"
-        (input)="actualizarBusqueda($any($event.target).value)"
-      />
+    <div class="fila-busqueda-clientes">
+      <div class="campo-busqueda">
+        <input
+          type="text"
+          placeholder="Buscar por nombre o teléfono..."
+          aria-label="Buscar cliente"
+          [value]="busqueda()"
+          (input)="actualizarBusqueda($any($event.target).value)"
+        />
+      </div>
+      @if (esAdministrador()) {
+        <button type="button" class="boton-eliminar-historial" (click)="abrirEliminarHistorial()">
+          Eliminar historial
+        </button>
+      }
     </div>
 
     @if (error()) {
@@ -235,6 +242,83 @@
               <button type="button" class="boton-cancelar" (click)="cerrarDetalle()">Cerrar</button>
             </div>
           }
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Eliminar historial (2026-10-29): solo administrador, acción irreversible
+       — borra el historial de LEALTAD (visitas/descuentos) del rango
+       elegido. No toca visitas_acumuladas de cada cliente. -->
+  @if (mostrarEliminarHistorial()) {
+    <div class="overlay">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Eliminar historial de lealtad"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarEliminarHistorial()"
+      >
+        <h2>Eliminar historial de lealtad</h2>
+        @if (!resultadoEliminarHistorial()) {
+          <p class="texto-confirmacion">
+            Esto borra los <strong>eventos de lealtad</strong> (visitas y descuentos aplicados) del
+            rango de fechas que elijas, de forma permanente. No ajusta el ciclo de visitas
+            acumuladas de cada cliente. No se puede deshacer.
+          </p>
+          <div class="campos-eliminar-historial">
+            <div class="campo-filtro">
+              <label for="eh-clientes-desde">Desde</label>
+              <input
+                id="eh-clientes-desde"
+                type="date"
+                [value]="desdeEliminarHistorial()"
+                (change)="desdeEliminarHistorial.set($any($event.target).value)"
+              />
+            </div>
+            <div class="campo-filtro">
+              <label for="eh-clientes-hasta">Hasta</label>
+              <input
+                id="eh-clientes-hasta"
+                type="date"
+                [value]="hastaEliminarHistorial()"
+                (change)="hastaEliminarHistorial.set($any($event.target).value)"
+              />
+            </div>
+          </div>
+          @if (errorEliminarHistorial()) {
+            <p class="mensaje-error">{{ errorEliminarHistorial() }}</p>
+          }
+          <div class="acciones-formulario">
+            <button
+              type="button"
+              class="boton-cancelar"
+              (click)="cerrarEliminarHistorial()"
+              [disabled]="eliminandoHistorial()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton-confirmar-eliminar"
+              [disabled]="!puedeEliminarHistorial()"
+              (click)="confirmarEliminarHistorial()"
+            >
+              {{ eliminandoHistorial() ? 'Eliminando...' : 'Sí, eliminar' }}
+            </button>
+          </div>
+        } @else {
+          <p class="texto-confirmacion">{{ resultadoEliminarHistorial() }}</p>
+          <div class="acciones-formulario">
+            <button
+              type="button"
+              class="boton-confirmar-eliminar"
+              (click)="cerrarEliminarHistorial()"
+            >
+              Cerrar
+            </button>
+          </div>
         }
       </div>
     </div>

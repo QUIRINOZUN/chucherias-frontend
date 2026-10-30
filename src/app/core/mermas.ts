@@ -60,4 +60,12 @@ export class MermasService {
     }
     return this.http.get<Merma[]>(`${this.apiUrl}/mermas`, { params });
   }
+
+  // DELETE /api/mermas/historial?desde=&hasta= — elimina las mermas del
+  // rango, irreversible. Solo administrador.
+  eliminarHistorial(desde: string, hasta: string): Observable<{ eliminados: number }> {
+    return this.http.delete<{ eliminados: number }>(`${this.apiUrl}/mermas/historial`, {
+      params: { desde, hasta },
+    });
+  }
 }

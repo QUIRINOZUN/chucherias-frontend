@@ -114,4 +114,12 @@ export class ChecklistService {
     }
     return this.http.get<MarcaHistorial[]>(`${this.apiUrl}/checklist/historial`, { params });
   }
+
+  // DELETE /api/checklist/historial?desde=&hasta= — elimina las marcas de
+  // apertura/cierre del rango, irreversible. Solo administrador.
+  eliminarHistorial(desde: string, hasta: string): Observable<{ eliminados: number }> {
+    return this.http.delete<{ eliminados: number }>(`${this.apiUrl}/checklist/historial`, {
+      params: { desde, hasta },
+    });
+  }
 }

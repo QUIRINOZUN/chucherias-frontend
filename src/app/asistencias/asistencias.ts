@@ -48,6 +48,7 @@ import {
   FiltrosAsistencias,
   Retardo,
 } from '../core/asistencias';
+import { AuthService } from '../core/auth';
 import { DatosEmpleado, Empleado, EmpleadosService } from '../core/empleados';
 import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { Usuario, UsuariosService } from '../core/usuarios';
@@ -256,11 +257,21 @@ export class AsistenciasComponent implements OnInit {
   // Deshabilita el botón de ESE empleado mientras se procesa su acción.
   procesandoEmpleadoId = signal<number | null>(null);
 
+  // ---- Eliminar historial (2026-10-29): solo administrador, irreversible ----
+  esAdministrador = computed(() => this.authService.usuarioActual()?.rol === 'administrador');
+  mostrarEliminarHistorial = signal(false);
+  desdeEliminarHistorial = signal('');
+  hastaEliminarHistorial = signal('');
+  eliminandoHistorial = signal(false);
+  errorEliminarHistorial = signal('');
+  resultadoEliminarHistorial = signal<string | null>(null);
+
   constructor(
     private empleadosService: EmpleadosService,
     private asistenciasService: AsistenciasService,
     private usuariosService: UsuariosService,
     private horariosService: HorariosService,
+    private authService: AuthService,
     public themeService: ThemeService,
     private router: Router,
   ) {}
@@ -1197,5 +1208,52 @@ export class AsistenciasComponent implements OnInit {
 
   volverAlDashboard(): void {
     this.router.navigate(['/dashboard']);
+  }
+
+  // ---- Eliminar historial (solo administrador, acción irreversible) -------
+  abrirEliminarHistorial(): void {
+    this.mostrarEliminarHistorial.set(true);
+    this.desdeEliminarHistorial.set('');
+    this.hastaEliminarHistorial.set('');
+    this.errorEliminarHistorial.set('');
+    this.resultadoEliminarHistorial.set(null);
+  }
+
+  cerrarEliminarHistorial(): void {
+    if (this.eliminandoHistorial()) return;
+    this.mostrarEliminarHistorial.set(false);
+  }
+
+  puedeEliminarHistorial(): boolean {
+    return (
+      !!this.desdeEliminarHistorial() &&
+      !!this.hastaEliminarHistorial() &&
+      this.hastaEliminarHistorial() >= this.desdeEliminarHistorial() &&
+      !this.eliminandoHistorial()
+    );
+  }
+
+  confirmarEliminarHistorial(): void {
+    if (!this.puedeEliminarHistorial()) return;
+    this.eliminandoHistorial.set(true);
+    this.errorEliminarHistorial.set('');
+    this.asistenciasService
+      .eliminarHistorial(this.desdeEliminarHistorial(), this.hastaEliminarHistorial())
+      .subscribe({
+        next: (respuesta) => {
+          this.eliminandoHistorial.set(false);
+          this.resultadoEliminarHistorial.set(
+            `Se eliminaron ${respuesta.eliminados} registro(s) de asistencia del rango indicado.`,
+          );
+          this.cargarHistorial();
+          this.cargarHoy();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.eliminandoHistorial.set(false);
+          this.errorEliminarHistorial.set(
+            error.error?.error || 'No se pudo eliminar el historial.',
+          );
+        },
+      });
   }
 }

@@ -76,6 +76,96 @@
 }
 
 /* ===================== Búsqueda ===================== */
+.fila-busqueda-clientes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.fila-busqueda-clientes .campo-busqueda {
+  flex: 1;
+  min-width: 200px;
+  margin-bottom: 0;
+}
+
+/* "Eliminar historial" (2026-10-29): acción de alto riesgo, solo
+   administrador — mismo lenguaje de peligro que el resto de la app. */
+.boton-eliminar-historial {
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--peligro-texto);
+  border-radius: var(--radio-pastilla);
+  background: none;
+  color: var(--peligro-texto);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.boton-eliminar-historial:hover {
+  background: color-mix(in srgb, var(--peligro-texto) 12%, transparent);
+}
+
+.texto-confirmacion {
+  color: var(--pos-text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.campos-eliminar-historial {
+  display: flex;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.campo-filtro {
+  flex: 1;
+}
+
+.campo-filtro label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pos-text-secondary);
+}
+
+.campo-filtro input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 10px;
+  font-size: 0.9rem;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+
+.campo-filtro input:focus {
+  outline: none;
+  border-color: var(--acento-modulo);
+}
+
+.boton-confirmar-eliminar {
+  min-height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radio-sm);
+  background: var(--peligro-texto);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-confirmar-eliminar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .campo-busqueda {
   margin-bottom: 16px;
 }

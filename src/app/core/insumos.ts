@@ -139,4 +139,13 @@ export class InsumosService {
       motivo,
     });
   }
+
+  // DELETE /api/insumos/historial?desde=&hasta= — elimina los movimientos
+  // de inventario del rango, irreversible (cambia la existencia calculada
+  // de cada insumo). Solo administrador.
+  eliminarHistorial(desde: string, hasta: string): Observable<{ eliminados: number }> {
+    return this.http.delete<{ eliminados: number }>(`${this.apiUrl}/insumos/historial`, {
+      params: { desde, hasta },
+    });
+  }
 }

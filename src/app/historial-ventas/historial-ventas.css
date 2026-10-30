@@ -206,6 +206,102 @@
   color: var(--pos-text-primary);
 }
 
+/* "Eliminar historial" (2026-10-29): acción de alto riesgo, solo
+   administrador — mismo lenguaje de peligro que el resto de la app. */
+.fila-acciones-filtros-ventas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.boton-eliminar-historial {
+  min-height: 44px;
+  padding: 0 14px;
+  margin-left: auto;
+  border: 1px solid var(--peligro-texto);
+  border-radius: var(--radio-pastilla);
+  background: none;
+  color: var(--peligro-texto);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-eliminar-historial:hover {
+  background: color-mix(in srgb, var(--peligro-texto) 12%, transparent);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+
+.panel-eliminar-historial {
+  width: min(420px, 100%);
+  background: var(--pos-bg-card);
+  border-top: 3px solid var(--peligro-texto);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-elevada);
+  padding: 20px;
+}
+
+.panel-eliminar-historial h2 {
+  margin: 0 0 10px;
+}
+
+.texto-confirmacion {
+  color: var(--pos-text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.campos-eliminar-historial {
+  display: flex;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.acciones-formulario {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.boton-cancelar {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: none;
+  color: var(--pos-text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-confirmar-eliminar {
+  min-height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radio-sm);
+  background: var(--peligro-texto);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-confirmar-eliminar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* RF-23 (2026-10-16): aviso de lealtad revertida tras cancelar. */
 .aviso-lealtad-revertida {
   display: flex;

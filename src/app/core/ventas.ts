@@ -209,4 +209,12 @@ export class VentasService {
       insumos_rescatados: insumosRescatados,
     });
   }
+
+  // DELETE /api/ventas/historial?desde=&hasta= — elimina TODAS las ventas/
+  // órdenes del rango, irreversible. Solo administrador.
+  eliminarHistorial(desde: string, hasta: string): Observable<{ eliminados: number }> {
+    return this.http.delete<{ eliminados: number }>(`${this.apiUrl}/ventas/historial`, {
+      params: { desde, hasta },
+    });
+  }
 }

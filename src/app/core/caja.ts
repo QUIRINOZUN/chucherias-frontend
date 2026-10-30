@@ -172,4 +172,16 @@ export class CajaService {
       params: fecha ? { fecha } : {},
     });
   }
+
+  // DELETE /api/caja/historial?desde=&hasta= — elimina cortes de caja Y
+  // movimientos de caja del rango, irreversible. Solo administrador.
+  eliminarHistorial(
+    desde: string,
+    hasta: string,
+  ): Observable<{ eliminados: { cortes: number; movimientos: number } }> {
+    return this.http.delete<{ eliminados: { cortes: number; movimientos: number } }>(
+      `${this.apiUrl}/caja/historial`,
+      { params: { desde, hasta } },
+    );
+  }
 }

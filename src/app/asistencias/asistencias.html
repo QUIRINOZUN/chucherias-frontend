@@ -515,11 +515,22 @@
           </div>
         </div>
 
-        @if (hayFiltrosHistorial()) {
-          <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltrosHistorial()">
-            Limpiar filtros
-          </button>
-        }
+        <div class="fila-acciones-historial-asistencias">
+          @if (hayFiltrosHistorial()) {
+            <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltrosHistorial()">
+              Limpiar filtros
+            </button>
+          }
+          @if (esAdministrador()) {
+            <button
+              type="button"
+              class="boton-eliminar-historial"
+              (click)="abrirEliminarHistorial()"
+            >
+              Eliminar historial
+            </button>
+          }
+        </div>
 
         @if (errorHistorial()) {
           <p class="mensaje-estado mensaje-error">{{ errorHistorial() }}</p>
@@ -926,6 +937,82 @@
             {{ guardandoExcepcion() ? 'Guardando...' : 'Guardar' }}
           </button>
         </div>
+      </div>
+    </div>
+  }
+
+  <!-- Eliminar historial (2026-10-29): solo administrador, acción irreversible
+       — borra registros de asistencia del rango elegido (incluida su
+       evidencia de correcciones, por cascada). -->
+  @if (mostrarEliminarHistorial()) {
+    <div class="overlay">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Eliminar historial de asistencias"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarEliminarHistorial()"
+      >
+        <h2>Eliminar historial de asistencias</h2>
+        @if (!resultadoEliminarHistorial()) {
+          <p class="texto-confirmacion">
+            Esto borra los <strong>registros de asistencia</strong> (entrada/salida) del rango de
+            fechas que elijas, de forma permanente. No se puede deshacer.
+          </p>
+          <div class="campos-eliminar-historial">
+            <div class="campo-filtro">
+              <label for="eh-asis-desde">Desde</label>
+              <input
+                id="eh-asis-desde"
+                type="date"
+                [value]="desdeEliminarHistorial()"
+                (change)="desdeEliminarHistorial.set($any($event.target).value)"
+              />
+            </div>
+            <div class="campo-filtro">
+              <label for="eh-asis-hasta">Hasta</label>
+              <input
+                id="eh-asis-hasta"
+                type="date"
+                [value]="hastaEliminarHistorial()"
+                (change)="hastaEliminarHistorial.set($any($event.target).value)"
+              />
+            </div>
+          </div>
+          @if (errorEliminarHistorial()) {
+            <p class="mensaje-error">{{ errorEliminarHistorial() }}</p>
+          }
+          <div class="acciones-formulario">
+            <button
+              type="button"
+              class="boton-cancelar"
+              (click)="cerrarEliminarHistorial()"
+              [disabled]="eliminandoHistorial()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton-confirmar-eliminar"
+              [disabled]="!puedeEliminarHistorial()"
+              (click)="confirmarEliminarHistorial()"
+            >
+              {{ eliminandoHistorial() ? 'Eliminando...' : 'Sí, eliminar' }}
+            </button>
+          </div>
+        } @else {
+          <p class="texto-confirmacion">{{ resultadoEliminarHistorial() }}</p>
+          <div class="acciones-formulario">
+            <button
+              type="button"
+              class="boton-confirmar-eliminar"
+              (click)="cerrarEliminarHistorial()"
+            >
+              Cerrar
+            </button>
+          </div>
+        }
       </div>
     </div>
   }

@@ -95,11 +95,22 @@
           }
         </div>
 
-        @if (hayFiltros()) {
-          <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltros()">
-            Limpiar filtros
-          </button>
-        }
+        <div class="fila-acciones-filtros-ve">
+          @if (hayFiltros()) {
+            <button type="button" class="boton-limpiar-filtros" (click)="limpiarFiltros()">
+              Limpiar filtros
+            </button>
+          }
+          @if (esAdministrador()) {
+            <button
+              type="button"
+              class="boton-eliminar-historial"
+              (click)="abrirEliminarHistorial()"
+            >
+              Eliminar historial
+            </button>
+          }
+        </div>
       </section>
 
       @if (errorLista()) {
@@ -415,7 +426,11 @@
            una "cotizada") — separado de Cancelar/Guardar por ser la única
            acción irreversible de esta pantalla. -->
       @if (ventaEditando()) {
-        <button type="button" class="boton-eliminar-cotizacion-ve" (click)="abrirConfirmarEliminar()">
+        <button
+          type="button"
+          class="boton-eliminar-cotizacion-ve"
+          (click)="abrirConfirmarEliminar()"
+        >
           Eliminar cotización
         </button>
       }
@@ -474,8 +489,8 @@
           >
             <h2>Eliminar cotización</h2>
             <p class="texto-confirmacion-ve">
-              ¿Eliminar la cotización de <strong>{{ clienteNombreForm() }}</strong>? Esta acción no
-              se puede deshacer.
+              ¿Eliminar la cotización de <strong>{{ clienteNombreForm() }}</strong
+              >? Esta acción no se puede deshacer.
             </p>
 
             @if (errorEliminarCotizacion()) {
@@ -503,6 +518,82 @@
           </div>
         </div>
       }
+    }
+
+    <!-- Eliminar historial (2026-10-29): solo administrador, acción
+         irreversible — borra TODAS las cotizaciones del rango elegido
+         (por fecha_evento), sin importar su estado. -->
+    @if (mostrarEliminarHistorial()) {
+      <div class="overlay">
+        <div
+          class="panel-selector-variante-ve"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Eliminar historial de ventas especiales"
+          appFocoDialogo
+          (cerrarConEscape)="cerrarEliminarHistorial()"
+        >
+          <h2>Eliminar historial de ventas especiales</h2>
+          @if (!resultadoEliminarHistorial()) {
+            <p class="texto-confirmacion-ve">
+              Esto borra <strong>todas las cotizaciones</strong> cuya fecha de evento caiga en el
+              rango que elijas, sin importar su estado, de forma permanente. No se puede deshacer.
+            </p>
+            <div class="campos-eliminar-historial-ve">
+              <div class="campo-filtro">
+                <label for="eh-ve-desde">Desde</label>
+                <input
+                  id="eh-ve-desde"
+                  type="date"
+                  [value]="desdeEliminarHistorial()"
+                  (change)="desdeEliminarHistorial.set($any($event.target).value)"
+                />
+              </div>
+              <div class="campo-filtro">
+                <label for="eh-ve-hasta">Hasta</label>
+                <input
+                  id="eh-ve-hasta"
+                  type="date"
+                  [value]="hastaEliminarHistorial()"
+                  (change)="hastaEliminarHistorial.set($any($event.target).value)"
+                />
+              </div>
+            </div>
+            @if (errorEliminarHistorial()) {
+              <p class="mensaje-estado mensaje-error">{{ errorEliminarHistorial() }}</p>
+            }
+            <div class="acciones-cotizacion">
+              <button
+                type="button"
+                class="boton-cancelar-ve"
+                [disabled]="eliminandoHistorial()"
+                (click)="cerrarEliminarHistorial()"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                class="boton-confirmar-eliminar-ve"
+                [disabled]="!puedeEliminarHistorial()"
+                (click)="confirmarEliminarHistorial()"
+              >
+                {{ eliminandoHistorial() ? 'Eliminando...' : 'Sí, eliminar' }}
+              </button>
+            </div>
+          } @else {
+            <p class="texto-confirmacion-ve">{{ resultadoEliminarHistorial() }}</p>
+            <div class="acciones-cotizacion">
+              <button
+                type="button"
+                class="boton-confirmar-eliminar-ve"
+                (click)="cerrarEliminarHistorial()"
+              >
+                Cerrar
+              </button>
+            </div>
+          }
+        </div>
+      </div>
     }
   </div>
 </div>
