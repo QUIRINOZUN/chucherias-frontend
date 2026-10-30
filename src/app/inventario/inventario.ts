@@ -442,6 +442,32 @@ export class InventarioComponent implements OnInit {
   historialMovimientos = signal<MovimientoInventario[]>([]);
   cargandoHistorial = signal(false);
 
+  // ---- Captura rápida de costos (2026-10-30) --------------------------------
+  // Costeo y Rentabilidad (2026-10-27) solo dan números reales si cada insumo
+  // tiene costo_unitario capturado — hasta ahora, la única forma de
+  // capturarlo era abrir el formulario completo de edición de CADA insumo
+  // (nombre, unidad, mínimo, proveedor...) uno por uno. Esta ventana es una
+  // tabla angosta, solo para esto: nombre + unidad + un campo de costo que
+  // se guarda SOLO con esa columna (PATCH parcial) en cuanto se sale del
+  // campo, sin tener que abrir/cerrar el formulario completo 149 veces.
+  mostrarCapturaCostos = signal(false);
+  busquedaCostos = signal('');
+  guardandoCostoId = signal<number | null>(null);
+  erroresCosto = signal<Map<number, string>>(new Map());
+
+  insumosParaCostos = computed(() => {
+    const texto = this.busquedaCostos().trim().toLowerCase();
+    const lista = texto
+      ? this.insumos().filter((i) => i.nombre.toLowerCase().includes(texto))
+      : this.insumos();
+    return [...lista].sort((a, b) => a.nombre.localeCompare(b.nombre));
+  });
+
+  // Cuántos insumos YA tienen costo capturado, del total real (no del
+  // filtro de búsqueda) — para ver el avance sin tener que contarlos.
+  totalConCosto = computed(() => this.insumos().filter((i) => i.costo_unitario != null).length);
+  totalInsumosReal = computed(() => this.insumos().length);
+
   // ---- Eliminar historial (2026-10-29): solo administrador, irreversible ----
   esAdministrador = computed(() => this.authService.usuarioActual()?.rol === 'administrador');
   mostrarEliminarHistorial = signal(false);
@@ -808,5 +834,59 @@ export class InventarioComponent implements OnInit {
 
   volverAlDashboard(): void {
     this.router.navigate(['/dashboard']);
+  }
+
+  // ---- Captura rápida de costos --------------------------------------------
+  abrirCapturaCostos(): void {
+    this.mostrarCapturaCostos.set(true);
+    this.busquedaCostos.set('');
+    this.erroresCosto.set(new Map());
+  }
+
+  cerrarCapturaCostos(): void {
+    this.mostrarCapturaCostos.set(false);
+  }
+
+  errorCostoDe(insumoId: number): string | undefined {
+    return this.erroresCosto().get(insumoId);
+  }
+
+  // Se llama al salir del campo (blur) — compara contra el valor actual para
+  // no mandar un PATCH si no cambió nada (ej. tocar el campo sin escribir).
+  guardarCostoUnitario(insumo: Insumo, valorTexto: string): void {
+    const texto = valorTexto.trim();
+    const nuevoValor = texto === '' ? null : Number(texto);
+
+    if (texto !== '' && (Number.isNaN(nuevoValor) || (nuevoValor as number) < 0)) {
+      this.erroresCosto.update((mapa) => new Map(mapa).set(insumo.id, 'Debe ser un número ≥ 0.'));
+      return;
+    }
+    if (nuevoValor === insumo.costo_unitario) {
+      return;
+    }
+
+    this.guardandoCostoId.set(insumo.id);
+    this.erroresCosto.update((mapa) => {
+      const nuevo = new Map(mapa);
+      nuevo.delete(insumo.id);
+      return nuevo;
+    });
+
+    this.insumosService.actualizarCostoUnitario(insumo.id, nuevoValor).subscribe({
+      next: (actualizado) => {
+        this.guardandoCostoId.set(null);
+        this.insumos.update((lista) =>
+          lista.map((i) =>
+            i.id === actualizado.id ? { ...i, costo_unitario: actualizado.costo_unitario } : i,
+          ),
+        );
+      },
+      error: (error: HttpErrorResponse) => {
+        this.guardandoCostoId.set(null);
+        this.erroresCosto.update((mapa) =>
+          new Map(mapa).set(insumo.id, error.error?.error || 'No se pudo guardar.'),
+        );
+      },
+    });
   }
 }

@@ -932,3 +932,154 @@
     overflow-x: visible;
   }
 }
+
+/* "Captura rápida de costos" (2026-10-30): botón + ventana de tabla angosta
+   para capturar costo_unitario de todos los insumos sin abrir el formulario
+   completo uno por uno (alimenta Costeo/Rentabilidad). */
+.boton-captura-costos {
+  min-height: 44px;
+  width: 100%;
+  margin-bottom: 12px;
+  border: 1px solid var(--acento-modulo);
+  border-radius: var(--radio-pastilla);
+  background: none;
+  color: var(--acento-modulo);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-captura-costos:hover {
+  background: color-mix(in srgb, var(--acento-modulo) 12%, transparent);
+}
+
+.panel-captura-costos {
+  width: 100%;
+  max-width: 520px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--pos-bg-card);
+  border-radius: var(--radio-lg);
+  border-top: 4px solid var(--acento-modulo);
+  box-shadow: var(--sombra-elevada);
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.captura-costos-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.captura-costos-encabezado h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-family: var(--fuente-titulo);
+}
+
+.boton-cerrar-costos {
+  min-width: 36px;
+  min-height: 36px;
+  border: none;
+  background: none;
+  color: var(--pos-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.boton-cerrar-costos:hover {
+  color: var(--pos-text-primary);
+}
+
+.texto-ayuda-costos {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--pos-text-secondary);
+  line-height: 1.4;
+}
+
+.lista-captura-costos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+}
+
+.fila-captura-costo {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 8px 10px;
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+}
+
+.fila-captura-costo-nombre {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.fila-captura-costo-nombre span:first-child {
+  font-size: 0.88rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fila-captura-costo-unidad {
+  font-size: 0.72rem;
+  color: var(--pos-text-secondary);
+}
+
+.fila-captura-costo-campo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.simbolo-pesos {
+  color: var(--pos-text-secondary);
+  font-size: 0.85rem;
+}
+
+.fila-captura-costo-campo input {
+  width: 90px;
+  min-height: 38px;
+  padding: 0 8px;
+  font-size: 0.88rem;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-card);
+  color: var(--pos-text-primary);
+  box-sizing: border-box;
+}
+
+.fila-captura-costo-campo input:focus {
+  outline: none;
+  border-color: var(--acento-modulo);
+}
+
+.estado-guardado-costo {
+  flex-basis: 100%;
+  text-align: right;
+  font-size: 0.68rem;
+  color: var(--pos-text-secondary);
+}
+
+.estado-error-costo {
+  color: var(--peligro-texto);
+}

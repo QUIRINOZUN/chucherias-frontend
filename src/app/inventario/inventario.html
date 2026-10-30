@@ -65,6 +65,10 @@
             + Nuevo insumo
           </button>
 
+          <button type="button" class="boton-captura-costos" (click)="abrirCapturaCostos()">
+            Captura de costos ({{ totalConCosto() }}/{{ totalInsumosReal() }})
+          </button>
+
           @if (esAdministrador()) {
             <button
               type="button"
@@ -739,6 +743,77 @@
             </button>
           </div>
         }
+      </div>
+    </div>
+  }
+
+  <!-- Captura rápida de costos (2026-10-30): tabla angosta solo con nombre +
+       unidad + costo unitario, para capturar los 149 insumos sin abrir el
+       formulario completo de edición uno por uno. Guarda al salir del campo
+       (blur), con un PATCH parcial — nunca manda el resto de los datos del
+       insumo. Alimenta Costeo (Recetario) y Rentabilidad (Reportes). -->
+  @if (mostrarCapturaCostos()) {
+    <div class="overlay">
+      <div
+        class="panel-captura-costos"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Captura rápida de costos"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarCapturaCostos()"
+      >
+        <div class="captura-costos-encabezado">
+          <h2>Captura rápida de costos</h2>
+          <button type="button" class="boton-cerrar-costos" (click)="cerrarCapturaCostos()">
+            <svg class="icono" aria-hidden="true"><use href="#ic-cerrar" /></svg>
+          </button>
+        </div>
+        <p class="texto-ayuda-costos">
+          El costo de cada insumo alimenta el margen de las recetas (Recetario) y la utilidad real
+          (Reportes → Rentabilidad). {{ totalConCosto() }} de {{ totalInsumosReal() }} insumos ya lo
+          tienen capturado.
+        </p>
+
+        <div class="campo-busqueda">
+          <svg class="icono" aria-hidden="true"><use href="#ic-buscar" /></svg>
+          <input
+            type="text"
+            placeholder="Buscar insumo..."
+            [value]="busquedaCostos()"
+            (input)="busquedaCostos.set($any($event.target).value)"
+          />
+        </div>
+
+        <ul class="lista-captura-costos">
+          @for (insumo of insumosParaCostos(); track insumo.id) {
+            <li class="fila-captura-costo">
+              <div class="fila-captura-costo-nombre">
+                <span>{{ insumo.nombre }}</span>
+                <span class="fila-captura-costo-unidad">{{ insumo.unidad_medida }}</span>
+              </div>
+              <div class="fila-captura-costo-campo">
+                <span class="simbolo-pesos">$</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Sin capturar"
+                  [value]="insumo.costo_unitario ?? ''"
+                  (blur)="guardarCostoUnitario(insumo, $any($event.target).value)"
+                />
+                @if (guardandoCostoId() === insumo.id) {
+                  <span class="estado-guardado-costo">Guardando...</span>
+                }
+                @if (errorCostoDe(insumo.id); as errorCosto) {
+                  <span class="estado-guardado-costo estado-error-costo">{{ errorCosto }}</span>
+                }
+              </div>
+            </li>
+          }
+          @if (insumosParaCostos().length === 0) {
+            <p class="mensaje-estado">Ningún insumo coincide con la búsqueda.</p>
+          }
+        </ul>
       </div>
     </div>
   }

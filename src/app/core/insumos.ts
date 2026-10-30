@@ -114,6 +114,16 @@ export class InsumosService {
     return this.http.patch<Insumo>(`${this.apiUrl}/insumos/${id}`, datos);
   }
 
+  // PATCH /api/insumos/:id — edición PARCIAL, solo el costo unitario (para
+  // "Captura rápida de costos", 2026-10-30). El servidor ya soporta edición
+  // parcial (campos ausentes conservan su valor actual) — no hace falta
+  // mandar el resto de DatosInsumo.
+  actualizarCostoUnitario(id: number, costoUnitario: number | null): Observable<Insumo> {
+    return this.http.patch<Insumo>(`${this.apiUrl}/insumos/${id}`, {
+      costo_unitario: costoUnitario,
+    });
+  }
+
   // POST /api/insumos/:id/entrada — registrar mercancía recibida.
   registrarEntrada(id: number, cantidad: number, motivo: string): Observable<MovimientoInventario> {
     return this.http.post<MovimientoInventario>(`${this.apiUrl}/insumos/${id}/entrada`, {
