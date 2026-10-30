@@ -327,3 +327,41 @@
   font-size: 0.85rem;
   color: var(--peligro-texto);
 }
+
+/* "Ver más" (2026-10-30): cada tarjeta nace colapsada (nombre + cantidad +
+   valor); el resto (fecha, responsable, folio, estado previo, motivo)
+   queda detrás del botón — mismo criterio que "Ver más" de Ventas. */
+.item-merma-resumen {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.item-merma-cantidad {
+  font-size: 0.85rem;
+  color: var(--pos-text-secondary);
+}
+
+.item-merma-estado-previo {
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+  margin-bottom: 4px;
+}
+
+.boton-ver-mas-merma {
+  min-height: 32px;
+  padding: 0 4px;
+  margin-top: 2px;
+  border: none;
+  background: none;
+  color: var(--acento-modulo);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-ver-mas-merma:hover {
+  text-decoration: underline;
+}

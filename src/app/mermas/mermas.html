@@ -110,19 +110,40 @@
                 {{ m.tipo === 'producto' ? 'Producto' : 'Insumo' }}
               </span>
             </div>
-            <div class="item-merma-detalle">
-              {{ m.cantidad }} {{ m.unidad_medida ?? 'pza' }} ·
-              {{ m.fecha | date: 'dd/MM/yyyy HH:mm' }} · {{ m.responsable }}
-              @if (m.numero_orden) {
-                · {{ m.numero_orden }}
+            <div class="item-merma-resumen">
+              <span class="item-merma-cantidad"
+                >{{ m.cantidad }} {{ m.unidad_medida ?? 'pza' }}</span
+              >
+              @if (m.valor_total != null) {
+                <span class="item-merma-valor">{{ m.valor_total | currency: 'MXN' }} perdidos</span>
               }
             </div>
-            @if (m.motivo) {
-              <div class="item-merma-motivo">{{ m.motivo }}</div>
+
+            @if (estaExpandida(m.id)) {
+              <div class="item-merma-detalle">
+                {{ m.fecha | date: 'dd/MM/yyyy HH:mm' }} · {{ m.responsable }}
+                @if (m.numero_orden) {
+                  · {{ m.numero_orden }}
+                }
+              </div>
+              @if (m.estado_orden_previo) {
+                <div class="item-merma-estado-previo">
+                  La orden estaba en "{{ m.estado_orden_previo }}" al cancelarse
+                </div>
+              }
+              @if (m.motivo) {
+                <div class="item-merma-motivo">{{ m.motivo }}</div>
+              }
             }
-            @if (m.valor_total != null) {
-              <div class="item-merma-valor">{{ m.valor_total | currency: 'MXN' }} perdidos</div>
-            }
+
+            <button
+              type="button"
+              class="boton-ver-mas-merma"
+              [attr.aria-expanded]="estaExpandida(m.id)"
+              (click)="alternarExpansion(m.id)"
+            >
+              {{ estaExpandida(m.id) ? 'Ver menos' : 'Ver más...' }}
+            </button>
           </li>
         }
       </ul>

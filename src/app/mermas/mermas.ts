@@ -33,6 +33,28 @@ export class MermasComponent implements OnInit {
   cargando = signal(true);
   error = signal('');
 
+  // Cada tarjeta nace colapsada mostrando solo nombre + cantidad + valor
+  // perdido; "Ver más" revela fecha, responsable, folio, motivo y el estado
+  // en que estaba la orden al cancelarse (mismo patrón que "Ver más" de
+  // Ventas, 2026-10-25 — varias tarjetas pueden estar abiertas a la vez).
+  mermasExpandidas = signal<Set<number>>(new Set());
+
+  estaExpandida(mermaId: number): boolean {
+    return this.mermasExpandidas().has(mermaId);
+  }
+
+  alternarExpansion(mermaId: number): void {
+    this.mermasExpandidas.update((set) => {
+      const nuevo = new Set(set);
+      if (nuevo.has(mermaId)) {
+        nuevo.delete(mermaId);
+      } else {
+        nuevo.add(mermaId);
+      }
+      return nuevo;
+    });
+  }
+
   // ---- Eliminar historial (2026-10-29): solo administrador, irreversible ----
   esAdministrador = computed(() => this.authService.usuarioActual()?.rol === 'administrador');
   mostrarEliminarHistorial = signal(false);
