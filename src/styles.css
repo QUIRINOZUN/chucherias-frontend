@@ -454,7 +454,15 @@ textarea:focus-visible {
    lleno + un halo exterior más tenue, como un timbre/stamp, con el mismo
    color + ícono que ya usan las insignias de categoría del menú real.
    Cada componente fija --acento-modulo en su :host; sin esa variable cae
-   al naranja de marca. */
+   al naranja de marca.
+
+   Sello de hule (2026-10-30): mismo tratamiento que ya tenía SOLO
+   .modulo-icono del Dashboard desde la ronda "taller artesanal"
+   (2026-10-27) — el círculo perfecto nunca se había propagado aquí, así
+   que las 14+ pantallas de módulo se quedaban con el molde genérico
+   mientras el Dashboard ya tenía el sello irregular + inclinado. Al vivir
+   en esta regla COMPARTIDA, el cambio llega a todas las pantallas de una
+   sola vez, sin tocar cada header por separado. */
 .insignia-pantalla {
   display: inline-flex;
   align-items: center;
@@ -462,7 +470,8 @@ textarea:focus-visible {
   width: 38px;
   height: 38px;
   flex-shrink: 0;
-  border-radius: 50%;
+  border-radius: 48% 52% 45% 55% / 55% 45% 52% 48%;
+  transform: rotate(-2deg);
   background: color-mix(
     in srgb,
     var(--acento-modulo, var(--action-primary)) 22%,
