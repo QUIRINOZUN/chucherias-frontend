@@ -310,15 +310,16 @@ const ELECCIONES_POR_VARIANTE: Record<number, GrupoEleccion[]> = {
 
   // Pepihuates y Picamix: tipo de cacahuate (el menú real dice "cacahuate
   // japonés" como base de Pepihuates y "cacahuate de tu elección" en
-  // Picamix — se trata igual en ambos). RF-16 (2026-10-13): ya existe el
-  // mecanismo general para un recargo por elección (insumos.costo_extra,
-  // ver routes/ventas.js/routes/insumos.js) — PERO activar el +$5 real de
-  // "cacahuate diferente" sigue pendiente de confirmar con Ximena: (a) el
-  // monto exacto, y (b) si aplica solo aquí o también al cacahuate del
-  // Tornado (variante 63), que usa los MISMOS 3 insumos ('Cacahuate
-  // japonés'/'salado'/'enchilado') — costo_extra es una propiedad del
-  // INSUMO, no del grupo de elección, así que un cargo puesto aquí se
-  // aplicaría también ahí. No activar sin confirmar ese alcance.
+  // Picamix — se trata igual en ambos). RF-16 (2026-10-13): el mecanismo
+  // general ya existía (insumos.costo_extra, ver routes/ventas.js/
+  // routes/insumos.js) — el recargo de +$5 se ACTIVÓ el 2026-10-30,
+  // confirmado con el usuario, para los TRES platillos que usan estos
+  // mismos insumos (Pepihuates, Picamix y el Tornado, variante 63 — ver
+  // más abajo), ya que costo_extra es una propiedad del INSUMO, no del
+  // grupo de elección. "Cacahuate japonés" se dejó SIN cargo (es la base
+  // de Pepihuates, "cacahuate japonés" sin más); "Cacahuate salado" y
+  // "Cacahuate enchilado" sí tienen costo_extra = 5 — el recargo es por
+  // pedir un cacahuate DIFERENTE al de base, no por cualquiera de los tres.
   45: [grupoCacahuateTipo(100)], // Pepihuates Chico
   46: [grupoCacahuateTipo(150)], // Pepihuates Mediano
   47: [grupoCacahuateTipo(100)], // Picamix Chico

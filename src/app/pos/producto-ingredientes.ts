@@ -58,23 +58,38 @@ const INGREDIENTES_POR_PRODUCTO: Record<string, IngredienteRemovible[]> = {
     { display: 'Cátsup', insumo: 'Salsa cátsup' },
     { display: 'Chiles', insumo: 'Chiles en escabeche' },
   ],
+  // 2026-10-30: confirmado con el usuario que SÍ llevan lechuga, tomate,
+  // cebolla morada y cátsup, igual que la Tradicional — se agregaron a la
+  // receta real (receta_insumos) y aquí al checklist, en las 3 variantes.
   'Hamburguesa BBQ': [
     { display: 'Aros de cebolla empanizados', insumo: 'Aros de cebolla empanizados' },
     { display: 'Tocino', insumo: 'Tocino' },
     { display: 'Mayonesa', insumo: 'Mayonesa' },
     { display: 'Queso amarillo', insumo: 'Queso amarillo' },
+    { display: 'Cebolla morada', insumo: 'Cebolla morada (fileteada)' },
+    { display: 'Tomate', insumo: 'Jitomate (rodajas)' },
+    { display: 'Lechuga', insumo: 'Lechuga' },
+    { display: 'Cátsup', insumo: 'Salsa cátsup' },
   ],
   'Hamburguesa Buffalo': [
     { display: 'Aros de cebolla empanizados', insumo: 'Aros de cebolla empanizados' },
     { display: 'Tocino', insumo: 'Tocino' },
     { display: 'Mayonesa', insumo: 'Mayonesa' },
     { display: 'Queso amarillo', insumo: 'Queso amarillo' },
+    { display: 'Cebolla morada', insumo: 'Cebolla morada (fileteada)' },
+    { display: 'Tomate', insumo: 'Jitomate (rodajas)' },
+    { display: 'Lechuga', insumo: 'Lechuga' },
+    { display: 'Cátsup', insumo: 'Salsa cátsup' },
   ],
   'Hamburguesa Mango Habanero': [
     { display: 'Aros de cebolla empanizados', insumo: 'Aros de cebolla empanizados' },
     { display: 'Tocino', insumo: 'Tocino' },
     { display: 'Mayonesa', insumo: 'Mayonesa' },
     { display: 'Queso amarillo', insumo: 'Queso amarillo' },
+    { display: 'Cebolla morada', insumo: 'Cebolla morada (fileteada)' },
+    { display: 'Tomate', insumo: 'Jitomate (rodajas)' },
+    { display: 'Lechuga', insumo: 'Lechuga' },
+    { display: 'Cátsup', insumo: 'Salsa cátsup' },
   ],
   'Hamburguesa de Pollo': [
     { display: 'Queso amarillo', insumo: 'Queso amarillo' },
