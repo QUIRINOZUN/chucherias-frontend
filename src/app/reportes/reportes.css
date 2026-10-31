@@ -89,6 +89,19 @@
   margin-bottom: 16px;
 }
 
+/* "RANGO DE CONSULTA" (2026-10-30, dirección "Tablero de control claro"):
+   mismo tratamiento de etiqueta pequeña en mayúsculas que ya usa el resto
+   de la app para encabezar un grupo de controles. */
+.etiqueta-rango-consulta {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pos-text-secondary);
+}
+
 .filtros-reportes {
   display: flex;
   flex-wrap: wrap;
@@ -151,6 +164,20 @@
   color: var(--acento-modulo);
 }
 
+/* Acceso rápido activo (2026-10-30): resalta solo si el rango actual
+   coincide EXACTAMENTE con lo que ese botón generaría hoy
+   (filtroRapidoActivo(), reportes.ts) — un rango capturado a mano que no
+   coincida con ninguno se queda con los 3 sin resaltar, nunca a fuerzas. */
+.boton-filtro-rapido-activo {
+  border-color: var(--acento-modulo);
+  background: var(--acento-modulo);
+  color: #fff;
+}
+
+.boton-filtro-rapido-activo:hover {
+  color: #fff;
+}
+
 .boton-limpiar-filtros {
   min-height: 44px;
   padding: 0 12px;
@@ -188,31 +215,42 @@
 
 .tabs-reportes {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   padding-bottom: 2px;
+  border-bottom: 1px solid var(--pos-border);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
 
+/* Pestañas con subrayado (2026-10-30, dirección "Tablero de control
+   claro"): antes eran píldoras llenas de color — con 6 pestañas reales
+   (General/Ventas/Inventario/Personal/Clientes/Rentabilidad) esa cantidad
+   de color competía con las cifras de abajo. El subrayado deja que el
+   color siga marcando la pestaña activa, sin pesar tanto visualmente. */
 .tab-reportes {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 6px;
   min-height: 44px;
-  padding: 0 16px;
+  padding: 0 14px;
   border: none;
-  border-radius: var(--radio-pastilla);
-  background: var(--pos-bg-card);
-  box-shadow: var(--sombra-suave);
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
   color: var(--pos-text-secondary);
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
   white-space: nowrap;
   transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.tab-reportes:hover {
+  color: var(--pos-text-primary);
 }
 
 .tab-reportes .icono {
@@ -221,9 +259,8 @@
 }
 
 .tab-reportes-activa {
-  background: var(--acento-modulo);
-  color: #fff;
-  box-shadow: var(--sombra-acento);
+  border-bottom-color: var(--acento-modulo);
+  color: var(--pos-text-primary);
 }
 
 /* ===================== Panel "General" (dashboard condensado) ===================== */
@@ -239,20 +276,21 @@
    del skill de dataviz: "exactamente una por vista"). Fraunces, no una
    sans — es la misma tipografía que ya usa toda la app para cifras/
    totales, nunca se cambia por pantalla. */
+/* 2026-10-30, dirección "Tablero de control claro": el fondo tintado
+   dominante se cambia por una tarjeta casi neutra (solo un borde superior
+   fino del color de ventas) — con más espacio en blanco alrededor, la
+   cifra se vuelve el elemento más grande de la pantalla por sí sola, sin
+   necesitar un fondo de color que compita con ella. */
 .hero-reporte {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
-  padding: 22px 24px;
+  gap: 24px;
+  padding: 32px 28px;
   border-radius: var(--radio-lg);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--mod-ventas) 16%, var(--pos-bg-card)) 0%,
-    var(--pos-bg-card) 70%
-  );
-  border-top: 4px solid var(--mod-ventas);
+  background: var(--pos-bg-card);
+  border-top: 3px solid var(--mod-ventas);
   box-shadow: var(--sombra-suave);
 }
 
@@ -260,8 +298,20 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
+  gap: 6px;
   min-width: 0;
+}
+
+/* Punto de color antes de la etiqueta (2026-10-30) — el mismo lenguaje que
+   ya usa .punto-atencion más abajo, aquí marcando de qué color es el dato
+   (ventas) sin necesitar todo un fondo tintado. */
+.punto-hero {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--mod-ventas);
 }
 
 /* Variante neutra (2026-10-29): el hero de "General" es DE ventas (el color
@@ -280,13 +330,26 @@
 
 /* Sparkline (2026-10-22): el 12-punto "trend" del contrato de stat-tile del
    skill de dataviz, junto al valor principal — nunca su propia gráfica con
-   ejes, eso ya vive completo en la pestaña "Ventas". Ancho fijo pequeño a
-   propósito: es un acompañante del número, no el protagonista. */
-.sparkline-hero {
+   ejes, eso ya vive completo en la pestaña "Ventas". 2026-10-30: se
+   agranda un poco (sigue siendo acompañante, no protagonista) y gana una
+   línea de referencia del promedio + las fechas de inicio/fin del rango
+   debajo, para dar contexto inmediato sin ir a otra pestaña. */
+.sparkline-hero-envoltorio {
   flex-shrink: 0;
-  width: 150px;
-  height: 46px;
+  width: 190px;
+}
+
+.sparkline-hero {
+  width: 100%;
+  height: 58px;
   display: block;
+}
+
+.sparkline-hero-promedio {
+  stroke: var(--pos-text-secondary);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0.6;
 }
 
 .sparkline-hero-area {
@@ -302,14 +365,27 @@
   stroke-linecap: round;
 }
 
+.sparkline-hero-ejes {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 0.68rem;
+  color: var(--pos-text-secondary);
+}
+
 @media (max-width: 480px) {
-  .sparkline-hero {
+  .sparkline-hero-envoltorio {
     width: 100%;
-    height: 36px;
+  }
+
+  .sparkline-hero {
+    height: 42px;
   }
 }
 
 .hero-reporte-etiqueta {
+  display: flex;
+  align-items: center;
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--pos-text-secondary);
@@ -317,16 +393,32 @@
   letter-spacing: 0.03em;
 }
 
+/* Más grande (2026-10-30): con el fondo tintado ya quitado, la cifra sola
+   es quien tiene que leerse como el dato más importante de la pantalla. */
 .hero-reporte-valor {
   font-family: var(--fuente-titulo);
   font-weight: 800;
-  font-size: clamp(2rem, 6vw, 2.8rem);
-  line-height: 1.1;
+  font-size: clamp(2.4rem, 7vw, 3.4rem);
+  line-height: 1.05;
 }
 
 .hero-reporte-detalle {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
   font-size: 0.85rem;
   color: var(--pos-text-secondary);
+}
+
+/* Variante compacta del chip de comparación (2026-10-30), para vivir en
+   línea junto al detalle del hero en vez de como su propio párrafo (la
+   variante completa, con "vs. <fechas> (<monto>)", se sigue usando en la
+   pestaña Ventas/Rentabilidad). */
+.chip-comparacion-inline {
+  margin: 0;
+  padding: 3px 10px;
+  font-size: 0.78rem;
 }
 
 /* Chip de comparación con el periodo anterior (2026-10-29): verde si mejoró,
@@ -421,27 +513,42 @@
   text-decoration-color: currentColor;
 }
 
-/* Tarjetas de dominio: resumen navegable de cada sección, mismo lenguaje
-   visual que las tarjetas de módulo del dashboard principal (borde
-   izquierdo de color + insignia circular), para que "General" se sienta
-   como el mismo tipo de pantalla que el menú principal de la app. */
+/* Punto de severidad (2026-10-30, dirección "Tablero de control claro"):
+   reemplaza la fila "en caja" de antes por solo un punto de color + texto
+   — más compacto, mismo lenguaje que .punto-hero del hero. */
+.punto-atencion {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  margin-right: 10px;
+  border-radius: 50%;
+  background: var(--peligro-texto);
+}
+
+/* Tarjetas de dominio: resumen navegable de cada sección. 2026-10-30,
+   dirección "Tablero de control claro": antes una insignia circular de
+   40px dominaba el lado izquierdo de cada tarjeta — ahora las 5 tarjetas
+   (Ventas/Inventario/Personal/Clientes/Rentabilidad) son parejas entre sí
+   (mismo tamaño, mismo peso visual), apiladas verticalmente, con el ícono
+   reducido a un acento discreto en la esquina — el color de módulo sigue
+   viviendo en el borde izquierdo, nunca duplicado como protagonista. */
 .grid-resumen-dominios {
   display: grid;
-  /* 200px (no 220px): con el ancho real de .reportes-cuerpo (920px, menos
-     padding) 220px dejaba 3 tarjetas por fila y la cuarta sola en su
-     propia fila — 200px sí alcanzan las 4 en una sola fila en escritorio,
-     sin perder la propiedad de apilarse solas en pantallas angostas. */
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
+  /* 170px (no 200px): con las tarjetas ahora verticales (no una fila con
+     ícono+texto lado a lado) necesitan menos ancho mínimo para verse bien. */
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
 }
 
 .tarjeta-dominio {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 18px;
   border: none;
-  border-left: 4px solid var(--acento-dominio, var(--acento-modulo));
+  border-left: 3px solid var(--acento-dominio, var(--acento-modulo));
   border-radius: var(--radio-lg);
   background: var(--pos-bg-card);
   box-shadow: var(--sombra-suave);
@@ -460,43 +567,43 @@
 }
 
 .tarjeta-dominio-icono {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   background: color-mix(
     in srgb,
-    var(--acento-dominio, var(--acento-modulo)) 20%,
+    var(--acento-dominio, var(--acento-modulo)) 16%,
     var(--pos-bg-card)
   );
   color: var(--acento-dominio, var(--acento-modulo));
 }
 
 .tarjeta-dominio-icono .icono {
-  width: 20px;
-  height: 20px;
-}
-
-.tarjeta-dominio-cuerpo {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+  width: 13px;
+  height: 13px;
 }
 
 .tarjeta-dominio-titulo {
-  font-size: 0.78rem;
+  max-width: calc(100% - 30px);
+  font-size: 0.74rem;
   font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   color: var(--pos-text-secondary);
 }
 
 .tarjeta-dominio-cifra {
   font-family: var(--fuente-titulo);
   font-weight: 800;
-  font-size: 1.5rem;
-  line-height: 1.2;
+  font-size: 1.7rem;
+  line-height: 1.15;
 }
 
 .tarjeta-dominio-cifra-alerta {

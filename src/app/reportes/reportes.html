@@ -39,6 +39,7 @@
          los empleados activos y el top de clientes son siempre de AHORA, el
          filtro de fecha no les aplica (ver aviso dentro de cada sección). -->
     <section class="tarjeta-filtros-reportes">
+      <span class="etiqueta-rango-consulta">Rango de consulta</span>
       <div class="filtros-reportes">
         <div class="campo-filtro">
           <label for="filtro-desde">Desde</label>
@@ -62,11 +63,28 @@
       <!-- RF-26 ("por día, semana y mes"): accesos rápidos, sin tener que
            teclear el rango a mano. -->
       <div class="filtros-rapidos-reportes">
-        <button type="button" class="boton-filtro-rapido" (click)="seleccionarHoy()">Hoy</button>
-        <button type="button" class="boton-filtro-rapido" (click)="seleccionarSemana()">
+        <button
+          type="button"
+          class="boton-filtro-rapido"
+          [class.boton-filtro-rapido-activo]="filtroRapidoActivo() === 'hoy'"
+          (click)="seleccionarHoy()"
+        >
+          Hoy
+        </button>
+        <button
+          type="button"
+          class="boton-filtro-rapido"
+          [class.boton-filtro-rapido-activo]="filtroRapidoActivo() === 'semana'"
+          (click)="seleccionarSemana()"
+        >
           Esta semana
         </button>
-        <button type="button" class="boton-filtro-rapido" (click)="seleccionarMes()">
+        <button
+          type="button"
+          class="boton-filtro-rapido"
+          [class.boton-filtro-rapido-activo]="filtroRapidoActivo() === 'mes'"
+          (click)="seleccionarMes()"
+        >
           Este mes
         </button>
       </div>
@@ -169,27 +187,64 @@
                propia gráfica con ejes — eso ya vive completo en "Ventas". -->
           <div class="hero-reporte">
             <div class="hero-reporte-texto">
-              <span class="hero-reporte-etiqueta">Ventas totales del periodo</span>
+              <span class="hero-reporte-etiqueta">
+                <span class="punto-hero" aria-hidden="true"></span>
+                Ventas totales del periodo
+              </span>
               <span class="hero-reporte-valor">{{ r.ventas.monto_total | currency: 'MXN' }}</span>
               <span class="hero-reporte-detalle">
                 {{ r.ventas.total_ventas }}
                 {{ r.ventas.total_ventas === 1 ? 'venta completada' : 'ventas completadas' }}
+                @if (puedeComparar() && comparacionVentas(); as c) {
+                  <span
+                    class="chip-comparacion chip-comparacion-inline"
+                    [class.chip-comparacion-positiva]="c.mejor"
+                    [class.chip-comparacion-negativa]="!c.mejor"
+                  >
+                    <svg
+                      class="icono icono-tendencia"
+                      [class.icono-tendencia-positiva]="c.mejor"
+                      aria-hidden="true"
+                    >
+                      <use href="#ic-gastos" />
+                    </svg>
+                    @if (c.porcentaje !== null) {
+                      {{ c.mejor ? '+' : '' }}{{ c.porcentaje }}%
+                    } @else {
+                      {{ c.mejor ? '+' : '' }}{{ c.diferencia | currency: 'MXN' }}
+                    }
+                  </span>
+                }
               </span>
             </div>
             @if (serieVentas(); as s) {
-              <svg
-                class="sparkline-hero"
-                viewBox="0 0 300 100"
-                aria-hidden="true"
-                focusable="false"
-              >
-                <path [attr.d]="s.rutaArea" class="sparkline-hero-area" />
-                <path
-                  [attr.d]="s.rutaLinea"
-                  class="sparkline-hero-linea"
-                  vector-effect="non-scaling-stroke"
-                />
-              </svg>
+              <div class="sparkline-hero-envoltorio">
+                <svg
+                  class="sparkline-hero"
+                  viewBox="0 0 300 100"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <line
+                    class="sparkline-hero-promedio"
+                    x1="0"
+                    [attr.y1]="s.promedioY"
+                    x2="300"
+                    [attr.y2]="s.promedioY"
+                    vector-effect="non-scaling-stroke"
+                  />
+                  <path [attr.d]="s.rutaArea" class="sparkline-hero-area" />
+                  <path
+                    [attr.d]="s.rutaLinea"
+                    class="sparkline-hero-linea"
+                    vector-effect="non-scaling-stroke"
+                  />
+                </svg>
+                <div class="sparkline-hero-ejes">
+                  <span>{{ etiquetaFechaCorta(s.puntos[0].dia) }}</span>
+                  <span>{{ etiquetaFechaCorta(s.ultimo.dia) }}</span>
+                </div>
+              </div>
             }
           </div>
 
@@ -202,6 +257,7 @@
                 @if (r.ventas.canceladas > 0) {
                   <li>
                     <button type="button" (click)="cambiarPestana('ventas')">
+                      <span class="punto-atencion" aria-hidden="true"></span>
                       {{ r.ventas.canceladas }}
                       {{ r.ventas.canceladas === 1 ? 'venta cancelada' : 'ventas canceladas' }} en
                       el periodo
@@ -211,6 +267,7 @@
                 @if (r.inventario.bajo_minimo > 0) {
                   <li>
                     <button type="button" (click)="cambiarPestana('inventario')">
+                      <span class="punto-atencion" aria-hidden="true"></span>
                       {{ r.inventario.bajo_minimo }} insumos en o por debajo de su mínimo ahora
                       mismo
                     </button>
@@ -219,6 +276,7 @@
                 @if (r.personal.retardos > 0) {
                   <li>
                     <button type="button" (click)="cambiarPestana('personal')">
+                      <span class="punto-atencion" aria-hidden="true"></span>
                       {{ r.personal.retardos }}
                       {{ r.personal.retardos === 1 ? 'retardo' : 'retardos' }} en el periodo
                     </button>
@@ -227,6 +285,7 @@
                 @if (r.rentabilidad.insumos_sin_costo > 0) {
                   <li>
                     <button type="button" (click)="cambiarPestana('rentabilidad')">
+                      <span class="punto-atencion" aria-hidden="true"></span>
                       {{ r.rentabilidad.insumos_sin_costo }} de {{ r.rentabilidad.total_insumos }}
                       insumos sin costo capturado — el costo de venta mostrado es parcial
                     </button>
@@ -248,11 +307,9 @@
               <span class="tarjeta-dominio-icono" aria-hidden="true">
                 <svg class="icono"><use href="#ic-recibo" /></svg>
               </span>
-              <span class="tarjeta-dominio-cuerpo">
-                <span class="tarjeta-dominio-titulo">Ventas</span>
-                <span class="tarjeta-dominio-cifra">{{ r.ventas.total_ventas }}</span>
-                <span class="tarjeta-dominio-etiqueta">completadas en el periodo</span>
-              </span>
+              <span class="tarjeta-dominio-titulo">Ventas</span>
+              <span class="tarjeta-dominio-cifra">{{ r.ventas.total_ventas }}</span>
+              <span class="tarjeta-dominio-etiqueta">completadas en el periodo</span>
             </button>
 
             <button
@@ -264,16 +321,14 @@
               <span class="tarjeta-dominio-icono" aria-hidden="true">
                 <svg class="icono"><use href="#ic-paquete" /></svg>
               </span>
-              <span class="tarjeta-dominio-cuerpo">
-                <span class="tarjeta-dominio-titulo">Inventario</span>
-                <span
-                  class="tarjeta-dominio-cifra"
-                  [class.tarjeta-dominio-cifra-alerta]="r.inventario.bajo_minimo > 0"
-                >
-                  {{ r.inventario.bajo_minimo }}
-                </span>
-                <span class="tarjeta-dominio-etiqueta">insumos bajo su mínimo ahora</span>
+              <span class="tarjeta-dominio-titulo">Inventario</span>
+              <span
+                class="tarjeta-dominio-cifra"
+                [class.tarjeta-dominio-cifra-alerta]="r.inventario.bajo_minimo > 0"
+              >
+                {{ r.inventario.bajo_minimo }}
               </span>
+              <span class="tarjeta-dominio-etiqueta">insumos bajo su mínimo ahora</span>
             </button>
 
             <button
@@ -285,11 +340,9 @@
               <span class="tarjeta-dominio-icono" aria-hidden="true">
                 <svg class="icono"><use href="#ic-reloj" /></svg>
               </span>
-              <span class="tarjeta-dominio-cuerpo">
-                <span class="tarjeta-dominio-titulo">Personal</span>
-                <span class="tarjeta-dominio-cifra">{{ r.personal.empleados_activos }}</span>
-                <span class="tarjeta-dominio-etiqueta">empleados activos ahora</span>
-              </span>
+              <span class="tarjeta-dominio-titulo">Personal</span>
+              <span class="tarjeta-dominio-cifra">{{ r.personal.empleados_activos }}</span>
+              <span class="tarjeta-dominio-etiqueta">empleados activos ahora</span>
             </button>
 
             <button
@@ -301,11 +354,9 @@
               <span class="tarjeta-dominio-icono" aria-hidden="true">
                 <svg class="icono"><use href="#ic-corazon" /></svg>
               </span>
-              <span class="tarjeta-dominio-cuerpo">
-                <span class="tarjeta-dominio-titulo">Clientes y lealtad</span>
-                <span class="tarjeta-dominio-cifra">{{ r.clientes.nuevos_en_periodo }}</span>
-                <span class="tarjeta-dominio-etiqueta">nuevos en el periodo</span>
-              </span>
+              <span class="tarjeta-dominio-titulo">Clientes y lealtad</span>
+              <span class="tarjeta-dominio-cifra">{{ r.clientes.nuevos_en_periodo }}</span>
+              <span class="tarjeta-dominio-etiqueta">nuevos en el periodo</span>
             </button>
 
             <button
@@ -317,13 +368,11 @@
               <span class="tarjeta-dominio-icono" aria-hidden="true">
                 <svg class="icono"><use href="#ic-calculadora" /></svg>
               </span>
-              <span class="tarjeta-dominio-cuerpo">
-                <span class="tarjeta-dominio-titulo">Rentabilidad</span>
-                <span class="tarjeta-dominio-cifra">{{
-                  r.rentabilidad.utilidad_bruta | currency: 'MXN'
-                }}</span>
-                <span class="tarjeta-dominio-etiqueta">utilidad bruta del periodo</span>
-              </span>
+              <span class="tarjeta-dominio-titulo">Rentabilidad</span>
+              <span class="tarjeta-dominio-cifra">{{
+                r.rentabilidad.utilidad_bruta | currency: 'MXN'
+              }}</span>
+              <span class="tarjeta-dominio-etiqueta">utilidad bruta del periodo</span>
             </button>
           </div>
         </section>

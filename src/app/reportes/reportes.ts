@@ -155,6 +155,12 @@ interface GraficaSerieVentas {
   // Coordenada Y del valor 0 — la línea de base (gridline), siempre a la
   // misma altura sin importar el máximo de la serie.
   baseY: number;
+  // Coordenada Y del PROMEDIO de la serie (2026-10-30, dirección "Tablero
+  // de control claro") — línea de referencia punteada en el sparkline del
+  // hero, para dar contexto inmediato sin tener que ir a la pestaña
+  // "Ventas". Calculada con la misma escala (maximo) que ya usa cada punto,
+  // nunca un valor aparte.
+  promedioY: number;
   ultimo: PuntoSerieVentas;
   pico: PuntoSerieVentas;
 }
@@ -199,12 +205,14 @@ function armarSerieVentas(
   const rutaLinea = puntos.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
   const baseY = valorAY(0, maximo);
   const rutaArea = `${rutaLinea} L ${puntos[puntos.length - 1].x} ${baseY} L ${puntos[0].x} ${baseY} Z`;
+  const promedio = montos.reduce((suma, m) => suma + m, 0) / montos.length;
 
   return {
     puntos,
     rutaLinea,
     rutaArea,
     baseY,
+    promedioY: valorAY(promedio, maximo),
     ultimo: puntos[puntos.length - 1],
     pico: puntos.reduce((mayor, actual) => (actual.monto > mayor.monto ? actual : mayor)),
   };
@@ -236,6 +244,31 @@ export class ReportesComponent implements OnInit {
   }
 
   hayFiltros = computed(() => !!this.filtroDesde() || !!this.filtroHasta());
+
+  // Qué acceso rápido (si acaso) coincide con el rango actual (2026-10-30,
+  // dirección "Tablero de control claro") — solo para resaltar el botón
+  // activo, igual que ya hacen las pestañas; nunca se guarda como estado
+  // aparte, se deriva comparando contra lo que CADA acceso rápido generaría
+  // hoy mismo, así nunca se desincroniza de filtroDesde/filtroHasta.
+  filtroRapidoActivo = computed<'hoy' | 'semana' | 'mes' | null>(() => {
+    const desde = this.filtroDesde();
+    const hasta = this.filtroHasta();
+    if (!desde || !hasta) return null;
+
+    const hoy = formatoFechaLocal(new Date());
+    if (desde === hoy && hasta === hoy) return 'hoy';
+
+    const hoyDate = new Date();
+    const diasDesdeElLunes = (hoyDate.getDay() + 6) % 7;
+    const lunes = new Date(hoyDate);
+    lunes.setDate(hoyDate.getDate() - diasDesdeElLunes);
+    if (desde === formatoFechaLocal(lunes) && hasta === hoy) return 'semana';
+
+    const primerDiaMes = new Date(hoyDate.getFullYear(), hoyDate.getMonth(), 1);
+    if (desde === formatoFechaLocal(primerDiaMes) && hasta === hoy) return 'mes';
+
+    return null;
+  });
 
   // ---- Gráficas (ver cabecera del archivo) ----------------------------------
   etiquetaFechaCorta = etiquetaFechaCorta;

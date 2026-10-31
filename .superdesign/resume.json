@@ -283,6 +283,57 @@
         }
       },
       "updatedAt": "2026-10-30T19:00:00Z"
+    },
+    "/reportes": {
+      "targetKind": "existing-ui",
+      "projectId": "9eda39df-a714-407d-b83d-03e5462f3b90",
+      "baselineDraftId": "cd6dc72b-a46c-4c49-a4c3-1f8b9e1eabc1",
+      "activeDraftId": "cd6dc72b-a46c-4c49-a4c3-1f8b9e1eabc1",
+      "designSystemPath": ".superdesign/design-system.md",
+      "referenceIds": [],
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "src/styles.css",
+        "src/app/reportes/reportes.ts",
+        "src/app/reportes/reportes.html:1:330",
+        "src/app/reportes/reportes.css",
+        "src/app/core/reportes.ts"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "d77a2b1c5c3989328853b7f1ddb35b3ab2e26489271364fcd628528d6412d0d3",
+        "src/styles.css": "b74b316c1ebcc51c84cf3ea327591edbad73a7c2296d53d1f59e5dc3e00755fc",
+        "src/app/reportes/reportes.ts": "eb43d423a1a3187348055e4da5e12328e4da0b49f67294fd84ceb9edc374f4d3",
+        "src/app/reportes/reportes.html": "92c1686ae4e5a913e4c7ebe2a9bb2e5e380be9fd8acaea2071ba716dd93a4731",
+        "src/app/reportes/reportes.css": "b7de346b7f6a827a7b1efe9c9d95099b43df881ae291277e46a9c262d81497e8",
+        "src/app/core/reportes.ts": "480e61c3885a8a180c6871ab95cd68576baf5818ef5dfa038d91ad2ab417fe5b"
+      },
+      "components": [],
+      "drafts": {
+        "cd6dc72b-a46c-4c49-a4c3-1f8b9e1eabc1": {
+          "title": "Chucherías Mix - Reportes Dashboard",
+          "visualDirection": "pixel-perfect reproduction of current UI (pestaña GENERAL, la que renderiza por default; la barra de 6 pestañas se muestra pero Ventas/Inventario/Personal/Clientes/Rentabilidad quedaron fuera del alcance; sin posición de logo)",
+          "currentVersion": 1
+        },
+        "78cf58f2-539c-41ee-88e7-d9df98419b90": {
+          "title": "Reportes - Pizarra de Resultados",
+          "visualDirection": "pizarra de resultados de cocina — textura de pizarra sutil en encabezados de sección, cifras grandes en Fraunces con ejes SOFT/WONK más pronunciados (mas escrito a mano), separadores tipo linea de tiza punteada, sello de hule evocando gis redondeado, pestañas como etiquetas colgantes — NO aplicada todavía",
+          "parentDraftId": "cd6dc72b-a46c-4c49-a4c3-1f8b9e1eabc1",
+          "currentVersion": 1
+        },
+        "67927966-fcc4-4253-9534-f3da9fef27f0": {
+          "title": "Chucherías Mix - Reporte Cierre de Turno",
+          "visualDirection": "recibo de cierre ampliado — mismo lenguaje visual del ticket de venta y Caja (borde perforado, divisores punteados, cifras tabulares, doble filete antes de totales), hero como el TOTAL de un recibo real, tarjetas de dominio como renglones de un estado de cuenta con mini-sello — NO aplicada todavía",
+          "parentDraftId": "cd6dc72b-a46c-4c49-a4c3-1f8b9e1eabc1",
+          "currentVersion": 1
+        },
+        "3b30060a-6eaf-4c9c-ba60-790dd651e855": {
+          "title": "Chucherías Mix - Tablero de Control Claro",
+          "visualDirection": "tablero de control claro — sin tema decorativo, prioriza jerarquia de lectura: hero mucho mas grande con espacio en blanco alrededor, 4 tarjetas de dominio parejas en tamaño/peso (icono+color de modulo solo como acento de esquina, no fondo tintado dominante), franja de atencion como lista compacta con punto de severidad, mayor contraste de peso entre cifra grande y etiqueta pequeña en mayusculas, sparkline agrandado con linea de referencia/promedio — NO aplicada todavia",
+          "parentDraftId": "cd6dc72b-a46c-4c49-a4c3-1f8b9e1eabc1",
+          "currentVersion": 1
+        }
+      },
+      "updatedAt": "2026-10-30T21:12:35.054Z"
     }
   }
 }
