@@ -242,12 +242,6 @@
   min-height: 44px;
   padding: 22px 20px;
   background-color: var(--pos-bg-card);
-  /* Textura de papel (2026-10-27, dirección "taller artesanal"): puntos
-     casi imperceptibles (3% de opacidad) sobre la tarjeta — da sensación
-     de papel/cartulina en vez de un bloque de color plano. Deliberadamente
-     sutil: nunca debe competir con el texto ni con el borde de color. */
-  background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0);
-  background-size: 4px 4px;
   animation: subir 0.3s ease both;
   /* Esquina inferior izquierda a propósito sin redondear (2026-10-13) +
      recorte diagonal (2026-10-27, dirección "taller artesanal"): el

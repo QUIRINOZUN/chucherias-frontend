@@ -93,12 +93,9 @@
             [routerLink]="modulo.ruta"
             [style.--acento-modulo]="modulo.colorVar"
           >
-            @if (modulo.ruta === '/recetario' && (variantesSinRecetaCount() ?? 0) > 0) {
-              <span
-                class="modulo-badge-alerta"
-                [attr.aria-label]="variantesSinRecetaCount() + ' variantes sin receta'"
-              >
-                {{ variantesSinRecetaCount() }}
+            @if (alertasPorRuta()[modulo.ruta]; as cuenta) {
+              <span class="modulo-badge-alerta" [attr.aria-label]="cuenta + ' pendientes'">
+                {{ cuenta }}
               </span>
             }
             <span class="modulo-icono">

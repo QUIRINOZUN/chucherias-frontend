@@ -38,6 +38,8 @@ import { ThemeService } from '../core/theme';
 import { RecetasService } from '../core/recetas';
 import { CajaService, ResumenCaja } from '../core/caja';
 import { AsistenciasService } from '../core/asistencias';
+import { GastosService } from '../core/gastos';
+import { VentasEspecialesService } from '../core/ventas-especiales';
 
 // Descripción de una tarjeta del menú.
 interface Modulo {
@@ -276,6 +278,28 @@ export class DashboardComponent implements OnInit {
 
   personalEnTurnoHoy = signal<number | null>(null);
 
+  // ---- Alertas por tarjeta de módulo (2026-10-31) --------------------------
+  // Mismo patrón que variantesSinRecetaCount: un número rojo sobre la
+  // tarjeta del módulo correspondiente, calculado una vez al entrar al
+  // dashboard — `alertasPorRuta()` lo expone genérico, para no repetir el
+  // `@if (modulo.ruta === '/x' && ...)` de antes por cada módulo nuevo.
+  gastosPendientesCount = signal<number | null>(null);
+  ventasEspecialesHoyCount = signal<number | null>(null);
+
+  alertasPorRuta = computed<Record<string, number>>(() => {
+    const mapa: Record<string, number> = {};
+    if ((this.variantesSinRecetaCount() ?? 0) > 0) {
+      mapa['/recetario'] = this.variantesSinRecetaCount()!;
+    }
+    if ((this.gastosPendientesCount() ?? 0) > 0) {
+      mapa['/gastos'] = this.gastosPendientesCount()!;
+    }
+    if ((this.ventasEspecialesHoyCount() ?? 0) > 0) {
+      mapa['/ventas-especiales'] = this.ventasEspecialesHoyCount()!;
+    }
+    return mapa;
+  });
+
   constructor(
     // `public` para que la plantilla muestre el nombre/rol y llame a logout().
     public authService: AuthService,
@@ -283,6 +307,8 @@ export class DashboardComponent implements OnInit {
     private recetasService: RecetasService,
     private cajaService: CajaService,
     private asistenciasService: AsistenciasService,
+    private gastosService: GastosService,
+    private ventasEspecialesService: VentasEspecialesService,
   ) {}
 
   ngOnInit(): void {
@@ -292,6 +318,7 @@ export class DashboardComponent implements OnInit {
     const rol = this.authService.usuarioActual()?.rol;
     if (rol === 'administrador' || rol === 'encargado') {
       this.cargarVariantesSinReceta();
+      this.cargarGastosPendientes();
     }
     if (this.puedeVerResumenCaja()) {
       this.cargarResumenCaja();
@@ -299,6 +326,37 @@ export class DashboardComponent implements OnInit {
     if (this.puedeVerPersonalEnTurno()) {
       this.cargarPersonalEnTurno();
     }
+    // Ventas especiales: administrador, encargado y cajero (mismos roles
+    // que ya ven ese módulo en el menú).
+    if (rol === 'administrador' || rol === 'encargado' || rol === 'cajero') {
+      this.cargarVentasEspecialesHoy();
+    }
+  }
+
+  // Gastos recurrentes cuyo pago se acerca/venció y no se ha vuelto a
+  // registrar este mes (2026-10-31) — mismo endpoint que alimenta la
+  // franja de alertas de la propia pantalla de Gastos.
+  cargarGastosPendientes(): void {
+    this.gastosService.obtenerAlertas().subscribe({
+      next: (alertas) => this.gastosPendientesCount.set(alertas.length),
+      error: () => {},
+    });
+  }
+
+  // Cotizaciones (Ventas especiales) agendadas para HOY, sin contar las ya
+  // canceladas/entregadas — "alerta de pedidos para hoy" pedida
+  // explícitamente por el usuario.
+  cargarVentasEspecialesHoy(): void {
+    const hoy = new Date().toLocaleDateString('en-CA');
+    this.ventasEspecialesService.listar({ desde: hoy, hasta: hoy }).subscribe({
+      next: (lista) => {
+        const pendientesHoy = lista.filter(
+          (v) => v.estado !== 'cancelada' && v.estado !== 'entregada',
+        );
+        this.ventasEspecialesHoyCount.set(pendientesHoy.length);
+      },
+      error: () => {},
+    });
   }
 
   cargarVariantesSinReceta(): void {
