@@ -284,7 +284,9 @@
                         } @else {
                           <span
                             class="producto-foto-marcador"
-                            [style.--color-categoria]="obtenerEstiloCategoria(grupo.categoria).color"
+                            [style.--color-categoria]="
+                              obtenerEstiloCategoria(grupo.categoria).color
+                            "
                           >
                             <svg class="icono">
                               <use
@@ -295,40 +297,44 @@
                         }
                       </div>
                       <div class="producto-receta-cuerpo">
-                      <span class="producto-nombre">{{ producto.producto_nombre }}</span>
-                      @if (producto.variantes.length === 0) {
-                        <p class="mensaje-estado mensaje-estado-chico">
-                          Sin variantes todavía — agrégale una desde la pestaña "Menú".
-                        </p>
-                      } @else {
-                        <ul class="lista-variantes">
-                          @for (variante of producto.variantes; track variante.variante_id) {
-                            <li
-                              class="item-variante"
-                              role="button"
-                              tabindex="0"
-                              (click)="abrirEditor(variante)"
-                              (keydown.enter)="abrirEditor(variante)"
-                              (keydown.space)="$event.preventDefault(); abrirEditor(variante)"
-                            >
-                              <div class="variante-info">
-                                <span class="variante-nombre">{{ variante.variante_nombre }}</span>
-                                <span class="variante-precio">{{
-                                  variante.precio | currency: 'MXN'
-                                }}</span>
-                              </div>
-                              <span
-                                class="badge-receta"
-                                [class.badge-receta-vacia]="!variante.tiene_receta"
+                        <span class="producto-nombre">{{ producto.producto_nombre }}</span>
+                        @if (producto.variantes.length === 0) {
+                          <p class="mensaje-estado mensaje-estado-chico">
+                            Sin variantes todavía — agrégale una desde la pestaña "Menú".
+                          </p>
+                        } @else {
+                          <ul class="lista-variantes">
+                            @for (variante of producto.variantes; track variante.variante_id) {
+                              <li
+                                class="item-variante"
+                                role="button"
+                                tabindex="0"
+                                (click)="abrirEditor(variante)"
+                                (keydown.enter)="abrirEditor(variante)"
+                                (keydown.space)="$event.preventDefault(); abrirEditor(variante)"
                               >
-                                {{
-                                  variante.tiene_receta ? 'Insumo asociado' : 'Sin insumo asociado'
-                                }}
-                              </span>
-                            </li>
-                          }
-                        </ul>
-                      }
+                                <div class="variante-info">
+                                  <span class="variante-nombre">{{
+                                    variante.variante_nombre
+                                  }}</span>
+                                  <span class="variante-precio">{{
+                                    variante.precio | currency: 'MXN'
+                                  }}</span>
+                                </div>
+                                <span
+                                  class="badge-receta"
+                                  [class.badge-receta-vacia]="!variante.tiene_receta"
+                                >
+                                  {{
+                                    variante.tiene_receta
+                                      ? 'Insumo asociado'
+                                      : 'Sin insumo asociado'
+                                  }}
+                                </span>
+                              </li>
+                            }
+                          </ul>
+                        }
                       </div>
                     </div>
                   }
@@ -390,6 +396,17 @@
             <ul class="lista-categorias-menu">
               @for (categoria of categorias(); track categoria.id) {
                 <li class="item-categoria-menu">
+                  <span
+                    class="categoria-menu-insignia"
+                    [style.--color-categoria]="obtenerEstiloCategoria(categoria.nombre).color"
+                    [attr.aria-label]="
+                      categoria.icono && categoria.color ? 'Personalizada' : 'Estilo por defecto'
+                    "
+                  >
+                    <svg class="icono" aria-hidden="true">
+                      <use [attr.href]="'#ic-' + obtenerEstiloCategoria(categoria.nombre).icono" />
+                    </svg>
+                  </span>
                   <span class="categoria-menu-nombre">{{ categoria.nombre }}</span>
                   <button
                     type="button"
@@ -843,6 +860,55 @@
             [value]="nombreCategoriaForm()"
             (input)="nombreCategoriaForm.set($any($event.target).value)"
           />
+        </div>
+
+        <!-- Icono/color personalizables (2026-10-31): vista previa + selector
+             de ícono (grilla del sprite) + selector de color nativo. Sin
+             elegir nada, la categoría se queda con el estilo por defecto
+             (mismo que ya resuelve categoria-estilos.ts por nombre). -->
+        <div class="campo campo-estilo-categoria">
+          <label>Icono y color (opcional)</label>
+          <div class="previsualizacion-estilo-categoria">
+            <span
+              class="categoria-menu-insignia categoria-menu-insignia-grande"
+              [style.--color-categoria]="previsualizacionCategoriaForm().color"
+            >
+              <svg class="icono" aria-hidden="true">
+                <use [attr.href]="'#ic-' + previsualizacionCategoriaForm().icono" />
+              </svg>
+            </span>
+            <div class="campo-color-categoria">
+              <input
+                type="color"
+                [value]="colorCategoriaForm() ?? colorHexPorDefecto()"
+                (input)="actualizarColorCategoria($any($event.target).value)"
+                aria-label="Color de la categoría"
+              />
+              @if (iconoCategoriaForm() || colorCategoriaForm()) {
+                <button
+                  type="button"
+                  class="boton-enlace-chico"
+                  (click)="restablecerEstiloCategoria()"
+                >
+                  Restablecer al estilo por defecto
+                </button>
+              }
+            </div>
+          </div>
+          <div class="grilla-iconos-categoria">
+            @for (icono of iconosDisponibles; track icono) {
+              <button
+                type="button"
+                class="boton-icono-categoria"
+                [class.boton-icono-categoria-activo]="iconoCategoriaForm() === icono"
+                (click)="seleccionarIconoCategoria(icono)"
+                [attr.aria-label]="'Usar el ícono ' + icono"
+                [attr.aria-pressed]="iconoCategoriaForm() === icono"
+              >
+                <svg class="icono" aria-hidden="true"><use [attr.href]="'#ic-' + icono" /></svg>
+              </button>
+            }
+          </div>
         </div>
 
         @if (errorFormularioCategoria()) {

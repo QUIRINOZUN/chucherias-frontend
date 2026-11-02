@@ -20,6 +20,12 @@ import { environment } from '../../environments/environment';
 export interface Categoria {
   id: number;
   nombre: string;
+  // Personalización de icono/color (2026-10-31) — null = sin personalizar,
+  // usa el estilo por defecto que resuelve pos/categoria-estilos.ts por
+  // nombre. icono es el nombre de un símbolo del sprite SVG de index.html
+  // (sin el prefijo "ic-"); color es un hex literal (#RRGGBB).
+  icono: string | null;
+  color: string | null;
 }
 
 // Una presentación vendible de un producto, con su precio real.
@@ -98,14 +104,23 @@ export class CatalogoService {
 
   // ---- Gestión del menú (administrador/encargado — 2026-10-09) ----
 
-  // POST /api/categorias
-  crearCategoria(nombre: string): Observable<Categoria> {
-    return this.http.post<Categoria>(`${this.apiUrl}/categorias`, { nombre });
+  // POST /api/categorias — icono/color opcionales (2026-10-31): sin ellos,
+  // la categoría nace con el estilo por defecto.
+  crearCategoria(
+    nombre: string,
+    estilo?: { icono?: string | null; color?: string | null },
+  ): Observable<Categoria> {
+    return this.http.post<Categoria>(`${this.apiUrl}/categorias`, { nombre, ...estilo });
   }
 
-  // PATCH /api/categorias/:id
-  editarCategoria(id: number, nombre: string): Observable<Categoria> {
-    return this.http.patch<Categoria>(`${this.apiUrl}/categorias/${id}`, { nombre });
+  // PATCH /api/categorias/:id — icono/color: ausentes = se conservan, ""
+  // o null = se quitan (vuelve al estilo por defecto).
+  editarCategoria(
+    id: number,
+    nombre: string,
+    estilo?: { icono?: string | null; color?: string | null },
+  ): Observable<Categoria> {
+    return this.http.patch<Categoria>(`${this.apiUrl}/categorias/${id}`, { nombre, ...estilo });
   }
 
   // DELETE /api/categorias/:id — 409 si todavía tiene productos.

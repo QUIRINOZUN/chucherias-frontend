@@ -43,7 +43,12 @@ import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { LineaRecetaForm, RecetasService, VarianteConReceta } from '../core/recetas';
 import { Insumo, InsumosService } from '../core/insumos';
 import { CatalogoService, Categoria, Producto, Variante } from '../core/catalogo';
-import { obtenerEstiloCategoria } from '../pos/categoria-estilos';
+import {
+  aplicarEstilosPersonalizados,
+  EstiloCategoria,
+  ICONOS_DISPONIBLES,
+  obtenerEstiloCategoria,
+} from '../pos/categoria-estilos';
 
 // Línea de receta tal como vive en el formulario (antes de guardarse).
 interface LineaFormulario {
@@ -82,6 +87,20 @@ interface GrupoCategoriaMenu {
 type ModoFormularioCategoria = 'crear' | 'editar' | null;
 type ModoFormularioProducto = 'crear' | 'editar' | null;
 type ModoFormularioVariante = 'crear' | 'editar' | null;
+
+// Convierte lo que devuelve getComputedStyle() para un color (siempre
+// "rgb(r, g, b)" o "rgba(r, g, b, a)", sin importar si el token original
+// se definió en oklch()) a un hex de 6 dígitos — lo que necesita
+// <input type="color"> para arrancar con el color real de una categoría
+// sin personalizar (2026-10-31, personalizar icono/color de categoría).
+function rgbACssHex(rgb: string): string {
+  const numeros = rgb.match(/\d+(\.\d+)?/g);
+  if (!numeros || numeros.length < 3) {
+    return '#c2410c';
+  }
+  const aDosDigitos = (n: string) => Math.round(Number(n)).toString(16).padStart(2, '0');
+  return `#${aDosDigitos(numeros[0])}${aDosDigitos(numeros[1])}${aDosDigitos(numeros[2])}`;
+}
 
 @Component({
   selector: 'app-recetario',
@@ -616,7 +635,11 @@ export class RecetarioComponent implements OnInit {
     this.cargandoMenu.set(true);
     this.errorMenu.set('');
     this.catalogoService.obtenerCategorias().subscribe({
-      next: (categorias) => this.categorias.set(categorias),
+      next: (categorias) => {
+        this.categorias.set(categorias);
+        // Icono/color personalizados (2026-10-31) — ver categoria-estilos.ts.
+        aplicarEstilosPersonalizados(categorias);
+      },
       error: () => {
         // La lista de categorías del formulario de producto simplemente
         // queda vacía; el resto de la pestaña sigue funcionando.
@@ -673,9 +696,7 @@ export class RecetarioComponent implements OnInit {
   });
 
   contarCategoriaMenu(id: number | null): number {
-    return id === null
-      ? this.productosMenu().length
-      : (this.conteoPorCategoriaMenu().get(id) ?? 0);
+    return id === null ? this.productosMenu().length : (this.conteoPorCategoriaMenu().get(id) ?? 0);
   }
 
   // Productos agrupados por categoría, en el mismo orden en que ya llegan
@@ -736,17 +757,39 @@ export class RecetarioComponent implements OnInit {
     this.productoDetalleId.set(null);
   }
 
-  // ---- Categorías: crear / renombrar / eliminar ----
+  // ---- Categorías: crear / renombrar / eliminar / personalizar icono y color ----
   modoFormularioCategoria = signal<ModoFormularioCategoria>(null);
   categoriaEditandoId = signal<number | null>(null);
   nombreCategoriaForm = signal('');
   procesandoCategoria = signal(false);
   errorFormularioCategoria = signal('');
 
+  // Icono/color personalizables (2026-10-31). null = sin personalizar —
+  // la categoría usa el estilo por defecto que resuelve categoria-estilos.ts
+  // por nombre. ICONOS_DISPONIBLES: todo el sprite SVG de index.html menos
+  // los íconos de pura navegación/acción (volver, cerrar, chevron…), que no
+  // tendría sentido ofrecer como ícono de categoría.
+  readonly iconosDisponibles = ICONOS_DISPONIBLES;
+  iconoCategoriaForm = signal<string | null>(null);
+  colorCategoriaForm = signal<string | null>(null);
+
+  // Vista previa en vivo mientras se edita — si todavía no se eligió nada,
+  // cae al mismo estilo por defecto que vería el resto de la app.
+  previsualizacionCategoriaForm = computed<EstiloCategoria>(() => {
+    const icono = this.iconoCategoriaForm();
+    const color = this.colorCategoriaForm();
+    if (icono && color) {
+      return { icono, color };
+    }
+    return obtenerEstiloCategoria(this.nombreCategoriaForm().trim() || '');
+  });
+
   abrirCreacionCategoria(): void {
     this.modoFormularioCategoria.set('crear');
     this.categoriaEditandoId.set(null);
     this.nombreCategoriaForm.set('');
+    this.iconoCategoriaForm.set(null);
+    this.colorCategoriaForm.set(null);
     this.errorFormularioCategoria.set('');
   }
 
@@ -754,11 +797,50 @@ export class RecetarioComponent implements OnInit {
     this.modoFormularioCategoria.set('editar');
     this.categoriaEditandoId.set(categoria.id);
     this.nombreCategoriaForm.set(categoria.nombre);
+    this.iconoCategoriaForm.set(categoria.icono);
+    this.colorCategoriaForm.set(categoria.color);
     this.errorFormularioCategoria.set('');
   }
 
   cerrarFormularioCategoria(): void {
     this.modoFormularioCategoria.set(null);
+  }
+
+  seleccionarIconoCategoria(icono: string): void {
+    this.iconoCategoriaForm.set(icono);
+    // Elegir un ícono sin haber elegido color todavía arranca con el color
+    // por defecto de esa categoría, para no dejar un ícono "sin tinte".
+    if (!this.colorCategoriaForm()) {
+      this.colorCategoriaForm.set(this.colorHexPorDefecto());
+    }
+  }
+
+  actualizarColorCategoria(valor: string): void {
+    this.colorCategoriaForm.set(valor);
+  }
+
+  // El <input type="color"> necesita un hex real para iniciar — si el
+  // estilo por defecto de esta categoría usa un token CSS (var(--cat-x)),
+  // no sirve ahí directo; se resuelve a un valor real leyendo la variable
+  // ya pintada en el documento.
+  colorHexPorDefecto(): string {
+    const estilo = obtenerEstiloCategoria(this.nombreCategoriaForm().trim() || '');
+    if (estilo.color.startsWith('#')) {
+      return estilo.color;
+    }
+    const variable = estilo.color.match(/--[\w-]+/)?.[0];
+    if (variable && typeof getComputedStyle === 'function') {
+      const valor = getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
+      if (valor) {
+        return rgbACssHex(valor);
+      }
+    }
+    return '#c2410c';
+  }
+
+  restablecerEstiloCategoria(): void {
+    this.iconoCategoriaForm.set(null);
+    this.colorCategoriaForm.set(null);
   }
 
   puedeGuardarCategoria(): boolean {
@@ -772,11 +854,12 @@ export class RecetarioComponent implements OnInit {
     this.procesandoCategoria.set(true);
     this.errorFormularioCategoria.set('');
     const nombre = this.nombreCategoriaForm().trim();
+    const estilo = { icono: this.iconoCategoriaForm(), color: this.colorCategoriaForm() };
 
     const peticion =
       this.modoFormularioCategoria() === 'crear'
-        ? this.catalogoService.crearCategoria(nombre)
-        : this.catalogoService.editarCategoria(this.categoriaEditandoId()!, nombre);
+        ? this.catalogoService.crearCategoria(nombre, estilo)
+        : this.catalogoService.editarCategoria(this.categoriaEditandoId()!, nombre, estilo);
 
     peticion.subscribe({
       next: () => {

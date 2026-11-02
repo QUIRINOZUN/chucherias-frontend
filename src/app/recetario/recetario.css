@@ -559,9 +559,9 @@
    (nunca cover): este proyecto ya decidió desde el 2026-10-09 no recortar
    nunca una foto de platillo/producto, y esa regla aplica igual aquí aunque
    el estudio visual original proponía recortarla a modo de "foto de
-   revista" — el fondo tintado + textura de puntos (mismo truco que ya usa
-   el POS para su marcador sin foto) rellena el espacio que sobra en vez de
-   cortar la imagen. */
+   revista" — el fondo tintado rellena el espacio que sobra en vez de
+   cortar la imagen (2026-10-31: se quitó la textura de puntos que llevaba
+   encima, al usuario no le gustó verla). */
 .receta-portada {
   position: relative;
   margin: -24px -24px 16px;
@@ -570,12 +570,6 @@
   align-items: flex-end;
   overflow: hidden;
   background-color: color-mix(in srgb, var(--acento-modulo) 16%, var(--pos-bg-main));
-  background-image: radial-gradient(
-    circle at 2px 2px,
-    color-mix(in srgb, var(--acento-modulo) 32%, transparent) 1.5px,
-    transparent 0
-  );
-  background-size: 16px 16px;
 }
 
 .receta-portada-imagen {
@@ -1151,6 +1145,27 @@
   font-size: 0.85rem;
 }
 
+/* Icono/color personalizables (2026-10-31): vista previa de un vistazo del
+   estilo real de cada categoría (personalizado o por defecto). */
+.categoria-menu-insignia {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-categoria) 18%, transparent);
+}
+
+.categoria-menu-insignia .icono {
+  width: 16px;
+  height: 16px;
+  stroke: var(--color-categoria);
+  fill: none;
+  stroke-width: 1.8;
+}
+
 /* ---- Pestaña Menú → Productos: lista compacta por categoría; tocar una
    fila abre la ventana de detalle (2026-10-09) en vez de desplegar todo
    ahí mismo. ---- */
@@ -1682,4 +1697,85 @@
   width: 72px;
   flex-shrink: 0;
   height: 44px;
+}
+
+/* ===================== Icono/color personalizables (2026-10-31) ===================== */
+.campo-estilo-categoria {
+  margin-bottom: 18px;
+}
+
+.previsualizacion-estilo-categoria {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.categoria-menu-insignia-grande {
+  width: 48px;
+  height: 48px;
+}
+
+.categoria-menu-insignia-grande .icono {
+  width: 26px;
+  height: 26px;
+}
+
+.campo-color-categoria {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.campo-color-categoria input[type='color'] {
+  width: 48px;
+  min-height: 40px;
+  padding: 2px;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  cursor: pointer;
+}
+
+.grilla-iconos-categoria {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+}
+
+.boton-icono-categoria {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid transparent;
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-card);
+  color: var(--pos-text-secondary);
+  cursor: pointer;
+}
+
+.boton-icono-categoria .icono {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+}
+
+.boton-icono-categoria:hover {
+  border-color: var(--acento-modulo);
+}
+
+.boton-icono-categoria-activo {
+  border-color: var(--acento-modulo);
+  background: color-mix(in srgb, var(--acento-modulo) 16%, var(--pos-bg-card));
+  color: var(--acento-modulo);
 }
