@@ -25,9 +25,16 @@ export interface Merma {
   unidad_medida: string | null;
   motivo: string | null;
   responsable: string;
-  // Solo mermas de producto (precio ya congelado × cantidad). Las de insumo
-  // no tienen un costo unitario capturado todavía.
+  // Una de producto: precio ya CONGELADO al cancelar × cantidad (nunca
+  // cambia). Una de insumo (2026-11-01): se calcula con el costo_unitario
+  // VIGENTE del insumo hoy (ver valor_estimado) — null si ese insumo
+  // todavía no tiene costo capturado.
   valor_total: string | null;
+  // true SOLO para mermas de insumo con valor_total: avisa que ese monto
+  // es una estimación con el costo de HOY, no el costo congelado al
+  // momento real de la merma (que nunca se guarda) — a diferencia del
+  // valor de una merma de producto, que sí está congelado.
+  valor_estimado: boolean;
   // Solo si vino de cancelar una venta.
   numero_orden: string | null;
   estado_orden_previo: string | null;

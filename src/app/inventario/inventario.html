@@ -131,6 +131,17 @@
               >
                 Todo el stock <span class="chip-conteo">{{ contarNivel(null) }}</span>
               </button>
+              @if (contarNivel('negativo') > 0) {
+                <button
+                  type="button"
+                  class="chip-categoria chip-nivel-negativo"
+                  [class.chip-activa]="nivelStockFiltro() === 'negativo'"
+                  (click)="seleccionarNivel('negativo')"
+                >
+                  Existencia negativa
+                  <span class="chip-conteo">{{ contarNivel('negativo') }}</span>
+                </button>
+              }
               <button
                 type="button"
                 class="chip-categoria chip-nivel-bajo"
@@ -232,7 +243,11 @@
                               }}
                             }
                           </span>
-                          @if (insumo.alerta) {
+                          @if (insumo.existencia < 0) {
+                            <span class="badge-existencia-negativa"
+                              >Existencia negativa — revisar</span
+                            >
+                          } @else if (insumo.alerta) {
                             <span class="badge-alerta">Bajo mínimo</span>
                           }
                         </div>
@@ -384,6 +399,15 @@
             <option value="u">Unidad/pieza (u)</option>
             <option value="porcion">Porción</option>
           </select>
+          @if (cambioRiesgosoDeUnidad()) {
+            <p class="aviso-usar-merma aviso-cambio-unidad">
+              Este insumo ya tiene movimientos de inventario o recetas guardadas en
+              <strong>{{ unidadOriginalAlEditar() }}</strong> — cambiar la unidad reinterpreta esas
+              cantidades en silencio (asumen que nunca cambia), sin convertir ningún número ya
+              guardado. Solo cambia esto si estás corrigiendo un error de captura y sabes lo que hay
+              que revisar después (historial del insumo y sus recetas).
+            </p>
+          }
         </div>
 
         <div class="campo">
@@ -445,10 +469,17 @@
           />
         </div>
 
+        <!-- Finding #4 de la auditoría de Inventario (2026-11-01): estos dos
+             campos son cosas muy distintas (uno es un COBRO al cliente, el
+             otro es lo que A TI te cuesta) pero los dos se llamaban "Costo
+             ___" uno junto al otro — fácil confundirlos sin leer con
+             cuidado. Se separan con un micro-encabezado de "para quién es"
+             cada uno, y el nombre del campo ya no empieza igual. -->
+        <p class="separador-campo-costo">Para el cliente, en el POS</p>
         <div class="campo">
           <label for="costo-extra-insumo">
-            Costo extra por elección (opcional) — cuando el cliente elige este insumo en el POS se
-            suma este cargo al total (ej. "cacahuate diferente")
+            Cargo extra por elección (opcional) — cuando el cliente elige este insumo en el POS se
+            suma este monto al total que PAGA (ej. "cacahuate diferente" +$5)
           </label>
           <input
             id="costo-extra-insumo"
@@ -465,10 +496,12 @@
           />
         </div>
 
+        <p class="separador-campo-costo">Para tu contabilidad (Costeo y Reportes)</p>
         <div class="campo">
           <label for="costo-unitario-insumo">
-            Costo unitario (opcional) — cuánto cuesta UNA {{ unidadForm() }} de este insumo, para
-            calcular el margen de cada receta en Recetario y Reportes
+            Costo de compra por {{ unidadForm() }} (opcional) — cuánto te cuesta A TI comprar una
+            {{ unidadForm() }} de este insumo, para calcular el margen de cada receta en Recetario y
+            Reportes → Rentabilidad
           </label>
           <input
             id="costo-unitario-insumo"
@@ -625,7 +658,75 @@
               = {{ cantidadConvertida() }} {{ insumoMovimiento()?.unidad_medida }}
             </p>
           }
+          <!-- Ajuste vs. Merma (corrección 2026-11-01): un ajuste negativo
+               también baja la existencia, pero NUNCA se refleja en el
+               Reporte de Mermas (ver mermas.ts) — solo aparece en el
+               historial de ESE insumo. Si lo que pasó fue una pérdida real
+               (se cayó, caducó, se dañó), "Merma" es el camino correcto:
+               deja el mismo rastro financiero/de auditoría que una
+               cancelación de venta. "Ajuste" es solo para corregir un
+               conteo que no coincide con lo que el sistema calculó. -->
+          @if (tipo === 'ajuste' && (cantidadMovimientoForm() ?? 0) < 0) {
+            <p class="aviso-usar-merma">
+              Si esto se perdió, se cayó o caducó, usa
+              <strong>Merma</strong> en vez de Ajuste — así queda en el Reporte de Mermas. Usa
+              Ajuste solo para corregir un conteo que no coincide con lo que calculó el sistema.
+            </p>
+          }
         </div>
+
+        @if (tipo === 'entrada') {
+          <div class="campo">
+            <label for="costo-compra-movimiento">
+              Costo TOTAL de esta compra (opcional) — lo que pagaste por toda la cantidad de arriba,
+              no por {{ insumoMovimiento()?.unidad_medida }}
+            </label>
+            <input
+              id="costo-compra-movimiento"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="Ej. 140.00"
+              [value]="costoTotalCompraForm()"
+              (input)="
+                costoTotalCompraForm.set(
+                  $any($event.target).value ? +$any($event.target).value : null
+                )
+              "
+            />
+            @if (costoPorUnidadBasePreview() !== null) {
+              <p class="texto-conversion">
+                = {{ costoPorUnidadBasePreview() | currency: 'MXN' }} por
+                {{ insumoMovimiento()?.unidad_medida }} (lo que se guarda como costo del insumo)
+              </p>
+            }
+            <p class="texto-ayuda-costo">
+              Si lo capturas, se actualiza el costo vigente del insumo (el que usan Costeo y
+              Reportes) y queda guardado en su historial de compras.
+            </p>
+          </div>
+
+          @if (cargandoCompraHistorial()) {
+            <p class="mensaje-estado">Cargando historial de compras...</p>
+          } @else if (compraHistorialInsumo().length > 0) {
+            <details class="historial-compras-detalle">
+              <summary>Historial de compras ({{ compraHistorialInsumo().length }})</summary>
+              <ul class="lista-compras-insumo">
+                @for (compra of compraHistorialInsumo(); track compra.id) {
+                  <li class="item-compra-insumo">
+                    <span class="item-compra-costo">{{
+                      compra.costo_unitario | currency: 'MXN'
+                    }}</span>
+                    <span class="item-compra-fecha">{{ compra.fecha | date: 'dd/MM/yyyy' }}</span>
+                    @if (compra.proveedor_nombre) {
+                      <span class="item-compra-proveedor">{{ compra.proveedor_nombre }}</span>
+                    }
+                  </li>
+                }
+              </ul>
+            </details>
+          }
+        }
 
         <div class="campo">
           <label for="motivo-movimiento">Motivo{{ tipo === 'entrada' ? ' (opcional)' : '' }}</label>

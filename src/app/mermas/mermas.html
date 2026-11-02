@@ -115,7 +115,11 @@
                 >{{ m.cantidad }} {{ m.unidad_medida ?? 'pza' }}</span
               >
               @if (m.valor_total != null) {
-                <span class="item-merma-valor">{{ m.valor_total | currency: 'MXN' }} perdidos</span>
+                <span class="item-merma-valor"
+                  >{{ m.valor_total | currency: 'MXN' }} perdidos{{
+                    m.valor_estimado ? ' (estimado)' : ''
+                  }}</span
+                >
               }
             </div>
 
@@ -133,6 +137,12 @@
               }
               @if (m.motivo) {
                 <div class="item-merma-motivo">{{ m.motivo }}</div>
+              }
+              @if (m.valor_estimado) {
+                <div class="item-merma-valor-estimado">
+                  Valor estimado con el costo de insumo capturado HOY — no es el costo que tenía el
+                  día de esta merma (eso nunca se guarda).
+                </div>
               }
             }
 

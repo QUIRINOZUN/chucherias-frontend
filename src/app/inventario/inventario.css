@@ -310,6 +310,16 @@
    variables --peligro-texto/--acento-texto/--exito-texto cambian de tono
    claro↔oscuro según el tema, así que NO sirven como relleno sólido con un
    texto fijo (se vuelven ilegibles en tema claro). */
+/* Negativo (2026-11-01) es más grave que "bajo" — no es "poco stock", es
+   un dato IMPOSIBLE (se descontó más de lo que había). Mismo rojo de
+   siempre pero SÓLIDO (texto blanco) en vez de solo un tinte: necesita
+   distinguirse de "Bajo" de un vistazo, no solo por la etiqueta. */
+.chip-nivel-negativo.chip-activa {
+  border-color: var(--action-danger);
+  background: var(--action-danger);
+  color: #fff;
+}
+
 .chip-nivel-bajo.chip-activa {
   border-color: var(--peligro-texto);
   background: color-mix(in srgb, var(--action-danger) 20%, var(--pos-bg-card));
@@ -480,6 +490,22 @@
   white-space: nowrap;
 }
 
+/* Existencia negativa (2026-11-01): reemplaza a .badge-alerta cuando el
+   dato es imposible, no solo bajo — relleno SÓLIDO en vez de un tinte
+   suave, mismo criterio que .chip-nivel-negativo, para que se note que es
+   un caso distinto (y más urgente) que "Bajo mínimo". */
+.badge-existencia-negativa {
+  align-self: flex-start;
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radio-pastilla);
+  background: var(--action-danger);
+  color: #fff;
+  white-space: nowrap;
+}
+
 /* Existencia como dato "de un vistazo": número grande y tabular, alineado a
    la derecha de la tarjeta; la unidad queda debajo, más pequeña. */
 .insumo-stat {
@@ -547,6 +573,16 @@
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+/* Negativo (2026-11-01): mismo rojo que "bajo" pero con un anillo blanco
+   alrededor (box-shadow) — se distingue por FORMA además de solo color,
+   para que no se confunda con "bajo" en una fila de puntos chicos. */
+.indicador-nivel-negativo {
+  background: var(--action-danger);
+  box-shadow:
+    0 0 0 2px var(--pos-bg-card),
+    0 0 0 3px var(--action-danger);
 }
 
 .indicador-nivel-bajo {
@@ -1082,4 +1118,85 @@
 
 .estado-error-costo {
   color: var(--peligro-texto);
+}
+
+/* Micro-encabezado de "para quién es" este campo de costo (2026-11-01,
+   finding #4 de la auditoría de Inventario): "Costo extra" (lo que PAGA
+   el cliente) y "Costo unitario" (lo que te cuesta A TI) se veían uno
+   junto al otro con nombres casi idénticos — esto los separa visualmente
+   sin inventar una sección/acordeón nuevo. */
+.separador-campo-costo {
+  margin: 10px 0 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pos-text-secondary);
+}
+
+/* ===================== Costo por compra (2026-10-31) ===================== */
+.texto-ayuda-costo {
+  margin: 6px 0 0;
+  font-size: 0.72rem;
+  color: var(--pos-text-secondary);
+  line-height: 1.4;
+}
+
+/* Ajuste vs. Merma, y cambio de unidad arriesgado (ambos 2026-11-01):
+   avisos de GUÍA, no de error — ninguno de los dos bloquea nada, solo se
+   le recuerda a quien edita un riesgo antes de que pase (ver
+   inventario.html, .aviso-cambio-unidad usa esta misma clase). Mismo
+   --peligro-texto que ya usa el resto de la app para "esto necesita tu
+   atención" (ej. .aviso-turnos-sin-cerrar en Nómina) — no es un color de
+   error nuevo, es el mismo lenguaje de "atención" ya establecido. */
+.aviso-usar-merma {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: var(--radio-sm);
+  background: color-mix(in srgb, var(--peligro-texto) 12%, var(--pos-bg-card));
+  border-left: 3px solid var(--peligro-texto);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--pos-text-primary);
+}
+
+.historial-compras-detalle {
+  margin: 0 0 14px;
+  font-size: 0.82rem;
+}
+
+.historial-compras-detalle summary {
+  cursor: pointer;
+  color: var(--acento-modulo);
+  font-weight: 600;
+}
+
+.lista-compras-insumo {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.item-compra-insumo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  font-size: 0.78rem;
+}
+
+.item-compra-costo {
+  font-weight: 700;
+}
+
+.item-compra-fecha,
+.item-compra-proveedor {
+  color: var(--pos-text-secondary);
 }

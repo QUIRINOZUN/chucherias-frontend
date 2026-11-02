@@ -350,6 +350,17 @@
   margin-bottom: 4px;
 }
 
+/* Aviso de "valor estimado" (2026-11-01): a diferencia de una merma de
+   producto (precio congelado al momento), el valor en pesos de una merma
+   de insumo se calcula con el costo VIGENTE de hoy — esto lo deja claro
+   para que nadie lo confunda con un dato histórico congelado. */
+.item-merma-valor-estimado {
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--pos-text-secondary);
+  margin-top: 2px;
+}
+
 .boton-ver-mas-merma {
   min-height: 32px;
   padding: 0 4px;

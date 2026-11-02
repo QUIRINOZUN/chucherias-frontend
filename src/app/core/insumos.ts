@@ -43,6 +43,11 @@ export interface Insumo {
   // costo/margen de cada receta en Recetario y la pestaña Rentabilidad de
   // Reportes.
   costo_unitario: number | null;
+  // 2026-11-01: true si el insumo ya tiene algún movimiento de inventario O
+  // alguna receta que lo use. Se usa para avisar antes de cambiar su
+  // unidad_medida — cambiarla reinterpreta en silencio toda cantidad ya
+  // guardada (movimientos y recetas asumen que esa columna nunca cambia).
+  en_uso: boolean;
 }
 
 // Datos para crear/editar un insumo.
@@ -71,6 +76,24 @@ export interface MovimientoInventario {
   fecha: string;
   motivo: string | null;
   responsable: string;
+  // Solo en la respuesta de registrarEntrada() cuando se capturó un costo
+  // (2026-10-31) — no viene en el historial de GET /:id/movimientos.
+  costo_unitario?: number | null;
+}
+
+// Un renglón del historial de compras de un insumo (2026-10-31): "cuánto
+// pagué cada vez que compré esto" — distinto del historial de movimientos
+// (ese es de EXISTENCIA; este es de COSTO).
+export interface CompraInsumo {
+  id: number;
+  costo_unitario: string; // NUMERIC llega como texto
+  cantidad: string | null;
+  fecha: string;
+  nota: string | null;
+  proveedor_id: number | null;
+  proveedor_nombre: string | null;
+  registrado_por: number;
+  registrado_por_nombre: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -125,11 +148,27 @@ export class InsumosService {
   }
 
   // POST /api/insumos/:id/entrada — registrar mercancía recibida.
-  registrarEntrada(id: number, cantidad: number, motivo: string): Observable<MovimientoInventario> {
+  // costoUnitario/proveedorId (2026-10-31, ambos opcionales): cuánto costó
+  // ESTA compra — si se captura, actualiza el costo vigente del insumo y
+  // queda guardado en su historial de compras (ver obtenerCompras()).
+  registrarEntrada(
+    id: number,
+    cantidad: number,
+    motivo: string,
+    costoUnitario?: number | null,
+    proveedorId?: number | null,
+  ): Observable<MovimientoInventario> {
     return this.http.post<MovimientoInventario>(`${this.apiUrl}/insumos/${id}/entrada`, {
       cantidad,
       motivo,
+      costo_unitario: costoUnitario || null,
+      proveedor_id: proveedorId || null,
     });
+  }
+
+  // GET /api/insumos/:id/compras — historial de "cuánto costó cada compra".
+  obtenerCompras(id: number): Observable<CompraInsumo[]> {
+    return this.http.get<CompraInsumo[]>(`${this.apiUrl}/insumos/${id}/compras`);
   }
 
   // POST /api/insumos/:id/ajuste — corrección manual (+/-), motivo obligatorio.

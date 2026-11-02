@@ -53,6 +53,7 @@ import { Router } from '@angular/router';
 import { ThemeService } from '../core/theme';
 import {
   CategoriaInsumo,
+  CompraInsumo,
   DatosInsumo,
   Insumo,
   InsumosService,
@@ -62,7 +63,13 @@ import { Proveedor, ProveedoresService } from '../core/proveedores';
 
 type ModoFormularioInsumo = 'crear' | 'editar' | null;
 type TipoMovimiento = 'entrada' | 'ajuste' | 'merma' | null;
-type NivelStock = 'bajo' | 'medio' | 'alto';
+// 'negativo' (2026-11-01) es un caso aparte de 'bajo': una existencia
+// negativa no es "poco stock", es un dato IMPOSIBLE (algo se descontó más
+// de lo que había) — antes ambos casos se veían exactamente igual (mismo
+// punto rojo, mismo chip "Bajo"), así que nada distinguía una alerta
+// normal de reabastecimiento de un error real que conviene investigar
+// (ej. una venta/merma duplicada, una conversión de unidad mal hecha).
+type NivelStock = 'negativo' | 'bajo' | 'medio' | 'alto';
 
 // Clave de agrupación para insumos sin categoria_id (NULL en la base): un id
 // real nunca es negativo, así que -1 no puede chocar con ninguna categoría.
@@ -80,6 +87,9 @@ const SIN_PROVEEDOR_ID = -1;
 // qué distinguir "medio" de "alto", así que todo lo que no sea bajo cae en
 // alto.
 function nivelStock(insumo: Insumo): NivelStock {
+  if (insumo.existencia < 0) {
+    return 'negativo';
+  }
   if (insumo.existencia <= insumo.cantidad_minima) {
     return 'bajo';
   }
@@ -387,6 +397,15 @@ export class InventarioComponent implements OnInit {
   procesandoForm = signal(false);
   errorFormulario = signal('');
 
+  // Aviso de cambio de unidad arriesgado (2026-11-01): la unidad de un
+  // insumo con movimientos/recetas ya guardados NUNCA debería cambiar sin
+  // que quien edita sepa el riesgo — ver cambioRiesgosoDeUnidad() abajo.
+  // Se guardan al abrir "editar" para comparar contra lo que se vaya
+  // tecleando en unidadForm. unidadOriginalAlEditar se lee también desde
+  // la plantilla (texto del aviso), por eso no es privada.
+  unidadOriginalAlEditar = signal<string | null>(null);
+  private enUsoAlEditar = signal(false);
+
   // Alta rápida de proveedor dentro del mismo formulario.
   mostrarNuevoProveedor = signal(false);
   nombreProveedorForm = signal('');
@@ -409,10 +428,52 @@ export class InventarioComponent implements OnInit {
   procesandoMovimiento = signal(false);
   errorMovimiento = signal('');
 
+  // Costo TOTAL de ESTA compra (2026-10-31, solo aplica cuando
+  // tipoMovimiento es 'entrada') — opcional; lo que de verdad se pagó por
+  // toda la cantidad capturada arriba (ej. "pagué $140 por estos 2 kg"),
+  // NUNCA el costo de una sola unidad base — ese lo calcula guardarMovimiento()
+  // dividiendo entre la cantidad ya convertida a base (cantidadBase), mismo
+  // criterio que ya aplica la propia cantidad del movimiento. Guardarlo así
+  // actualiza insumos.costo_unitario y queda en el historial de compras (ver
+  // compraHistorialInsumo abajo).
+  //
+  // CORRECCIÓN (2026-11-01): antes este campo se mandaba tal cual al
+  // servidor como "costo por unidad base", sin convertir — con una entrada
+  // capturada en kg, alguien que escribiera el costo TOTAL de su compra
+  // (lo natural: "esto pagué") terminaba guardando ese monto como costo
+  // POR GRAMO, 1000x más alto del real. Era un bug real, no solo una
+  // etiqueta confusa: corrompía en silencio el margen de Recetario y
+  // Reportes → Rentabilidad.
+  costoTotalCompraForm = signal<number | null>(null);
+  compraHistorialInsumo = signal<CompraInsumo[]>([]);
+  cargandoCompraHistorial = signal(false);
+
   // Opciones de unidad disponibles para el insumo del movimiento actual.
   opcionesUnidadMovimiento = computed<OpcionUnidadSurtido[]>(() => {
     const insumo = this.insumoMovimiento();
     return insumo ? opcionesSurtido(insumo.unidad_medida) : [];
+  });
+
+  // Costo por unidad BASE que de verdad se va a guardar — se deriva del
+  // costo total capturado entre la cantidad ya convertida a base, la MISMA
+  // cuenta que hace guardarMovimiento() al enviar la entrada (ver ahí el
+  // porqué, 2026-11-01). Expuesto como computed para mostrarlo en vivo en
+  // el formulario (vista previa, "= $0.07/g") y para no duplicar la cuenta
+  // en dos lugares distintos que podrían desincronizarse.
+  costoPorUnidadBasePreview = computed<number | null>(() => {
+    const costoTotal = this.costoTotalCompraForm();
+    const cantidad = this.cantidadMovimientoForm();
+    const factor = this.opcionesUnidadMovimiento().find(
+      (o) => o.valor === this.unidadMovimientoForm(),
+    )?.factor;
+    if (costoTotal == null || !cantidad || !factor) {
+      return null;
+    }
+    const cantidadBase = cantidad * factor;
+    if (cantidadBase <= 0) {
+      return null;
+    }
+    return Math.round((costoTotal / cantidadBase) * 100) / 100;
   });
 
   // Cuánto equivale la cantidad capturada en la unidad base del insumo, para
@@ -544,6 +605,9 @@ export class InventarioComponent implements OnInit {
     this.mostrarNuevaCategoria.set(false);
     this.nombreCategoriaForm.set('');
     this.errorFormulario.set('');
+    // Un insumo nuevo nunca está "en uso" todavía — sin riesgo de cambio de unidad.
+    this.unidadOriginalAlEditar.set(null);
+    this.enUsoAlEditar.set(false);
   }
 
   abrirEdicionInsumo(insumo: Insumo): void {
@@ -563,7 +627,24 @@ export class InventarioComponent implements OnInit {
     this.mostrarNuevaCategoria.set(false);
     this.nombreCategoriaForm.set('');
     this.errorFormulario.set('');
+    this.unidadOriginalAlEditar.set(insumo.unidad_medida);
+    this.enUsoAlEditar.set(insumo.en_uso);
   }
+
+  // Cambiar la unidad de un insumo que YA tiene movimientos/recetas
+  // reinterpreta en silencio todo lo que ya se guardó (ver comentario de
+  // NivelStock arriba) — se avisa (no se bloquea: puede ser una
+  // corrección legítima de un error de captura), solo cuando de verdad
+  // hay algo que se reinterpretaría.
+  cambioRiesgosoDeUnidad = computed(() => {
+    const original = this.unidadOriginalAlEditar();
+    return (
+      this.modoFormulario() === 'editar' &&
+      this.enUsoAlEditar() &&
+      original !== null &&
+      this.unidadForm() !== original
+    );
+  });
 
   cerrarFormularioInsumo(): void {
     this.modoFormulario.set(null);
@@ -672,10 +753,25 @@ export class InventarioComponent implements OnInit {
     this.cantidadMovimientoForm.set(null);
     this.motivoMovimientoForm.set('');
     this.errorMovimiento.set('');
+    this.costoTotalCompraForm.set(null);
+    this.compraHistorialInsumo.set([]);
     // Por default se captura en la unidad "grande" (kg/L) cuando existe:
     // así se surte "2 kg de cebolla" en vez de "2000 g de cebolla".
     const opciones = opcionesSurtido(insumo.unidad_medida);
     this.unidadMovimientoForm.set(opciones[opciones.length - 1].valor);
+
+    // Historial de compras (2026-10-31): solo tiene sentido para "entrada"
+    // — se carga aparte para no pedirlo en ajuste/merma, que nunca lo usan.
+    if (tipo === 'entrada') {
+      this.cargandoCompraHistorial.set(true);
+      this.insumosService.obtenerCompras(insumo.id).subscribe({
+        next: (compras) => {
+          this.compraHistorialInsumo.set(compras);
+          this.cargandoCompraHistorial.set(false);
+        },
+        error: () => this.cargandoCompraHistorial.set(false),
+      });
+    }
   }
 
   cerrarMovimiento(): void {
@@ -730,6 +826,12 @@ export class InventarioComponent implements OnInit {
         ?.factor ?? 1;
     const cantidadBase = cantidad * factor;
 
+    // costoPorUnidadBasePreview ya hace la misma cuenta (costo total ÷
+    // cantidadBase) que se necesita aquí — se reutiliza tal cual para que
+    // lo que el formulario MUESTRA sea exactamente lo que se MANDA, nunca
+    // dos cálculos separados que podrían desincronizarse.
+    const costoPorUnidadBase = this.costoPorUnidadBasePreview();
+
     const motivo = this.motivoMovimientoForm().trim();
     const tipo = this.tipoMovimiento();
     const peticion =
@@ -738,6 +840,7 @@ export class InventarioComponent implements OnInit {
             insumo.id,
             cantidadBase,
             motivo || 'Entrada de mercancía',
+            costoPorUnidadBase,
           )
         : tipo === 'merma'
           ? this.insumosService.registrarMerma(insumo.id, cantidadBase, motivo)
