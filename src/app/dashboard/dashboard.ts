@@ -40,6 +40,7 @@ import { CajaService, ResumenCaja } from '../core/caja';
 import { AsistenciasService } from '../core/asistencias';
 import { GastosService } from '../core/gastos';
 import { VentasEspecialesService } from '../core/ventas-especiales';
+import { InsumosService } from '../core/insumos';
 
 // Descripción de una tarjeta del menú.
 interface Modulo {
@@ -285,11 +286,17 @@ export class DashboardComponent implements OnInit {
   // `@if (modulo.ruta === '/x' && ...)` de antes por cada módulo nuevo.
   gastosPendientesCount = signal<number | null>(null);
   ventasEspecialesHoyCount = signal<number | null>(null);
+  // RF-12 (2026-11-02): insumos en o bajo su cantidad mínima — antes la
+  // alerta solo se veía entrando a Inventario; ahora avisa desde el menú.
+  insumosBajoMinimoCount = signal<number | null>(null);
 
   alertasPorRuta = computed<Record<string, number>>(() => {
     const mapa: Record<string, number> = {};
     if ((this.variantesSinRecetaCount() ?? 0) > 0) {
       mapa['/recetario'] = this.variantesSinRecetaCount()!;
+    }
+    if ((this.insumosBajoMinimoCount() ?? 0) > 0) {
+      mapa['/inventario'] = this.insumosBajoMinimoCount()!;
     }
     if ((this.gastosPendientesCount() ?? 0) > 0) {
       mapa['/gastos'] = this.gastosPendientesCount()!;
@@ -309,6 +316,7 @@ export class DashboardComponent implements OnInit {
     private asistenciasService: AsistenciasService,
     private gastosService: GastosService,
     private ventasEspecialesService: VentasEspecialesService,
+    private insumosService: InsumosService,
   ) {}
 
   ngOnInit(): void {
@@ -319,6 +327,7 @@ export class DashboardComponent implements OnInit {
     if (rol === 'administrador' || rol === 'encargado') {
       this.cargarVariantesSinReceta();
       this.cargarGastosPendientes();
+      this.cargarInsumosBajoMinimo();
     }
     if (this.puedeVerResumenCaja()) {
       this.cargarResumenCaja();
@@ -331,6 +340,15 @@ export class DashboardComponent implements OnInit {
     if (rol === 'administrador' || rol === 'encargado' || rol === 'cajero') {
       this.cargarVentasEspecialesHoy();
     }
+  }
+
+  // Insumos con existencia <= cantidad_minima (RF-12) — mismo `alerta` que
+  // calcula el servidor para la pantalla de Inventario.
+  cargarInsumosBajoMinimo(): void {
+    this.insumosService.listar().subscribe({
+      next: (insumos) => this.insumosBajoMinimoCount.set(insumos.filter((i) => i.alerta).length),
+      error: () => {},
+    });
   }
 
   // Gastos recurrentes cuyo pago se acerca/venció y no se ha vuelto a
