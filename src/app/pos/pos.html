@@ -855,10 +855,21 @@
                   <span>Recibido</span>
                   <span>{{ r.montoRecibido | currency: 'MXN' }}</span>
                 </div>
-                <div class="comprobante-linea">
-                  <span>Cambio</span>
-                  <span>{{ r.cambio | currency: 'MXN' }}</span>
-                </div>
+                @if ((r.cambio ?? 0) < 0) {
+                  <!-- El servidor cobró más de lo que la vista previa estimó
+                       (ej. el descuento de lealtad no se aplicó): el efectivo
+                       recibido no alcanza — se muestra lo que FALTA, nunca un
+                       cambio negativo. -->
+                  <div class="comprobante-linea comprobante-faltante">
+                    <span>Falta por cobrar</span>
+                    <span>{{ -(r.cambio ?? 0) | currency: 'MXN' }}</span>
+                  </div>
+                } @else {
+                  <div class="comprobante-linea">
+                    <span>Cambio</span>
+                    <span>{{ r.cambio | currency: 'MXN' }}</span>
+                  </div>
+                }
               }
             </div>
 

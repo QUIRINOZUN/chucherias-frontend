@@ -2975,3 +2975,9 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* Efectivo recibido menor al total real que cobró el servidor (2026-11-02). */
+.comprobante-faltante {
+  color: var(--peligro-texto);
+  font-weight: 700;
+}

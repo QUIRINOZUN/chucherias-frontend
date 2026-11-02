@@ -1666,7 +1666,11 @@ export class PosComponent implements OnInit, OnDestroy {
     filas.push(linea('Pago', r.metodoPago === 'efectivo' ? 'Efectivo' : 'Transferencia'));
     if (r.metodoPago === 'efectivo') {
       filas.push(linea('Recibido', money(r.montoRecibido ?? 0)));
-      filas.push(linea('Cambio', money(r.cambio ?? 0)));
+      if ((r.cambio ?? 0) < 0) {
+        filas.push(linea('Falta cobrar', money(-(r.cambio ?? 0))));
+      } else {
+        filas.push(linea('Cambio', money(r.cambio ?? 0)));
+      }
     }
     filas.push(separador);
     // Misma despedida con variedad del comprobante con diseño (no un texto
