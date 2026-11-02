@@ -79,6 +79,10 @@ export interface CorteCaja {
   total_transferencia: string;
   total_sistema: string;
   diferencia: string;
+  // Diferencia por método (2026-11-02). null en los cortes anteriores a esa
+  // fecha, que solo guardaron la combinada.
+  diferencia_efectivo: string | null;
+  diferencia_transferencia: string | null;
   responsable_id: number;
   responsable: string;
 }

@@ -1057,3 +1057,23 @@
     color: #000;
   }
 }
+
+/* Diferencia por método (2026-11-02), bajo el sello de diferencia combinada. */
+.diferencias-por-metodo {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.diferencias-por-metodo li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--exito-texto);
+}
+.diferencias-por-metodo li.diferencia-negativa {
+  color: var(--peligro-texto);
+}

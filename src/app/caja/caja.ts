@@ -204,6 +204,21 @@ export class CajaComponent implements OnInit {
     return efectivo + transferencia - r.total_sistema;
   });
 
+  // Diferencia POR MÉTODO (2026-11-02): la combinada de arriba puede dar 0
+  // aunque sobren $50 en efectivo y falten $50 en transferencia.
+  diferenciaEfectivo = computed(() => {
+    const r = this.resumen();
+    const efectivo = this.efectivoContado();
+    return r && efectivo != null ? Math.round((efectivo - r.total_efectivo) * 100) / 100 : null;
+  });
+  diferenciaTransferencia = computed(() => {
+    const r = this.resumen();
+    const transferencia = this.transferenciaContado();
+    return r && transferencia != null
+      ? Math.round((transferencia - r.total_transferencia) * 100) / 100
+      : null;
+  });
+
   constructor(
     private cajaService: CajaService,
     private usuariosService: UsuariosService,

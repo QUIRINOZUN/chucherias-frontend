@@ -125,6 +125,22 @@
                 <span>Diferencia</span>
                 <span>{{ corte.diferencia | currency: 'MXN' }}</span>
               </div>
+              @if (corte.diferencia_efectivo != null) {
+                <div
+                  class="linea-corte"
+                  [class.diferencia-negativa]="+corte.diferencia_efectivo < 0"
+                >
+                  <span>· Efectivo</span>
+                  <span>{{ corte.diferencia_efectivo | currency: 'MXN' }}</span>
+                </div>
+                <div
+                  class="linea-corte"
+                  [class.diferencia-negativa]="+(corte.diferencia_transferencia ?? 0) < 0"
+                >
+                  <span>· Transferencia</span>
+                  <span>{{ corte.diferencia_transferencia | currency: 'MXN' }}</span>
+                </div>
+              }
               <button type="button" class="boton-nuevo-corte" (click)="nuevoCorte()">Hecho</button>
             </div>
           } @else {
@@ -308,6 +324,29 @@
                     }}</span>
                   }
                 </div>
+                <!-- Por método: evita que un sobrante en uno tape un faltante en el otro. -->
+                <ul class="diferencias-por-metodo">
+                  @for (
+                    fila of [
+                      { nombre: 'Efectivo', valor: diferenciaEfectivo() },
+                      { nombre: 'Transferencia', valor: diferenciaTransferencia() },
+                    ];
+                    track fila.nombre
+                  ) {
+                    <li [class.diferencia-negativa]="(fila.valor ?? 0) < 0">
+                      <span>{{ fila.nombre }}</span>
+                      <span>
+                        @if (fila.valor === 0) {
+                          Cuadra
+                        } @else if ((fila.valor ?? 0) > 0) {
+                          Sobran {{ fila.valor | currency: 'MXN' }}
+                        } @else {
+                          Faltan {{ -(fila.valor ?? 0) | currency: 'MXN' }}
+                        }
+                      </span>
+                    </li>
+                  }
+                </ul>
               }
 
               @if (errorRegistro()) {
@@ -567,6 +606,12 @@
                         Sistema {{ corte.total_sistema | currency: 'MXN' }} · Contado
                         {{ +corte.total_efectivo + +corte.total_transferencia | currency: 'MXN' }}
                       </span>
+                      @if (corte.diferencia_efectivo != null) {
+                        <span class="item-historial-detalle">
+                          Efectivo {{ corte.diferencia_efectivo | currency: 'MXN' }} · Transferencia
+                          {{ corte.diferencia_transferencia | currency: 'MXN' }}
+                        </span>
+                      }
                     </div>
                     <span
                       class="item-historial-diferencia"
