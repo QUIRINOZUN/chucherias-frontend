@@ -689,3 +689,80 @@
     gap: 0;
   }
 }
+
+/* ===================== Alertas de pago recurrente (2026-10-31) ===================== */
+.franja-alertas-gastos {
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border-radius: var(--radio-lg);
+  border: 1px solid color-mix(in srgb, var(--peligro-texto) 35%, transparent);
+  background: color-mix(in srgb, var(--peligro-texto) 8%, var(--pos-bg-card));
+}
+
+.titulo-franja-alertas {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+}
+
+.lista-alertas-gastos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-alerta-gasto {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  font-size: 0.82rem;
+}
+
+.item-alerta-vencida .item-alerta-estado {
+  color: var(--peligro-texto);
+  font-weight: 700;
+}
+
+.item-alerta-concepto {
+  font-weight: 700;
+}
+
+.item-alerta-categoria {
+  color: var(--pos-text-secondary);
+  font-size: 0.75rem;
+}
+
+.item-alerta-monto {
+  font-weight: 700;
+}
+
+.item-alerta-estado {
+  margin-left: auto;
+  color: var(--pos-text-secondary);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.fila-alerta-recurrente {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fila-alerta-recurrente .campo {
+  flex: 1;
+  min-width: 140px;
+}
+
+.texto-ayuda-costo {
+  margin: -8px 0 14px;
+  font-size: 0.72rem;
+  color: var(--pos-text-secondary);
+  line-height: 1.4;
+}

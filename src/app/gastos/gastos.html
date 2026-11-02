@@ -30,6 +30,36 @@
   </header>
 
   <div class="gastos-cuerpo">
+    <!-- ALERTAS DE PAGO RECURRENTE (2026-10-31): solo aparece si hay algo
+         real que atender (día de pago ya cerca o ya vencido, sin registrar
+         este mes) — nunca una franja vacía de "todo bien". -->
+    @if (alertasRecurrentes().length > 0) {
+      <section class="franja-alertas-gastos">
+        <h2 class="titulo-franja-alertas">Pagos recurrentes por registrar</h2>
+        <ul class="lista-alertas-gastos">
+          @for (alerta of alertasRecurrentes(); track alerta.categoria_id + alerta.concepto) {
+            <li class="item-alerta-gasto" [class.item-alerta-vencida]="alerta.vencido">
+              <span class="item-alerta-concepto">{{ alerta.concepto }}</span>
+              <span class="item-alerta-categoria">{{ alerta.categoria }}</span>
+              <span class="item-alerta-monto">{{ alerta.monto_ultimo | currency: 'MXN' }}</span>
+              <span class="item-alerta-estado">
+                @if (alerta.vencido) {
+                  Venció hace {{ -alerta.dias_restantes }}
+                  {{ -alerta.dias_restantes === 1 ? 'día' : 'días' }} (día
+                  {{ alerta.dia_pago_mes }})
+                } @else if (alerta.dias_restantes === 0) {
+                  Hoy es el día de pago (día {{ alerta.dia_pago_mes }})
+                } @else {
+                  En {{ alerta.dias_restantes }}
+                  {{ alerta.dias_restantes === 1 ? 'día' : 'días' }} (día {{ alerta.dia_pago_mes }})
+                }
+              </span>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
     <!-- FILTROS: rango de fechas opcional (sin filtros, todo el histórico) +
          accesos rápidos + categoría/forma de pago (chips, server-filtrados) +
          búsqueda por concepto/nota. -->
@@ -348,9 +378,44 @@
             [checked]="esRecurrenteForm()"
             (change)="esRecurrenteForm.set($any($event.target).checked)"
           />
-          Es un gasto recurrente (ej. renta mensual) — solo informativo, no genera nada
-          automáticamente.
+          Es un gasto recurrente (ej. renta mensual).
         </label>
+
+        @if (esRecurrenteForm()) {
+          <div class="fila-alerta-recurrente">
+            <div class="campo">
+              <label for="dia-pago-gasto">Día de pago del mes (opcional)</label>
+              <input
+                id="dia-pago-gasto"
+                type="number"
+                min="1"
+                max="31"
+                step="1"
+                placeholder="Ej. 5"
+                [value]="diaPagoMesForm()"
+                (input)="
+                  diaPagoMesForm.set($any($event.target).value ? +$any($event.target).value : null)
+                "
+              />
+            </div>
+            <div class="campo">
+              <label for="dias-aviso-gasto">Avisar con cuántos días de anticipación</label>
+              <input
+                id="dias-aviso-gasto"
+                type="number"
+                min="0"
+                step="1"
+                [value]="diasAvisoPrevioForm()"
+                (input)="diasAvisoPrevioForm.set(+$any($event.target).value || 0)"
+              />
+            </div>
+          </div>
+          @if (diaPagoMesForm() === null) {
+            <p class="texto-ayuda-costo">
+              Sin un día de pago no aparecerá en las alertas de "Pagos recurrentes por registrar".
+            </p>
+          }
+        }
 
         <div class="campo">
           <label for="proveedor-gasto">Proveedor (opcional)</label>

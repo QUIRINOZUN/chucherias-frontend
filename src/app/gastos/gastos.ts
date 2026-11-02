@@ -25,6 +25,7 @@ import {
   CategoriaGasto,
   FormaPagoGasto,
   FiltrosGastos,
+  AlertaGastoRecurrente,
 } from '../core/gastos';
 import { ProveedoresService, Proveedor } from '../core/proveedores';
 import { ThemeService } from '../core/theme';
@@ -51,6 +52,9 @@ function formatoFechaLocal(fecha: Date): string {
 export class GastosComponent implements OnInit {
   categorias = signal<CategoriaGasto[]>([]);
   proveedores = signal<Proveedor[]>([]);
+
+  // ---- Alertas de pago recurrente (2026-10-31) -----------------------------
+  alertasRecurrentes = signal<AlertaGastoRecurrente[]>([]);
 
   gastos = signal<Gasto[]>([]);
   cargando = signal(true);
@@ -100,6 +104,9 @@ export class GastosComponent implements OnInit {
   fechaForm = signal('');
   formaPagoForm = signal<FormaPagoGasto>('efectivo');
   esRecurrenteForm = signal(false);
+  // Solo tienen efecto si esRecurrenteForm es true (ver routes/gastos.js).
+  diaPagoMesForm = signal<number | null>(null);
+  diasAvisoPrevioForm = signal(3);
   proveedorIdForm = signal<number | null>(null);
   notaForm = signal('');
 
@@ -160,6 +167,17 @@ export class GastosComponent implements OnInit {
       },
     });
     this.cargarGastos();
+    this.cargarAlertas();
+  }
+
+  cargarAlertas(): void {
+    this.gastosService.obtenerAlertas().subscribe({
+      next: (alertas) => this.alertasRecurrentes.set(alertas),
+      error: () => {
+        // La franja de alertas simplemente no aparece; el resto de la
+        // pantalla sigue funcionando con normalidad.
+      },
+    });
   }
 
   cargarGastos(): void {
@@ -269,6 +287,8 @@ export class GastosComponent implements OnInit {
     this.fechaForm.set(formatoFechaLocal(new Date()));
     this.formaPagoForm.set('efectivo');
     this.esRecurrenteForm.set(false);
+    this.diaPagoMesForm.set(null);
+    this.diasAvisoPrevioForm.set(3);
     this.proveedorIdForm.set(null);
     this.notaForm.set('');
     this.errorForm.set('');
@@ -285,6 +305,8 @@ export class GastosComponent implements OnInit {
     this.fechaForm.set(gasto.fecha);
     this.formaPagoForm.set(gasto.forma_pago);
     this.esRecurrenteForm.set(gasto.es_recurrente);
+    this.diaPagoMesForm.set(gasto.dia_pago_mes);
+    this.diasAvisoPrevioForm.set(gasto.dias_aviso_previo ?? 3);
     this.proveedorIdForm.set(gasto.proveedor_id);
     this.notaForm.set(gasto.nota ?? '');
     this.errorForm.set('');
@@ -307,6 +329,8 @@ export class GastosComponent implements OnInit {
       fecha: this.fechaForm(),
       forma_pago: this.formaPagoForm(),
       es_recurrente: this.esRecurrenteForm(),
+      dia_pago_mes: this.esRecurrenteForm() ? this.diaPagoMesForm() : null,
+      dias_aviso_previo: this.diasAvisoPrevioForm(),
       proveedor_id: this.proveedorIdForm(),
       nota: this.notaForm().trim() || null,
     };
@@ -324,6 +348,7 @@ export class GastosComponent implements OnInit {
         this.guardando.set(false);
         this.modoFormulario.set(null);
         this.cargarGastos();
+        this.cargarAlertas();
       },
       error: (error: HttpErrorResponse) => {
         this.guardando.set(false);

@@ -27,6 +27,11 @@ export interface Gasto {
   fecha: string; // AAAA-MM-DD
   forma_pago: FormaPagoGasto;
   es_recurrente: boolean;
+  // Alertas de pago recurrente (2026-10-31): solo tienen sentido cuando
+  // es_recurrente es true. dia_pago_mes = día fijo del mes (1-31);
+  // dias_aviso_previo = con cuántos días de anticipación avisar.
+  dia_pago_mes: number | null;
+  dias_aviso_previo: number;
   proveedor_id: number | null;
   proveedor_nombre: string | null;
   nota: string | null;
@@ -36,6 +41,19 @@ export interface Gasto {
   editado_por: number | null;
   editado_por_nombre: string | null;
   fecha_edicion: string | null;
+}
+
+// Una fila de GET /api/gastos/alertas: un gasto recurrente cuya fecha de
+// pago ya se acerca (o ya venció) este mes y todavía no se ha vuelto a
+// registrar.
+export interface AlertaGastoRecurrente {
+  categoria_id: number;
+  categoria: string;
+  concepto: string;
+  monto_ultimo: number;
+  dia_pago_mes: number;
+  dias_restantes: number;
+  vencido: boolean;
 }
 
 export interface FiltrosGastos {
@@ -54,6 +72,8 @@ export interface DatosNuevoGasto {
   fecha: string;
   forma_pago: FormaPagoGasto;
   es_recurrente?: boolean;
+  dia_pago_mes?: number | null;
+  dias_aviso_previo?: number;
   proveedor_id?: number | null;
   nota?: string | null;
 }
@@ -111,5 +131,11 @@ export class GastosService {
     return this.http.delete<{ eliminados: number }>(`${this.apiUrl}/gastos/historial`, {
       params: { desde, hasta },
     });
+  }
+
+  // GET /api/gastos/alertas — gastos recurrentes cuyo pago se acerca o ya
+  // venció este mes y todavía no se registró de nuevo (2026-10-31).
+  obtenerAlertas(): Observable<AlertaGastoRecurrente[]> {
+    return this.http.get<AlertaGastoRecurrente[]>(`${this.apiUrl}/gastos/alertas`);
   }
 }
