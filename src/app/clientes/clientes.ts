@@ -18,6 +18,7 @@ import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth';
 import { Cliente, ClienteDetalle, ClientesService } from '../core/clientes';
+import { ConfigLealtad, EscalonLealtad, LealtadService } from '../core/lealtad';
 import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { ThemeService } from '../core/theme';
 
@@ -58,8 +59,35 @@ export class ClientesComponent implements OnInit {
   errorEliminarHistorial = signal('');
   resultadoEliminarHistorial = signal<string | null>(null);
 
+  // ---- Configuración del programa de lealtad (2026-10-31) -----------------
+  // Se carga siempre (cualquier admin/encargado que abra esta pantalla puede
+  // editarla), tanto para alimentar la barra de progreso del detalle
+  // (ya no asume "ciclo de 10") como para la ventana de configuración.
+  configLealtad = signal<ConfigLealtad | null>(null);
+  escalones = signal<EscalonLealtad[]>([]);
+
+  mostrarConfigLealtad = signal(false);
+  cicloVisitasForm = signal(10);
+  montoMinimoForm = signal(100);
+  guardandoConfigLealtad = signal(false);
+  errorConfigLealtad = signal('');
+
+  // Formulario para agregar/editar UN escalón a la vez, dentro de la misma
+  // ventana de configuración. `formEscalonAbierto` decide si se ve el
+  // formulario; `escalonEditandoId` en null (con el formulario abierto)
+  // significa "creando uno nuevo", con un id significa "editando ese".
+  formEscalonAbierto = signal(false);
+  escalonEditandoId = signal<number | null>(null);
+  visitaEscalonForm = signal(1);
+  porcentajeEscalonForm = signal(5);
+  descripcionEscalonForm = signal('');
+  guardandoEscalon = signal(false);
+  errorEscalon = signal('');
+  confirmarEliminarEscalonId = signal<number | null>(null);
+
   constructor(
     private clientesService: ClientesService,
+    private lealtadService: LealtadService,
     private authService: AuthService,
     public themeService: ThemeService,
     private router: Router,
@@ -67,6 +95,150 @@ export class ClientesComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarClientes();
+    this.cargarConfigLealtad();
+  }
+
+  // ===========================================================================
+  // CONFIGURACIÓN DEL PROGRAMA DE LEALTAD
+  // ===========================================================================
+  cargarConfigLealtad(): void {
+    this.lealtadService.obtenerConfig().subscribe({
+      next: (config) => this.configLealtad.set(config),
+      error: () => {
+        // La barra de progreso del detalle cae a su valor por default (10)
+        // si esto falla; el resto de la pantalla sigue funcionando.
+      },
+    });
+    this.lealtadService.listarEscalones().subscribe({
+      next: (escalones) => this.escalones.set(escalones),
+      error: () => {},
+    });
+  }
+
+  abrirConfigLealtad(): void {
+    const config = this.configLealtad();
+    this.cicloVisitasForm.set(config?.ciclo_visitas ?? 10);
+    this.montoMinimoForm.set(config?.monto_minimo_compra ?? 100);
+    this.errorConfigLealtad.set('');
+    this.cancelarFormularioEscalon();
+    this.mostrarConfigLealtad.set(true);
+  }
+
+  cerrarConfigLealtad(): void {
+    if (this.guardandoConfigLealtad()) return;
+    this.mostrarConfigLealtad.set(false);
+  }
+
+  guardarConfigLealtad(): void {
+    if (this.cicloVisitasForm() <= 0 || this.montoMinimoForm() < 0) {
+      this.errorConfigLealtad.set(
+        'El ciclo debe ser mayor a cero y el monto mínimo no puede ser negativo.',
+      );
+      return;
+    }
+    this.guardandoConfigLealtad.set(true);
+    this.errorConfigLealtad.set('');
+    this.lealtadService
+      .actualizarConfig({
+        ciclo_visitas: this.cicloVisitasForm(),
+        monto_minimo_compra: this.montoMinimoForm(),
+      })
+      .subscribe({
+        next: (config) => {
+          this.configLealtad.set(config);
+          this.guardandoConfigLealtad.set(false);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.guardandoConfigLealtad.set(false);
+          this.errorConfigLealtad.set(error.error?.error || 'No se pudo guardar la configuración.');
+        },
+      });
+  }
+
+  // ---- Escalones (en qué visita, qué % de descuento) -----------------------
+  abrirNuevoEscalon(): void {
+    this.escalonEditandoId.set(null);
+    this.visitaEscalonForm.set(1);
+    this.porcentajeEscalonForm.set(5);
+    this.descripcionEscalonForm.set('');
+    this.errorEscalon.set('');
+    this.formEscalonAbierto.set(true);
+  }
+
+  abrirEditarEscalon(escalon: EscalonLealtad): void {
+    this.escalonEditandoId.set(escalon.id);
+    this.visitaEscalonForm.set(escalon.visita_numero);
+    this.porcentajeEscalonForm.set(escalon.porcentaje_descuento);
+    this.descripcionEscalonForm.set(escalon.descripcion ?? '');
+    this.errorEscalon.set('');
+    this.formEscalonAbierto.set(true);
+  }
+
+  cancelarFormularioEscalon(): void {
+    this.formEscalonAbierto.set(false);
+    this.escalonEditandoId.set(null);
+  }
+
+  guardarEscalon(): void {
+    if (
+      this.visitaEscalonForm() <= 0 ||
+      this.porcentajeEscalonForm() <= 0 ||
+      this.porcentajeEscalonForm() > 100
+    ) {
+      this.errorEscalon.set(
+        'La visita debe ser mayor a cero y el porcentaje debe estar entre 1 y 100.',
+      );
+      return;
+    }
+    const datos = {
+      visita_numero: this.visitaEscalonForm(),
+      porcentaje_descuento: this.porcentajeEscalonForm(),
+      descripcion: this.descripcionEscalonForm().trim() || null,
+    };
+    this.guardandoEscalon.set(true);
+    this.errorEscalon.set('');
+
+    const id = this.escalonEditandoId();
+    const peticion = id
+      ? this.lealtadService.editarEscalon(id, datos)
+      : this.lealtadService.crearEscalon(datos);
+    peticion.subscribe({
+      next: (escalon) => {
+        this.guardandoEscalon.set(false);
+        this.escalones.update((lista) => {
+          const sinEste = lista.filter((e) => e.id !== escalon.id);
+          return [...sinEste, escalon].sort((a, b) => a.visita_numero - b.visita_numero);
+        });
+        this.cancelarFormularioEscalon();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.guardandoEscalon.set(false);
+        this.errorEscalon.set(error.error?.error || 'No se pudo guardar el escalón.');
+      },
+    });
+  }
+
+  pedirEliminarEscalon(id: number): void {
+    this.confirmarEliminarEscalonId.set(id);
+  }
+
+  cancelarEliminarEscalon(): void {
+    this.confirmarEliminarEscalonId.set(null);
+  }
+
+  confirmarEliminarEscalon(): void {
+    const id = this.confirmarEliminarEscalonId();
+    if (!id) return;
+    this.lealtadService.eliminarEscalon(id).subscribe({
+      next: () => {
+        this.escalones.update((lista) => lista.filter((e) => e.id !== id));
+        this.confirmarEliminarEscalonId.set(null);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.errorConfigLealtad.set(error.error?.error || 'No se pudo eliminar el escalón.');
+        this.confirmarEliminarEscalonId.set(null);
+      },
+    });
   }
 
   // Typeahead con un pequeño retraso, para no consultar al servidor en cada

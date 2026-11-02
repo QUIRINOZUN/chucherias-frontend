@@ -41,6 +41,9 @@
           (input)="actualizarBusqueda($any($event.target).value)"
         />
       </div>
+      <button type="button" class="boton-configurar-lealtad" (click)="abrirConfigLealtad()">
+        Configurar programa
+      </button>
       @if (esAdministrador()) {
         <button type="button" class="boton-eliminar-historial" (click)="abrirEliminarHistorial()">
           Eliminar historial
@@ -124,18 +127,37 @@
 
             <div class="progreso-lealtad">
               <p class="progreso-lealtad-texto">
-                {{ detalle.visitas_acumuladas }} de 10 visitas del ciclo actual
+                {{ detalle.visitas_acumuladas }} de
+                {{ configLealtad()?.ciclo_visitas ?? 10 }} visitas del ciclo actual
               </p>
               <div class="progreso-lealtad-barra">
                 <div
                   class="progreso-lealtad-relleno"
-                  [style.width.%]="(detalle.visitas_acumuladas / 10) * 100"
+                  [style.width.%]="
+                    (detalle.visitas_acumuladas / (configLealtad()?.ciclo_visitas ?? 10)) * 100
+                  "
                 ></div>
-                <!-- Marcas en la visita 5 (5% de descuento) y 10 (15%). -->
-                <span class="progreso-lealtad-marca" style="left: 50%"></span>
+                <!-- Una marca por escalón configurado (antes: fija en 50%,
+                     "visita 5" — ahora se posiciona según el ciclo real). -->
+                @for (escalon of escalones(); track escalon.id) {
+                  <span
+                    class="progreso-lealtad-marca"
+                    [style.left.%]="
+                      (escalon.visita_numero / (configLealtad()?.ciclo_visitas ?? 10)) * 100
+                    "
+                  ></span>
+                }
               </div>
               <p class="progreso-lealtad-leyenda">
-                Visita 5 → 5% de descuento · Visita 10 → 15% y reinicia el ciclo
+                @if (escalones().length === 0) {
+                  Sin escalones de descuento configurados todavía.
+                } @else {
+                  @for (escalon of escalones(); track escalon.id) {
+                    Visita {{ escalon.visita_numero }} → {{ escalon.porcentaje_descuento }}%{{
+                      !$last ? ' · ' : ''
+                    }}
+                  }
+                }
               </p>
             </div>
           } @else {
@@ -243,6 +265,175 @@
             </div>
           }
         }
+      </div>
+    </div>
+  }
+
+  <!-- CONFIGURAR PROGRAMA DE LEALTAD (2026-10-31): largo del ciclo, monto
+       mínimo de compra, y los escalones (en qué visita, qué % de
+       descuento). Administrador y encargado — mismo criterio de "gestión"
+       que el resto de esta pantalla. -->
+  @if (mostrarConfigLealtad()) {
+    <div class="overlay">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Configurar programa de lealtad"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarConfigLealtad()"
+      >
+        <h2>Configurar programa de lealtad</h2>
+        <div class="campo">
+          <label for="ciclo-visitas-form">Largo del ciclo (número de visitas)</label>
+          <input
+            id="ciclo-visitas-form"
+            type="number"
+            min="1"
+            step="1"
+            [value]="cicloVisitasForm()"
+            (input)="cicloVisitasForm.set(+$any($event.target).value)"
+          />
+        </div>
+        <div class="campo">
+          <label for="monto-minimo-form">Monto mínimo de compra que cuenta como visita</label>
+          <input
+            id="monto-minimo-form"
+            type="number"
+            min="0"
+            step="0.01"
+            [value]="montoMinimoForm()"
+            (input)="montoMinimoForm.set(+$any($event.target).value)"
+          />
+        </div>
+        @if (errorConfigLealtad()) {
+          <p class="mensaje-estado mensaje-error">{{ errorConfigLealtad() }}</p>
+        }
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-confirmar"
+            [disabled]="guardandoConfigLealtad()"
+            (click)="guardarConfigLealtad()"
+          >
+            {{ guardandoConfigLealtad() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+
+        <h3 class="subtitulo-historial">Escalones de descuento</h3>
+        @if (escalones().length === 0) {
+          <p class="mensaje-estado">Sin escalones capturados todavía.</p>
+        } @else {
+          <ul class="lista-escalones-lealtad">
+            @for (escalon of escalones(); track escalon.id) {
+              <li class="item-escalon-lealtad">
+                <div class="item-escalon-info">
+                  <span class="item-escalon-visita">Visita {{ escalon.visita_numero }}</span>
+                  <span class="item-escalon-porcentaje">{{ escalon.porcentaje_descuento }}%</span>
+                  @if (escalon.descripcion) {
+                    <span class="item-escalon-descripcion">{{ escalon.descripcion }}</span>
+                  }
+                </div>
+                <div class="item-escalon-acciones">
+                  <button
+                    type="button"
+                    class="boton-enlace-chico"
+                    (click)="abrirEditarEscalon(escalon)"
+                  >
+                    Editar
+                  </button>
+                  @if (confirmarEliminarEscalonId() === escalon.id) {
+                    <button
+                      type="button"
+                      class="boton-confirmar-eliminar"
+                      (click)="confirmarEliminarEscalon()"
+                    >
+                      ¿Seguro?
+                    </button>
+                    <button
+                      type="button"
+                      class="boton-enlace-chico"
+                      (click)="cancelarEliminarEscalon()"
+                    >
+                      No
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="boton-enlace-chico boton-enlace-peligro"
+                      (click)="pedirEliminarEscalon(escalon.id)"
+                    >
+                      Eliminar
+                    </button>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (!formEscalonAbierto()) {
+          <button type="button" class="boton-nuevo" (click)="abrirNuevoEscalon()">
+            + Nuevo escalón
+          </button>
+        } @else {
+          <div class="campo">
+            <label for="visita-escalon-form">Número de visita</label>
+            <input
+              id="visita-escalon-form"
+              type="number"
+              min="1"
+              [max]="cicloVisitasForm()"
+              step="1"
+              [value]="visitaEscalonForm()"
+              (input)="visitaEscalonForm.set(+$any($event.target).value)"
+            />
+          </div>
+          <div class="campo">
+            <label for="porcentaje-escalon-form">Porcentaje de descuento</label>
+            <input
+              id="porcentaje-escalon-form"
+              type="number"
+              min="1"
+              max="100"
+              step="0.5"
+              [value]="porcentajeEscalonForm()"
+              (input)="porcentajeEscalonForm.set(+$any($event.target).value)"
+            />
+          </div>
+          <div class="campo">
+            <label for="descripcion-escalon-form">Descripción (opcional)</label>
+            <input
+              id="descripcion-escalon-form"
+              type="text"
+              placeholder="Ej. 5% por llegar a 5 visitas"
+              [value]="descripcionEscalonForm()"
+              (input)="descripcionEscalonForm.set($any($event.target).value)"
+            />
+          </div>
+          @if (errorEscalon()) {
+            <p class="mensaje-estado mensaje-error">{{ errorEscalon() }}</p>
+          }
+          <div class="acciones-formulario">
+            <button type="button" class="boton-cancelar" (click)="cancelarFormularioEscalon()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton-confirmar"
+              [disabled]="guardandoEscalon()"
+              (click)="guardarEscalon()"
+            >
+              {{ guardandoEscalon() ? 'Guardando...' : 'Guardar escalón' }}
+            </button>
+          </div>
+        }
+
+        <div class="acciones-formulario">
+          <button type="button" class="boton-cancelar" (click)="cerrarConfigLealtad()">
+            Cerrar
+          </button>
+        </div>
       </div>
     </div>
   }

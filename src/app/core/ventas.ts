@@ -58,10 +58,16 @@ export interface RespuestaVenta {
     total: string;
     metodo_pago: MetodoPago;
   };
-  // Solo si la venta llevaba cliente_id: la visita del ciclo (0-9) en la que
-  // quedó DESPUÉS de esta compra — alimenta el avance "X de 10" del ticket.
-  // Nunca se usa para calcular dinero, eso ya lo decidió venta.descuento_lealtad.
+  // Solo si la venta llevaba cliente_id: la visita del ciclo (0 a
+  // ciclo_visitas-1) en la que quedó DESPUÉS de esta compra — alimenta el
+  // avance "X de N" del ticket. Nunca se usa para calcular dinero, eso ya
+  // lo decidió venta.descuento_lealtad.
   visitas_lealtad: number | null;
+  // Largo real del ciclo vigente y si esta compra lo completó (2026-10-31,
+  // lealtad configurable) — así el ticket ya no tiene que adivinar el
+  // ciclo por su cuenta.
+  ciclo_visitas: number;
+  ciclo_completado: boolean;
 }
 
 // Un renglón de producto dentro de una venta del historial. Puede cancelarse
