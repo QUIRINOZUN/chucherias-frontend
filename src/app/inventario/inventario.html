@@ -238,7 +238,8 @@
                               · +{{ insumo.costo_extra | currency: 'MXN' }} por elección
                             }
                             @if (insumo.costo_unitario) {
-                              · costo {{ insumo.costo_unitario | currency: 'MXN' }}/{{
+                              · costo
+                              {{ insumo.costo_unitario | currency: 'MXN' : 'symbol' : '1.2-6' }}/{{
                                 insumo.unidad_medida
                               }}
                             }
@@ -507,7 +508,7 @@
             id="costo-unitario-insumo"
             type="number"
             min="0"
-            step="0.01"
+            step="any"
             placeholder="Sin capturar"
             [value]="costoUnitarioForm() ?? ''"
             (input)="
@@ -696,7 +697,7 @@
             />
             @if (costoPorUnidadBasePreview() !== null) {
               <p class="texto-conversion">
-                = {{ costoPorUnidadBasePreview() | currency: 'MXN' }} por
+                = {{ costoPorUnidadBasePreview() | currency: 'MXN' : 'symbol' : '1.2-6' }} por
                 {{ insumoMovimiento()?.unidad_medida }} (lo que se guarda como costo del insumo)
               </p>
             }
@@ -715,7 +716,7 @@
                 @for (compra of compraHistorialInsumo(); track compra.id) {
                   <li class="item-compra-insumo">
                     <span class="item-compra-costo">{{
-                      compra.costo_unitario | currency: 'MXN'
+                      compra.costo_unitario | currency: 'MXN' : 'symbol' : '1.2-6'
                     }}</span>
                     <span class="item-compra-fecha">{{ compra.fecha | date: 'dd/MM/yyyy' }}</span>
                     @if (compra.proveedor_nombre) {
@@ -897,7 +898,7 @@
                 <input
                   type="number"
                   min="0"
-                  step="0.01"
+                  step="any"
                   placeholder="Sin capturar"
                   [value]="insumo.costo_unitario ?? ''"
                   (blur)="guardarCostoUnitario(insumo, $any($event.target).value)"

@@ -473,7 +473,9 @@ export class InventarioComponent implements OnInit {
     if (cantidadBase <= 0) {
       return null;
     }
-    return Math.round((costoTotal / cantidadBase) * 100) / 100;
+    // 6 decimales (insumos.costo_unitario es NUMERIC(14,6) desde
+    // 2026-11-02): con solo 2, 50 kg por $60 ($0.0012/g) se guardaba como 0.
+    return Math.round((costoTotal / cantidadBase) * 1e6) / 1e6;
   });
 
   // Cuánto equivale la cantidad capturada en la unidad base del insumo, para
