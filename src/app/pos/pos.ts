@@ -49,9 +49,10 @@ import { Cliente, ClientesService } from '../core/clientes';
 import { EmpleadosService, Repartidor } from '../core/empleados';
 import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { InsumosService } from '../core/insumos';
+import { ConfigLealtad, EscalonLealtad, LealtadService } from '../core/lealtad';
 import { ThemeService } from '../core/theme';
 import { MetodoPago, RespuestaVenta, TipoEntrega, VentasService } from '../core/ventas';
-import { obtenerEstiloCategoria } from './categoria-estilos';
+import { aplicarEstilosPersonalizados, obtenerEstiloCategoria } from './categoria-estilos';
 import { IngredienteRemovible, obtenerIngredientesRemovibles } from './producto-ingredientes';
 import { GrupoEleccion, OpcionEleccion, obtenerEleccionesDeVariante } from './producto-elecciones';
 
@@ -125,10 +126,14 @@ interface Recibo {
   // si el cliente ya tenía una visita contada hoy por otra compra.
   clienteLealtadNombre: string | null;
   descuentoLealtad: number;
-  // Avance del ciclo de lealtad (0-9) DESPUÉS de esta compra, o null si no
-  // había cliente de lealtad ligado — alimenta el "X de 10" del ticket
-  // (2026-10-17, ver "potenciar ticket"). Nunca decide dinero.
+  // Avance del ciclo de lealtad DESPUÉS de esta compra, o null si no había
+  // cliente de lealtad ligado — alimenta el "X de N" del ticket (2026-10-17,
+  // ver "potenciar ticket"). Nunca decide dinero.
   visitasLealtad: number | null;
+  // Largo real del ciclo y si esta compra lo completó (2026-10-31, lealtad
+  // configurable) — ya resueltos por el servidor, el ticket no adivina.
+  cicloVisitas: number;
+  cicloCompletado: boolean;
   montoRecibido: number | null;
   cambio: number | null;
   cajero: string;
@@ -249,6 +254,144 @@ export class PosComponent implements OnInit, OnDestroy {
   recibo = signal<Recibo | null>(null);
 
   // ---------------------------------------------------------------------------
+  // SEPARAR CUENTA (2026-10-31) — dos formas, ambas sin tocar el backend:
+  //
+  // 1) "Por productos": el carrito se divide en varias subcuentas (cada
+  //    línea se asigna a un número de cuenta) y cada una se cobra como una
+  //    venta INDEPENDIENTE — su propio folio, su propio descuento de
+  //    inventario, su propio ticket. Se implementa con una COLA: se arma
+  //    la lista de subcuentas y se van cargando una por una en el mismo
+  //    flujo de Cobro de siempre (reutilizado sin cambios), avanzando a la
+  //    siguiente cada vez que se cierra el comprobante de la anterior.
+  // 2) "Entre N personas, monto igual": una calculadora dentro del Cobro
+  //    (ver totalPorPersona()) — sigue siendo UNA sola venta (mismos
+  //    productos, un solo folio); solo ayuda a saber cuánto le toca pagar
+  //    a cada persona. No cambia nada de cómo se registra la venta.
+  // ---------------------------------------------------------------------------
+  dividiendoCuenta = signal(false);
+  // item.id → número de subcuenta (1-indexado). Sin entrada = cuenta 1.
+  cuentaPorItem = signal<Map<string, number>>(new Map());
+
+  // Cuando hay una cola activa, `carrito()` contiene SOLO los productos de
+  // la subcuenta que se está cobrando ahora mismo — las demás esperan aquí.
+  colaDeCuentas = signal<ItemCarrito[][] | null>(null);
+  indiceCuentaActual = signal(0);
+
+  // Entre N personas, monto igual — calculadora dentro del Cobro.
+  personasDivisionForm = signal(2);
+
+  cuentaDe(item: ItemCarrito): number {
+    return this.cuentaPorItem().get(item.id) ?? 1;
+  }
+
+  asignarCuenta(item: ItemCarrito, numero: number): void {
+    this.cuentaPorItem.update((mapa) => {
+      const nuevo = new Map(mapa);
+      nuevo.set(item.id, numero);
+      return nuevo;
+    });
+  }
+
+  // Cuántas subcuentas DISTINTAS hay asignadas entre las líneas reales del
+  // carrito (ignora cualquier entrada vieja de un item que ya no existe).
+  numeroCuentasDetectadas = computed(() => {
+    const numeros = new Set(this.carrito().map((item) => this.cuentaDe(item)));
+    return numeros.size;
+  });
+
+  totalDeCuenta(numero: number): number {
+    return this.carrito()
+      .filter((item) => this.cuentaDe(item) === numero)
+      .reduce(
+        (suma, item) => suma + (item.precio + this.costoExtraDeLinea(item)) * item.cantidad,
+        0,
+      );
+  }
+
+  abrirDividirCuenta(): void {
+    if (this.carrito().length < 2) return;
+    // Por default, todo arranca en la cuenta 1 (conserva cualquier
+    // asignación previa de un item que siga en el carrito).
+    const mapa = new Map<string, number>();
+    for (const item of this.carrito()) {
+      mapa.set(item.id, this.cuentaPorItem().get(item.id) ?? 1);
+    }
+    this.cuentaPorItem.set(mapa);
+    this.dividiendoCuenta.set(true);
+  }
+
+  cerrarDividirCuenta(): void {
+    this.dividiendoCuenta.set(false);
+  }
+
+  // Arma la cola de subcuentas (ordenadas por número) y empieza a cobrar la
+  // primera — reutiliza abrirCobro() tal cual, sin duplicar su lógica.
+  confirmarDivisionCuenta(): void {
+    if (this.numeroCuentasDetectadas() < 2) return;
+
+    const grupos = new Map<number, ItemCarrito[]>();
+    for (const item of this.carrito()) {
+      const numero = this.cuentaDe(item);
+      const lista = grupos.get(numero) ?? [];
+      lista.push(item);
+      grupos.set(numero, lista);
+    }
+    const cola = [...grupos.entries()].sort((a, b) => a[0] - b[0]).map(([, items]) => items);
+
+    this.colaDeCuentas.set(cola);
+    this.indiceCuentaActual.set(0);
+    this.dividiendoCuenta.set(false);
+    this.carrito.set(cola[0]);
+    this.abrirCobro();
+  }
+
+  // Avanza a la siguiente subcuenta pendiente de la cola — enganchado desde
+  // nuevaVenta() cuando hay un cobro dividido en curso. Al acabarse la
+  // cola, limpia todo y deja la pantalla lista para la siguiente venta
+  // normal (mismo criterio que nuevaVenta()).
+  private cargarSiguienteCuentaDeLaCola(): void {
+    const cola = this.colaDeCuentas();
+    const siguiente = this.indiceCuentaActual() + 1;
+    if (!cola || siguiente >= cola.length) {
+      this.colaDeCuentas.set(null);
+      this.indiceCuentaActual.set(0);
+      this.cuentaPorItem.set(new Map());
+      this.carrito.set([]);
+      return;
+    }
+    this.indiceCuentaActual.set(siguiente);
+    this.carrito.set(cola[siguiente]);
+    this.abrirCobro();
+  }
+
+  // Cancela las subcuentas que TODAVÍA no se han cobrado (las ya cobradas
+  // son ventas reales, no se pueden "deshacer" desde aquí) y deja el
+  // carrito vacío — el cajero puede volver a agregar lo que falte a mano.
+  cancelarColaDeCuentas(): void {
+    this.colaDeCuentas.set(null);
+    this.indiceCuentaActual.set(0);
+    this.cuentaPorItem.set(new Map());
+    this.carrito.set([]);
+    this.mostrarCobro.set(false);
+  }
+
+  actualizarPersonasDivision(valor: string): void {
+    const numero = Math.floor(Number(valor));
+    this.personasDivisionForm.set(Number.isFinite(numero) && numero >= 2 ? numero : 2);
+  }
+
+  // Entre N personas, monto igual: cuánto paga cada persona, con el
+  // residuo (si el total no se divide exacto entre N) cargado a la
+  // PRIMERA persona — nunca se pierde ni se inventa un centavo.
+  totalPorPersona = computed(() => {
+    const n = Math.max(1, Math.floor(this.personasDivisionForm()));
+    const total = this.totalAPagar();
+    const porPersona = Math.floor((total / n) * 100) / 100;
+    const residuo = Math.round((total - porPersona * n) * 100) / 100;
+    return { porPersona, primeraPersona: porPersona + residuo, n };
+  });
+
+  // ---------------------------------------------------------------------------
   // Estado de CAJA: "Saldo inicial" / "Ingresar efectivo" y el aviso + ticket
   // de un retiro que el administrador haya emitido.
   // ---------------------------------------------------------------------------
@@ -323,19 +466,31 @@ export class PosComponent implements OnInit, OnDestroy {
   // Cantidad total de artículos (suma de cantidades, no de líneas).
   cantidadItems = computed(() => this.carrito().reduce((suma, item) => suma + item.cantidad, 0));
 
+  // Configuración real del programa de lealtad (2026-10-31), cargada en
+  // ngOnInit — antes el ciclo/escalones/mínimo estaban hardcodeados aquí.
+  // Mientras no responda el servidor, se usan los mismos valores de
+  // siempre como respaldo (10 visitas, mínimo $100) para no dejar la vista
+  // previa rota en ese instante.
+  configLealtad = signal<ConfigLealtad | null>(null);
+  escalonesLealtad = signal<EscalonLealtad[]>([]);
+
+  cicloLealtad = computed(() => this.configLealtad()?.ciclo_visitas ?? 10);
+  montoMinimoLealtad = computed(() => this.configLealtad()?.monto_minimo_compra ?? 100);
+
   // RF-21/RF-22: estimación del descuento de lealtad ANTES de cobrar, para
   // que el cajero pida el monto correcto en efectivo. Es solo una vista
   // previa — el servidor es quien de verdad decide al registrar la venta
   // (POST /api/ventas), porque solo él sabe si ese cliente ya tuvo una
   // visita contada hoy por otra compra. null = sin cliente seleccionado o
-  // el total no alcanza los $100 mínimos para contar visita.
+  // el total no alcanza el mínimo configurado para contar visita.
   previsualizacionLealtad = computed(() => {
     const cliente = this.clienteLealtadSeleccionado();
-    if (!cliente || this.totalCarrito() < 100) {
+    if (!cliente || this.totalCarrito() < this.montoMinimoLealtad()) {
       return null;
     }
     const visitaNumero = cliente.visitas_acumuladas + 1;
-    const porcentaje = visitaNumero === 10 ? 15 : visitaNumero === 5 ? 5 : 0;
+    const escalon = this.escalonesLealtad().find((e) => e.visita_numero === visitaNumero);
+    const porcentaje = escalon ? Number(escalon.porcentaje_descuento) : 0;
     return { visitaNumero, porcentaje };
   });
 
@@ -423,9 +578,7 @@ export class PosComponent implements OnInit, OnDestroy {
   // (public/img/monedas/), mismo patrón que los billetes — antes se
   // dibujaban como un chip circular con el número, sin imagen.
   imagenMoneda(monto: number): string | null {
-    return DENOMINACIONES_MONEDAS_MXN.includes(monto)
-      ? `/img/monedas/moneda_${monto}.svg`
-      : null;
+    return DENOMINACIONES_MONEDAS_MXN.includes(monto) ? `/img/monedas/moneda_${monto}.svg` : null;
   }
 
   // Cambio a devolver = monto recibido - total. Solo tiene sentido en
@@ -446,6 +599,7 @@ export class PosComponent implements OnInit, OnDestroy {
     private insumosService: InsumosService,
     private clientesService: ClientesService,
     private empleadosService: EmpleadosService,
+    private lealtadService: LealtadService,
     private authService: AuthService,
     public themeService: ThemeService,
     private router: Router,
@@ -455,7 +609,11 @@ export class PosComponent implements OnInit, OnDestroy {
   // arranca el sondeo de retiros de efectivo sin confirmar.
   ngOnInit(): void {
     this.catalogoService.obtenerCategorias().subscribe({
-      next: (categorias) => this.categorias.set(categorias),
+      next: (categorias) => {
+        this.categorias.set(categorias);
+        // Icono/color personalizados (2026-10-31) — ver categoria-estilos.ts.
+        aplicarEstilosPersonalizados(categorias);
+      },
       error: (error: HttpErrorResponse) =>
         this.errorCarga.set(this.interpretarErrorConexion(error)),
     });
@@ -496,6 +654,19 @@ export class PosComponent implements OnInit, OnDestroy {
     // aparece, no bloquea cobrar (el repartidor es opcional).
     this.empleadosService.listarRepartidores().subscribe({
       next: (lista) => this.repartidores.set(lista),
+      error: () => {},
+    });
+
+    // 2026-10-31: configuración real del programa de lealtad (antes
+    // hardcodeada: ciclo de 10, escalones 5%/15%, mínimo $100). Falla en
+    // silencio con los mismos valores de siempre como respaldo — ver
+    // previsualizacionLealtad()/porcentajeLealtad() más abajo.
+    this.lealtadService.obtenerConfig().subscribe({
+      next: (config) => this.configLealtad.set(config),
+      error: () => {},
+    });
+    this.lealtadService.listarEscalones().subscribe({
+      next: (escalones) => this.escalonesLealtad.set(escalones),
       error: () => {},
     });
   }
@@ -1309,6 +1480,8 @@ export class PosComponent implements OnInit, OnDestroy {
           clienteLealtadNombre: clienteLealtad?.nombre_completo || null,
           descuentoLealtad: descuentoReal,
           visitasLealtad: respuesta.visitas_lealtad,
+          cicloVisitas: respuesta.ciclo_visitas,
+          cicloCompletado: respuesta.ciclo_completado,
           montoRecibido: metodoPago === 'efectivo' ? montoRecibido : null,
           cambio: metodoPago === 'efectivo' ? (montoRecibido ?? 0) - totalReal : null,
           cajero: this.authService.usuarioActual()?.nombre || '',
@@ -1329,11 +1502,10 @@ export class PosComponent implements OnInit, OnDestroy {
     window.print();
   }
 
-  // Deriva 5 o 15 a partir del monto real que decidió el servidor — el
-  // ciclo de lealtad solo tiene esos dos porcentajes posibles (ver
-  // "5. Lealtad" en routes/ventas.js), así que no hace falta pedirle al
-  // backend el número de visita solo para saber cuál de los dos fue.
-  // Usado por la celebración del comprobante cuando descuentoLealtad > 0.
+  // Porcentaje real que aplicó el servidor, a partir del monto — ya no
+  // asume que solo puede ser 5 o 15 (2026-10-31, lealtad configurable: los
+  // escalones pueden ser cualquier valor). Usado por la celebración del
+  // comprobante cuando descuentoLealtad > 0.
   porcentajeLealtad(r: Recibo): number {
     if (!r.subtotal) {
       return 0;
@@ -1342,18 +1514,18 @@ export class PosComponent implements OnInit, OnDestroy {
   }
 
   // Avance del ciclo de lealtad para el ticket (2026-10-17, "potenciar
-  // ticket"): 10 casillas, llenas de izquierda a derecha según
-  // visitasLealtad. Si esta compra completó el ciclo (15%), el contador ya
-  // volvió a 0 en el servidor — aquí se muestran las 10 llenas en vez de 0,
-  // para que el ticket celebre el ciclo completo en vez de parecer que no
-  // llevaba ningún avance.
+  // ticket"): N casillas (el ciclo real, 2026-10-31), llenas de izquierda a
+  // derecha según visitasLealtad. Si esta compra completó el ciclo, el
+  // contador ya volvió a 0 en el servidor (r.cicloCompletado lo dice
+  // explícito, ya no se adivina por el porcentaje) — aquí se muestran
+  // todas llenas en vez de 0, para que el ticket celebre el ciclo completo
+  // en vez de parecer que no llevaba ningún avance.
   avanceLealtad(r: Recibo): boolean[] {
     if (r.visitasLealtad === null) {
       return [];
     }
-    const cicloCompletado = r.descuentoLealtad > 0 && this.porcentajeLealtad(r) >= 15;
-    const posicion = cicloCompletado ? 10 : r.visitasLealtad;
-    return Array.from({ length: 10 }, (_, i) => i < posicion);
+    const posicion = r.cicloCompletado ? r.cicloVisitas : r.visitasLealtad;
+    return Array.from({ length: r.cicloVisitas }, (_, i) => i < posicion);
   }
 
   // Pequeña variedad de despedidas cálidas (2026-10-17, "potenciar ticket"):
@@ -1374,13 +1546,12 @@ export class PosComponent implements OnInit, OnDestroy {
     '{nombre}, gracias por tu lealtad. ¡Nos vemos pronto!',
   ];
 
-  // Texto bajo las 10 casillas de avance — separado de avanceLealtad()
-  // porque el caso "ciclo recién completado" necesita el mismo ajuste
-  // 0→10, pero aquí como número en vez de casillas llenas.
+  // Texto bajo las casillas de avance — separado de avanceLealtad() porque
+  // el caso "ciclo recién completado" necesita el mismo ajuste 0→ciclo,
+  // pero aquí como número en vez de casillas llenas.
   textoAvanceLealtad(r: Recibo): string {
-    const cicloCompletado = r.descuentoLealtad > 0 && this.porcentajeLealtad(r) >= 15;
-    const visita = cicloCompletado ? 10 : (r.visitasLealtad ?? 0);
-    return `${visita} de 10 visitas en tu ciclo actual`;
+    const visita = r.cicloCompletado ? r.cicloVisitas : (r.visitasLealtad ?? 0);
+    return `${visita} de ${r.cicloVisitas} visitas en tu ciclo actual`;
   }
 
   despedidaCalida(r: Recibo): string {
@@ -1442,6 +1613,10 @@ export class PosComponent implements OnInit, OnDestroy {
     filas.push(centrado('CHUCHERIAS MIX'));
     filas.push(centrado('Venta registrada'));
     filas.push('');
+    const cola = this.colaDeCuentas();
+    if (cola) {
+      filas.push(centrado(`Cuenta ${this.indiceCuentaActual() + 1} de ${cola.length}`));
+    }
     filas.push(this.quitarAcentos(`Orden ${r.venta.orden.numero_orden}`));
     filas.push(this.quitarAcentos(this.formatoFechaCorta(r.fecha)));
     if (r.cajero) {
@@ -1514,8 +1689,29 @@ export class PosComponent implements OnInit, OnDestroy {
   }
 
   // "Nueva venta": deja la pantalla lista para el siguiente cliente, con todos
-  // los valores en su estado inicial.
+  // los valores en su estado inicial. Si hay un cobro dividido en curso
+  // (ver "Separar cuenta" arriba), en vez de resetear todo carga la
+  // siguiente subcuenta pendiente de la cola.
   nuevaVenta(): void {
+    if (this.colaDeCuentas()) {
+      this.mostrarCobro.set(false);
+      this.recibo.set(null);
+      this.metodoPago.set('efectivo');
+      this.montoRecibido.set(null);
+      this.conteoEfectivo.set(new Map());
+      this.tipoEntrega.set('presencial');
+      this.clienteNombreForm.set('');
+      this.clienteDireccionForm.set('');
+      this.clienteTelefonoForm.set('');
+      this.repartidorSeleccionadoId.set(null);
+      this.clienteLealtadSeleccionado.set(null);
+      this.clienteLealtadQuery.set('');
+      this.resultadosClienteLealtad.set([]);
+      this.mostrarNuevoClienteLealtad.set(false);
+      this.errorClienteLealtad.set('');
+      this.cargarSiguienteCuentaDeLaCola();
+      return;
+    }
     this.carrito.set([]);
     this.carritoAbierto.set(false);
     this.quitarAbiertoPara.set(null);

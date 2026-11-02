@@ -104,9 +104,9 @@
             [class.chip-activa]="categoriaSeleccionada() === null"
             (click)="seleccionarCategoria(null)"
           >
-            <span class="chip-icono chip-icono-neutro">
-              <svg class="icono" aria-hidden="true"><use href="#ic-todas" /></svg>
-            </span>
+            <svg class="chip-icono chip-icono-neutro" aria-hidden="true">
+              <use href="#ic-todas" />
+            </svg>
             Todas
           </button>
           @for (categoria of categorias(); track categoria.id) {
@@ -117,11 +117,9 @@
               [style.--color-chip]="estiloCategoria(categoria.nombre).color"
               (click)="seleccionarCategoria(categoria.id)"
             >
-              <span class="chip-icono">
-                <svg class="icono" aria-hidden="true">
-                  <use [attr.href]="'#ic-' + estiloCategoria(categoria.nombre).icono" />
-                </svg>
-              </span>
+              <svg class="chip-icono" aria-hidden="true">
+                <use [attr.href]="'#ic-' + estiloCategoria(categoria.nombre).icono" />
+              </svg>
               {{ categoria.nombre }}
             </button>
           }
@@ -139,14 +137,11 @@
                todas las secciones, con una categoría elegida solo queda esa. -->
           @for (grupo of productosAgrupados(); track grupo.categoria.id) {
             <section class="categoria-seccion" [style.--color-categoria]="grupo.estilo.color">
-              <div class="categoria-seccion-fondo" aria-hidden="true"></div>
               <div class="categoria-seccion-contenido">
                 <div class="categoria-seccion-encabezado">
-                  <span class="categoria-seccion-icono">
-                    <svg class="icono" aria-hidden="true">
-                      <use [attr.href]="'#ic-' + grupo.estilo.icono" />
-                    </svg>
-                  </span>
+                  <svg class="categoria-seccion-icono" aria-hidden="true">
+                    <use [attr.href]="'#ic-' + grupo.estilo.icono" />
+                  </svg>
                   <h2>{{ grupo.categoria.nombre }}</h2>
                 </div>
 
@@ -197,13 +192,18 @@
                           <div class="imagen-marcador-categoria">
                             <span class="imagen-marcador-icono">
                               <svg class="icono" aria-hidden="true">
-                                <use [attr.href]="'#ic-' + estiloCategoria(producto.categoria).icono" />
+                                <use
+                                  [attr.href]="'#ic-' + estiloCategoria(producto.categoria).icono"
+                                />
                               </svg>
                             </span>
                           </div>
                         }
                         <div class="info-producto-categoria">
                           <h3>{{ producto.nombre }}</h3>
+                          @if (producto.variantes.length > 1 && producto.descripcion) {
+                            <p class="descripcion-producto-categoria">{{ producto.descripcion }}</p>
+                          }
                           <div class="fila-precio-flecha-categoria">
                             <span class="precio-desde-categoria">
                               {{ producto.variantes.length > 1 ? 'Desde ' : ''
@@ -513,10 +513,17 @@
             }
           </div>
 
-          <button type="button" class="boton-cobrar" (click)="abrirCobro()">
-            Cobrar
-            <svg class="icono" aria-hidden="true"><use href="#ic-siguiente" /></svg>
-          </button>
+          <div class="fila-botones-cobro">
+            @if (carrito().length >= 2) {
+              <button type="button" class="boton-separar-cuenta" (click)="abrirDividirCuenta()">
+                Separar cuenta
+              </button>
+            }
+            <button type="button" class="boton-cobrar" (click)="abrirCobro()">
+              Cobrar
+              <svg class="icono" aria-hidden="true"><use href="#ic-siguiente" /></svg>
+            </button>
+          </div>
         </div>
       }
     </aside>
@@ -616,6 +623,85 @@
     </div>
   }
 
+  <!-- VENTANA: SEPARAR CUENTA (2026-10-31) — asigna cada línea del carrito a
+       una subcuenta; "Cobrar por separado" las convierte en una cola de
+       ventas independientes, cada una pasando por el Cobro de siempre. -->
+  @if (dividiendoCuenta()) {
+    <div class="overlay">
+      <div
+        class="panel-cobro"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Separar cuenta"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarDividirCuenta()"
+      >
+        <h2>Separar cuenta</h2>
+        <p class="movimiento-caja-descripcion">
+          Asigna cada producto a una cuenta. Cada cuenta se cobrará por separado, con su propio
+          ticket.
+        </p>
+
+        <ul class="lista-separar-cuenta">
+          @for (item of carrito(); track item.id) {
+            <li class="item-separar-cuenta">
+              <div class="item-separar-info">
+                <span class="item-separar-nombre"
+                  >{{ item.cantidad }}× {{ item.productoNombre }}</span
+                >
+                <span class="item-separar-precio">
+                  {{ (item.precio + costoExtraDeLinea(item)) * item.cantidad | currency: 'MXN' }}
+                </span>
+              </div>
+              <div class="selector-cuenta">
+                @for (numero of [1, 2, 3, 4]; track numero) {
+                  <button
+                    type="button"
+                    class="pastilla-cuenta"
+                    [class.pastilla-cuenta-activa]="cuentaDe(item) === numero"
+                    (click)="asignarCuenta(item, numero)"
+                  >
+                    {{ numero }}
+                  </button>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+
+        <div class="resumen-cuentas-separadas">
+          @for (numero of [1, 2, 3, 4]; track numero) {
+            @if (totalDeCuenta(numero) > 0) {
+              <span class="chip-resumen-cuenta">
+                Cuenta {{ numero }}: {{ totalDeCuenta(numero) | currency: 'MXN' }}
+              </span>
+            }
+          }
+        </div>
+
+        @if (numeroCuentasDetectadas() < 2) {
+          <p class="texto-ayuda-division">
+            Asigna al menos un producto a una segunda cuenta para poder separar el cobro.
+          </p>
+        }
+
+        <div class="acciones-cobro">
+          <button type="button" class="boton-cancelar" (click)="cerrarDividirCuenta()">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar"
+            [disabled]="numeroCuentasDetectadas() < 2"
+            (click)="confirmarDivisionCuenta()"
+          >
+            Cobrar por separado ({{ numeroCuentasDetectadas() }} cuentas)
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- VENTANA DE COBRO / COMPROBANTE: un mismo panel muestra primero el formulario de cobro y,
        al confirmar la venta, el comprobante. -->
   @if (mostrarCobro()) {
@@ -649,6 +735,11 @@
                 </svg>
               </div>
               <p class="venta-registrada-badge">Venta registrada</p>
+              @if (colaDeCuentas(); as cola) {
+                <p class="comprobante-cuenta-separada">
+                  Cuenta {{ indiceCuentaActual() + 1 }} de {{ cola.length }}
+                </p>
+              }
               <p class="comprobante-orden">Orden {{ r.venta.orden.numero_orden }}</p>
               <p class="comprobante-fecha">{{ r.fecha | date: 'dd/MM/yyyy HH:mm' }}</p>
               @if (r.cajero) {
@@ -697,8 +788,9 @@
                     <svg class="icono lealtad-celebracion-icono"><use href="#ic-corazon" /></svg>
                   </span>
                   <p class="lealtad-celebracion-texto">
-                    @if (porcentajeLealtad(r) >= 15) {
-                      ¡Ciclo de lealtad completado! 15% de descuento y el contador vuelve a 0.
+                    @if (r.cicloCompletado) {
+                      ¡Ciclo de lealtad completado! {{ porcentajeLealtad(r) }}% de descuento y el
+                      contador vuelve a 0.
                     } @else {
                       ¡Visita de premio! {{ porcentajeLealtad(r) }}% de descuento por lealtad.
                     }
@@ -805,7 +897,15 @@
                 Imprimir
               </button>
               <button type="button" class="boton-confirmar" (click)="nuevaVenta()">
-                Nueva venta
+                @if (colaDeCuentas(); as cola) {
+                  @if (indiceCuentaActual() + 1 < cola.length) {
+                    Cobrar cuenta {{ indiceCuentaActual() + 2 }} de {{ cola.length }}
+                  } @else {
+                    Terminar
+                  }
+                } @else {
+                  Nueva venta
+                }
               </button>
             </div>
           </div>
@@ -832,6 +932,41 @@
                 {{ preview.porcentaje }}% de descuento ya aplicado arriba.
               </p>
             }
+          }
+
+          <!-- Cobro dividido en curso (2026-10-31): avisa en qué cuenta va y
+               deja cancelar las que todavía no se cobraron. -->
+          @if (colaDeCuentas(); as cola) {
+            <div class="aviso-cuenta-dividida">
+              <span>Cobrando la cuenta {{ indiceCuentaActual() + 1 }} de {{ cola.length }}.</span>
+              <button type="button" class="boton-enlace-chico" (click)="cancelarColaDeCuentas()">
+                Cancelar las que faltan
+              </button>
+            </div>
+          } @else {
+            <!-- "Entre N personas, monto igual" (2026-10-31): calculadora, no
+                 cambia cómo se registra la venta — sigue siendo una sola. -->
+            <details class="calculadora-division">
+              <summary>Dividir entre varias personas (monto igual)</summary>
+              <div class="fila-calculadora-division">
+                <label for="personas-division">Personas</label>
+                <input
+                  id="personas-division"
+                  type="number"
+                  min="2"
+                  step="1"
+                  [value]="personasDivisionForm()"
+                  (input)="actualizarPersonasDivision($any($event.target).value)"
+                />
+              </div>
+              @if (totalPorPersona(); as division) {
+                <p class="resultado-calculadora-division">
+                  {{ division.n - 1 }} persona(s) pagan
+                  {{ division.porPersona | currency: 'MXN' }} · 1 persona paga
+                  {{ division.primeraPersona | currency: 'MXN' }}
+                </p>
+              }
+            </details>
           }
 
           <!-- COLUMNAS DEL COBRO (2026-10-26): en pantallas anchas, Entrega +

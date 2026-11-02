@@ -26,6 +26,21 @@
   min-height: 100vh;
 }
 
+/* Franja arcoíris: SOLO en el POS se reemplaza por una línea sólida del
+   naranja de marca (2026-10-31, auditoría de diseño). El resto del sistema
+   sigue con --franja-arcoiris consistente (styles.css) — esa decisión fue
+   explícita del usuario y no se tocó; aquí se desvía a propósito porque un
+   degradado de 5 colores sin anclar a ningún color de la marca es, de los
+   5 hallazgos de la auditoría, el más reconocible como "demo genérico". El
+   POS es también la única pantalla con su propio logotipo en el encabezado
+   (no insignia de módulo), así que ya no compartía el resto del lenguaje
+   visual de esa franja con las demás 13 pantallas. El selector duplica la
+   clase para ganarle a la regla global por especificidad sin !important. */
+.pos-header.pos-header::before {
+  height: 2px;
+  background: var(--action-primary);
+}
+
 .pos-header {
   display: flex;
   flex-wrap: wrap;
@@ -310,26 +325,25 @@
   font-weight: 700;
 }
 
-/* El color de categoría vive en este círculo con el ícono en blanco; el
-   nombre siempre está al lado (nunca solo color). */
+/* El color de categoría vive en el propio ícono (sin círculo de fondo); el
+   nombre siempre está al lado (nunca solo color). El círculo relleno de
+   color queda reservado para el marcador de producto sin foto — antes el
+   mismo "círculo + ícono blanco" se repetía aquí, en el encabezado de
+   sección Y en el marcador, sin ninguna variación entre los tres; ese
+   mismo átomo repetido sin cambiar de forma es lo que hace que una
+   interfaz se sienta "salida de una plantilla" (auditoría 2026-10-31). */
 .chip-icono {
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--color-chip);
-  color: #fff;
-}
-
-.chip-icono .icono {
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  color: var(--color-chip, var(--pos-text-primary));
 }
 
 .chip-icono-neutro {
-  background: var(--pos-text-primary);
-  color: var(--pos-bg-main);
+  color: var(--pos-text-primary);
 }
 
 /* ===================== Tarjetas de producto ===================== */
@@ -494,8 +508,9 @@
   display: block;
 }
 
-/* Sin foto (todo el catálogo hoy): color sólido de la categoría con una
-   textura de puntos sutil y el ícono grande encima. */
+/* Sin foto (todo el catálogo hoy): color sólido de la categoría con el
+   ícono grande encima (2026-10-31: se quitó la textura de puntos que
+   llevaba encima, al usuario no le gustó verla). */
 .imagen-marcador {
   width: 100%;
   height: 132px;
@@ -503,12 +518,6 @@
   align-items: center;
   justify-content: center;
   background-color: var(--color-categoria, var(--pos-text-muted));
-  background-image: radial-gradient(
-    circle at 2px 2px,
-    rgba(255, 255, 255, 0.2) 1.5px,
-    transparent 0
-  );
-  background-size: 16px 16px;
 }
 
 .imagen-marcador-icono {
@@ -673,51 +682,42 @@
   position: relative;
 }
 
-/* Fondo tintado del color real de la categoría (--color-categoria, fijado
-   inline en pos.html) + una textura de puntos muy sutil del mismo color —
-   misma técnica de "dot texture" ya usada en .imagen-marcador y en el
-   Dashboard, aplicada aquí a un área mucho más grande por eso con opacidad
-   bastante más baja. */
-.categoria-seccion-fondo {
-  position: absolute;
-  inset: 0;
-  background-color: color-mix(in srgb, var(--color-categoria) 6%, transparent);
-  background-image: radial-gradient(
-    circle at 2px 2px,
-    color-mix(in srgb, var(--color-categoria) 35%, transparent) 1.5px,
-    transparent 0
-  );
-  background-size: 22px 22px;
-  pointer-events: none;
-}
-
+/* Borde izquierdo del color real de la categoría (--color-categoria,
+   fijado inline en pos.html) — 2026-10-31: antes solo la mitad de las
+   secciones (índice impar) llevaban este tratamiento, alternando con un
+   fondo tintado + textura de puntos para "romper la monotonía"; el
+   usuario pidió que TODAS las categorías se vean consistentes con este
+   mismo estilo (ya sin la textura de puntos, quitada en la ronda
+   anterior), así que se volvió el único tratamiento. */
 .categoria-seccion-contenido {
   position: relative;
-  padding: 28px 2px 8px;
+  padding: 28px 2px 8px 20px;
+  border-left: 5px solid var(--color-categoria);
 }
 
 .categoria-seccion-encabezado {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid color-mix(in srgb, var(--color-categoria) 35%, transparent);
 }
 
+/* Ícono grande SIN círculo de fondo (2026-10-31): el mismo "círculo sólido +
+   ícono blanco" se repetía aquí, en los chips de filtro Y en el marcador de
+   producto sin foto — sin ninguna variación entre los tres. El círculo
+   relleno queda reservado para el marcador (es el único de los tres que de
+   verdad necesita leerse como una "miniatura de foto"); aquí el ícono vive
+   suelto, grande y coloreado, con el filete de abajo como ancla visual de
+   la sección en su lugar. */
 .categoria-seccion-icono {
-  width: 52px;
-  height: 52px;
+  width: 34px;
+  height: 34px;
   flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--color-categoria);
-  color: #fff;
-  box-shadow: var(--sombra-suave);
-}
-
-.categoria-seccion-icono .icono {
-  width: 26px;
-  height: 26px;
+  fill: none;
+  stroke: var(--color-categoria);
+  stroke-width: 1.6;
 }
 
 .categoria-seccion-encabezado h2 {
@@ -798,7 +798,11 @@
   width: 100%;
   height: 200px;
   object-fit: contain;
-  background: color-mix(in srgb, var(--color-categoria, var(--pos-text-muted)) 10%, var(--pos-bg-card));
+  background: color-mix(
+    in srgb,
+    var(--color-categoria, var(--pos-text-muted)) 10%,
+    var(--pos-bg-card)
+  );
   display: block;
 }
 
@@ -809,8 +813,6 @@
   align-items: center;
   justify-content: center;
   background-color: var(--color-categoria, var(--pos-text-muted));
-  background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.2) 1.5px, transparent 0);
-  background-size: 16px 16px;
 }
 
 .info-producto-categoria {
@@ -835,6 +837,23 @@
     'SOFT' 70,
     'WONK' 1;
   color: var(--pos-text-primary);
+}
+
+/* Descripción corta, solo en la tarjeta HORIZONTAL (2026-10-31): un
+   producto con variantes es más ancho que su nombre+precio, dejando un
+   vacío de fondo liso a la derecha que se leía como un layout roto, no
+   como una decisión — el mismo texto que ya existe en la ventana de
+   detalle ahora llena ese espacio con información real en vez de aire. */
+.descripcion-producto-categoria {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--pos-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .fila-precio-flecha-categoria {
@@ -881,14 +900,17 @@
 }
 
 /* El carrito la estira a la altura de la fila (normalmente la marca una
-   tarjeta vertical vecina, más alta por tener imagen+texto apilados) — con
-   solo 1 línea de título + precio, pegar el precio al fondo con
-   `margin-top: auto` (el comportamiento normal de .fila-precio-flecha-
-   categoria) dejaba un hueco vacío enorme arriba, que fue justo el bug que
-   reportó el usuario. Aquí en cambio el bloque título+precio se CENTRA como
-   grupo, usando el espacio de sobra a propósito en vez de dejarlo vacío. */
+   tarjeta vertical vecina, más alta por tener imagen+texto apilados). Sin
+   descripción (producto sin texto capturado) el bloque título+precio se
+   CENTRA como grupo, usando el espacio de sobra a propósito en vez de
+   dejarlo vacío. Con descripción (2026-10-31, ya llena el alto por sí
+   sola) se alinea arriba en vez de forzar el centrado. */
 .tarjeta-horizontal .info-producto-categoria {
   justify-content: center;
+}
+
+.tarjeta-horizontal .info-producto-categoria:has(.descripcion-producto-categoria) {
+  justify-content: flex-start;
 }
 
 .tarjeta-horizontal .fila-precio-flecha-categoria {
@@ -1641,6 +1663,180 @@
   transform: scale(0.98);
 }
 
+/* ===================== Separar cuenta (2026-10-31) ===================== */
+.fila-botones-cobro {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.fila-botones-cobro .boton-cobrar {
+  flex: 1;
+  width: auto;
+  margin-top: 0;
+}
+
+.boton-separar-cuenta {
+  flex-shrink: 0;
+  min-height: 60px;
+  padding: 0 14px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-md);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.boton-separar-cuenta:hover {
+  border-color: var(--action-primary);
+  color: var(--action-primary);
+}
+
+.lista-separar-cuenta {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.item-separar-cuenta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+}
+
+.item-separar-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item-separar-nombre {
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.item-separar-precio {
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+}
+
+.selector-cuenta {
+  display: flex;
+  gap: 6px;
+}
+
+.pastilla-cuenta {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--pos-border);
+  background: var(--pos-bg-card);
+  color: var(--pos-text-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pastilla-cuenta-activa {
+  border-color: var(--action-primary);
+  background: var(--action-primary);
+  color: #fff;
+}
+
+.resumen-cuentas-separadas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.chip-resumen-cuenta {
+  padding: 4px 10px;
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pos-text-secondary);
+}
+
+.texto-ayuda-division {
+  margin: 0 0 14px;
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+}
+
+.comprobante-cuenta-separada {
+  margin: 2px 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--action-primary);
+}
+
+.aviso-cuenta-dividida {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: var(--radio-sm);
+  background: color-mix(in srgb, var(--action-primary) 10%, var(--pos-bg-main));
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.calculadora-division {
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+}
+
+.calculadora-division summary {
+  cursor: pointer;
+  color: var(--pos-text-secondary);
+  font-weight: 600;
+}
+
+.fila-calculadora-division {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.fila-calculadora-division label {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.fila-calculadora-division input {
+  width: 70px;
+  min-height: 40px;
+  padding: 0 10px;
+  font-size: 0.95rem;
+  border: 2px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-card);
+  color: var(--pos-text-primary);
+}
+
+.resultado-calculadora-division {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  color: var(--pos-text-secondary);
+}
+
 /* ===================== Cobro y comprobante ===================== */
 /* Fondo oscuro con desenfoque detrás de la ventana de cobro/comprobante. */
 .overlay {
@@ -2103,20 +2299,12 @@
   padding: 24px 22px 16px;
   border-bottom: 2px dashed var(--pos-border);
   border-radius: 28px 28px 0 0;
-  background-image:
-    radial-gradient(
-      circle at 2px 2px,
-      color-mix(in srgb, var(--acento-modulo, var(--action-primary)) 30%, transparent) 1.5px,
-      transparent 0
-    ),
-    linear-gradient(
-      160deg,
-      color-mix(in srgb, var(--acento-modulo, var(--action-primary)) 14%, var(--pos-bg-card)) 0%,
-      var(--pos-bg-card) 70%
-    );
-  background-size:
-    16px 16px,
-    100% 100%;
+  background-image: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--acento-modulo, var(--action-primary)) 14%, var(--pos-bg-card)) 0%,
+    var(--pos-bg-card) 70%
+  );
+  background-size: 100% 100%;
 }
 
 .comprobante-logo {

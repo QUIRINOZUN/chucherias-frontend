@@ -347,10 +347,10 @@ textarea:focus-visible {
    ahí la variable no está definida y el fallback cae al naranja de marca).
    2026-10-13, segunda pasada: se quitó el garabato bajo el título (no le
    gustó al usuario) y se reemplazó por una decoración más presente arriba
-   de la pantalla — un degradado tintado del color del módulo + la MISMA
-   textura de puntos que ya usan las tarjetas de producto sin foto en el
-   POS (`.imagen-marcador`, `pos.css`), nunca un motivo nuevo sin
-   precedente en la app — y una raya de acento sólida de 4px abajo. */
+   de la pantalla — un degradado tintado del color del módulo — y una raya
+   de acento sólida de 4px abajo. 2026-10-31: se quitó también la textura
+   de puntos que llevaba encima (al usuario no le gustó verla), aquí y en
+   cada otro lugar de la app que la reutilizaba. */
 .pos-header,
 .caja-header,
 .historial-header,
@@ -370,20 +370,12 @@ textarea:focus-visible {
   position: relative;
   overflow: hidden;
   border-bottom: 0 !important;
-  background-image:
-    radial-gradient(
-      circle at 2px 2px,
-      color-mix(in srgb, var(--acento-modulo, var(--action-primary)) 35%, transparent) 1.5px,
-      transparent 0
-    ),
-    linear-gradient(
-      120deg,
-      color-mix(in srgb, var(--acento-modulo, var(--action-primary)) 16%, var(--pos-bg-card)) 0%,
-      var(--pos-bg-card) 65%
-    );
-  background-size:
-    18px 18px,
-    100% 100%;
+  background-image: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--acento-modulo, var(--action-primary)) 16%, var(--pos-bg-card)) 0%,
+    var(--pos-bg-card) 65%
+  );
+  background-size: 100% 100%;
   box-shadow:
     var(--sombra-suave),
     inset 0 -4px 0 0 var(--acento-modulo, transparent);
