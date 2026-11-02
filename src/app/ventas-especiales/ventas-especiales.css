@@ -921,3 +921,22 @@
     flex-basis: 100%;
   }
 }
+
+/* ===================== Accesos rápidos de fecha (2026-10-31) ===================== */
+.boton-filtro-rapido {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-end;
+}
+
+.boton-filtro-rapido:hover {
+  border-color: var(--acento-modulo);
+  color: var(--acento-modulo);
+}

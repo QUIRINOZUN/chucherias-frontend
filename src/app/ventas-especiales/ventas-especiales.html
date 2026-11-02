@@ -60,6 +60,13 @@
               (change)="cambiarHasta($any($event.target).value)"
             />
           </div>
+          <!-- Accesos rápidos (2026-10-31): "alerta de pedidos para hoy" y
+               "fecha próxima a cotización" — mismo criterio que los
+               accesos de Reportes/Nómina/Gastos. -->
+          <button type="button" class="boton-filtro-rapido" (click)="filtrarHoy()">Hoy</button>
+          <button type="button" class="boton-filtro-rapido" (click)="filtrarProximosDias()">
+            Próximos 3 días
+          </button>
         </div>
 
         <div class="campo-busqueda-ve">

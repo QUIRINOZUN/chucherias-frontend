@@ -27,7 +27,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../core/auth';
 import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { CatalogoService, Categoria, Producto, Variante } from '../core/catalogo';
-import { obtenerEstiloCategoria } from '../pos/categoria-estilos';
+import { aplicarEstilosPersonalizados, obtenerEstiloCategoria } from '../pos/categoria-estilos';
 import { ThemeService } from '../core/theme';
 import {
   VentasEspecialesService,
@@ -242,6 +242,25 @@ export class VentasEspecialesComponent implements OnInit {
     this.cargarLista();
   }
 
+  // Accesos rápidos (2026-10-31, "alerta de pedidos para hoy / fecha
+  // próxima a cotización"): mismo criterio que los de Reportes/Nómina/
+  // Gastos — llenan desde/hasta solos en vez de teclear la fecha a mano.
+  filtrarHoy(): void {
+    const hoy = formatoFechaLocal(new Date());
+    this.filtroDesde.set(hoy);
+    this.filtroHasta.set(hoy);
+    this.cargarLista();
+  }
+
+  filtrarProximosDias(): void {
+    const hoy = new Date();
+    const en3Dias = new Date(hoy);
+    en3Dias.setDate(hoy.getDate() + 3);
+    this.filtroDesde.set(formatoFechaLocal(hoy));
+    this.filtroHasta.set(formatoFechaLocal(en3Dias));
+    this.cargarLista();
+  }
+
   seleccionarEstado(estado: EstadoVentaEspecial | null): void {
     this.filtroEstado.set(estado);
     this.cargarLista();
@@ -331,7 +350,11 @@ export class VentasEspecialesComponent implements OnInit {
   private cargarCatalogoSiHaceFalta(): void {
     if (this.catalogoCargado()) return;
     this.catalogoService.obtenerCategorias().subscribe({
-      next: (categorias) => this.categorias.set(categorias),
+      next: (categorias) => {
+        this.categorias.set(categorias);
+        // Icono/color personalizados (2026-10-31) — ver categoria-estilos.ts.
+        aplicarEstilosPersonalizados(categorias);
+      },
       error: () => {
         // Las categorías son solo para los chips de filtro; sin ellas el
         // buscador de productos sigue funcionando igual.
