@@ -14,7 +14,7 @@
 // =============================================================================
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface ConfigLealtad {
@@ -48,8 +48,15 @@ export class LealtadService {
   constructor(private http: HttpClient) {}
 
   // GET /api/lealtad/config
+  // monto_minimo_compra es NUMERIC en Postgres y el driver lo entrega como
+  // texto ("100.00"): se convierte aquí para que el formulario lo reenvíe
+  // como número (el servidor rechaza un string con 400).
   obtenerConfig(): Observable<ConfigLealtad> {
-    return this.http.get<ConfigLealtad>(`${this.apiUrl}/lealtad/config`);
+    return this.http
+      .get<ConfigLealtad>(`${this.apiUrl}/lealtad/config`)
+      .pipe(
+        map((config) => ({ ...config, monto_minimo_compra: Number(config.monto_minimo_compra) })),
+      );
   }
 
   // PATCH /api/lealtad/config
@@ -60,9 +67,16 @@ export class LealtadService {
     return this.http.patch<ConfigLealtad>(`${this.apiUrl}/lealtad/config`, datos);
   }
 
-  // GET /api/lealtad/escalones
+  // GET /api/lealtad/escalones — porcentaje_descuento también llega como
+  // texto ("5.00"), mismo motivo que arriba.
   listarEscalones(): Observable<EscalonLealtad[]> {
-    return this.http.get<EscalonLealtad[]>(`${this.apiUrl}/lealtad/escalones`);
+    return this.http
+      .get<EscalonLealtad[]>(`${this.apiUrl}/lealtad/escalones`)
+      .pipe(
+        map((escalones) =>
+          escalones.map((e) => ({ ...e, porcentaje_descuento: Number(e.porcentaje_descuento) })),
+        ),
+      );
   }
 
   // POST /api/lealtad/escalones
