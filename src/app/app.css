@@ -42,3 +42,25 @@
   font-weight: 700;
   cursor: pointer;
 }
+
+/* Aviso de conexión (2026-11-04): franja fija arriba de cualquier pantalla. */
+.aviso-conexion {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  padding: 10px 16px;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.aviso-conexion-caida {
+  background: var(--action-danger);
+}
+
+.aviso-conexion-ok {
+  background: var(--action-success);
+}

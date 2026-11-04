@@ -2,10 +2,26 @@
 <!-- AQUÍ se pinta la pantalla actual según la ruta (login, dashboard, POS, caja…). -->
 <router-outlet></router-outlet>
 
+<!-- AVISO DE CONEXIÓN: se ve en cualquier pantalla cuando se cae el internet (y
+     unos segundos al volver). Mientras no haya conexión no se puede registrar nada:
+     hay que anotar en la libreta y capturar después. -->
+@if (sinConexion()) {
+  <div class="aviso-conexion aviso-conexion-caida" role="alert">
+    Sin conexión a internet. Anota en la libreta y captura al volver.
+  </div>
+} @else if (reconectado()) {
+  <div class="aviso-conexion aviso-conexion-ok" role="status">Conexión recuperada.</div>
+}
+
 <!-- AVISO DE INACTIVIDAD (RNF-01): aparece cuando faltan 60 segundos para cerrar la sesión.
      Solo el botón "Seguir conectado" lo cancela. -->
 @if (inactividad.segundosRestantes(); as restantes) {
-  <div class="aviso-inactividad" role="alertdialog" aria-live="assertive" aria-label="Aviso de inactividad">
+  <div
+    class="aviso-inactividad"
+    role="alertdialog"
+    aria-live="assertive"
+    aria-label="Aviso de inactividad"
+  >
     <p>Tu sesión se cerrará en {{ restantes }} s por inactividad.</p>
     <button type="button" (click)="inactividad.continuarSesion()">Seguir conectado</button>
   </div>

@@ -23,12 +23,36 @@ import { InactividadService } from './core/inactividad';
 export class App {
   protected readonly title = signal('chucherias-frontend');
 
+  // AVISO DE CONEXIÓN (2026-11-04): el sistema necesita internet para cobrar.
+  // Cuando el navegador detecta que se cayó, se avisa de inmediato en TODAS las
+  // pantallas (así el cajero sabe al instante que debe anotar en la libreta en
+  // vez de descubrirlo al fallar un cobro), y al volver se confirma unos
+  // segundos. Es la señal del propio navegador: no detecta un internet
+  // "conectado pero sin salida", para ese caso el POS ya muestra su mensaje.
+  protected readonly sinConexion = signal(!navigator.onLine);
+  protected readonly reconectado = signal(false);
+  private temporizadorReconexion?: ReturnType<typeof setTimeout>;
+
   constructor(
     private authService: AuthService,
     // `protected` para que la plantilla pueda leer segundosRestantes y llamar
     // a continuarSesion() desde el aviso de inactividad.
     protected inactividad: InactividadService,
   ) {
+    // El componente raíz vive mientras la página esté abierta, así que estos
+    // listeners no necesitan limpiarse.
+    window.addEventListener('offline', () => {
+      clearTimeout(this.temporizadorReconexion);
+      this.reconectado.set(false);
+      this.sinConexion.set(true);
+    });
+    window.addEventListener('online', () => {
+      this.sinConexion.set(false);
+      this.reconectado.set(true);
+      clearTimeout(this.temporizadorReconexion);
+      this.temporizadorReconexion = setTimeout(() => this.reconectado.set(false), 5000);
+    });
+
     // El control de inactividad solo corre mientras hay sesión iniciada
     // (incluye recargar la página con un token guardado).
     // `effect` se vuelve a ejecutar cada vez que cambia usuarioActual: al
