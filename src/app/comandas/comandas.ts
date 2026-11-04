@@ -183,6 +183,18 @@ export class ComandasComponent implements OnInit, OnDestroy {
   };
   private readonly alRecibirFoco = () => this.cargarOrdenes();
 
+  // SONIDO BLOQUEADO (2026-11-04): los navegadores no dejan sonar audio hasta
+  // que la persona toca la página al menos una vez. Si cocina abre el tablero
+  // y nunca lo toca, el aviso de "orden nueva" no suena y nadie se entera. Se
+  // muestra un aviso visible mientras el audio siga bloqueado, y cualquier
+  // toque o tecla en la página lo desbloquea.
+  sonidoBloqueado = signal(false);
+  private readonly alInteractuar = () => {
+    if (this.sonidoBloqueado()) {
+      this.activarSonido(false);
+    }
+  };
+
   // Foto del último sondeo (id de orden -> su estado), para detectar qué
   // cambió desde la vez anterior y avisar solo UNA vez por cambio.
   private estadosAnteriores = new Map<number, EstadoOrden>();
@@ -232,6 +244,9 @@ export class ComandasComponent implements OnInit, OnDestroy {
     this.intervaloId = setInterval(() => this.cargarOrdenes(), INTERVALO_ACTUALIZACION_MS);
     document.addEventListener('visibilitychange', this.alVolverVisible);
     window.addEventListener('focus', this.alRecibirFoco);
+    document.addEventListener('pointerdown', this.alInteractuar);
+    document.addEventListener('keydown', this.alInteractuar);
+    this.prepararAudio();
 
     if (this.puedeAsignarRepartidor()) {
       this.empleadosService.listarRepartidores().subscribe({
@@ -256,7 +271,44 @@ export class ComandasComponent implements OnInit, OnDestroy {
     }
     document.removeEventListener('visibilitychange', this.alVolverVisible);
     window.removeEventListener('focus', this.alRecibirFoco);
+    document.removeEventListener('pointerdown', this.alInteractuar);
+    document.removeEventListener('keydown', this.alInteractuar);
     this.contextoAudio?.close();
+  }
+
+  // Crea el contexto de audio al abrir el tablero (no solo al sonar el primer
+  // aviso) para saber desde el principio si el navegador lo dejó bloqueado, y
+  // se mantiene sincronizado con cualquier cambio posterior de estado.
+  private prepararAudio(): void {
+    try {
+      const contexto = this.contextoAudio ?? new AudioContext();
+      this.contextoAudio = contexto;
+      this.sonidoBloqueado.set(contexto.state !== 'running');
+      contexto.onstatechange = () => this.sonidoBloqueado.set(contexto.state !== 'running');
+    } catch {
+      // Sin Web Audio en este navegador: el aviso sonoro simplemente no existe.
+      this.sonidoBloqueado.set(false);
+    }
+  }
+
+  // Botón "Activar sonido" (y toque/tecla en cualquier parte de la página):
+  // reanuda el audio dentro de un gesto de la persona, que es lo único que
+  // los navegadores aceptan. `confirmar` agrega un beep corto para que quien
+  // lo toca sepa que ya suena.
+  activarSonido(confirmar = true): void {
+    const contexto = this.contextoAudio;
+    if (!contexto) {
+      return;
+    }
+    contexto
+      .resume()
+      .then(() => {
+        this.sonidoBloqueado.set(contexto.state !== 'running');
+        if (confirmar && contexto.state === 'running') {
+          this.reproducirAviso([660]);
+        }
+      })
+      .catch(() => {});
   }
 
   // Pide al servidor las órdenes activas y reemplaza el tablero completo.

@@ -29,6 +29,15 @@
     </button>
   </header>
 
+  @if (sonidoBloqueado()) {
+    <!-- El navegador bloquea el audio hasta que alguien toca la página: sin este
+         aviso, cocina no se enteraría de que las órdenes nuevas NO suenan. -->
+    <div class="aviso-sonido" role="status">
+      <span>El aviso sonoro de órdenes nuevas está desactivado.</span>
+      <button type="button" (click)="activarSonido()">Activar sonido</button>
+    </div>
+  }
+
   @if (cargando()) {
     <!-- Skeleton (2026-10-12): las 3 columnas reales (título + ícono, que no
          dependen del servidor) con tarjetas fantasma en vez de solo texto. -->
