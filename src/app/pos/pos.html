@@ -629,7 +629,7 @@
   @if (dividiendoCuenta()) {
     <div class="overlay">
       <div
-        class="panel-cobro"
+        class="panel-cobro panel-cobro-ancho panel-separar-cuenta"
         role="dialog"
         aria-modal="true"
         aria-label="Separar cuenta"
@@ -695,7 +695,8 @@
             [disabled]="numeroCuentasDetectadas() < 2"
             (click)="confirmarDivisionCuenta()"
           >
-            Cobrar por separado ({{ numeroCuentasDetectadas() }} cuentas)
+            Cobrar por separado ({{ numeroCuentasDetectadas() }}
+            {{ numeroCuentasDetectadas() === 1 ? 'cuenta' : 'cuentas' }})
           </button>
         </div>
       </div>
@@ -1332,11 +1333,17 @@
                     />
                   </div>
                   @if (totalPorPersona(); as division) {
-                    <p class="resultado-calculadora-division">
-                      {{ division.n - 1 }} persona(s) pagan
-                      {{ division.porPersona | currency: 'MXN' }} · 1 persona paga
-                      {{ division.primeraPersona | currency: 'MXN' }}
-                    </p>
+                    <div class="resultado-calculadora-division">
+                      <span class="resultado-division-etiqueta">Cada persona paga</span>
+                      <span class="resultado-division-monto">{{
+                        division.porPersona | currency: 'MXN'
+                      }}</span>
+                      @if (division.primeraPersona !== division.porPersona) {
+                        <span class="resultado-division-nota"
+                          >Una persona paga {{ division.primeraPersona | currency: 'MXN' }}</span
+                        >
+                      }
+                    </div>
                   }
                 </details>
               }

@@ -1694,14 +1694,23 @@
   color: var(--action-primary);
 }
 
+.panel-separar-cuenta {
+  max-width: min(94vw, 640px);
+  border-top: 6px solid var(--action-primary);
+}
+
+.panel-separar-cuenta h2 {
+  font-size: 1.7rem;
+}
+
 .lista-separar-cuenta {
   list-style: none;
-  margin: 0 0 14px;
+  margin: 0 0 16px;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-height: 40vh;
+  gap: 12px;
+  max-height: 46vh;
   overflow-y: auto;
 }
 
@@ -1709,11 +1718,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
-  padding: 10px 12px;
-  border-radius: var(--radio-sm);
-  background: var(--pos-bg-main);
+  padding: 14px 16px;
+  border-radius: var(--radio-md);
+  border-left: 5px solid var(--action-primary);
+  background: color-mix(in srgb, var(--action-primary) 7%, var(--pos-bg-main));
 }
 
 .item-separar-info {
@@ -1723,29 +1733,37 @@
 }
 
 .item-separar-nombre {
-  font-weight: 600;
-  font-size: 0.88rem;
+  font-weight: 700;
+  font-size: 1.05rem;
 }
 
 .item-separar-precio {
-  font-size: 0.78rem;
-  color: var(--pos-text-secondary);
+  font-family: var(--fuente-titulo);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--acento-texto);
 }
 
 .selector-cuenta {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .pastilla-cuenta {
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: 2px solid var(--pos-border);
   background: var(--pos-bg-card);
   color: var(--pos-text-primary);
+  font-size: 1.05rem;
   font-weight: 700;
   cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.pastilla-cuenta:hover {
+  transform: scale(1.08);
 }
 
 .pastilla-cuenta-activa {
@@ -1762,12 +1780,12 @@
 }
 
 .chip-resumen-cuenta {
-  padding: 4px 10px;
+  padding: 8px 14px;
   border-radius: var(--radio-pastilla);
-  background: var(--pos-bg-main);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--pos-text-secondary);
+  background: color-mix(in srgb, var(--action-primary) 14%, var(--pos-bg-main));
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--pos-text-primary);
 }
 
 .texto-ayuda-division {
@@ -1800,12 +1818,17 @@
 .calculadora-division {
   margin-bottom: 16px;
   font-size: 0.85rem;
+  padding: 12px 14px;
+  border: 2px dashed var(--acento-modulo, var(--action-primary));
+  border-radius: var(--radio-md);
+  background: color-mix(in srgb, var(--acento-modulo, var(--action-primary)) 8%, var(--pos-bg-card));
 }
 
 .calculadora-division summary {
   cursor: pointer;
-  color: var(--pos-text-secondary);
-  font-weight: 600;
+  color: var(--pos-text-primary);
+  font-weight: 700;
+  font-size: 0.92rem;
 }
 
 .fila-calculadora-division {
@@ -1832,8 +1855,32 @@
 }
 
 .resultado-calculadora-division {
-  margin: 10px 0 0;
-  font-size: 0.8rem;
+  margin: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+}
+
+.resultado-division-etiqueta {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pos-text-secondary);
+}
+
+.resultado-division-monto {
+  font-family: var(--fuente-titulo);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--acento-texto);
+}
+
+.resultado-division-nota {
+  font-size: 0.75rem;
   color: var(--pos-text-secondary);
 }
 
