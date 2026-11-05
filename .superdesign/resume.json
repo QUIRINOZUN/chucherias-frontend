@@ -334,6 +334,132 @@
         }
       },
       "updatedAt": "2026-10-30T21:12:35.054Z"
+    },
+    "/asistencias": {
+      "targetKind": "existing-ui",
+      "projectId": "9eda39df-a714-407d-b83d-03e5462f3b90",
+      "baselineDraftId": "39e3b620-3fc7-4caf-8da2-974fed2187d4",
+      "activeDraftId": "3a61b726-a1d4-485c-b916-1c22036200ac",
+      "designSystemPath": ".superdesign/design-system.md",
+      "referenceIds": [],
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "src/styles.css",
+        "src/app/asistencias/asistencias.html:1:176",
+        "src/app/asistencias/asistencias.css:1:400"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "d77a2b1c5c3989328853b7f1ddb35b3ab2e26489271364fcd628528d6412d0d3",
+        "src/styles.css": "1f731307ae534a5fe6da76aa5d1e3fa2fd7d49157100b1d8906d5a47e1de58f7",
+        "src/app/asistencias/asistencias.html": "efb309417231a7a589a4ac862b6127c0aa75e486211f397239bde1e7b8b52ccf",
+        "src/app/asistencias/asistencias.css": "7acf967f360c6a63bd4a2c0a40277786c64c661022f31e4d811980d779562b6b"
+      },
+      "components": [],
+      "drafts": {
+        "39e3b620-3fc7-4caf-8da2-974fed2187d4": {
+          "title": "Asistencias — estado actual",
+          "visualDirection": "pixel-perfect reproduction (pestaña Hoy, header + tabs; sin logo)",
+          "currentVersion": 1
+        },
+        "3a61b726-a1d4-485c-b916-1c22036200ac": {
+          "title": "Asistencias — Tarjeta de reloj checador",
+          "visualDirection": "tarjetas tipo tarjeta de reloj checador: borde perforado, hora de entrada grande tabular, sello circular LISTO, botón tipo punch — NO aplicada todavía — APLICADA al código real (pestaña Hoy: .hoy-perforado, .hoy-reloj, .hoy-sello, botón punch)",
+          "parentDraftId": "39e3b620-3fc7-4caf-8da2-974fed2187d4",
+          "currentVersion": 1
+        },
+        "85bc1d98-080c-49ff-b2ac-40399120fe36": {
+          "title": "Asistencias — Tablero de turnos",
+          "visualDirection": "roster: avatar con iniciales en anillo de estado, franja de progreso, hero strip de conteos, rejilla de 2 columnas — NO aplicada todavía",
+          "parentDraftId": "39e3b620-3fc7-4caf-8da2-974fed2187d4",
+          "currentVersion": 1
+        }
+      },
+      "updatedAt": "2026-11-04T19:54:17.303Z"
+    },
+    "/inventario": {
+      "targetKind": "existing-ui",
+      "projectId": "9eda39df-a714-407d-b83d-03e5462f3b90",
+      "baselineDraftId": "b6cf633b-4385-46c0-826b-019593610825",
+      "activeDraftId": "b6cf633b-4385-46c0-826b-019593610825",
+      "designSystemPath": ".superdesign/design-system.md",
+      "referenceIds": [],
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "src/styles.css",
+        "src/app/inventario/inventario.html:1:366",
+        "src/app/inventario/inventario.css:1:725"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "d77a2b1c5c3989328853b7f1ddb35b3ab2e26489271364fcd628528d6412d0d3",
+        "src/styles.css": "1f731307ae534a5fe6da76aa5d1e3fa2fd7d49157100b1d8906d5a47e1de58f7",
+        "src/app/inventario/inventario.html": "fba63f55aa0d8251c8bbd4deb3407fa8603cd45def3a9acbb46649fdf71215fb",
+        "src/app/inventario/inventario.css": "16227e41e1ff198ea14fbbf266a2f58e8b00000bbb04000cb62ab6393db30396"
+      },
+      "components": [],
+      "drafts": {
+        "b6cf633b-4385-46c0-826b-019593610825": {
+          "title": "Inventario — estado actual",
+          "visualDirection": "pixel-perfect reproduction (pantalla principal: header, controles, lista agrupada; overlays fuera de alcance; sin logo)",
+          "currentVersion": 1
+        },
+        "eef9acde-25c9-4c27-b38c-2d8b71c5c7a1": {
+          "title": "Inventario — Etiqueta de alacena",
+          "visualDirection": "etiqueta de alacena: existencia en bloque tag grande, barra medidor de nivel vs mínimo, acciones secundarias de menor peso, encabezados tipo tira con sello de conteo — NO aplicada todavía",
+          "parentDraftId": "b6cf633b-4385-46c0-826b-019593610825",
+          "currentVersion": 1
+        },
+        "40f9885c-1a54-4d0a-8663-190eb88b8c54": {
+          "title": "Inventario — Libro de registro",
+          "visualDirection": "libro contable: filas densas tipo ledger con puntos guía, cifras tabulares alineadas, franja lateral por nivel, doble regla en encabezados — NO aplicada todavía",
+          "parentDraftId": "b6cf633b-4385-46c0-826b-019593610825",
+          "currentVersion": 1
+        }
+      },
+      "updatedAt": "2026-11-04T20:21:15.538Z"
+    },
+    "/pos-cobro": {
+      "targetKind": "existing-ui",
+      "projectId": "9eda39df-a714-407d-b83d-03e5462f3b90",
+      "baselineDraftId": "2426bb2b-617a-4c24-8db3-f6b57409b9d7",
+      "activeDraftId": "3a09b599-1236-492d-9dbe-94e5d0991e33",
+      "designSystemPath": ".superdesign/design-system.md",
+      "referenceIds": [],
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "src/styles.css",
+        "src/app/pos/pos.html:705:722",
+        "src/app/pos/pos.html:923:1365",
+        "src/app/pos/pos.css:1842:2610",
+        "src/app/pos/pos.css:2612:2727",
+        "src/app/pos/pos.css:2855:2983"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "d77a2b1c5c3989328853b7f1ddb35b3ab2e26489271364fcd628528d6412d0d3",
+        "src/styles.css": "1f731307ae534a5fe6da76aa5d1e3fa2fd7d49157100b1d8906d5a47e1de58f7",
+        "src/app/pos/pos.html": "03baeda0ba0689688d3f929b2bec4394639af3b51d1b7af9f646c81d78bfd7cc",
+        "src/app/pos/pos.css": "e11d7ec35a896f7f0e392eeb2a18119549a88773b7adae5b88ca4ba14b474e5b"
+      },
+      "components": [],
+      "drafts": {
+        "2426bb2b-617a-4c24-8db3-f6b57409b9d7": {
+          "title": "Cobro POS — estado actual",
+          "visualDirection": "pixel-perfect reproduction of current UI (ground truth)",
+          "currentVersion": 1
+        },
+        "aad8155a-4ef1-4f2e-aa34-152a9e76b021": {
+          "title": "Caja Registradora POS",
+          "visualDirection": "caja registradora — display grande del total con recibido/cambio, bandeja de efectivo, entrega y lealtad compactas (NO aplicada todavía)",
+          "parentDraftId": "2426bb2b-617a-4c24-8db3-f6b57409b9d7",
+          "currentVersion": 1
+        },
+        "3a09b599-1236-492d-9dbe-94e5d0991e33": {
+          "title": "Checkout Guiado",
+          "visualDirection": "pasos numerados con sello + panel resumen fijo a la derecha — ELEGIDA por el usuario y APLICADA al código real (pos.html: .cobro-layout/.cobro-pasos/.cobro-resumen; pos.css) — sin verificar en navegador",
+          "parentDraftId": "2426bb2b-617a-4c24-8db3-f6b57409b9d7",
+          "currentVersion": 1
+        }
+      },
+      "updatedAt": "2026-11-04T21:54:31.912Z"
     }
   }
 }

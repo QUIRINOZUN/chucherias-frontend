@@ -2002,6 +2002,93 @@
   font-size: 1.02rem;
 }
 
+/* Dirección "Pasos numerados" (2026-11-04): el ícono de cada sección se
+   reemplaza por un sello numerado (1, 2, 3) con contorno orgánico — mismo
+   lenguaje de "sello de hule" del resto de la app. El número sale de un
+   contador CSS, así que no depende de cuántas secciones haya ni de su
+   orden en el HTML. */
+.cobro-pasos {
+  counter-reset: paso;
+}
+
+.cobro-pasos .seccion-cobro {
+  counter-increment: paso;
+}
+
+.cobro-pasos .seccion-cobro-icono {
+  width: 38px;
+  height: 38px;
+  border-radius: 48% 52% 45% 55% / 55% 45% 52% 48%;
+  transform: rotate(-4deg);
+  background: var(--acento-modulo);
+  color: #fff;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--acento-modulo) 18%, transparent);
+}
+
+.cobro-pasos .seccion-cobro-icono .icono {
+  display: none;
+}
+
+.cobro-pasos .seccion-cobro-icono::after {
+  content: counter(paso);
+  font-family: var(--fuente-titulo);
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* Resumen de lo elegido en ese paso, a la derecha de su título. */
+.seccion-cobro-resumen {
+  margin-left: auto;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--pos-text-secondary);
+}
+
+.seccion-cobro-resumen + .seccion-cobro-opcional {
+  margin-left: 0;
+}
+
+/* Panel de resumen (total, cambio y acciones). En móvil va debajo de los
+   pasos; en pantallas anchas queda fijo a la derecha (ver media query). */
+.cobro-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cobro-resumen {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border-radius: var(--radio-lg);
+  border: 1px solid color-mix(in srgb, var(--acento-modulo) 35%, var(--pos-border));
+  background: color-mix(in srgb, var(--acento-modulo) 7%, var(--pos-bg-card));
+}
+
+.cobro-resumen .cobro-hero {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 0;
+  padding: 14px 16px;
+  box-shadow: none;
+}
+
+.cobro-resumen .acciones-cobro {
+  flex-direction: column-reverse;
+  margin-top: 0;
+}
+
+.cobro-resumen .acciones-cobro button {
+  width: 100%;
+}
+
 .seccion-cobro-opcional {
   margin-left: auto;
   font-size: 0.7rem;
@@ -2686,32 +2773,22 @@
      (misma .panel-cobro-ancho, pero SIN esta clase, ver pos.html) se queda
      en su ancho de ticket de siempre, esto solo ensancha el formulario. */
   .panel-cobro-horizontal {
-    max-width: min(90vw, 880px);
+    max-width: min(92vw, 980px);
   }
 
-  .cobro-secciones {
+  /* 2026-11-04 ("Pasos numerados"): los 3 pasos en una columna a la
+     izquierda y el resumen fijo a la derecha — el total y el cambio siguen
+     a la vista mientras se cuentan los billetes. */
+  .cobro-layout {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) 300px;
     gap: 0 24px;
     align-items: start;
   }
 
-  /* Entrega y Cliente de lealtad apiladas en la columna izquierda; Método
-     de pago (la sección más alta, con la grilla de billetes/monedas) sola
-     en la derecha, ocupando las dos filas. */
-  .cobro-secciones > section:nth-child(1) {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .cobro-secciones > section:nth-child(2) {
-    grid-column: 1;
-    grid-row: 2;
-  }
-
-  .cobro-secciones > section:nth-child(3) {
-    grid-column: 2;
-    grid-row: 1 / span 2;
+  .cobro-resumen {
+    position: sticky;
+    top: 0;
   }
 
   .panel-detalle-producto {
@@ -2980,4 +3057,13 @@
 .comprobante-faltante {
   color: var(--peligro-texto);
   font-weight: 700;
+}
+
+/* Cobro en móvil: el aviso "Opcional" le quita espacio al resumen del paso
+   ("Sin cliente" se cortaba) — en pantallas angostas se oculta, el paso 2
+   ya se entiende como opcional por su resumen. */
+@media (max-width: 480px) {
+  .cobro-pasos .seccion-cobro-opcional {
+    display: none;
+  }
 }
