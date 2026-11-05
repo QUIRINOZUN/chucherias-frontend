@@ -135,14 +135,26 @@
                   !abiertaPorEmpleado().has(empleado.id) && turnosCompletadosHoy(empleado.id) > 0
                 "
               >
-                <span class="hoy-punto" aria-hidden="true"></span>
+                <!-- Borde perforado + talón de hora (2026-11-04, dirección
+                     "Tarjeta de reloj checador"): la hora de entrada es lo
+                     primero que se lee, como en una tarjeta de checador. -->
+                <span class="hoy-perforado" aria-hidden="true"></span>
+                <div class="hoy-reloj">
+                  @if (abiertaPorEmpleado().get(empleado.id); as abierta) {
+                    <span class="hoy-reloj-etiqueta hoy-reloj-etiqueta-en-turno">Entrada</span>
+                    <span class="hoy-reloj-hora">{{ abierta.hora_entrada?.slice(0, 5) }}</span>
+                  } @else if (turnosCompletadosHoy(empleado.id) > 0) {
+                    <span class="hoy-sello">Listo</span>
+                  } @else {
+                    <span class="hoy-reloj-etiqueta">Entrada</span>
+                    <span class="hoy-reloj-hora hoy-reloj-hora-vacia">--:--</span>
+                  }
+                </div>
                 <div class="hoy-info">
                   <span class="hoy-nombre">{{ empleado.nombre }}</span>
                   <span class="hoy-puesto">{{ empleado.puesto }}</span>
-                  @if (abiertaPorEmpleado().get(empleado.id); as abierta) {
-                    <span class="hoy-estado hoy-estado-en-turno">
-                      Entró a las {{ abierta.hora_entrada?.slice(0, 5) }}
-                    </span>
+                  @if (abiertaPorEmpleado().has(empleado.id)) {
+                    <span class="hoy-estado hoy-estado-en-turno">En turno</span>
                   } @else if (turnosCompletadosHoy(empleado.id) > 0) {
                     <span class="hoy-estado">
                       Ya marcó

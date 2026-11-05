@@ -277,8 +277,83 @@
   background: var(--pos-bg-card);
   border-radius: var(--radio-lg);
   box-shadow: var(--sombra-suave);
-  padding: 14px 16px;
+  padding: 14px 16px 14px 30px;
   border-left: 4px solid var(--pos-border);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Borde perforado de tarjeta de checador: huecos del color del fondo de la
+   página recortados sobre el costado izquierdo. */
+.hoy-perforado {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  background-image: radial-gradient(circle, var(--pos-bg-main) 4px, transparent 4px);
+  background-size: 100% 20px;
+  background-position: 0 5px;
+}
+
+/* Talón con la hora de entrada: cifra grande tabular, separada del resto por
+   una línea punteada (el corte del talón). */
+.hoy-reloj {
+  flex-shrink: 0;
+  min-width: 72px;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-right: 12px;
+  border-right: 1px dashed var(--pos-border);
+}
+
+.hoy-reloj-etiqueta {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pos-text-secondary);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.hoy-reloj-etiqueta-en-turno {
+  color: var(--exito-texto);
+}
+
+.hoy-reloj-hora {
+  font-family: var(--fuente-titulo);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.hoy-reloj-hora-vacia {
+  color: var(--pos-border);
+}
+
+/* Sello de hule circular y ladeado (mismo lenguaje que .sello-diferencia de
+   Caja y el sello de los íconos del dashboard). */
+.hoy-sello {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 9px;
+  border: 2px solid var(--pos-text-secondary);
+  border-radius: 48% 52% 45% 55% / 55% 45% 52% 48%;
+  transform: rotate(-12deg);
+  font-family: var(--fuente-titulo);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pos-text-secondary);
+  opacity: 0.75;
 }
 
 .tarjeta-hoy-en-turno {
@@ -312,23 +387,6 @@
 
 .tarjeta-hoy-completo {
   border-left-color: var(--pos-text-secondary);
-}
-
-.hoy-punto {
-  flex-shrink: 0;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: var(--pos-border);
-}
-
-.tarjeta-hoy-en-turno .hoy-punto {
-  background: var(--action-success);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--action-success) 25%, transparent);
-}
-
-.tarjeta-hoy-completo .hoy-punto {
-  background: var(--pos-text-secondary);
 }
 
 .hoy-info {
@@ -373,6 +431,16 @@
   font-size: 0.82rem;
   cursor: pointer;
   white-space: nowrap;
+  /* Botón tipo "punch" del checador: borde de anillo y base con relieve. */
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 -4px 0 rgba(0, 0, 0, 0.2),
+    0 3px 0 rgba(0, 0, 0, 0.18);
+}
+
+.boton-marcar:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
 }
 
 .boton-marcar-salida {
