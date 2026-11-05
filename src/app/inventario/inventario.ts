@@ -44,7 +44,7 @@
 //     reales, ni manda nada al servidor. Mismo patrón de `Set<id>` que ya
 //     usa `categoriasColapsadas` para un toggle por fila.
 // =============================================================================
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, HostListener, OnInit, computed, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { AuthService } from '../core/auth';
 import { FocoDialogoDirective } from '../core/foco-dialogo';
@@ -499,6 +499,26 @@ export class InventarioComponent implements OnInit {
       this.cantidadConvertida() != null
     );
   });
+
+  // ---- Menú "⋯" de acciones por fila (2026-11-04) ----
+  // Una sola fila con el menú abierto a la vez; se cierra al tocar fuera, con
+  // Escape o al elegir una acción (las ventanas que abren ya lo hacen visible).
+  menuAccionesId = signal<number | null>(null);
+
+  alternarMenuAcciones(id: number, evento: Event): void {
+    // stopPropagation: si no, el clic llegaría al listener de documento de abajo
+    // y cerraría el menú que se acaba de abrir.
+    evento.stopPropagation();
+    this.menuAccionesId.set(this.menuAccionesId() === id ? null : id);
+  }
+
+  @HostListener('document:click')
+  @HostListener('document:keydown.escape')
+  cerrarMenuAcciones(): void {
+    if (this.menuAccionesId() !== null) {
+      this.menuAccionesId.set(null);
+    }
+  }
 
   // ---- Historial expandible por fila ----
   insumoHistorialId = signal<number | null>(null);

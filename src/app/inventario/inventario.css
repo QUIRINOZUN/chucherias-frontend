@@ -127,7 +127,6 @@
   font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
-  box-shadow: var(--sombra-acento);
   transition:
     background-color 0.15s ease,
     transform 0.1s ease;
@@ -349,10 +348,12 @@
   gap: 8px;
   width: 100%;
   min-height: 44px;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
   padding: 0 4px;
   border: none;
-  border-bottom: 1px solid var(--pos-border);
+  /* Libro de registro (2026-11-04): doble raya bajo el encabezado de cada
+     sección, como el cierre de columna de un libro contable. */
+  border-bottom: 3px double var(--pos-border);
   background: none;
   color: var(--pos-text-primary);
   cursor: pointer;
@@ -384,13 +385,17 @@
   transform: rotate(-90deg);
 }
 
+/* Libro de registro: las filas van pegadas, separadas por una línea fina,
+   dentro de un solo recuadro — caben bastantes más insumos por pantalla. */
 .lista-insumos {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-md);
+  overflow: hidden;
 }
 
 .lista-insumos-esqueleto {
@@ -423,33 +428,55 @@
    nota 2026-10-13 abajo) — el punto de color de nivel de stock
    (.indicador-nivel) sigue siendo el único lenguaje funcional de
    existencia, esto es puramente de identidad del módulo. */
+/* Libro de registro (2026-11-04): cada insumo es un renglón de libro
+   contable — franja lateral del color del nivel de stock (reemplaza al
+   borde azul de identidad y al punto indicador), línea fina entre filas,
+   y todo en una sola fila en pantallas anchas: nombre · guía punteada ·
+   existencia · acciones. El historial desplegable ocupa su propia fila
+   debajo (flex-basis: 100%). */
 .tarjeta-insumo {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
   background: var(--pos-bg-card);
-  border: 1px solid var(--pos-border);
-  border-left: 4px solid var(--acento-modulo);
-  border-radius: var(--radio-lg) var(--radio-lg) var(--radio-lg) 4px;
-  box-shadow: var(--sombra-suave);
-  padding: 14px 16px;
-  transition:
-    box-shadow 0.15s ease,
-    transform 0.15s ease;
+  border-bottom: 1px solid var(--pos-border);
+  padding: 10px 16px 10px 20px;
+  transition: background-color 0.15s ease;
 }
 
-/* 2026-10-13: antes esta regla usaba el atajo `border-color` (pisa los 4
-   lados), así que con el catálogo real casi completo bajo mínimo el azul
-   de identidad de arriba nunca llegaba a verse — cualquier tarjeta en
-   alerta tapaba el azul con rojo en los 4 bordes. Ahora solo tiñe de rojo
-   los 3 lados que no cargan la identidad del módulo; el izquierdo se
-   queda azul siempre. */
-.tarjeta-insumo.tarjeta-alerta {
-  border-top-color: var(--action-danger);
-  border-right-color: var(--action-danger);
-  border-bottom-color: var(--action-danger);
+.tarjeta-insumo:last-child {
+  border-bottom: none;
 }
 
 .tarjeta-insumo:hover {
-  box-shadow: var(--sombra-elevada);
-  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--pos-text-primary) 4%, var(--pos-bg-card));
+}
+
+/* Franja de nivel: el único lenguaje de color de existencia por fila. */
+.tarjeta-insumo::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: transparent;
+}
+
+.tarjeta-insumo.nivel-negativo::before {
+  background: var(--action-danger);
+}
+
+.tarjeta-insumo.nivel-bajo::before {
+  background: var(--peligro-texto);
+}
+
+.tarjeta-insumo.nivel-medio::before {
+  background: var(--acento-texto);
+}
+
+.tarjeta-insumo.nivel-alto::before {
+  background: var(--exito-texto);
 }
 
 /* Fila principal de la tarjeta: nombre + datos secundarios a la izquierda,
@@ -457,53 +484,47 @@
    cifra destacada" para que el número salte a la vista sin tener que leer
    el resto de la tarjeta. */
 .insumo-principal {
+  flex: 1 1 320px;
+  min-width: 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
+  align-items: flex-end;
+  gap: 12px;
 }
 
 .insumo-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
-  flex: 1;
+  flex: 0 1 auto;
+  max-width: 100%;
 }
 
 .insumo-nombre {
   font-weight: 700;
   font-family: var(--fuente-titulo);
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   line-height: 1.25;
 }
 
-.badge-alerta {
-  align-self: flex-start;
-  flex-shrink: 0;
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: var(--radio-pastilla);
-  background: color-mix(in srgb, var(--action-danger) 20%, var(--pos-bg-card));
-  color: var(--peligro-texto);
-  white-space: nowrap;
+/* Guía punteada entre el nombre y la existencia, como en un libro de
+   registro o una carta de menú: lleva el ojo del renglón a su cifra. */
+.insumo-guia {
+  flex: 1;
+  min-width: 16px;
+  align-self: flex-end;
+  margin-bottom: 8px;
+  border-bottom: 1px dotted var(--pos-text-muted);
+  opacity: 0.45;
 }
 
-/* Existencia negativa (2026-11-01): reemplaza a .badge-alerta cuando el
-   dato es imposible, no solo bajo — relleno SÓLIDO en vez de un tinte
-   suave, mismo criterio que .chip-nivel-negativo, para que se note que es
-   un caso distinto (y más urgente) que "Bajo mínimo". */
-.badge-existencia-negativa {
-  align-self: flex-start;
-  flex-shrink: 0;
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: var(--radio-pastilla);
-  background: var(--action-danger);
-  color: #fff;
-  white-space: nowrap;
+/* Motivo de la alerta en texto plano (2026-11-04): antes eran píldoras rojas
+   sólidas en cada fila; con 150 insumos casi todos en alerta eso era textura,
+   no señal. La franja lateral y la cifra (solo si es negativa) ya marcan el
+   nivel; aquí solo se dice por qué, en gris. */
+.insumo-aviso {
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
 }
 
 /* Existencia como dato "de un vistazo": número grande y tabular, alineado a
@@ -518,7 +539,7 @@
 
 .stat-numero {
   font-family: var(--fuente-titulo);
-  font-size: clamp(1.8rem, 6vw, 2.3rem);
+  font-size: clamp(1.5rem, 5vw, 1.8rem);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -569,6 +590,9 @@
    colores que sus chips de filtro equivalentes (.chip-nivel-*), para que la
    tarjeta se reconozca de un vistazo sin tener que leer el número. */
 .indicador-nivel {
+  /* Libro de registro: el nivel ya lo marca la franja lateral de la fila,
+     el punto sería redundante. Se conserva el elemento por si se revierte. */
+  display: none;
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -607,8 +631,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 6px;
 }
 
 /* Surtir/agregar existencia es la acción más frecuente de la pantalla: va
@@ -625,7 +648,6 @@
   background: var(--acento-modulo);
   color: #fff;
   cursor: pointer;
-  box-shadow: var(--sombra-acento);
   transition:
     background-color 0.15s ease,
     transform 0.1s ease;
@@ -666,7 +688,8 @@
 }
 
 .historial-panel {
-  margin-top: 12px;
+  flex-basis: 100%;
+  margin-top: 4px;
   padding-top: 12px;
   border-top: 1px solid var(--pos-border);
 }
@@ -1199,4 +1222,126 @@
 .item-compra-fecha,
 .item-compra-proveedor {
   color: var(--pos-text-secondary);
+}
+
+/* Menú "⋯" de acciones por fila (2026-11-04): Ajuste, Merma, Editar e
+   Historial; "+" (surtir) sigue a la vista fuera del menú. */
+.menu-acciones {
+  position: relative;
+}
+
+.boton-menu {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--pos-border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--pos-text-secondary);
+  cursor: pointer;
+}
+
+.boton-menu .icono {
+  width: 22px;
+  height: 22px;
+}
+
+.boton-menu:hover,
+.boton-menu[aria-expanded='true'] {
+  border-color: var(--acento-modulo);
+  color: var(--pos-text-primary);
+}
+
+.menu-acciones-lista {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  min-width: 170px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-md);
+  background: var(--pos-bg-card);
+  box-shadow: var(--sombra-elevada);
+}
+
+.menu-acciones-lista button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: none;
+  border-radius: var(--radio-sm);
+  background: transparent;
+  color: var(--pos-text-primary);
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-acciones-lista button:hover {
+  background: color-mix(in srgb, var(--acento-modulo) 14%, var(--pos-bg-card));
+}
+
+/* Controles compactos en móvil (2026-11-04): con aviso, 3 botones, buscador y
+   3 filas de chips la primera fila de la lista caía al fondo de la pantalla.
+   Aquí los botones secundarios van lado a lado, los espacios se acortan y las
+   etiquetas de los chips quedan solo para lectores de pantalla (los chips ya
+   se explican solos: "Todas", "Todo el stock", "Todos"). Desde 860px se
+   mantiene el layout de dos columnas de siempre. */
+.controles-secundarios {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 859px) {
+  .inventario-cuerpo {
+    padding-top: 10px;
+  }
+
+  .inventario-layout {
+    gap: 8px;
+  }
+
+  .aviso-alertas {
+    margin-bottom: 8px;
+  }
+
+  .boton-nuevo-insumo {
+    min-height: 48px;
+    margin-bottom: 8px;
+  }
+
+  .controles-secundarios {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .controles-secundarios > button {
+    flex: 1 1 150px;
+    width: auto;
+    margin-bottom: 0;
+  }
+
+  .campo-busqueda {
+    margin-bottom: 8px;
+  }
+
+  .etiqueta-filtro {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .fila-chips {
+    margin-bottom: 4px;
+  }
 }

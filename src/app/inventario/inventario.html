@@ -65,19 +65,24 @@
             + Nuevo insumo
           </button>
 
-          <button type="button" class="boton-captura-costos" (click)="abrirCapturaCostos()">
-            Captura de costos ({{ totalConCosto() }}/{{ totalInsumosReal() }})
-          </button>
-
-          @if (esAdministrador()) {
-            <button
-              type="button"
-              class="boton-eliminar-historial"
-              (click)="abrirEliminarHistorial()"
-            >
-              Eliminar historial
+          <!-- Acciones secundarias agrupadas (2026-11-04): en móvil van lado a lado
+               para que la lista empiece más arriba; en pantallas anchas siguen
+               apiladas en la columna de controles. -->
+          <div class="controles-secundarios">
+            <button type="button" class="boton-captura-costos" (click)="abrirCapturaCostos()">
+              Captura de costos ({{ totalConCosto() }}/{{ totalInsumosReal() }})
             </button>
-          }
+
+            @if (esAdministrador()) {
+              <button
+                type="button"
+                class="boton-eliminar-historial"
+                (click)="abrirEliminarHistorial()"
+              >
+                Eliminar historial
+              </button>
+            }
+          </div>
 
           <div class="campo-busqueda">
             <svg class="icono" aria-hidden="true"><use href="#ic-buscar" /></svg>
@@ -221,7 +226,11 @@
               @if (!estaColapsada(grupo.id)) {
                 <ul class="lista-insumos">
                   @for (insumo of grupo.insumos; track insumo.id) {
-                    <li class="tarjeta-insumo" [class.tarjeta-alerta]="insumo.alerta">
+                    <li
+                      class="tarjeta-insumo"
+                      [class.tarjeta-alerta]="insumo.alerta"
+                      [class]="'nivel-' + nivelDe(insumo)"
+                    >
                       <!-- Nombre + datos secundarios a la izquierda, existencia en
                            número grande a la derecha (RF de inventario dinámico:
                            es el dato que más se necesita identificar de un vistazo). -->
@@ -244,19 +253,23 @@
                               }}
                             }
                           </span>
+                          <!-- Una sola marca roja por fila (2026-11-04): la franja y la cifra
+                               ya dicen el nivel; aquí el motivo va en texto plano, sin píldora. -->
                           @if (insumo.existencia < 0) {
-                            <span class="badge-existencia-negativa"
-                              >Existencia negativa — revisar</span
-                            >
+                            <span class="insumo-aviso">Existencia negativa, revisar</span>
                           } @else if (insumo.alerta) {
-                            <span class="badge-alerta">Bajo mínimo</span>
+                            <span class="insumo-aviso">Bajo mínimo</span>
                           }
                         </div>
 
+                        <span class="insumo-guia" aria-hidden="true"></span>
+
                         <div class="insumo-stat">
-                          <span class="stat-numero" [class.stat-numero-alerta]="insumo.alerta">{{
-                            valorMostrado(insumo, insumo.existencia)
-                          }}</span>
+                          <span
+                            class="stat-numero"
+                            [class.stat-numero-alerta]="insumo.existencia < 0"
+                            >{{ valorMostrado(insumo, insumo.existencia) }}</span
+                          >
                           <span class="stat-unidad-fila">
                             <span
                               class="indicador-nivel"
@@ -294,34 +307,58 @@
                         >
                           <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
                         </button>
-                        <button
-                          type="button"
-                          class="boton-accion"
-                          (click)="abrirMovimiento(insumo, 'ajuste')"
-                        >
-                          Ajuste
-                        </button>
-                        <button
-                          type="button"
-                          class="boton-accion"
-                          (click)="abrirMovimiento(insumo, 'merma')"
-                        >
-                          Merma
-                        </button>
-                        <button
-                          type="button"
-                          class="boton-accion"
-                          (click)="abrirEdicionInsumo(insumo)"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          class="boton-accion"
-                          (click)="alternarHistorial(insumo)"
-                        >
-                          {{ insumoHistorialId() === insumo.id ? 'Ocultar' : 'Historial' }}
-                        </button>
+                        <!-- Resto de acciones en un menú "⋯" (2026-11-04): 150 filas por
+                             5 controles era ruido; "+" sigue a la vista por ser la más frecuente. -->
+                        <div class="menu-acciones">
+                          <button
+                            type="button"
+                            class="boton-menu"
+                            aria-haspopup="menu"
+                            [attr.aria-expanded]="menuAccionesId() === insumo.id"
+                            [attr.aria-label]="'Más acciones de ' + insumo.nombre"
+                            (click)="alternarMenuAcciones(insumo.id, $event)"
+                          >
+                            <svg class="icono" aria-hidden="true">
+                              <use href="#ic-mas-opciones" />
+                            </svg>
+                          </button>
+                          @if (menuAccionesId() === insumo.id) {
+                            <div class="menu-acciones-lista" role="menu">
+                              <button
+                                type="button"
+                                role="menuitem"
+                                (click)="abrirMovimiento(insumo, 'ajuste')"
+                              >
+                                Ajuste
+                              </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                (click)="abrirMovimiento(insumo, 'merma')"
+                              >
+                                Merma
+                              </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                (click)="abrirEdicionInsumo(insumo)"
+                              >
+                                Editar
+                              </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                (click)="alternarHistorial(insumo)"
+                              >
+                                {{
+                                  insumoHistorialId() === insumo.id
+                                    ? 'Ocultar historial'
+                                    : 'Historial'
+                                }}
+                              </button>
+                            </div>
+                          }
+                        </div>
                       </div>
 
                       @if (insumoHistorialId() === insumo.id) {
