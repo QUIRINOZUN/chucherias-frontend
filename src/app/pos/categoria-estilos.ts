@@ -106,6 +106,28 @@ export function obtenerEstiloCategoria(nombreCategoria: string): EstiloCategoria
 // buscar, tema claro/oscuro, check, "todas"), que no tendría sentido
 // ofrecer como ícono temático de una categoría del menú.
 export const ICONOS_DISPONIBLES: string[] = [
+  // Comida y bebida primero (2026-11-04), el resto después.
+  'taco',
+  'hotdog',
+  'sandwich',
+  'carne',
+  'pollo',
+  'pescado',
+  'sushi',
+  'ensalada',
+  'sopa',
+  'pan',
+  'queso',
+  'palomitas',
+  'galleta',
+  'dona',
+  'cupcake',
+  'pastel',
+  'helado',
+  'paleta',
+  'cafe',
+  'refresco',
+  'cerveza',
   'alitas',
   'billetes',
   'bitacora',

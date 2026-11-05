@@ -68,6 +68,32 @@
         />
       </div>
 
+      <p class="etiqueta-filtro">Categoría</p>
+      <div class="fila-chips-envoltorio">
+        <div class="fila-chips">
+          <button
+            type="button"
+            class="chip-categoria"
+            [class.chip-activa]="categoriaFiltroRecetasId() === null"
+            (click)="seleccionarCategoriaRecetas(null)"
+          >
+            Todas <span class="chip-conteo">{{ contarCategoriaMenu(null) }}</span>
+          </button>
+          @for (categoria of categorias(); track categoria.id) {
+            <button
+              type="button"
+              class="chip-categoria"
+              [class.chip-activa]="categoriaFiltroRecetasId() === categoria.id"
+              (click)="seleccionarCategoriaRecetas(categoria.id)"
+            >
+              {{ categoria.nombre }}
+              <span class="chip-conteo">{{ contarCategoriaMenu(categoria.id) }}</span>
+            </button>
+          }
+        </div>
+        <div class="fila-chips-desvanecido" aria-hidden="true"></div>
+      </div>
+
       @if (error()) {
         <p class="mensaje-estado mensaje-error">{{ error() }}</p>
       }

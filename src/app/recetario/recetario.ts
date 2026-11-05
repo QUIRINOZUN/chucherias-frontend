@@ -208,12 +208,27 @@ export class RecetarioComponent implements OnInit {
   // computed que llaman a esto con cada valor). Compartida en vez de
   // duplicada dos veces completas: el único cambio real entre las dos
   // secciones es ese filtro de producto.
+  // Chips de categoría de "Recetas" (null = "Todas"); mismo criterio de
+  // mutua exclusión que en "Menú": elegir un chip limpia el buscador.
+  categoriaFiltroRecetasId = signal<number | null>(null);
+
+  seleccionarCategoriaRecetas(id: number | null): void {
+    this.categoriaFiltroRecetasId.set(id);
+    this.busqueda.set('');
+  }
+
   private agruparPorPreparacion(requierePreparacion: boolean): GrupoCategoria[] {
     const texto = this.busqueda().trim().toLowerCase();
     const recetaInfo = this.recetaInfoPorVariante();
     const grupos: GrupoCategoria[] = [];
 
+    const categoriaFiltro = this.categoriaFiltroRecetasId();
+
     for (const categoria of this.categorias()) {
+      // Chip de categoría: solo filtra mientras no haya texto en el buscador.
+      if (!texto && categoriaFiltro !== null && categoria.id !== categoriaFiltro) {
+        continue;
+      }
       const productosDeCategoria = this.productosMenu().filter(
         (p) =>
           p.categoria_id === categoria.id &&
