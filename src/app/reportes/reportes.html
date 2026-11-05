@@ -370,7 +370,9 @@
               </span>
               <span class="tarjeta-dominio-titulo">Rentabilidad</span>
               <span class="tarjeta-dominio-cifra">{{
-                r.rentabilidad.utilidad_bruta | currency: 'MXN'
+                r.rentabilidad.lineas_sin_costo > 0
+                  ? 'Pendiente'
+                  : (r.rentabilidad.utilidad_bruta | currency: 'MXN')
               }}</span>
               <span class="tarjeta-dominio-etiqueta">utilidad bruta del periodo</span>
             </button>
@@ -786,7 +788,9 @@
             </div>
             <div class="stat-reporte">
               <span class="stat-reporte-valor">{{
-                r.rentabilidad.utilidad_bruta | currency: 'MXN'
+                r.rentabilidad.lineas_sin_costo > 0
+                  ? 'Pendiente'
+                  : (r.rentabilidad.utilidad_bruta | currency: 'MXN')
               }}</span>
               <span class="stat-reporte-etiqueta">Utilidad bruta</span>
             </div>
@@ -820,7 +824,9 @@
                 Ingresos − costo de insumos − mano de obra − gastos generales
               </span>
               <span class="hero-reporte-valor">{{
-                r.rentabilidad.utilidad_neta | currency: 'MXN'
+                r.rentabilidad.lineas_sin_costo > 0
+                  ? 'Pendiente'
+                  : (r.rentabilidad.utilidad_neta | currency: 'MXN')
               }}</span>
               <span class="hero-reporte-detalle">
                 {{
