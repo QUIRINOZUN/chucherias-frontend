@@ -252,7 +252,9 @@
   border-radius: var(--radio-lg) var(--radio-lg) var(--radio-lg) 6px;
   clip-path: polygon(0 0, 100% 0, 100% 100%, 8% 100%, 0 92%);
   border-left: 4px solid var(--acento-modulo, var(--action-primary));
-  box-shadow: var(--sombra-suave);
+  /* Sin box-shadow a propósito (2026-11-04): el clip-path rectangular no
+     recorta las esquinas redondeadas, así que la sombra asomaba como una
+     mancha en esas esquinas. */
   text-decoration: none;
   color: inherit;
   transition:
@@ -327,7 +329,6 @@
 @media (hover: hover) {
   .tarjeta-modulo:hover {
     transform: translateY(-4px);
-    box-shadow: var(--sombra-elevada);
   }
 
   .tarjeta-modulo:hover .modulo-icono {
@@ -470,7 +471,6 @@
     align-items: center;
     gap: 16px;
     padding: 26px 22px;
-    box-shadow: var(--sombra-acento);
   }
 
   .tarjeta-modulo:nth-child(3n) .modulo-texto {
