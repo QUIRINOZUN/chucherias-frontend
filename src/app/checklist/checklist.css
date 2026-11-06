@@ -535,3 +535,144 @@
   border-color: var(--acento-modulo);
   color: var(--pos-text-primary);
 }
+
+/* ===================== Libreta de apertura y cierre (2026-11-06) ===================== */
+/* Una hoja de libreta con renglones: cada paso es una línea, la casilla se
+   marca como a mano y, al completar el turno, aparece el sello LISTO. */
+.libreta {
+  --tinta-turno: #b45309;
+  position: relative;
+  padding: 20px 20px 12px 56px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--pos-radio);
+  background:
+    linear-gradient(
+      to right,
+      transparent 40px,
+      color-mix(in srgb, var(--peligro-texto) 45%, transparent) 40px 42px,
+      transparent 42px
+    ),
+    var(--pos-bg-card);
+}
+
+.libreta.libreta-cierre {
+  --tinta-turno: #3b5bdb;
+}
+
+.libreta-encabezado {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+  border-bottom: 2px solid var(--tinta-turno);
+}
+
+.libreta-titulo {
+  margin: 0;
+  font-family: var(--fuente-titulo);
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.libreta-cuenta {
+  margin-left: auto;
+  font-family: var(--fuente-titulo);
+  font-size: 1.1rem;
+  color: var(--pos-text-secondary);
+}
+
+.libreta-cuenta strong {
+  font-size: 1.9rem;
+  color: var(--tinta-turno);
+}
+
+.libreta-sello {
+  position: absolute;
+  right: 0;
+  top: -34px;
+  padding: 2px 12px;
+  border: 3px solid var(--action-success);
+  border-radius: 6px;
+  color: var(--action-success);
+  font-family: var(--fuente-titulo);
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transform: rotate(-8deg);
+  animation: sellar-libreta 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes sellar-libreta {
+  from {
+    opacity: 0;
+    transform: rotate(-20deg) scale(1.6);
+  }
+}
+
+.libreta .lista-pasos {
+  gap: 0;
+}
+
+.libreta .item-paso {
+  min-height: 56px;
+  border: none;
+  border-bottom: 1px dotted var(--pos-border);
+  border-radius: 0;
+  background: transparent;
+  padding: 10px 4px;
+}
+
+.libreta .item-paso:last-child {
+  border-bottom: none;
+}
+
+.libreta .paso-casilla {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--pos-text-secondary);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tinta-turno);
+}
+
+.libreta .item-paso-marcado .paso-casilla {
+  border-color: var(--tinta-turno);
+  background: transparent;
+  transform: rotate(-4deg);
+}
+
+.libreta .item-paso-marcado .paso-casilla .icono {
+  width: 22px;
+  height: 22px;
+  stroke-width: 3;
+  animation: palomear 0.25s ease-out both;
+}
+
+@keyframes palomear {
+  from {
+    opacity: 0;
+    transform: scale(0.4) rotate(-20deg);
+  }
+}
+
+.libreta .item-paso-marcado .paso-descripcion {
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--tinta-turno) 60%, transparent);
+  color: var(--pos-text-secondary);
+}
+
+.libreta .paso-detalle {
+  font-family: var(--fuente-titulo);
+  font-style: italic;
+  color: var(--tinta-turno);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .libreta-sello,
+  .libreta .item-paso-marcado .paso-casilla .icono {
+    animation: none;
+  }
+}

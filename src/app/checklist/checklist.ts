@@ -52,6 +52,16 @@ export class ChecklistComponent implements OnInit {
   // 'gestion' puesto, aunque el tipo lo permita en teoría.
   tipoActivo = computed(() => this.pestanaActiva() as TipoChecklist);
 
+  // Libreta: cuántos pasos de ese turno ya se marcaron hoy, y si ya están todos.
+  marcadosDe(tipo: TipoChecklist): number {
+    return this.itemsHoy()[tipo].filter((i) => i.marcado).length;
+  }
+
+  completoDe(tipo: TipoChecklist): boolean {
+    const items = this.itemsHoy()[tipo];
+    return items.length > 0 && items.every((i) => i.marcado);
+  }
+
   esGestor = computed(() => {
     const rol = this.authService.usuarioActual()?.rol;
     return rol === 'administrador' || rol === 'encargado';

@@ -86,6 +86,19 @@
               @if (cliente.telefono) {
                 <span class="item-cliente-telefono">{{ cliente.telefono }}</span>
               }
+              <span class="sellos-lealtad" aria-hidden="true">
+                @for (sello of sellosDe(cliente.visitas_acumuladas); track sello.numero) {
+                  <span
+                    class="sello-lealtad"
+                    [class.sello-llena]="sello.llena"
+                    [class.sello-escalon]="sello.escalon"
+                  >
+                    @if (sello.llena) {
+                      <svg class="icono"><use href="#ic-corazon" /></svg>
+                    }
+                  </span>
+                }
+              </span>
             </div>
             <span class="badge-visitas">
               {{ cliente.visitas_acumuladas }}
@@ -130,22 +143,17 @@
                 {{ detalle.visitas_acumuladas }} de
                 {{ configLealtad()?.ciclo_visitas ?? 10 }} visitas del ciclo actual
               </p>
-              <div class="progreso-lealtad-barra">
-                <div
-                  class="progreso-lealtad-relleno"
-                  [style.width.%]="
-                    (detalle.visitas_acumuladas / (configLealtad()?.ciclo_visitas ?? 10)) * 100
-                  "
-                ></div>
-                <!-- Una marca por escalón configurado (antes: fija en 50%,
-                     "visita 5" — ahora se posiciona según el ciclo real). -->
-                @for (escalon of escalones(); track escalon.id) {
+              <div class="sellos-lealtad sellos-lealtad-grande" aria-hidden="true">
+                @for (sello of sellosDe(detalle.visitas_acumuladas); track sello.numero) {
                   <span
-                    class="progreso-lealtad-marca"
-                    [style.left.%]="
-                      (escalon.visita_numero / (configLealtad()?.ciclo_visitas ?? 10)) * 100
-                    "
-                  ></span>
+                    class="sello-lealtad"
+                    [class.sello-llena]="sello.llena"
+                    [class.sello-escalon]="sello.escalon"
+                  >
+                    @if (sello.llena) {
+                      <svg class="icono"><use href="#ic-corazon" /></svg>
+                    }
+                  </span>
                 }
               </div>
               <p class="progreso-lealtad-leyenda">
@@ -199,65 +207,92 @@
           }
 
           @if (!editando()) {
-            <h3 class="subtitulo-historial">Historial de lealtad</h3>
-            @if (detalle.historial.length === 0) {
-              <p class="mensaje-estado">Todavía no tiene ninguna visita registrada.</p>
-            } @else {
-              <ul class="lista-historial-lealtad">
-                @for (evento of detalle.historial; track evento.id) {
-                  <li
-                    class="item-historial-lealtad"
-                    [class.item-historial-descuento]="evento.tipo_evento === 'descuento_aplicado'"
-                  >
-                    <div class="item-historial-linea">
-                      <span class="item-historial-descripcion">{{ evento.descripcion }}</span>
-                      @if (evento.venta_total) {
-                        <span class="item-historial-monto">{{
-                          evento.venta_total | currency: 'MXN'
-                        }}</span>
-                      }
-                    </div>
-                    <span class="item-historial-fecha">{{
-                      evento.fecha | date: 'dd/MM/yyyy HH:mm'
-                    }}</span>
-                  </li>
-                }
-              </ul>
+            <div class="pestanas-detalle-cliente" role="tablist">
+              <button
+                type="button"
+                role="tab"
+                class="pestana-detalle-cliente"
+                [class.pestana-detalle-activa]="pestanaDetalle() === 'lealtad'"
+                [attr.aria-selected]="pestanaDetalle() === 'lealtad'"
+                (click)="pestanaDetalle.set('lealtad')"
+              >
+                Lealtad
+              </button>
+              <button
+                type="button"
+                role="tab"
+                class="pestana-detalle-cliente"
+                [class.pestana-detalle-activa]="pestanaDetalle() === 'compras'"
+                [attr.aria-selected]="pestanaDetalle() === 'compras'"
+                (click)="pestanaDetalle.set('compras')"
+              >
+                Compras
+              </button>
+            </div>
+
+            @if (pestanaDetalle() === 'lealtad') {
+              @if (detalle.historial.length === 0) {
+                <p class="mensaje-estado">Todavía no tiene ninguna visita registrada.</p>
+              } @else {
+                <ul class="lista-historial-lealtad">
+                  @for (evento of detalle.historial; track evento.id) {
+                    <li
+                      class="item-historial-lealtad"
+                      [class.item-historial-descuento]="evento.tipo_evento === 'descuento_aplicado'"
+                    >
+                      <div class="item-historial-linea">
+                        <span class="item-historial-descripcion">{{ evento.descripcion }}</span>
+                        @if (evento.venta_total) {
+                          <span class="item-historial-monto">{{
+                            evento.venta_total | currency: 'MXN'
+                          }}</span>
+                        }
+                      </div>
+                      <span class="item-historial-fecha">{{
+                        evento.fecha | date: 'dd/MM/yyyy HH:mm'
+                      }}</span>
+                    </li>
+                  }
+                </ul>
+              }
             }
 
             <!-- RF-21 ("historial de compras"): distinto del historial de
-                 lealtad de arriba — aquí van TODAS las ventas reales del
-                 cliente, hayan contado como visita o no. -->
-            <h3 class="subtitulo-historial">Historial de compras</h3>
-            @if (detalle.compras.length === 0) {
-              <p class="mensaje-estado">Todavía no tiene ninguna compra registrada.</p>
-            } @else {
-              <ul class="lista-historial-compras">
-                @for (compra of detalle.compras; track compra.id) {
-                  <li
-                    class="item-historial-compra"
-                    [class.item-historial-compra-cancelada]="compra.estado === 'cancelada'"
-                  >
-                    <div class="item-historial-linea">
-                      <span class="item-historial-descripcion">{{ compra.numero_orden }}</span>
-                      <span class="item-historial-monto">{{ compra.total | currency: 'MXN' }}</span>
-                    </div>
-                    <span class="item-compra-productos">
-                      @for (item of compra.items; track $index) {
-                        <span [class.item-compra-producto-cancelado]="item.cancelado"
-                          >{{ item.cantidad }}× {{ item.producto }} ({{ item.variante }})</span
-                        >{{ !$last ? ' · ' : '' }}
-                      }
-                    </span>
-                    <span class="item-historial-fecha">
-                      {{ compra.fecha | date: 'dd/MM/yyyy HH:mm' }}
-                      @if (compra.estado === 'cancelada') {
-                        · Cancelada
-                      }
-                    </span>
-                  </li>
-                }
-              </ul>
+                 lealtad — aquí van TODAS las ventas reales del cliente,
+                 hayan contado como visita o no. -->
+            @if (pestanaDetalle() === 'compras') {
+              @if (detalle.compras.length === 0) {
+                <p class="mensaje-estado">Todavía no tiene ninguna compra registrada.</p>
+              } @else {
+                <ul class="lista-historial-compras">
+                  @for (compra of detalle.compras; track compra.id) {
+                    <li
+                      class="item-historial-compra"
+                      [class.item-historial-compra-cancelada]="compra.estado === 'cancelada'"
+                    >
+                      <div class="item-historial-linea">
+                        <span class="item-historial-descripcion">{{ compra.numero_orden }}</span>
+                        <span class="item-historial-monto">{{
+                          compra.total | currency: 'MXN'
+                        }}</span>
+                      </div>
+                      <span class="item-compra-productos">
+                        @for (item of compra.items; track $index) {
+                          <span [class.item-compra-producto-cancelado]="item.cancelado"
+                            >{{ item.cantidad }}× {{ item.producto }} ({{ item.variante }})</span
+                          >{{ !$last ? ' · ' : '' }}
+                        }
+                      </span>
+                      <span class="item-historial-fecha">
+                        {{ compra.fecha | date: 'dd/MM/yyyy HH:mm' }}
+                        @if (compra.estado === 'cancelada') {
+                          · Cancelada
+                        }
+                      </span>
+                    </li>
+                  }
+                </ul>
+              }
             }
 
             <div class="acciones-formulario">

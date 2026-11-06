@@ -275,7 +275,24 @@ export class ClientesComponent implements OnInit {
   // DETALLE (historial de lealtad) y EDICIÓN (nombre/teléfono)
   // ===========================================================================
 
+  // Tarjeta de lealtad: una casilla por visita del ciclo (largo configurable);
+  // las llenas son visitas ya hechas y las que coinciden con un escalón de
+  // descuento llevan un aro extra.
+  sellosDe(visitas: number): { llena: boolean; escalon: boolean; numero: number }[] {
+    const ciclo = this.configLealtad()?.ciclo_visitas ?? 10;
+    const visitasEscalon = new Set(this.escalones().map((e) => e.visita_numero));
+    return Array.from({ length: ciclo }, (_, i) => ({
+      numero: i + 1,
+      llena: i < visitas,
+      escalon: visitasEscalon.has(i + 1),
+    }));
+  }
+
+  // Pestaña del detalle de un cliente: su tarjeta de lealtad o sus compras.
+  pestanaDetalle = signal<'lealtad' | 'compras'>('lealtad');
+
   abrirDetalle(cliente: Cliente): void {
+    this.pestanaDetalle.set('lealtad');
     this.clienteDetalleId.set(cliente.id);
     this.clienteDetalle.set(null);
     this.cargandoDetalle.set(true);

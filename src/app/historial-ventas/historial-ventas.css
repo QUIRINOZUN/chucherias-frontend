@@ -811,3 +811,265 @@
   border-width: 2px;
   border-radius: var(--radio-sm);
 }
+
+/* ===================== Rollo de caja (2026-11-06) ===================== */
+/* Barra de filtros compacta: búsqueda a la vista, rango rápido como control
+   segmentado y el resto de filtros detrás del botón "Filtros". */
+.barra-principal-ventas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.campo-buscar-ventas {
+  position: relative;
+  flex: 1 1 260px;
+  display: flex;
+  align-items: center;
+}
+
+.campo-buscar-ventas .icono {
+  position: absolute;
+  left: 14px;
+  width: 18px;
+  height: 18px;
+  color: var(--pos-text-secondary);
+  pointer-events: none;
+}
+
+.campo-buscar-ventas input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px 0 42px;
+}
+
+.filtros-rapidos-ventas {
+  display: inline-flex;
+  padding: 4px;
+  gap: 2px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+}
+
+.filtros-rapidos-ventas .boton-filtro-rapido {
+  min-height: 40px;
+  border: none;
+  border-radius: var(--radio-pastilla);
+  background: transparent;
+  padding: 0 14px;
+}
+
+.filtros-rapidos-ventas .boton-filtro-rapido:hover {
+  background: color-mix(in srgb, var(--acento-modulo) 14%, transparent);
+}
+
+.boton-abrir-filtros {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.boton-abrir-filtros[aria-expanded='true'] {
+  border-color: var(--acento-modulo);
+}
+
+.contador-filtros {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: var(--acento-modulo);
+  color: #fff;
+  font-size: 0.72rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.panel-filtros-ventas {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--pos-border);
+}
+
+/* Cada día es un tramo del rollo: encabezado con el total del día y los
+   tickets como renglones separados por perforaciones. */
+.dia-rollo {
+  margin-bottom: 18px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--pos-radio);
+  background: var(--pos-bg-card);
+  overflow: hidden;
+}
+
+.dia-rollo-encabezado {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  background: color-mix(in srgb, var(--acento-modulo) 9%, var(--pos-bg-card));
+  border-bottom: 2px solid var(--acento-modulo);
+}
+
+.dia-rollo-semana {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pos-text-secondary);
+}
+
+.dia-rollo-fecha {
+  display: block;
+  font-family: var(--fuente-titulo);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.dia-rollo-cifras {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  text-align: right;
+}
+
+.dia-rollo-tickets {
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+}
+
+.dia-rollo-total {
+  font-family: var(--fuente-titulo);
+  font-size: 1.6rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.dia-rollo .lista-ventas {
+  gap: 0;
+}
+
+.dia-rollo .tarjeta-venta {
+  border: none;
+  border-left: 4px solid var(--action-success);
+  border-radius: 0;
+  padding: 12px 18px;
+  background: transparent;
+}
+
+.dia-rollo .tarjeta-venta + .tarjeta-venta {
+  border-top: 1px dashed var(--pos-border);
+}
+
+.dia-rollo .tarjeta-venta.tarjeta-venta-cancelada {
+  border-left-color: var(--peligro-texto);
+  opacity: 1;
+}
+
+.dia-rollo .tarjeta-venta-cancelada .venta-orden,
+.dia-rollo .tarjeta-venta-cancelada .venta-total {
+  text-decoration: line-through;
+  color: var(--pos-text-secondary);
+}
+
+/* Renglón: folio + hora/cajero + sellos a la izquierda, total grande a la derecha. */
+.dia-rollo .venta-resumen-datos {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 6px;
+}
+
+.venta-resumen-linea {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  min-width: 0;
+}
+
+.venta-hora-corta {
+  font-size: 0.75rem;
+  color: var(--pos-text-secondary);
+}
+
+.venta-sellos {
+  grid-column: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dia-rollo .venta-resumen-datos .venta-total {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  font-family: var(--fuente-titulo);
+  font-size: 1.35rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.sello-venta {
+  padding: 2px 8px;
+  border: 1px solid var(--pos-border);
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pos-text-secondary);
+}
+
+.sello-venta-cancelada {
+  border: 2px solid var(--peligro-texto);
+  color: var(--peligro-texto);
+  transform: rotate(-4deg);
+}
+
+@media (max-width: 560px) {
+  .dia-rollo-encabezado {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dia-rollo-cifras {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .filtros-rapidos-ventas {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+.campo-buscar-ventas input {
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  min-width: 0;
+}
+
+.campo-buscar-ventas {
+  flex: 1 1 220px;
+}
+
+.fila-acciones-filtros-ventas {
+  margin-top: 8px;
+}

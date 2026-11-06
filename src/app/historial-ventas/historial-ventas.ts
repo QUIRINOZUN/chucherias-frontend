@@ -165,6 +165,73 @@ export class HistorialVentasComponent implements OnInit {
       .reduce((suma, v) => suma + Number(v.total), 0),
   );
 
+  // ROLLO DE CAJA (2026-11-06): los tickets se agrupan por día (en hora local)
+  // con el total de ese día — solo ventas completadas, igual que totalFiltrado.
+  ventasPorDia = computed(() => {
+    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const meses = [
+      'enero',
+      'febrero',
+      'marzo',
+      'abril',
+      'mayo',
+      'junio',
+      'julio',
+      'agosto',
+      'septiembre',
+      'octubre',
+      'noviembre',
+      'diciembre',
+    ];
+    const grupos = new Map<
+      string,
+      {
+        clave: string;
+        diaSemana: string;
+        fechaTexto: string;
+        ventas: VentaHistorial[];
+        total: number;
+        completadas: number;
+      }
+    >();
+    for (const venta of this.ventas()) {
+      const fecha = new Date(venta.fecha);
+      const clave = formatoFechaLocal(fecha);
+      let grupo = grupos.get(clave);
+      if (!grupo) {
+        grupo = {
+          clave,
+          diaSemana: dias[fecha.getDay()],
+          fechaTexto: `${fecha.getDate()} de ${meses[fecha.getMonth()]} de ${fecha.getFullYear()}`,
+          ventas: [],
+          total: 0,
+          completadas: 0,
+        };
+        grupos.set(clave, grupo);
+      }
+      grupo.ventas.push(venta);
+      if (venta.estado === 'completada') {
+        grupo.total += Number(venta.total);
+        grupo.completadas += 1;
+      }
+    }
+    return [...grupos.values()];
+  });
+
+  // Los filtros secundarios (fechas, estado, método, entrega) viven detrás de un
+  // botón "Filtros" con la cuenta de cuántos están activos; la búsqueda y los
+  // accesos rápidos de fecha siempre están a la vista.
+  filtrosAbiertos = signal(false);
+  filtrosActivos = computed(
+    () =>
+      [this.filtroEstado(), this.filtroMetodoPago(), this.filtroTipoEntrega()].filter((f) => !!f)
+        .length + (this.filtroDesde() || this.filtroHasta() ? 1 : 0),
+  );
+
+  alternarFiltros(): void {
+    this.filtrosAbiertos.set(!this.filtrosAbiertos());
+  }
+
   // Eliminar historial (2026-10-29): acción de alto riesgo, solo administrador
   // — borra TODAS las ventas/órdenes del rango elegido, irreversible.
   esAdministrador = computed(() => this.authService.usuarioActual()?.rol === 'administrador');

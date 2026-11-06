@@ -106,36 +106,49 @@
           capturados.
         </p>
       } @else {
-        <ul class="lista-pasos">
-          @for (item of itemsDe(tipoActivo()); track item.id) {
-            <li
-              class="item-paso"
-              [class.item-paso-marcado]="item.marcado"
-              role="button"
-              tabindex="0"
-              (click)="alternarMarca(item, tipoActivo())"
-              (keydown.enter)="alternarMarca(item, tipoActivo())"
-              (keydown.space)="$event.preventDefault(); alternarMarca(item, tipoActivo())"
-            >
-              <span class="paso-casilla" aria-hidden="true">
-                @if (item.marcado) {
-                  <svg class="icono"><use href="#ic-check" /></svg>
+        <section class="libreta" [class.libreta-cierre]="tipoActivo() === 'cierre'">
+          <header class="libreta-encabezado">
+            <h2 class="libreta-titulo">
+              {{ tipoActivo() === 'apertura' ? 'Puntos de apertura' : 'Puntos de cierre' }}
+            </h2>
+            <span class="libreta-cuenta">
+              <strong>{{ marcadosDe(tipoActivo()) }}</strong> de {{ itemsDe(tipoActivo()).length }}
+            </span>
+            @if (completoDe(tipoActivo())) {
+              <span class="libreta-sello">Listo</span>
+            }
+          </header>
+          <ul class="lista-pasos">
+            @for (item of itemsDe(tipoActivo()); track item.id) {
+              <li
+                class="item-paso"
+                [class.item-paso-marcado]="item.marcado"
+                role="button"
+                tabindex="0"
+                (click)="alternarMarca(item, tipoActivo())"
+                (keydown.enter)="alternarMarca(item, tipoActivo())"
+                (keydown.space)="$event.preventDefault(); alternarMarca(item, tipoActivo())"
+              >
+                <span class="paso-casilla" aria-hidden="true">
+                  @if (item.marcado) {
+                    <svg class="icono"><use href="#ic-check" /></svg>
+                  }
+                </span>
+                <div class="paso-texto">
+                  <span class="paso-descripcion">{{ item.descripcion }}</span>
+                  @if (item.marcado) {
+                    <span class="paso-detalle">
+                      {{ item.marcado_por_nombre }} · {{ item.fecha_marcado | date: 'HH:mm' }}
+                    </span>
+                  }
+                </div>
+                @if (procesandoItemId() === item.id) {
+                  <span class="paso-procesando">...</span>
                 }
-              </span>
-              <div class="paso-texto">
-                <span class="paso-descripcion">{{ item.descripcion }}</span>
-                @if (item.marcado) {
-                  <span class="paso-detalle">
-                    {{ item.marcado_por_nombre }} · {{ item.fecha_marcado | date: 'HH:mm' }}
-                  </span>
-                }
-              </div>
-              @if (procesandoItemId() === item.id) {
-                <span class="paso-procesando">...</span>
-              }
-            </li>
-          }
-        </ul>
+              </li>
+            }
+          </ul>
+        </section>
       }
     }
 

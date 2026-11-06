@@ -596,3 +596,82 @@
 .boton-enlace-peligro {
   color: var(--peligro-texto) !important;
 }
+
+/* ===================== Cartera de tarjetas de lealtad (2026-11-06) ===================== */
+/* Una casilla por visita del ciclo: estampada (corazón) si ya se hizo,
+   punteada si falta; el aro extra marca la visita que da descuento. */
+.sellos-lealtad {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.sello-lealtad {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border: 2px dashed var(--pos-border);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--acento-modulo);
+}
+
+.sello-lealtad .icono {
+  width: 14px;
+  height: 14px;
+}
+
+.sello-lealtad.sello-llena {
+  border: 2px solid var(--acento-modulo);
+  background: color-mix(in srgb, var(--acento-modulo) 14%, transparent);
+  transform: rotate(-6deg);
+}
+
+.sello-lealtad.sello-escalon::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 2px solid var(--acento-modulo);
+  border-radius: 50%;
+}
+
+.sellos-lealtad-grande {
+  gap: 10px;
+  margin: 14px 0 12px;
+}
+
+.sellos-lealtad-grande .sello-lealtad {
+  width: 34px;
+  height: 34px;
+}
+
+.sellos-lealtad-grande .sello-lealtad .icono {
+  width: 18px;
+  height: 18px;
+}
+
+.pestanas-detalle-cliente {
+  display: flex;
+  margin: 18px 0 14px;
+  border-bottom: 1px solid var(--pos-border);
+}
+
+.pestana-detalle-cliente {
+  flex: 1;
+  min-height: 48px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--pos-text-secondary);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pestana-detalle-cliente.pestana-detalle-activa {
+  border-bottom-color: var(--acento-modulo);
+  color: var(--pos-text-primary);
+}
