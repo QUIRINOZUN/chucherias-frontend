@@ -27,6 +27,29 @@
   font-size: 1.3rem;
 }
 
+/* Botón "Volver": la misma pastilla que en el resto de pantallas (antes no
+   tenía estilos y salía como el botón crudo del navegador). */
+.boton-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: none;
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.boton-volver:active {
+  transform: scale(0.96);
+}
+
 .boton-tema {
   margin-left: auto;
   min-width: 44px;
