@@ -606,3 +606,21 @@
 .menu-acciones-lista .menu-accion-peligro {
   color: var(--peligro-texto);
 }
+
+/* Con zoom alto o pantallas angostas la regla móvil anterior (flex-wrap: wrap)
+   partía el gafete en columnas: la franja, el avatar y el nombre quedaban cada
+   uno en su columna. El gafete es siempre una sola columna. */
+.lista-usuarios .tarjeta-usuario {
+  flex-wrap: nowrap;
+}
+
+.lista-usuarios .usuario-info {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .lista-usuarios {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
