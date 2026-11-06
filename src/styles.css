@@ -602,7 +602,6 @@ header[class$='-header']:not(.dashboard-header) {
    tarjeta (WCAG 2.5.5): antes medían 32–40px. */
 button.boton-filtro-rapido,
 button[class*='chip-'],
-button[class*='boton-nuevo'],
 button.boton-editar,
 button.boton-editar-tarifa,
 button.boton-ver-mas-merma,
@@ -637,13 +636,13 @@ button.boton-alternar {
 
 /* Filtros colapsables (2026-11-06): con el botón "Filtros" cerrado solo se ven la
    búsqueda y los rangos rápidos; fechas, listas y chips se despliegan al abrir. */
-.filtros-colapsados .campo-filtro:has(input[type='date']),
-.filtros-colapsados .campo-filtro:has(select),
-.filtros-colapsados [class*='grupo-chips'],
-.filtros-colapsados .etiqueta-grupo-chips,
-.filtros-colapsados .fila-chips-bitacora,
-.filtros-colapsados .chips-estado-ve,
-.filtros-colapsados .campo-checkbox {
+section.filtros-colapsados .campo-filtro:has(input[type='date']),
+section.filtros-colapsados .campo-filtro:has(select),
+section.filtros-colapsados [class*='grupo-chips'],
+section.filtros-colapsados .etiqueta-grupo-chips,
+section.filtros-colapsados .fila-chips-bitacora,
+section.filtros-colapsados .chips-estado-ve,
+section.filtros-colapsados .campo-checkbox {
   display: none;
 }
 
@@ -677,4 +676,55 @@ button.boton-alternar {
   background: var(--acento-modulo);
   color: transparent;
   font-size: 0;
+}
+
+/* ===================== Estructura común (2026-11-06) ===================== */
+/* La piel de cada módulo es libre, pero lo que se repite en todas las pantallas
+   se comporta igual:
+   1) ACCIÓN PRINCIPAL: una píldora sólida del color del módulo, a la derecha,
+      del mismo tamaño en todas (antes: barras anchas en unas, píldoras en otras).
+   2) Una o dos acciones por elemento van como botones en fila; tres o más, en
+      un menú "..." (ver Usuarios e Inventario).
+   3) ESTADO VACÍO / MENSAJES: centrados, con aire y texto secundario.
+   Los selectores llevan "button" + [type] para ganar a los estilos de cada
+   componente sin usar !important. */
+button.boton-nuevo-usuario[type],
+button.boton-nueva-cotizacion[type],
+button.boton-nuevo-gasto[type],
+button.boton-nuevo[type] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+  min-width: 0;
+  min-height: 48px;
+  margin-left: auto;
+  padding: 0 24px;
+  border: none;
+  border-radius: var(--radio-pastilla);
+  background: var(--acento-modulo);
+  color: #fff;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+button.boton-nuevo-usuario[type]:hover,
+button.boton-nueva-cotizacion[type]:hover,
+button.boton-nuevo-gasto[type]:hover,
+button.boton-nuevo[type]:hover {
+  background: color-mix(in srgb, var(--acento-modulo) 85%, black);
+}
+
+.mensaje-estado {
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--pos-text-secondary);
+}
+
+.mensaje-estado.mensaje-error {
+  color: var(--peligro-texto);
 }
