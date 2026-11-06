@@ -70,9 +70,10 @@ const ROLES_QUE_AVANZAN = ['administrador', 'encargado', 'auxiliar'];
 // Asignar repartidor (2026-10-16): mismo criterio que registrar la venta
 // (routes/ordenes.js), no cocina.
 const ROLES_QUE_ASIGNAN_REPARTIDOR = ['administrador', 'encargado', 'cajero'];
-// Asignar cocinero (2026-10-19): SÍ es una decisión de cocina — mismos roles
-// que avanzan comandas.
-const ROLES_QUE_ASIGNAN_COCINERO = ['administrador', 'encargado', 'auxiliar'];
+// Asignar cocinero a mano: solo administrador/encargado (corregir o asignar por
+// otra persona). El cocinero normal se asigna SOLO al empezar a preparar (el
+// servidor lo hace con la cuenta de quien toca "Avanzar").
+const ROLES_QUE_ASIGNAN_COCINERO = ['administrador', 'encargado'];
 
 // A qué estado pasa una comanda al tocar su botón. 'entregado' no aparece como
 // clave porque una orden entregada ya no se muestra ni se puede avanzar.
