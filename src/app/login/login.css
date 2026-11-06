@@ -175,7 +175,7 @@ form {
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #8a7766;
+  color: var(--color-texto-suave);
 }
 
 .comanda-sello {

@@ -88,6 +88,7 @@
             <svg class="icono" aria-hidden="true"><use href="#ic-buscar" /></svg>
             <input
               type="text"
+              aria-label="Buscar insumo"
               placeholder="Buscar insumo..."
               [value]="busqueda()"
               (input)="busqueda.set($any($event.target).value)"

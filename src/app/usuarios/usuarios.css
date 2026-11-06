@@ -451,7 +451,7 @@
   --color-rol: var(--mod-recetario);
 }
 .lista-usuarios .tarjeta-usuario[data-rol='encargado'] {
-  --color-rol: var(--mod-comandas);
+  --color-rol: color-mix(in srgb, var(--mod-comandas) 78%, black);
 }
 .lista-usuarios .tarjeta-usuario[data-rol='cajero'] {
   --color-rol: var(--mod-caja);

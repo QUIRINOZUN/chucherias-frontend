@@ -1,6 +1,9 @@
 <!-- app.html — PLANTILLA RAÍZ (lógica en app.ts) -->
 <!-- AQUÍ se pinta la pantalla actual según la ruta (login, dashboard, POS, caja…). -->
-<router-outlet></router-outlet>
+<a class="saltar-contenido" href="#contenido-principal">Saltar al contenido</a>
+<main id="contenido-principal" tabindex="-1">
+  <router-outlet></router-outlet>
+</main>
 
 <!-- AVISO DE CONEXIÓN: se ve en cualquier pantalla cuando se cae el internet (y
      unos segundos al volver). Mientras no haya conexión no se puede registrar nada:

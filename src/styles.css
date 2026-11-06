@@ -596,3 +596,41 @@ textarea:focus-visible {
 header[class$='-header']:not(.dashboard-header) {
   z-index: 30;
 }
+
+/* Accesibilidad (auditoría 2026-11-06) --------------------------------- */
+/* Objetivos táctiles de al menos 44px en chips, rangos rápidos y botones de
+   tarjeta (WCAG 2.5.5): antes medían 32–40px. */
+button.boton-filtro-rapido,
+button[class*='chip-'],
+button[class*='boton-nuevo'],
+button.boton-editar,
+button.boton-editar-tarifa,
+button.boton-ver-mas-merma,
+button.boton-eliminar,
+button.boton-alternar {
+  min-height: 44px !important;
+}
+
+/* Enlace "Saltar al contenido": invisible hasta recibir el foco con teclado. */
+.saltar-contenido {
+  position: fixed;
+  top: -60px;
+  left: 12px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: var(--radio-md);
+  background: var(--action-primary);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+
+.saltar-contenido:focus {
+  top: 12px;
+}
+
+#contenido-principal {
+  display: block;
+  outline: none;
+}

@@ -125,6 +125,7 @@
                 [class.item-paso-marcado]="item.marcado"
                 role="button"
                 tabindex="0"
+                [attr.aria-pressed]="item.marcado"
                 (click)="alternarMarca(item, tipoActivo())"
                 (keydown.enter)="alternarMarca(item, tipoActivo())"
                 (keydown.space)="$event.preventDefault(); alternarMarca(item, tipoActivo())"
