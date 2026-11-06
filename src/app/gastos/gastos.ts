@@ -152,6 +152,14 @@ export class GastosComponent implements OnInit {
     private router: Router,
   ) {}
 
+  // Los filtros de fecha, categoría y similares viven detrás del botón "Filtros";
+  // la búsqueda y los rangos rápidos siempre están a la vista.
+  filtrosAbiertos = signal(false);
+
+  alternarFiltros(): void {
+    this.filtrosAbiertos.set(!this.filtrosAbiertos());
+  }
+
   ngOnInit(): void {
     this.gastosService.listarCategorias().subscribe({
       next: (categorias) => this.categorias.set(categorias),

@@ -73,51 +73,65 @@
                 {{ usuario.fecha_creacion | date: 'dd/MM/yyyy' }}
               </span>
             </div>
-            <span class="badge-estado" [class.badge-inactivo]="!usuario.activo">
-              {{ usuario.activo ? 'Activo' : 'Inactivo' }}
-            </span>
-            @if (esAdministrador()) {
-              <!-- Controles de administrador: editar, activar/desactivar y eliminar. Un administrador NO puede desactivar ni
-                   eliminar su propia cuenta (los botones se deshabilitan) para no quedarse sin acceso. -->
-              <button type="button" class="boton-editar" (click)="abrirEdicion(usuario)">
-                Editar
-              </button>
-              <button
-                type="button"
-                class="boton-alternar"
-                [class.boton-alternar-desactivar]="usuario.activo"
-                [disabled]="
-                  actualizandoId() === usuario.id || usuario.id === authService.usuarioActual()?.id
-                "
-                [title]="
-                  usuario.id === authService.usuarioActual()?.id
-                    ? 'No puedes desactivar tu propia cuenta'
-                    : ''
-                "
-                (click)="alternarActivo(usuario)"
-              >
-                {{
-                  actualizandoId() === usuario.id
-                    ? '...'
-                    : usuario.activo
-                      ? 'Desactivar'
-                      : 'Activar'
-                }}
-              </button>
-              <button
-                type="button"
-                class="boton-eliminar"
-                [disabled]="usuario.id === authService.usuarioActual()?.id"
-                [title]="
-                  usuario.id === authService.usuarioActual()?.id
-                    ? 'No puedes eliminar tu propia cuenta'
-                    : 'Eliminar'
-                "
-                (click)="abrirConfirmarEliminar(usuario)"
-              >
-                Eliminar
-              </button>
-            }
+            <div class="gafete-pie">
+              <span class="badge-estado" [class.badge-inactivo]="!usuario.activo">
+                {{ usuario.activo ? 'Activo' : 'Inactivo' }}
+              </span>
+              @if (esAdministrador()) {
+                <!-- Acciones de administrador en un menú "...": editar, activar/desactivar y
+                     eliminar. Un administrador NO puede desactivar ni eliminar su propia
+                     cuenta (esas opciones se deshabilitan) para no quedarse sin acceso. -->
+                <div class="menu-acciones">
+                  <button
+                    type="button"
+                    class="boton-menu"
+                    aria-haspopup="menu"
+                    [attr.aria-expanded]="menuAccionesId() === usuario.id"
+                    [attr.aria-label]="'Más acciones de ' + usuario.nombre"
+                    (click)="alternarMenuAcciones(usuario.id, $event)"
+                  >
+                    <svg class="icono" aria-hidden="true"><use href="#ic-mas-opciones" /></svg>
+                  </button>
+                  @if (menuAccionesId() === usuario.id) {
+                    <div class="menu-acciones-lista" role="menu">
+                      <button type="button" role="menuitem" (click)="abrirEdicion(usuario)">
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        [disabled]="
+                          actualizandoId() === usuario.id ||
+                          usuario.id === authService.usuarioActual()?.id
+                        "
+                        [title]="
+                          usuario.id === authService.usuarioActual()?.id
+                            ? 'No puedes desactivar tu propia cuenta'
+                            : ''
+                        "
+                        (click)="alternarActivo(usuario)"
+                      >
+                        {{ usuario.activo ? 'Desactivar' : 'Activar' }}
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        class="menu-accion-peligro"
+                        [disabled]="usuario.id === authService.usuarioActual()?.id"
+                        [title]="
+                          usuario.id === authService.usuarioActual()?.id
+                            ? 'No puedes eliminar tu propia cuenta'
+                            : ''
+                        "
+                        (click)="abrirConfirmarEliminar(usuario)"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
           </li>
         }
       </ul>

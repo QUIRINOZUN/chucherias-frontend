@@ -40,7 +40,18 @@
         Nueva cotización
       </button>
 
-      <section class="tarjeta-filtros-ve">
+      <section class="tarjeta-filtros-ve" [class.filtros-colapsados]="!filtrosAbiertos()">
+        <button
+          type="button"
+          class="boton-abrir-filtros"
+          [attr.aria-expanded]="filtrosAbiertos()"
+          (click)="alternarFiltros()"
+        >
+          Filtros
+          @if (hayFiltros()) {
+            <span class="contador-filtros" role="img" aria-label="hay filtros activos">•</span>
+          }
+        </button>
         <div class="filtros-ve">
           <div class="campo-filtro">
             <label for="filtro-desde">Desde</label>

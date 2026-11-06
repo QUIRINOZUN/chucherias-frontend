@@ -34,7 +34,18 @@
       o una cotización). Sin filtros, las últimas 200.
     </p>
 
-    <section class="tarjeta-filtros-bitacora">
+    <section class="tarjeta-filtros-bitacora" [class.filtros-colapsados]="!filtrosAbiertos()">
+      <button
+        type="button"
+        class="boton-abrir-filtros"
+        [attr.aria-expanded]="filtrosAbiertos()"
+        (click)="alternarFiltros()"
+      >
+        Filtros
+        @if (hayFiltros()) {
+          <span class="contador-filtros" role="img" aria-label="hay filtros activos">•</span>
+        }
+      </button>
       <div class="filtros-bitacora">
         <div class="campo-filtro">
           <label for="filtro-desde">Desde</label>

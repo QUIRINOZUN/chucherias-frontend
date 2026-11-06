@@ -34,7 +34,18 @@
     <!-- FILTROS: rango de fechas opcional (sin filtros, todo el histórico) +
          incluir empleados dados de baja (para pagar un periodo en el que
          todavía trabajaban). -->
-    <section class="tarjeta-filtros-nomina">
+    <section class="tarjeta-filtros-nomina" [class.filtros-colapsados]="!filtrosAbiertos()">
+      <button
+        type="button"
+        class="boton-abrir-filtros"
+        [attr.aria-expanded]="filtrosAbiertos()"
+        (click)="alternarFiltros()"
+      >
+        Filtros
+        @if (hayFiltros()) {
+          <span class="contador-filtros" role="img" aria-label="hay filtros activos">•</span>
+        }
+      </button>
       <div class="filtros-nomina">
         <div class="campo-filtro">
           <label for="filtro-desde">Desde</label>

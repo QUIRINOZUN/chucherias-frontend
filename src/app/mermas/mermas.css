@@ -445,3 +445,21 @@
 .lista-mermas .item-merma-valor {
   font-size: 1.25rem;
 }
+
+/* "Ver más": botón con contorno y área táctil completa (antes, un texto rojo
+   pequeño que se perdía sobre la etiqueta). */
+.lista-mermas .boton-ver-mas-merma {
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 0 16px;
+  border: 1px solid var(--acento-modulo);
+  border-radius: var(--radio-pastilla);
+  color: var(--pos-text-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.lista-mermas .boton-ver-mas-merma:hover {
+  background: color-mix(in srgb, var(--acento-modulo) 14%, transparent);
+  text-decoration: none;
+}

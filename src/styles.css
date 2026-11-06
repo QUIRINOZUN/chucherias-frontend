@@ -634,3 +634,47 @@ button.boton-alternar {
   display: block;
   outline: none;
 }
+
+/* Filtros colapsables (2026-11-06): con el botón "Filtros" cerrado solo se ven la
+   búsqueda y los rangos rápidos; fechas, listas y chips se despliegan al abrir. */
+.filtros-colapsados .campo-filtro:has(input[type='date']),
+.filtros-colapsados .campo-filtro:has(select),
+.filtros-colapsados [class*='grupo-chips'],
+.filtros-colapsados .etiqueta-grupo-chips,
+.filtros-colapsados .fila-chips-bitacora,
+.filtros-colapsados .chips-estado-ve,
+.filtros-colapsados .campo-checkbox {
+  display: none;
+}
+
+.boton-abrir-filtros {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  margin-bottom: 10px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.boton-abrir-filtros[aria-expanded='true'] {
+  border-color: var(--acento-modulo);
+}
+
+.boton-abrir-filtros .contador-filtros {
+  width: 10px;
+  height: 10px;
+  min-width: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--acento-modulo);
+  color: transparent;
+  font-size: 0;
+}

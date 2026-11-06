@@ -518,3 +518,91 @@
 .lista-usuarios .tarjeta-usuario .boton-eliminar {
   align-self: stretch;
 }
+
+/* ===================== Menú "..." del gafete ===================== */
+/* El menú flotante no debe recortarse: la tarjeta deja de usar overflow: hidden
+   y la franja de color redondea sus propias esquinas. */
+.lista-usuarios .tarjeta-usuario {
+  overflow: visible;
+}
+
+.gafete-franja {
+  border-radius: var(--radio-lg) var(--radio-lg) 0 0;
+}
+
+.gafete-pie {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.menu-acciones {
+  position: relative;
+}
+
+.boton-menu {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--pos-border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--pos-text-secondary);
+  cursor: pointer;
+}
+
+.boton-menu .icono {
+  width: 22px;
+  height: 22px;
+}
+
+.boton-menu:hover,
+.boton-menu[aria-expanded='true'] {
+  border-color: var(--color-rol);
+  color: var(--pos-text-primary);
+}
+
+.menu-acciones-lista {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 20;
+  min-width: 170px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-md);
+  background: var(--pos-bg-card);
+  box-shadow: var(--sombra-elevada);
+}
+
+.menu-acciones-lista button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: none;
+  border-radius: var(--radio-sm);
+  background: transparent;
+  color: var(--pos-text-primary);
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-acciones-lista button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-rol, var(--acento-modulo)) 14%, var(--pos-bg-card));
+}
+
+.menu-acciones-lista button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.menu-acciones-lista .menu-accion-peligro {
+  color: var(--peligro-texto);
+}

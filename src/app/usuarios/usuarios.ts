@@ -18,7 +18,7 @@
 // El formulario usa señales sueltas (nombreForm, usuarioForm…) en vez de un
 // FormGroup: la validación es corta y se resume en puedeGuardar().
 // =============================================================================
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, HostListener, OnInit, computed, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -123,6 +123,23 @@ export class UsuariosComponent implements OnInit {
 
   // Abre el formulario en modo "editar", precargado con los datos actuales.
   // La contraseña siempre arranca vacía (nunca se conoce la actual).
+  // Menú "..." de cada cuenta: abre una sola a la vez y se cierra al tocar fuera,
+  // con Escape o al elegir una opción.
+  menuAccionesId = signal<number | null>(null);
+
+  alternarMenuAcciones(id: number, evento: Event): void {
+    evento.stopPropagation();
+    this.menuAccionesId.set(this.menuAccionesId() === id ? null : id);
+  }
+
+  @HostListener('document:click')
+  @HostListener('document:keydown.escape')
+  cerrarMenuAcciones(): void {
+    if (this.menuAccionesId() !== null) {
+      this.menuAccionesId.set(null);
+    }
+  }
+
   abrirEdicion(usuario: Usuario): void {
     this.modoFormulario.set('editar');
     this.usuarioEditandoId.set(usuario.id);

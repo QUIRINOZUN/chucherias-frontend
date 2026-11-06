@@ -676,3 +676,10 @@
     animation: none;
   }
 }
+
+/* El tachado de un paso hecho debe verse siempre (la regla base quedaba tapada). */
+.libreta .item-paso.item-paso-marcado .paso-descripcion {
+  text-decoration-line: line-through !important;
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--tinta-turno);
+}

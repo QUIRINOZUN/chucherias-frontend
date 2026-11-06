@@ -45,7 +45,15 @@
     </section>
 
     <!-- FILTROS: rango de fechas y tipo. Cada cambio vuelve a consultar de inmediato. -->
-    <section class="tarjeta-filtros-mermas">
+    <section class="tarjeta-filtros-mermas" [class.filtros-colapsados]="!filtrosAbiertos()">
+      <button
+        type="button"
+        class="boton-abrir-filtros"
+        [attr.aria-expanded]="filtrosAbiertos()"
+        (click)="alternarFiltros()"
+      >
+        Filtros
+      </button>
       <div class="filtros-historial">
         <div class="campo-filtro">
           <label for="filtro-desde">Desde</label>

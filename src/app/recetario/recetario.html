@@ -421,7 +421,10 @@
           } @else {
             <ul class="lista-categorias-menu">
               @for (categoria of categorias(); track categoria.id) {
-                <li class="item-categoria-menu">
+                <li
+                  class="item-categoria-menu"
+                  [style.--color-categoria]="obtenerEstiloCategoria(categoria.nombre).color"
+                >
                   <span
                     class="categoria-menu-insignia"
                     [style.--color-categoria]="obtenerEstiloCategoria(categoria.nombre).color"

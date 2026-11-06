@@ -63,7 +63,18 @@
     <!-- FILTROS: rango de fechas opcional (sin filtros, todo el histórico) +
          accesos rápidos + categoría/forma de pago (chips, server-filtrados) +
          búsqueda por concepto/nota. -->
-    <section class="tarjeta-filtros-gastos">
+    <section class="tarjeta-filtros-gastos" [class.filtros-colapsados]="!filtrosAbiertos()">
+      <button
+        type="button"
+        class="boton-abrir-filtros"
+        [attr.aria-expanded]="filtrosAbiertos()"
+        (click)="alternarFiltros()"
+      >
+        Filtros
+        @if (hayFiltros()) {
+          <span class="contador-filtros" role="img" aria-label="hay filtros activos">•</span>
+        }
+      </button>
       <div class="filtros-gastos">
         <div class="campo-filtro">
           <label for="filtro-desde">Desde</label>
