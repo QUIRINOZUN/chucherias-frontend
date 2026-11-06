@@ -1779,3 +1779,84 @@
   background: color-mix(in srgb, var(--acento-modulo) 16%, var(--pos-bg-card));
   color: var(--acento-modulo);
 }
+
+/* ===================== Secciones de la carta (2026-11-06) ===================== */
+/* Cada categoría es una sección del tablero del menú: insignia grande del
+   color de la categoría, su nombre, cuántos productos tiene y las acciones al pie. */
+.lista-categorias-menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+.lista-categorias-menu .item-categoria-menu {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 4px 8px;
+  padding: 16px;
+  border: 1px solid var(--pos-border);
+  border-top: 4px solid var(--color-categoria, var(--acento-modulo));
+  border-radius: var(--radio-lg);
+  box-shadow: none;
+}
+
+.lista-categorias-menu .categoria-menu-insignia {
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 8px;
+  margin-right: calc(100% - 52px);
+}
+
+.lista-categorias-menu .categoria-menu-nombre {
+  flex-basis: 100%;
+  font-family: var(--fuente-titulo);
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.categoria-menu-conteo {
+  flex-basis: 100%;
+  margin-bottom: 10px;
+  font-size: 0.78rem;
+  color: var(--pos-text-secondary);
+}
+
+.lista-categorias-menu .boton-editar,
+.lista-categorias-menu .boton-eliminar-chico {
+  flex: 1 1 auto;
+}
+
+/* ===================== Productos en cuadrícula (2026-11-06) ===================== */
+.lista-productos-menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 12px;
+}
+
+.lista-productos-menu .item-producto-menu {
+  padding: 12px 14px;
+  border: 1px solid var(--pos-border);
+  border-left: 4px solid var(--acento-modulo);
+  box-shadow: none;
+}
+
+.lista-productos-menu .producto-menu-miniatura {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  border-radius: var(--radio-md);
+  object-fit: contain;
+  background: color-mix(in srgb, var(--acento-modulo) 10%, var(--pos-bg-main));
+}
+
+.producto-menu-sin-foto {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fuente-titulo);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--acento-modulo);
+}

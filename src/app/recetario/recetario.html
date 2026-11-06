@@ -434,6 +434,10 @@
                     </svg>
                   </span>
                   <span class="categoria-menu-nombre">{{ categoria.nombre }}</span>
+                  <span class="categoria-menu-conteo">
+                    {{ contarCategoriaMenu(categoria.id) }}
+                    {{ contarCategoriaMenu(categoria.id) === 1 ? 'producto' : 'productos' }}
+                  </span>
                   <button
                     type="button"
                     class="boton-editar"
@@ -554,6 +558,12 @@
                           [src]="producto.imagen_url"
                           [alt]="producto.nombre"
                         />
+                      } @else {
+                        <span
+                          class="producto-menu-miniatura producto-menu-sin-foto"
+                          aria-hidden="true"
+                          >{{ producto.nombre.charAt(0) }}</span
+                        >
                       }
                       <div class="item-producto-menu-info">
                         <span class="producto-nombre" [class.texto-inactivo]="!producto.activo">

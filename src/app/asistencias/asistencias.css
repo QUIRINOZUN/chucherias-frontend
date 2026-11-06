@@ -1307,3 +1307,153 @@
     flex-direction: column;
   }
 }
+
+/* ===================== Plantilla de personal (2026-11-06) ===================== */
+/* Cada empleado es una tarjeta de checador: un dial con su inicial (como la
+   carátula del reloj), puesto y antigüedad, y las acciones al pie. */
+.lista-empleados {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.lista-empleados .tarjeta-empleado {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas:
+    'dial info estado'
+    'acciones acciones acciones';
+  align-items: center;
+  gap: 12px 14px;
+  padding: 16px;
+  border: 1px solid var(--pos-border);
+  border-top: 3px solid var(--acento-modulo);
+  border-radius: var(--radio-lg);
+  box-shadow: none;
+}
+
+.empleado-dial {
+  grid-area: dial;
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border: 3px solid var(--acento-modulo);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fuente-titulo);
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--acento-modulo);
+  outline: 2px dashed color-mix(in srgb, var(--acento-modulo) 50%, transparent);
+  outline-offset: 4px;
+}
+
+.lista-empleados .tarjeta-empleado .empleado-info {
+  grid-area: info;
+  min-width: 0;
+}
+
+.lista-empleados .tarjeta-empleado .badge-estado {
+  grid-area: estado;
+}
+
+.lista-empleados .tarjeta-empleado .boton-editar {
+  grid-area: acciones;
+  justify-self: start;
+}
+
+.lista-empleados .tarjeta-empleado .boton-alternar {
+  grid-area: acciones;
+  justify-self: end;
+}
+
+.lista-empleados .tarjeta-empleado-inactivo {
+  opacity: 0.6;
+}
+
+/* Selector de empleado del calendario: fichas con inicial. */
+.chips-empleado-horario {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.chip-empleado-horario {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 16px 0 6px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-card);
+  color: var(--pos-text-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chip-empleado-inicial {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--acento-modulo) 20%, transparent);
+  color: var(--acento-modulo);
+  font-family: var(--fuente-titulo);
+  font-weight: 800;
+}
+
+.chip-empleado-horario-activo {
+  border-color: var(--acento-modulo);
+  background: color-mix(in srgb, var(--acento-modulo) 16%, var(--pos-bg-card));
+}
+
+.chip-empleado-horario-activo .chip-empleado-inicial {
+  background: var(--acento-modulo);
+  color: #fff;
+}
+
+/* ===================== Tira de checadas (2026-11-06) ===================== */
+/* Cada registro muestra entrada y salida como las dos marcas del checador,
+   en cifras grandes y tabulares. */
+.item-historial-horas {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 8px 0 10px;
+}
+
+.checada {
+  display: inline-flex;
+  flex-direction: column;
+  min-width: 82px;
+  padding: 6px 12px;
+  border-radius: var(--radio-sm);
+  background: color-mix(in srgb, var(--acento-modulo) 12%, var(--pos-bg-card));
+  font-family: var(--fuente-titulo);
+  font-size: 1.4rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.checada small {
+  font-family: var(--fuente-texto);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pos-text-secondary);
+}
+
+.checada-flecha {
+  color: var(--pos-text-secondary);
+  font-size: 1.2rem;
+}

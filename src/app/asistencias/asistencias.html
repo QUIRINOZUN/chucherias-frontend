@@ -211,7 +211,10 @@
         } @else {
           <ul class="lista-empleados">
             @for (empleado of empleados(); track empleado.id) {
-              <li class="tarjeta-empleado">
+              <li class="tarjeta-empleado" [class.tarjeta-empleado-inactivo]="!empleado.activo">
+                <span class="empleado-dial" aria-hidden="true">{{
+                  empleado.nombre.charAt(0)
+                }}</span>
                 <div class="empleado-info">
                   <span class="empleado-nombre">{{ empleado.nombre }}</span>
                   <span class="empleado-detalle">
@@ -276,26 +279,26 @@
 
         <!-- ---- Sub-vista: CALENDARIO (semana o mes, editable) ---- -->
         @if (subVistaHorario() === 'calendario') {
-          <div class="campo-filtro campo-filtro-ancho campo-selector-horario">
-            <label for="empleado-horario">Empleado</label>
-            <!-- Sin [value] (2026-10-17, mismo patrón corregido en el
-                 resto del proyecto) — por consistencia, aunque hoy este
-                 selector siempre arranca vacío. -->
-            <select
-              id="empleado-horario"
-              (change)="seleccionarEmpleadoHorario($any($event.target).value)"
-            >
-              <option value="" [selected]="!empleadoIdHorario()">Selecciona un empleado</option>
-              @for (empleado of empleadosActivos(); track empleado.id) {
-                <option [value]="empleado.id" [selected]="empleado.id === empleadoIdHorario()">
-                  {{ empleado.nombre }}
-                </option>
-              }
-            </select>
+          <!-- Quién: un toque en vez de un desplegable. -->
+          <div class="chips-empleado-horario" role="group" aria-label="Empleado">
+            @for (empleado of empleadosActivos(); track empleado.id) {
+              <button
+                type="button"
+                class="chip-empleado-horario"
+                [class.chip-empleado-horario-activo]="empleado.id === empleadoIdHorario()"
+                [attr.aria-pressed]="empleado.id === empleadoIdHorario()"
+                (click)="seleccionarEmpleadoHorario('' + empleado.id)"
+              >
+                <span class="chip-empleado-inicial" aria-hidden="true">{{
+                  empleado.nombre.charAt(0)
+                }}</span>
+                {{ empleado.nombre }}
+              </button>
+            }
           </div>
 
           @if (!empleadoIdHorario()) {
-            <p class="mensaje-estado">Elige un empleado para ver y editar su calendario.</p>
+            <p class="mensaje-estado">Toca a un empleado para ver y editar su calendario.</p>
           } @else {
             <!-- Selector Semana/Mes, igual criterio que Google Calendar. -->
             <div class="selector-tipo-dia selector-vista-calendario">
@@ -559,8 +562,13 @@
                   <span class="item-historial-fecha">{{ a.fecha | date: 'dd/MM/yyyy' }}</span>
                 </div>
                 <div class="item-historial-horas">
-                  Entrada: {{ a.hora_entrada?.slice(0, 5) ?? '—' }} · Salida:
-                  {{ a.hora_salida?.slice(0, 5) ?? '—' }}
+                  <span class="checada">
+                    <small>Entrada</small>{{ a.hora_entrada?.slice(0, 5) ?? '—' }}
+                  </span>
+                  <span class="checada-flecha" aria-hidden="true">→</span>
+                  <span class="checada">
+                    <small>Salida</small>{{ a.hora_salida?.slice(0, 5) ?? '—' }}
+                  </span>
                 </div>
                 @if (a.observaciones) {
                   <div class="item-historial-observaciones">{{ a.observaciones }}</div>
