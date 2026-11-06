@@ -7,7 +7,7 @@
 <div class="login-container">
   <!-- PANEL DE MARCA: nombre del negocio y composición decorativa (los íconos son solo adorno, no se leen en pantalla). -->
   <aside class="login-marca">
-    <!-- Composición decorativa: íconos de la carta girados sobre el fondo. -->
+    <!-- Emblemas gigantes de la carta como marca de agua (solo adorno). -->
     <div class="marca-composicion" aria-hidden="true">
       <svg class="icono deco deco-1"><use href="#ic-hamburguesa" /></svg>
       <svg class="icono deco deco-2"><use href="#ic-pizza" /></svg>
@@ -17,15 +17,14 @@
       <svg class="icono deco deco-6"><use href="#ic-waffle" /></svg>
       <svg class="icono deco deco-7"><use href="#ic-picante" /></svg>
     </div>
+
+    <!-- Toldo: la franja de colores del logotipo cruzando el panel en diagonal,
+         por detrás del logo. -->
+    <div class="marca-toldo" aria-hidden="true"></div>
+
     <div class="marca-texto">
-      <p class="marca-etiqueta">Sistema de gestión</p>
-      <!-- Logotipo en vez del nombre tipográfico. Aquí va la variante de
-           letras BLANCAS (no la de color) porque el fondo de este panel es
-           un degradado naranja/café oscuro — el logo a color comparte tono
-           con el fondo y se perdía; en blanco contrasta bien. El dashboard y
-           el POS sí usan la versión a color, sobre fondos neutros. Servido
-           desde Cloudinary (2026-10-16, migrado de public/img/ local —
-           mismo criterio que las fotos de producto/receta). -->
+      <!-- Logo de letras BLANCAS (el de color se pierde sobre el fondo naranja
+           oscuro). Servido desde Cloudinary. -->
       <h1 class="marca-nombre">
         <img
           src="https://res.cloudinary.com/isjkpamh/image/upload/v1792190975/chucherias/marca/hn3wfopcqsmxfzcrehui.png"
@@ -33,16 +32,18 @@
           class="marca-logo"
         />
       </h1>
-      <p class="marca-lema">
-        Hamburguesas, pizzas, alitas y antojitos. Todo el negocio en un solo lugar.
-      </p>
+      <p class="marca-etiqueta">Sistema de gestión operativa</p>
     </div>
   </aside>
 
   <!-- FORMULARIO DE ACCESO. -->
   <main class="login-formulario">
     <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
-      <h2>Bienvenido</h2>
+      <div class="comanda-encabezado">
+        <span class="comanda-nota">Acceso</span>
+        <span class="comanda-sello">Comanda</span>
+      </div>
+      <h2>¡Bienvenido!</h2>
       <p class="subtitulo">Inicia sesión para continuar</p>
 
       <!-- Campo de usuario (obligatorio, mínimo 3 caracteres). -->
@@ -52,6 +53,7 @@
           id="usuario"
           type="text"
           formControlName="usuario"
+          placeholder="Tu usuario"
           autocomplete="username"
           [class.campo-invalido]="usuarioInvalido"
         />

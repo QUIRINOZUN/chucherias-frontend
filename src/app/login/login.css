@@ -2,7 +2,7 @@
    primera impresión de la marca y no depende del tema oscuro/claro del POS. */
 :host {
   --color-fondo: #fdf6ec;
-  --color-superficie: #ffffff;
+  --color-superficie: #fffdf9;
   --color-texto: #241c16;
   --color-texto-suave: #6b5f54;
   --color-acento: #c2410c;
@@ -15,7 +15,7 @@
   font-family: var(--fuente-texto);
 }
 
-/* Móvil: una sola columna (banda de marca arriba, formulario debajo). */
+/* Móvil: una sola columna (cartel arriba, comanda debajo). */
 .login-container {
   min-height: 100vh;
   min-height: 100dvh;
@@ -24,29 +24,16 @@
   background: var(--color-fondo);
 }
 
-/* ===================== Panel de marca ===================== */
+/* ===================== Panel de marca: el cartel ===================== */
 .login-marca {
   position: relative;
   overflow: hidden;
   display: flex;
-  align-items: flex-end;
-  padding: 44px 24px 68px;
-  background: linear-gradient(155deg, #7c2d12 0%, #9a3412 48%, #b23c0c 100%);
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px 56px;
+  background: #7c2d12;
   color: #fdf6ec;
-}
-
-/* Franja arcoíris arriba del panel de marca (2026-10-13): un guiño al
-   logotipo real de Chucherías Mix, cuyas letras alternan varios colores
-   (ver las fotos de marca). Usa --franja-arcoiris (styles.css) — la MISMA
-   variable que ahora llevan los 9 encabezados de pantalla, para que el
-   arcoíris sea un elemento consistente en toda la app y no algo exclusivo
-   del login. */
-.login-marca::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 5px;
-  background: var(--franja-arcoiris);
 }
 
 .marca-composicion {
@@ -55,59 +42,61 @@
   pointer-events: none;
 }
 
-/* Íconos gigantes, girados y muy tenues: dan textura sin competir con el texto. */
+/* Emblemas enormes como marca de agua, girados y recortados por los bordes. */
 .deco {
   position: absolute;
-  stroke-width: 1.25;
+  stroke-width: 1.1;
   color: #fdf6ec;
-  opacity: 0.16;
+  opacity: 0.07;
 }
 
 .deco-1 {
-  width: 132px;
-  height: 132px;
-  right: -18px;
-  top: -20px;
+  width: 260px;
+  height: 260px;
+  right: -60px;
+  top: -70px;
   transform: rotate(14deg);
 }
 .deco-2 {
-  width: 88px;
-  height: 88px;
-  right: 96px;
-  bottom: 30px;
+  width: 200px;
+  height: 200px;
+  left: -50px;
+  bottom: -60px;
   transform: rotate(-16deg);
 }
 .deco-3 {
-  width: 76px;
-  height: 76px;
-  left: 46%;
-  top: 14px;
-  transform: rotate(28deg);
+  width: 160px;
+  height: 160px;
+  left: 40%;
+  bottom: -50px;
+  transform: rotate(24deg);
 }
-.deco-4 {
-  display: none;
-}
-.deco-5 {
-  display: none;
-}
-.deco-6 {
-  display: none;
-}
+.deco-4,
+.deco-5,
+.deco-6,
 .deco-7 {
   display: none;
 }
 
-.marca-texto {
-  position: relative;
+/* Toldo: banda diagonal con los colores del logotipo, por detrás del logo. */
+.marca-toldo {
+  position: absolute;
+  left: -15%;
+  top: 14%;
+  width: 130%;
+  height: 74px;
+  background: var(--franja-arcoiris);
+  transform: rotate(-9deg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  animation: barrer 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.marca-etiqueta {
-  margin: 0 0 10px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #fee6cf;
+.marca-texto {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 560px;
+  text-align: center;
 }
 
 .marca-nombre {
@@ -115,51 +104,106 @@
   line-height: 0;
 }
 
-/* El logo sustituye al nombre tipográfico; se escala por ancho (su relación
-   de aspecto es fija, ~3:1) en vez de por font-size. */
 .marca-logo {
   display: block;
-  width: clamp(220px, 60vw, 380px);
+  width: min(92%, 440px);
   height: auto;
+  margin: 0 auto;
+  animation: estampar-logo 0.6s 0.1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.marca-lema {
-  margin: 14px 0 0;
-  max-width: 32ch;
-  font-size: 0.98rem;
-  line-height: 1.45;
-  color: #fbe8d2;
+.marca-etiqueta {
+  margin: 28px auto 0;
+  padding: 14px 8px;
+  max-width: 440px;
+  border-top: 1px solid rgba(254, 230, 207, 0.35);
+  border-bottom: 1px solid rgba(254, 230, 207, 0.35);
+  font-family: var(--fuente-titulo);
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fee6cf;
+  animation: subir-suave 0.5s 0.3s ease both;
 }
 
-/* ===================== Formulario ===================== */
+/* ===================== Formulario: la comanda ===================== */
 .login-formulario {
   position: relative;
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 32px 24px 40px;
-  margin-top: -32px;
-  background: var(--color-fondo);
-  border-radius: 28px 28px 0 0;
+  padding: 28px 20px 40px;
+  background: #1d1511;
 }
 
 form {
   width: 100%;
-  max-width: 380px;
+  max-width: 440px;
+}
+
+/* La comanda: papel con el borde superior festoneado (los semicírculos
+   oscuros son los orificios del papel). */
+.login-formulario form {
+  position: relative;
+  padding: 52px 28px 32px;
+  background: #fffbf5;
+  border-radius: 0 0 20px 20px;
+  animation: subir-suave 0.55s 0.1s ease both;
+}
+
+.login-formulario form::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 16px;
+  background: radial-gradient(circle at 50% 0, #1d1511 9px, transparent 9.5px) repeat-x;
+  background-size: 26px 16px;
+}
+
+.comanda-encabezado {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  margin-bottom: 26px;
+  border-bottom: 2px solid var(--color-borde);
+}
+
+.comanda-nota {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #8a7766;
+}
+
+.comanda-sello {
+  font-family: var(--fuente-titulo);
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--color-acento);
 }
 
 h2 {
   margin: 0;
   font-family: var(--fuente-titulo);
-  font-size: 1.9rem;
+  font-variation-settings:
+    'SOFT' 80,
+    'WONK' 1;
+  font-size: 2.6rem;
   font-weight: 800;
   letter-spacing: -0.02em;
+  line-height: 1.05;
   color: var(--color-texto);
 }
 
 .subtitulo {
-  margin: 6px 0 28px;
-  font-size: 0.95rem;
+  margin: 10px 0 30px;
+  font-size: 1rem;
+  font-style: italic;
   color: var(--color-texto-suave);
 }
 
@@ -169,20 +213,22 @@ h2 {
 
 label {
   display: block;
-  margin-bottom: 8px;
-  font-size: 0.85rem;
-  font-weight: 700;
+  margin-bottom: 10px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   color: var(--color-texto);
 }
 
 input {
   width: 100%;
-  min-height: 52px;
-  padding: 0 16px;
-  font-size: 1rem;
+  min-height: 60px;
+  padding: 0 18px;
+  font-size: 1.1rem;
   border: 2px solid var(--color-borde);
   border-radius: var(--radio);
-  background: var(--color-superficie);
+  background: #fff;
   color: var(--color-texto);
   transition:
     border-color 0.15s ease,
@@ -252,23 +298,22 @@ input.campo-invalido {
 
 .boton-enviar {
   width: 100%;
-  min-height: 56px;
+  min-height: 68px;
   border: none;
-  border-radius: 14px;
+  border-radius: 22px;
   background: var(--color-acento);
   color: #fff;
-  font-size: 1.05rem;
+  font-size: 1.3rem;
   font-weight: 800;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  box-shadow: 0 8px 22px rgba(194, 65, 12, 0.32);
+  box-shadow: 0 14px 28px rgba(194, 65, 12, 0.35);
   transition:
     background-color 0.15s ease,
-    transform 0.1s ease,
-    box-shadow 0.15s ease;
+    transform 0.1s ease;
 }
 
 .boton-enviar:hover:not(:disabled) {
@@ -306,6 +351,27 @@ input.campo-invalido {
   }
 }
 
+@keyframes estampar-logo {
+  from {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+}
+
+@keyframes subir-suave {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes barrer {
+  from {
+    opacity: 0;
+    transform: translateX(-12%) rotate(-9deg);
+  }
+}
+
 @keyframes entrar {
   from {
     opacity: 0;
@@ -313,91 +379,111 @@ input.campo-invalido {
   }
 }
 
-/* ===================== Pantallas anchas: dividido en dos ===================== */
+/* ===================== Pantallas anchas: cartel + comanda ===================== */
 @media (min-width: 900px) {
   .login-container {
-    grid-template-columns: 1.15fr 1fr;
+    grid-template-columns: 1fr 1fr;
     grid-template-rows: none;
   }
 
   .login-marca {
-    align-items: center;
-    padding: 64px;
+    padding: 72px 56px;
+  }
+
+  .marca-toldo {
+    top: 17%;
+    height: 150px;
+    transform: rotate(-16deg);
   }
 
   .marca-logo {
-    width: clamp(320px, 30vw, 480px);
+    width: min(100%, 520px);
   }
 
-  .marca-lema {
-    font-size: 1.15rem;
-    max-width: 30ch;
+  .marca-etiqueta {
+    margin-top: 56px;
+    font-size: 1.5rem;
+    max-width: 480px;
   }
 
+  .deco {
+    opacity: 0.08;
+  }
   .deco-1 {
-    width: 300px;
-    height: 300px;
-    right: -60px;
-    top: -50px;
-    transform: rotate(14deg);
+    width: 520px;
+    height: 520px;
+    right: -150px;
+    top: -120px;
   }
   .deco-2 {
-    width: 200px;
-    height: 200px;
-    right: 22%;
-    bottom: -30px;
-    transform: rotate(-16deg);
+    width: 380px;
+    height: 380px;
+    left: -110px;
+    bottom: -90px;
   }
   .deco-3 {
-    width: 150px;
-    height: 150px;
-    left: 34%;
-    top: 7%;
-    transform: rotate(28deg);
+    width: 280px;
+    height: 280px;
+    left: 38%;
+    bottom: -90px;
   }
   .deco-4 {
     display: block;
-    width: 130px;
-    height: 130px;
-    left: -24px;
-    bottom: 9%;
+    width: 300px;
+    height: 300px;
+    left: -80px;
+    top: 42%;
     transform: rotate(-12deg);
   }
   .deco-5 {
     display: block;
-    width: 110px;
-    height: 110px;
-    right: 8%;
-    top: 42%;
+    width: 240px;
+    height: 240px;
+    right: -50px;
+    top: 52%;
     transform: rotate(10deg);
   }
   .deco-6 {
     display: block;
-    width: 120px;
-    height: 120px;
-    left: 8%;
-    top: 5%;
+    width: 260px;
+    height: 260px;
+    left: 30%;
+    top: -80px;
     transform: rotate(-8deg);
   }
   .deco-7 {
     display: block;
-    width: 90px;
-    height: 90px;
-    left: 40%;
-    bottom: 5%;
+    width: 190px;
+    height: 190px;
+    right: 22%;
+    bottom: -60px;
     transform: rotate(18deg);
   }
 
   .login-formulario {
     align-items: center;
-    margin-top: 0;
-    padding: 48px;
-    border-radius: 0;
+    padding: 40px 48px;
+  }
+
+  .login-formulario form {
+    max-width: 480px;
+    padding: 64px 44px 44px;
+  }
+
+  h2 {
+    font-size: 3.2rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .spinner {
+    animation: none;
+  }
+
+  .marca-logo,
+  .marca-toldo,
+  .marca-etiqueta,
+  .login-formulario form {
     animation: none;
   }
 }

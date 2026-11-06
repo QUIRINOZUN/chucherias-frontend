@@ -460,6 +460,27 @@
         }
       },
       "updatedAt": "2026-11-04T21:54:31.912Z"
+    },
+    "/login": {
+      "targetKind": "existing-ui",
+      "projectId": "9eda39df-a714-407d-b83d-03e5462f3b90",
+      "baselineDraftId": "d25d8b8c-2eb6-46d4-be97-37d4b6ccee91",
+      "activeDraftId": "9e632709-0f46-4fc1-b048-474bba1633a6",
+      "designSystemPath": ".superdesign/design-system.md",
+      "referenceIds": [],
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "src/app/login/login.html",
+        "src/app/login/login.css",
+        "src/styles.css:1:272"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "d77a2b1c5c3989328853b7f1ddb35b3ab2e26489271364fcd628528d6412d0d3",
+        "src/app/login/login.html": "6534d99e1d66dc79497a245d147ea7dea487f3a3ccc244aff1ae06215359a687",
+        "src/app/login/login.css": "e402329b4f69483a237245d6d25b679c9fb62dbbcf826afc5cb992ab91c08483",
+        "src/styles.css": "1f731307ae534a5fe6da76aa5d1e3fa2fd7d49157100b1d8906d5a47e1de58f7"
+      },
+      "note": "Aplicado: Letrero de la calle (A) más épico. Descartado: Mostrador de noche 9d645372-bf37-4a3f-bd8b-cf5035a68379. Cambios vs borrador: sin folio/versión/ubicación inventados."
     }
   }
 }
