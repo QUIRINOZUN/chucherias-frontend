@@ -424,3 +424,97 @@
     flex: 1 1 100%;
   }
 }
+
+/* ===================== Gafetes por rol (2026-11-06) ===================== */
+/* Cada cuenta es un gafete de credencial: franja de color con el rol (y el
+   ojal para el cordón), avatar con la inicial, nombre y estado. */
+.lista-usuarios {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.lista-usuarios .tarjeta-usuario {
+  --color-rol: var(--mod-usuarios);
+  position: relative;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 0 16px 16px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-lg);
+  overflow: hidden;
+  box-shadow: none;
+}
+
+.lista-usuarios .tarjeta-usuario[data-rol='administrador'] {
+  --color-rol: var(--mod-recetario);
+}
+.lista-usuarios .tarjeta-usuario[data-rol='encargado'] {
+  --color-rol: var(--mod-comandas);
+}
+.lista-usuarios .tarjeta-usuario[data-rol='cajero'] {
+  --color-rol: var(--mod-caja);
+}
+.lista-usuarios .tarjeta-usuario[data-rol='auxiliar'] {
+  --color-rol: var(--mod-ventas);
+}
+
+.gafete-franja {
+  position: relative;
+  align-self: stretch;
+  margin: 0 -16px 6px;
+  padding: 22px 16px 8px;
+  background: var(--color-rol);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.gafete-ojal {
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  width: 34px;
+  height: 8px;
+  margin-left: -17px;
+  border-radius: 4px;
+  background: var(--pos-bg-main);
+}
+
+.gafete-avatar {
+  width: 52px;
+  height: 52px;
+  margin-top: -2px;
+  border: 3px solid var(--color-rol);
+  border-radius: 50%;
+  background: var(--pos-bg-main);
+  color: var(--color-rol);
+  font-family: var(--fuente-titulo);
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lista-usuarios .tarjeta-usuario-inactiva {
+  opacity: 0.6;
+}
+
+.lista-usuarios .usuario-info {
+  width: 100%;
+}
+
+.lista-usuarios .usuario-nombre {
+  font-size: 1.15rem;
+}
+
+.lista-usuarios .tarjeta-usuario .boton-editar,
+.lista-usuarios .tarjeta-usuario .boton-alternar,
+.lista-usuarios .tarjeta-usuario .boton-eliminar {
+  align-self: stretch;
+}

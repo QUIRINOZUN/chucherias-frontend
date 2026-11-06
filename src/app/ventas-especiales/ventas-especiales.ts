@@ -282,6 +282,30 @@ export class VentasEspecialesComponent implements OnInit {
     this.cargarLista();
   }
 
+  // Hoja de calendario de la invitación: mes abreviado y día del evento
+  // (fecha_evento llega como AAAA-MM-DD).
+  mesCorto(fecha: string): string {
+    const meses = [
+      'ENE',
+      'FEB',
+      'MAR',
+      'ABR',
+      'MAY',
+      'JUN',
+      'JUL',
+      'AGO',
+      'SEP',
+      'OCT',
+      'NOV',
+      'DIC',
+    ];
+    return meses[Number(fecha.slice(5, 7)) - 1] ?? '';
+  }
+
+  diaDe(fecha: string): string {
+    return String(Number(fecha.slice(8, 10)));
+  }
+
   etiquetaTipo(tipo: TipoVentaEspecial): string {
     return this.tipos.find((t) => t.valor === tipo)?.etiqueta ?? tipo;
   }

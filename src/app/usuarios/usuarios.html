@@ -56,11 +56,20 @@
       <!-- LISTA: una tarjeta por cuenta con nombre, usuario, rol, fecha de alta y estado (Activo/Inactivo). -->
       <ul class="lista-usuarios">
         @for (usuario of usuarios(); track usuario.id) {
-          <li class="tarjeta-usuario">
+          <li
+            class="tarjeta-usuario"
+            [attr.data-rol]="usuario.rol"
+            [class.tarjeta-usuario-inactiva]="!usuario.activo"
+          >
+            <span class="gafete-franja">
+              <span class="gafete-ojal" aria-hidden="true"></span>
+              {{ usuario.rol }}
+            </span>
+            <span class="gafete-avatar" aria-hidden="true">{{ usuario.nombre.charAt(0) }}</span>
             <div class="usuario-info">
               <span class="usuario-nombre">{{ usuario.nombre }}</span>
               <span class="usuario-detalle">
-                &#64;{{ usuario.usuario }} · {{ usuario.rol }} · desde
+                &#64;{{ usuario.usuario }} · desde
                 {{ usuario.fecha_creacion | date: 'dd/MM/yyyy' }}
               </span>
             </div>

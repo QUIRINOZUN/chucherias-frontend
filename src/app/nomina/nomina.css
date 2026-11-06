@@ -493,3 +493,58 @@
     width: 100%;
   }
 }
+
+/* ===================== Hoja de raya (2026-11-06) ===================== */
+/* La lista de empleados es una hoja de raya: un renglón por persona separado
+   por líneas punteadas, el pago alineado a la derecha en cifras tabulares. */
+.lista-nomina {
+  gap: 0;
+  padding: 6px 0;
+  border: 1px solid var(--pos-border);
+  border-top: 3px double var(--pos-text-secondary);
+  border-radius: var(--pos-radio);
+  background: var(--pos-bg-card);
+  overflow: hidden;
+}
+
+.lista-nomina::before {
+  content: 'Empleado  ·  Horas  ·  Pago';
+  display: block;
+  padding: 10px 18px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--pos-text-secondary);
+  border-bottom: 2px solid var(--acento-modulo);
+}
+
+.lista-nomina .tarjeta-empleado-nomina {
+  border: none;
+  border-bottom: 1px dotted var(--pos-border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 14px 18px;
+}
+
+.lista-nomina .tarjeta-empleado-nomina:last-child {
+  border-bottom: none;
+}
+
+.lista-nomina .empleado-nomina-nombre {
+  font-family: var(--fuente-titulo);
+  font-size: 1.1rem;
+}
+
+.lista-nomina .empleado-nomina-total {
+  font-family: var(--fuente-titulo);
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--acento-modulo);
+}
+
+.lista-nomina .empleado-nomina-total {
+  color: var(--exito-texto);
+}

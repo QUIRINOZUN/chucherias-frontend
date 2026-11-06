@@ -145,6 +145,10 @@
               (keydown.enter)="abrirEditarCotizacion(venta)"
               (keydown.space)="abrirEditarCotizacion(venta)"
             >
+              <div class="ve-hoja" aria-hidden="true">
+                <span class="ve-hoja-mes">{{ mesCorto(venta.fecha_evento) }}</span>
+                <span class="ve-hoja-dia">{{ diaDe(venta.fecha_evento) }}</span>
+              </div>
               <div class="ve-info">
                 <span class="ve-cliente">{{ venta.cliente_nombre }}</span>
                 <span class="ve-detalle">

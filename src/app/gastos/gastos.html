@@ -215,10 +215,11 @@
         <ul class="lista-gastos">
           @for (gasto of gastos(); track gasto.id) {
             <li class="tarjeta-gasto">
+              <span class="recibo-categoria">{{ gasto.categoria }}</span>
               <div class="gasto-info">
                 <span class="gasto-concepto">{{ gasto.concepto }}</span>
                 <span class="gasto-detalle">
-                  {{ gasto.categoria }} · {{ gasto.fecha | date: 'dd/MM/yyyy' }}
+                  {{ gasto.fecha | date: 'dd/MM/yyyy' }}
                   @if (gasto.proveedor_nombre) {
                     · {{ gasto.proveedor_nombre }}
                   }

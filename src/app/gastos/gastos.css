@@ -766,3 +766,80 @@
   color: var(--pos-text-secondary);
   line-height: 1.4;
 }
+
+/* ===================== Recibos pegados (2026-11-06) ===================== */
+/* Cada gasto es un recibo de papel pegado en la libreta: pestaña con la
+   categoría, borde inferior en zigzag, giro leve alterno y el monto como lo
+   más grande del recibo. */
+.lista-gastos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px 16px;
+  align-items: start;
+}
+
+.lista-gastos .tarjeta-gasto {
+  position: relative;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 36px 16px 26px;
+  border: none;
+  border-radius: 2px;
+  background: var(--pos-bg-card);
+  box-shadow: none;
+  outline: 1px solid var(--pos-border);
+  --zig: 10px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--zig)) no-repeat,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom /
+      calc(var(--zig) * 2) var(--zig) repeat-x;
+  mask:
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--zig)) no-repeat,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom /
+      calc(var(--zig) * 2) var(--zig) repeat-x;
+}
+
+.lista-gastos .tarjeta-gasto:nth-child(odd) {
+  transform: rotate(-0.6deg);
+}
+
+.lista-gastos .tarjeta-gasto:nth-child(even) {
+  transform: rotate(0.5deg);
+}
+
+.recibo-categoria {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 6px 16px;
+  background: color-mix(in srgb, var(--acento-modulo) 22%, var(--pos-bg-card));
+  border-bottom: 2px solid var(--acento-modulo);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--pos-text-primary);
+}
+
+.lista-gastos .gasto-concepto {
+  font-family: var(--fuente-titulo);
+  font-size: 1.1rem;
+}
+
+.lista-gastos .gasto-acciones {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--pos-border);
+}
+
+.lista-gastos .gasto-monto {
+  font-family: var(--fuente-titulo);
+  font-size: 1.7rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
