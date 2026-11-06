@@ -588,3 +588,11 @@ textarea:focus-visible {
     background: #fff;
   }
 }
+
+/* Encabezados de pantalla pegados arriba (position: sticky): sin z-index, las
+   tarjetas con clip-path, transform, máscara u overflow de cada pantalla se
+   pintaban POR ENCIMA al hacer scroll (visto en Mermas). 30 queda debajo de
+   las ventanas emergentes (.overlay usa 50). */
+header[class$='-header']:not(.dashboard-header) {
+  z-index: 30;
+}
