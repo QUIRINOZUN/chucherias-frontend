@@ -73,6 +73,17 @@ export class AuthService {
       );
   }
 
+  // Cambia la contraseña de la cuenta en sesión (exige la actual).
+  cambiarContrasena(
+    contrasenaActual: string,
+    contrasenaNueva: string,
+  ): Observable<{ ok: boolean }> {
+    return this.http.patch<{ ok: boolean }>(`${this.apiUrl}/auth/contrasena`, {
+      contrasena_actual: contrasenaActual,
+      contrasena_nueva: contrasenaNueva,
+    });
+  }
+
   // Cierra la sesión: borra token y usuario y regresa al login.
   // `aviso` es opcional: si se indica (cierre por inactividad o token
   // vencido), la pantalla de login lo muestra para explicar el motivo.

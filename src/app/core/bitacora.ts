@@ -18,7 +18,8 @@ export type AccionBitacora =
   | 'eliminar_usuario'
   | 'cancelar_venta'
   | 'retiro_caja'
-  | 'eliminar_venta_especial';
+  | 'eliminar_venta_especial'
+  | 'cambio_contrasena';
 
 export interface EntradaBitacora {
   id: number;

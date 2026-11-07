@@ -24,6 +24,7 @@ const ETIQUETA_ACCION: Record<AccionBitacora, string> = {
   cancelar_venta: 'Cancelar venta',
   retiro_caja: 'Retiro de caja',
   eliminar_venta_especial: 'Eliminar venta especial',
+  cambio_contrasena: 'Cambio de contraseña',
 };
 
 const ACCIONES: { valor: AccionBitacora; etiqueta: string }[] = [
@@ -33,6 +34,7 @@ const ACCIONES: { valor: AccionBitacora; etiqueta: string }[] = [
   { valor: 'cancelar_venta', etiqueta: 'Cancelar venta' },
   { valor: 'retiro_caja', etiqueta: 'Retiro de caja' },
   { valor: 'eliminar_venta_especial', etiqueta: 'Eliminar venta especial' },
+  { valor: 'cambio_contrasena', etiqueta: 'Cambio de contraseña' },
 ];
 
 // "AAAA-MM-DD" en hora LOCAL — nunca toISOString() (mismo criterio que
@@ -166,7 +168,7 @@ export class BitacoraComponent implements OnInit {
   // Las acciones destructivas resaltan en rojo en la lista (mismo lenguaje
   // de peligro que el resto de la app); inicio de sesión es informativo.
   esAccionDeRiesgo(accion: AccionBitacora): boolean {
-    return accion !== 'inicio_sesion';
+    return accion !== 'inicio_sesion' && accion !== 'cambio_contrasena';
   }
 
   volverAlDashboard(): void {

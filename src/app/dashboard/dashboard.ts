@@ -41,6 +41,8 @@ import { AsistenciasService } from '../core/asistencias';
 import { GastosService } from '../core/gastos';
 import { VentasEspecialesService } from '../core/ventas-especiales';
 import { InsumosService } from '../core/insumos';
+import { FocoDialogoDirective } from '../core/foco-dialogo';
+import { HttpErrorResponse } from '@angular/common/http';
 
 // Descripción de una tarjeta del menú.
 interface Modulo {
@@ -237,7 +239,7 @@ const MODULOS: Modulo[] = [
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, CurrencyPipe],
+  imports: [RouterLink, CurrencyPipe, FocoDialogoDirective],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -306,6 +308,48 @@ export class DashboardComponent implements OnInit {
     }
     return mapa;
   });
+
+  // ---- Cambiar mi contraseña ----
+  mostrarCambioClave = signal(false);
+  claveActual = signal('');
+  claveNueva = signal('');
+  claveRepetida = signal('');
+  guardandoClave = signal(false);
+  errorClave = signal('');
+  exitoClave = signal(false);
+
+  abrirCambioClave(): void {
+    this.claveActual.set('');
+    this.claveNueva.set('');
+    this.claveRepetida.set('');
+    this.errorClave.set('');
+    this.exitoClave.set(false);
+    this.mostrarCambioClave.set(true);
+  }
+
+  cerrarCambioClave(): void {
+    this.mostrarCambioClave.set(false);
+  }
+
+  guardarCambioClave(): void {
+    if (this.guardandoClave()) return;
+    if (this.claveNueva() !== this.claveRepetida()) {
+      this.errorClave.set('La contraseña nueva y su repetición no coinciden.');
+      return;
+    }
+    this.guardandoClave.set(true);
+    this.errorClave.set('');
+    this.authService.cambiarContrasena(this.claveActual(), this.claveNueva()).subscribe({
+      next: () => {
+        this.guardandoClave.set(false);
+        this.exitoClave.set(true);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.guardandoClave.set(false);
+        this.errorClave.set(error.error?.error ?? 'No se pudo cambiar la contraseña.');
+      },
+    });
+  }
 
   constructor(
     // `public` para que la plantilla muestre el nombre/rol y llame a logout().

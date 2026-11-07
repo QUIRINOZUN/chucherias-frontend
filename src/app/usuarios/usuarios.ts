@@ -166,13 +166,13 @@ export class UsuariosComponent implements OnInit {
     }
     // Al crear, la contraseña es obligatoria; al editar, es opcional
     // (dejarla en blanco significa "no cambiarla").
-    if (this.modoFormulario() === 'crear' && this.contrasenaForm().length < 6) {
+    if (this.modoFormulario() === 'crear' && this.contrasenaForm().length < 8) {
       return false;
     }
     if (
       this.modoFormulario() === 'editar' &&
       this.contrasenaForm().length > 0 &&
-      this.contrasenaForm().length < 6
+      this.contrasenaForm().length < 8
     ) {
       return false;
     }

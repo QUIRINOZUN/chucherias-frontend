@@ -118,7 +118,81 @@
   </div>
 
   <!-- CERRAR SESIÓN: borra token y usuario y regresa al login (AuthService.logout). -->
-  <button type="button" class="boton-cerrar-sesion" (click)="authService.logout()">
-    Cerrar sesión
-  </button>
+  <div class="acciones-sesion">
+    <button type="button" class="boton-cambiar-clave" (click)="abrirCambioClave()">
+      Cambiar mi contraseña
+    </button>
+    <button type="button" class="boton-cerrar-sesion" (click)="authService.logout()">
+      Cerrar sesión
+    </button>
+  </div>
+
+  @if (mostrarCambioClave()) {
+    <div class="overlay-clave" (click)="cerrarCambioClave()">
+      <div
+        class="panel-clave"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Cambiar mi contraseña"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarCambioClave()"
+        (click)="$event.stopPropagation()"
+      >
+        <h2>Cambiar mi contraseña</h2>
+        @if (exitoClave()) {
+          <p class="clave-exito">
+            Listo, tu contraseña se cambió. Úsala la próxima vez que inicies sesión.
+          </p>
+          <button type="button" class="boton-clave-principal" (click)="cerrarCambioClave()">
+            Cerrar
+          </button>
+        } @else {
+          <label>
+            Contraseña actual
+            <input
+              type="password"
+              autocomplete="current-password"
+              [value]="claveActual()"
+              (input)="claveActual.set($any($event.target).value)"
+            />
+          </label>
+          <label>
+            Contraseña nueva
+            <input
+              type="password"
+              autocomplete="new-password"
+              [value]="claveNueva()"
+              (input)="claveNueva.set($any($event.target).value)"
+            />
+          </label>
+          <label>
+            Repite la contraseña nueva
+            <input
+              type="password"
+              autocomplete="new-password"
+              [value]="claveRepetida()"
+              (input)="claveRepetida.set($any($event.target).value)"
+            />
+          </label>
+          <p class="clave-ayuda">Mínimo 8 caracteres, con al menos una letra y un número.</p>
+          @if (errorClave()) {
+            <p class="clave-error" role="alert">{{ errorClave() }}</p>
+          }
+          <div class="clave-botones">
+            <button type="button" class="boton-clave-secundario" (click)="cerrarCambioClave()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton-clave-principal"
+              [disabled]="guardandoClave() || !claveActual() || !claveNueva() || !claveRepetida()"
+              (click)="guardarCambioClave()"
+            >
+              {{ guardandoClave() ? 'Guardando…' : 'Guardar' }}
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
 </div>
