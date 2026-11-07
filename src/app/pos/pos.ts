@@ -39,6 +39,7 @@
 //     p. ej. carrito(), y se cambia con .set() o .update().
 // =============================================================================
 import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
+import { NEGOCIO } from '../core/negocio';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -1563,6 +1564,14 @@ export class PosComponent implements OnInit, OnDestroy {
     return this.DESPEDIDAS_GENERICAS[id % this.DESPEDIDAS_GENERICAS.length];
   }
 
+  // Datos del establecimiento para el encabezado/pie del ticket (core/negocio.ts).
+  readonly negocio = NEGOCIO;
+
+  // Total de piezas vendidas (suma de cantidades), para el pie del ticket.
+  totalArticulos(r: Recibo): number {
+    return r.items.reduce((suma, i) => suma + i.cantidad, 0);
+  }
+
   // Quita acentos/diacríticos y la ñ (los convierte a su letra base: á→a,
   // ñ→n, etc.) — ver textoPlanoTicket() para el porqué: el controlador
   // "Generic / Text Only" de Windows (impresoras térmicas sin driver
@@ -1610,8 +1619,29 @@ export class PosComponent implements OnInit, OnDestroy {
     const money = (n: number) => `$${n.toFixed(2)}`;
 
     const filas: string[] = [];
-    filas.push(centrado('CHUCHERIAS MIX'));
-    filas.push(centrado('Venta registrada'));
+    const envolver = (texto: string): string[] => {
+      const salida: string[] = [];
+      let actual = '';
+      for (const palabra of this.quitarAcentos(texto).split(' ')) {
+        if ((actual + ' ' + palabra).trim().length > ANCHO) {
+          salida.push(actual);
+          actual = palabra;
+        } else {
+          actual = (actual + ' ' + palabra).trim();
+        }
+      }
+      if (actual) salida.push(actual);
+      return salida;
+    };
+    const n = this.negocio;
+    filas.push(centrado(n.nombre.toUpperCase()));
+    if (n.titular) filas.push(...envolver(n.titular).map((x) => centrado(x)));
+    if (n.rfc) filas.push(centrado(`RFC: ${n.rfc}`));
+    if (n.direccion) filas.push(...envolver(n.direccion).map((x) => centrado(x)));
+    if (n.telefono) filas.push(centrado(`Tel: ${n.telefono}`));
+    if (n.horario) filas.push(...envolver(n.horario).map((x) => centrado(x)));
+    filas.push(separador);
+    filas.push(centrado('TICKET DE VENTA'));
     filas.push('');
     const cola = this.colaDeCuentas();
     if (cola) {
@@ -1623,6 +1653,7 @@ export class PosComponent implements OnInit, OnDestroy {
       filas.push(this.quitarAcentos(`Atendio: ${r.cajero}`));
     }
     filas.push(separador);
+    filas.push('CANT DESCRIPCION         IMPORTE');
 
     for (const item of r.items) {
       filas.push(
@@ -1636,6 +1667,7 @@ export class PosComponent implements OnInit, OnDestroy {
     }
     filas.push(separador);
 
+    filas.push(linea('Articulos', String(this.totalArticulos(r))));
     filas.push(linea('Subtotal', money(r.subtotal)));
     if (r.descuentoLealtad > 0) {
       filas.push(linea('Desc. lealtad', '-' + money(r.descuentoLealtad)));
@@ -1677,6 +1709,7 @@ export class PosComponent implements OnInit, OnDestroy {
     // fijo) — determinística por el id de la venta, así el mismo ticket
     // siempre muestra la misma frase si se reimprime.
     filas.push(centrado(this.despedidaCalida(r)));
+    if (this.negocio.leyenda) filas.push(...envolver(this.negocio.leyenda).map((x) => centrado(x)));
     filas.push('');
 
     return filas.join('\n');

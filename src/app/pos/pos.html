@@ -735,6 +735,24 @@
                   <path class="exito-venta-palomita" fill="none" d="M15 27l7 7 16-16" />
                 </svg>
               </div>
+              <p class="comprobante-negocio-nombre">{{ negocio.nombre }}</p>
+              <div class="comprobante-negocio-datos">
+                @if (negocio.titular) {
+                  <p>{{ negocio.titular }}</p>
+                }
+                @if (negocio.rfc) {
+                  <p>RFC: {{ negocio.rfc }}</p>
+                }
+                @if (negocio.direccion) {
+                  <p>{{ negocio.direccion }}</p>
+                }
+                @if (negocio.telefono) {
+                  <p>Tel: {{ negocio.telefono }}</p>
+                }
+                @if (negocio.horario) {
+                  <p>{{ negocio.horario }}</p>
+                }
+              </div>
               <p class="venta-registrada-badge">Venta registrada</p>
               @if (colaDeCuentas(); as cola) {
                 <p class="comprobante-cuenta-separada">
@@ -769,6 +787,10 @@
 
             <!-- Totales: subtotal, total, tipo de entrega, método de pago y, en efectivo, recibido y cambio. -->
             <div class="comprobante-totales">
+              <div class="comprobante-linea">
+                <span>Artículos</span>
+                <span>{{ totalArticulos(r) }}</span>
+              </div>
               <div class="comprobante-linea">
                 <span>Subtotal</span>
                 <span>{{ r.subtotal | currency: 'MXN' }}</span>
@@ -884,6 +906,9 @@
             <div class="comprobante-despedida">
               <svg class="icono" aria-hidden="true"><use href="#ic-corazon" /></svg>
               <p>{{ despedidaCalida(r) }}</p>
+              @if (negocio.leyenda) {
+                <p class="comprobante-leyenda">{{ negocio.leyenda }}</p>
+              }
             </div>
 
             <!-- Borde de "papel cortado" (2026-10-17, "potenciar ticket"):

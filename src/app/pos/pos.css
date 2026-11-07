@@ -1821,7 +1821,11 @@
   padding: 12px 14px;
   border: 2px dashed var(--acento-modulo, var(--action-primary));
   border-radius: var(--radio-md);
-  background: color-mix(in srgb, var(--acento-modulo, var(--action-primary)) 8%, var(--pos-bg-card));
+  background: color-mix(
+    in srgb,
+    var(--acento-modulo, var(--action-primary)) 8%,
+    var(--pos-bg-card)
+  );
 }
 
 .calculadora-division summary {
@@ -3113,4 +3117,25 @@
   .cobro-pasos .seccion-cobro-opcional {
     display: none;
   }
+}
+
+/* Datos del establecimiento en el encabezado del ticket. */
+.comprobante-negocio-nombre {
+  margin: 6px 0 2px;
+  font-family: var(--fuente-titulo);
+  font-weight: 800;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.comprobante-negocio-datos p,
+.comprobante-leyenda {
+  margin: 0;
+  font-size: 0.75rem;
+  text-align: center;
+  color: var(--pos-text-secondary);
+}
+
+.comprobante-leyenda {
+  margin-top: 6px;
 }
