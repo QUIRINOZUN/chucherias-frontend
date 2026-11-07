@@ -139,10 +139,18 @@
                 <span class="chip-resumen-numero">{{ totalConReceta() }}</span>
                 <span class="chip-resumen-etiqueta">con receta</span>
               </div>
-              <div class="chip-resumen" [class.chip-resumen-alerta]="totalSinReceta() > 0">
+              <button
+                type="button"
+                class="chip-resumen chip-resumen-enlace"
+                [class.chip-resumen-alerta]="totalSinReceta() > 0"
+                [class.chip-resumen-activo]="soloSinReceta()"
+                [attr.aria-pressed]="soloSinReceta()"
+                title="Ver solo las variantes sin receta"
+                (click)="alternarSoloSinReceta()"
+              >
                 <span class="chip-resumen-numero">{{ totalSinReceta() }}</span>
                 <span class="chip-resumen-etiqueta">sin receta</span>
-              </div>
+              </button>
             </div>
           }
 
@@ -280,10 +288,17 @@
                 <span class="chip-resumen-numero">{{ totalConInsumo() }}</span>
                 <span class="chip-resumen-etiqueta">con insumo asociado</span>
               </div>
-              <div class="chip-resumen">
+              <button
+                type="button"
+                class="chip-resumen chip-resumen-enlace"
+                [class.chip-resumen-activo]="soloSinReceta()"
+                [attr.aria-pressed]="soloSinReceta()"
+                title="Ver solo las que no tienen insumo asociado"
+                (click)="alternarSoloSinReceta()"
+              >
                 <span class="chip-resumen-numero">{{ totalSinInsumo() }}</span>
                 <span class="chip-resumen-etiqueta">sin insumo asociado</span>
-              </div>
+              </button>
             </div>
 
             @if (gruposSinPreparacion().length === 0) {

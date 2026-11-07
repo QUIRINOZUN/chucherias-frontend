@@ -1860,3 +1860,20 @@
   font-weight: 800;
   color: var(--acento-modulo);
 }
+
+/* Chips de resumen que filtran la lista al tocarlos ("sin receta"). */
+.chip-resumen-enlace {
+  font: inherit;
+  cursor: pointer;
+  min-height: 44px;
+  border: 1px solid var(--pos-border);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.chip-resumen-enlace:hover,
+.chip-resumen-activo {
+  border-color: var(--peligro-texto);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--peligro-texto) 25%, transparent);
+}

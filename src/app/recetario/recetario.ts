@@ -217,12 +217,21 @@ export class RecetarioComponent implements OnInit {
     this.busqueda.set('');
   }
 
+  // Filtro "solo las que no tienen receta": se activa tocando el chip rojo de
+  // "sin receta" (o "sin insumo asociado") y deja ver cuáles son en concreto.
+  soloSinReceta = signal(false);
+
+  alternarSoloSinReceta(): void {
+    this.soloSinReceta.update((v) => !v);
+  }
+
   private agruparPorPreparacion(requierePreparacion: boolean): GrupoCategoria[] {
     const texto = this.busqueda().trim().toLowerCase();
     const recetaInfo = this.recetaInfoPorVariante();
     const grupos: GrupoCategoria[] = [];
 
     const categoriaFiltro = this.categoriaFiltroRecetasId();
+    const soloSin = this.soloSinReceta();
 
     for (const categoria of this.categorias()) {
       // Chip de categoría: solo filtra mientras no haya texto en el buscador.
@@ -259,7 +268,12 @@ export class RecetarioComponent implements OnInit {
             costo_receta: recetaInfo.get(v.id)?.costo_receta ?? null,
             margen: recetaInfo.get(v.id)?.margen ?? null,
             margen_porcentaje: recetaInfo.get(v.id)?.margen_porcentaje ?? null,
-          }));
+          }))
+          .filter((v) => !soloSin || !v.tiene_receta);
+
+        if (soloSin && variantesConReceta.length === 0) {
+          continue;
+        }
 
         // Con búsqueda activa, un producto sin ninguna coincidencia (ni su
         // nombre, ni ninguna de sus variantes) se omite por completo —
@@ -294,7 +308,7 @@ export class RecetarioComponent implements OnInit {
       // Si sí tiene productos de este tipo (o la categoría está vacía de
       // plano) pero una búsqueda activa no encontró nada, se omite solo
       // mientras haya texto — sin búsqueda se muestra igual con su aviso.
-      if (texto && gruposProducto.length === 0) {
+      if ((texto || soloSin) && gruposProducto.length === 0) {
         continue;
       }
       grupos.push({ categoria: categoria.nombre, productos: gruposProducto });
