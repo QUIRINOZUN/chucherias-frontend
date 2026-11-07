@@ -707,6 +707,36 @@
   overflow-wrap: anywhere;
 }
 
+/* Cifra que lleva al módulo de donde sale el dato (hipervínculo). */
+.stat-reporte-enlace {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.stat-reporte-enlace:hover {
+  border-color: var(--acento-seccion);
+  transform: translateY(-1px);
+}
+
+.stat-reporte-enlace::after {
+  content: 'Ver en el módulo →';
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--pos-text-secondary);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.stat-reporte-enlace:hover::after,
+.stat-reporte-enlace:focus-visible::after {
+  opacity: 1;
+}
+
 .stat-reporte-etiqueta {
   font-size: 0.72rem;
   color: var(--pos-text-secondary);

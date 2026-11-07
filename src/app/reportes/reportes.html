@@ -430,36 +430,41 @@
           }
 
           <div class="grid-stats-reporte">
-            <div class="stat-reporte">
+            <a class="stat-reporte stat-reporte-enlace" routerLink="/ventas" title="Ir a Ventas">
               <span class="stat-reporte-valor">{{ r.ventas.total_ventas }}</span>
               <span class="stat-reporte-etiqueta">Ventas completadas</span>
-            </div>
-            <div class="stat-reporte">
+            </a>
+            <a class="stat-reporte stat-reporte-enlace" routerLink="/ventas" title="Ir a Ventas">
               <span class="stat-reporte-valor">{{ r.ventas.monto_total | currency: 'MXN' }}</span>
               <span class="stat-reporte-etiqueta">Monto total</span>
-            </div>
-            <div class="stat-reporte">
+            </a>
+            <a class="stat-reporte stat-reporte-enlace" routerLink="/ventas" title="Ir a Ventas">
               <span class="stat-reporte-valor">{{
                 r.ventas.monto_efectivo | currency: 'MXN'
               }}</span>
               <span class="stat-reporte-etiqueta">Efectivo</span>
-            </div>
-            <div class="stat-reporte">
+            </a>
+            <a class="stat-reporte stat-reporte-enlace" routerLink="/ventas" title="Ir a Ventas">
               <span class="stat-reporte-valor">{{
                 r.ventas.monto_transferencia | currency: 'MXN'
               }}</span>
               <span class="stat-reporte-etiqueta">Transferencia</span>
-            </div>
-            <div class="stat-reporte" [class.stat-reporte-alerta]="r.ventas.canceladas > 0">
+            </a>
+            <a
+              class="stat-reporte stat-reporte-enlace"
+              routerLink="/ventas"
+              title="Ir a Ventas"
+              [class.stat-reporte-alerta]="r.ventas.canceladas > 0"
+            >
               <span class="stat-reporte-valor">{{ r.ventas.canceladas }}</span>
               <span class="stat-reporte-etiqueta">Canceladas</span>
-            </div>
-            <div class="stat-reporte">
+            </a>
+            <a class="stat-reporte stat-reporte-enlace" routerLink="/ventas" title="Ir a Ventas">
               <span class="stat-reporte-valor">{{
                 r.ventas.descuento_lealtad_total | currency: 'MXN'
               }}</span>
               <span class="stat-reporte-etiqueta">Descuento por lealtad</span>
-            </div>
+            </a>
           </div>
 
           <!-- GRÁFICA DE TENDENCIA: ventas completadas por día del negocio,
@@ -604,24 +609,33 @@
             Existencias de ahora mismo; mermas del periodo seleccionado.
           </p>
           <div class="grid-stats-reporte">
-            <div class="stat-reporte">
+            <a
+              class="stat-reporte stat-reporte-enlace"
+              routerLink="/inventario"
+              title="Ir a Inventario"
+            >
               <span class="stat-reporte-valor">{{ r.inventario.total_insumos }}</span>
               <span class="stat-reporte-etiqueta">Insumos registrados</span>
-            </div>
-            <div class="stat-reporte" [class.stat-reporte-alerta]="r.inventario.bajo_minimo > 0">
+            </a>
+            <a
+              class="stat-reporte stat-reporte-enlace"
+              routerLink="/inventario"
+              title="Ir a Inventario"
+              [class.stat-reporte-alerta]="r.inventario.bajo_minimo > 0"
+            >
               <span class="stat-reporte-valor">{{ r.inventario.bajo_minimo }}</span>
               <span class="stat-reporte-etiqueta">Bajo su mínimo</span>
-            </div>
-            <div class="stat-reporte">
+            </a>
+            <a class="stat-reporte stat-reporte-enlace" routerLink="/mermas" title="Ir a Mermas">
               <span class="stat-reporte-valor">{{ r.inventario.mermas_total }}</span>
               <span class="stat-reporte-etiqueta">Mermas registradas</span>
-            </div>
-            <div class="stat-reporte">
+            </a>
+            <a class="stat-reporte stat-reporte-enlace" routerLink="/mermas" title="Ir a Mermas">
               <span class="stat-reporte-valor">{{
                 r.inventario.mermas_valor_total | currency: 'MXN'
               }}</span>
               <span class="stat-reporte-etiqueta">Valor perdido</span>
-            </div>
+            </a>
           </div>
 
           <!-- MEDIDOR: una proporción contra un límite (insumos bajo mínimo
@@ -666,18 +680,31 @@
             Empleados activos de ahora mismo; asistencias y retardos del periodo seleccionado.
           </p>
           <div class="grid-stats-reporte">
-            <div class="stat-reporte">
+            <a
+              class="stat-reporte stat-reporte-enlace"
+              routerLink="/asistencias"
+              title="Ir a Asistencias"
+            >
               <span class="stat-reporte-valor">{{ r.personal.empleados_activos }}</span>
               <span class="stat-reporte-etiqueta">Empleados activos</span>
-            </div>
-            <div class="stat-reporte">
+            </a>
+            <a
+              class="stat-reporte stat-reporte-enlace"
+              routerLink="/asistencias"
+              title="Ir a Asistencias"
+            >
               <span class="stat-reporte-valor">{{ r.personal.asistencias_registradas }}</span>
               <span class="stat-reporte-etiqueta">Asistencias registradas</span>
-            </div>
-            <div class="stat-reporte" [class.stat-reporte-alerta]="r.personal.retardos > 0">
+            </a>
+            <a
+              class="stat-reporte stat-reporte-enlace"
+              routerLink="/asistencias"
+              title="Ir a Asistencias"
+              [class.stat-reporte-alerta]="r.personal.retardos > 0"
+            >
               <span class="stat-reporte-valor">{{ r.personal.retardos }}</span>
               <span class="stat-reporte-etiqueta">Retardos</span>
-            </div>
+            </a>
           </div>
 
           @if (r.personal.asistencias_registradas > 0 || r.personal.retardos > 0) {
@@ -718,14 +745,22 @@
             cliente.
           </p>
           <div class="grid-stats-reporte">
-            <div class="stat-reporte">
+            <a
+              class="stat-reporte stat-reporte-enlace"
+              routerLink="/clientes"
+              title="Ir a Clientes"
+            >
               <span class="stat-reporte-valor">{{ r.clientes.total_clientes }}</span>
               <span class="stat-reporte-etiqueta">Clientes registrados</span>
-            </div>
-            <div class="stat-reporte">
+            </a>
+            <a
+              class="stat-reporte stat-reporte-enlace"
+              routerLink="/clientes"
+              title="Ir a Clientes"
+            >
               <span class="stat-reporte-valor">{{ r.clientes.nuevos_en_periodo }}</span>
               <span class="stat-reporte-etiqueta">Nuevos en el periodo</span>
-            </div>
+            </a>
           </div>
           @if (r.clientes.top_clientes.length > 0) {
             <p class="subtitulo-top-clientes">Más cerca de su próximo descuento</p>
@@ -873,18 +908,18 @@
           }
 
           <div class="grid-stats-reporte">
-            <div class="stat-reporte">
+            <a class="stat-reporte stat-reporte-enlace" routerLink="/nomina" title="Ir a Nómina">
               <span class="stat-reporte-valor">{{
                 r.rentabilidad.costo_mano_obra | currency: 'MXN'
               }}</span>
               <span class="stat-reporte-etiqueta">Mano de obra</span>
-            </div>
-            <div class="stat-reporte">
+            </a>
+            <a class="stat-reporte stat-reporte-enlace" routerLink="/gastos" title="Ir a Gastos">
               <span class="stat-reporte-valor">{{
                 r.rentabilidad.gastos_generales | currency: 'MXN'
               }}</span>
               <span class="stat-reporte-etiqueta">Gastos generales</span>
-            </div>
+            </a>
           </div>
           @if (r.rentabilidad.turnos_sin_cerrar > 0 || r.rentabilidad.empleados_sin_tarifa > 0) {
             <p class="seccion-reporte-aviso">

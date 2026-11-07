@@ -50,7 +50,7 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ReportesService, ResumenReportes } from '../core/reportes';
 import { ThemeService } from '../core/theme';
 
@@ -221,7 +221,7 @@ function armarSerieVentas(
 @Component({
   selector: 'app-reportes',
   standalone: true,
-  imports: [CurrencyPipe, DecimalPipe],
+  imports: [CurrencyPipe, DecimalPipe, RouterLink],
   templateUrl: './reportes.html',
   styleUrl: './reportes.css',
 })
