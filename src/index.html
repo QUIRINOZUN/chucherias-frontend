@@ -4,7 +4,14 @@
     <meta charset="utf-8" />
     <title>Chucherías</title>
     <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, interactive-widget=resizes-content"
+    />
+    <!-- Color de la barra del navegador en el teléfono (2026-11-08): sigue al
+         tema de la app, no al del sistema. El script de abajo y ThemeService
+         lo actualizan al aplicar/alternar el tema. -->
+    <meta name="theme-color" content="#1d1511" />
     <!-- Ícono real de la marca (2026-10-16), reemplaza el favicon default de
          Angular CLI. favicon.ico (multi-resolución 16/32/48/256) cubre el
          fallback de navegadores/crawlers que piden /favicon.ico directo sin
@@ -34,6 +41,8 @@
         try {
           var tema = localStorage.getItem('tema');
           document.documentElement.setAttribute('data-theme', tema === 'light' ? 'light' : 'dark');
+          var barra = document.querySelector('meta[name=theme-color]');
+          if (barra && tema === 'light') barra.setAttribute('content', '#fdf6ec');
         } catch (e) {
           document.documentElement.setAttribute('data-theme', 'dark');
         }

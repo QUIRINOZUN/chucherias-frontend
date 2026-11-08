@@ -13,6 +13,7 @@
   --acento-modulo: var(--mod-reportes);
   display: block;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
@@ -23,6 +24,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .reportes-header {
@@ -159,9 +161,11 @@
   cursor: pointer;
 }
 
-.boton-filtro-rapido:hover {
-  border-color: var(--acento-modulo);
-  color: var(--acento-modulo);
+@media (hover: hover) and (pointer: fine) {
+  .boton-filtro-rapido:hover {
+    border-color: var(--acento-modulo);
+    color: var(--acento-modulo);
+  }
 }
 
 /* Acceso rápido activo (2026-10-30): resalta solo si el rango actual
@@ -174,8 +178,10 @@
   color: #fff;
 }
 
-.boton-filtro-rapido-activo:hover {
-  color: #fff;
+@media (hover: hover) and (pointer: fine) {
+  .boton-filtro-rapido-activo:hover {
+    color: #fff;
+  }
 }
 
 .boton-limpiar-filtros {
@@ -190,9 +196,11 @@
   cursor: pointer;
 }
 
-.boton-limpiar-filtros:hover {
-  border-color: var(--acento-modulo);
-  color: var(--pos-text-primary);
+@media (hover: hover) and (pointer: fine) {
+  .boton-limpiar-filtros:hover {
+    border-color: var(--acento-modulo);
+    color: var(--pos-text-primary);
+  }
 }
 
 /* ===================== Pestañas ===================== */
@@ -249,8 +257,10 @@
     border-color 0.15s ease;
 }
 
-.tab-reportes:hover {
-  color: var(--pos-text-primary);
+@media (hover: hover) and (pointer: fine) {
+  .tab-reportes:hover {
+    color: var(--pos-text-primary);
+  }
 }
 
 .tab-reportes .icono {
@@ -509,8 +519,10 @@
   transition: text-decoration-color 0.15s ease;
 }
 
-.lista-atencion button:hover {
-  text-decoration-color: currentColor;
+@media (hover: hover) and (pointer: fine) {
+  .lista-atencion button:hover {
+    text-decoration-color: currentColor;
+  }
 }
 
 /* Punto de severidad (2026-10-30, dirección "Tablero de control claro"):
@@ -718,9 +730,11 @@
     transform 0.15s ease;
 }
 
-.stat-reporte-enlace:hover {
-  border-color: var(--acento-seccion);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .stat-reporte-enlace:hover {
+    border-color: var(--acento-seccion);
+    transform: translateY(-1px);
+  }
 }
 
 .stat-reporte-enlace::after {
@@ -732,9 +746,14 @@
   transition: opacity 0.15s ease;
 }
 
-.stat-reporte-enlace:hover::after,
 .stat-reporte-enlace:focus-visible::after {
   opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .stat-reporte-enlace:hover::after {
+    opacity: 1;
+  }
 }
 
 .stat-reporte-etiqueta {

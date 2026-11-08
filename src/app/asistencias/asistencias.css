@@ -15,6 +15,7 @@
   --acento-modulo: var(--mod-asistencias);
   display: block;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
@@ -25,6 +26,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .asistencias-header {
@@ -235,8 +237,10 @@
   min-height: 44px;
 }
 
-.boton-enlace:hover {
-  text-decoration: underline;
+@media (hover: hover) and (pointer: fine) {
+  .boton-enlace:hover {
+    text-decoration: underline;
+  }
 }
 
 .boton-nuevo {
@@ -545,13 +549,17 @@
   white-space: nowrap;
 }
 
-.boton-editar:hover {
-  border-color: var(--acento-modulo);
+@media (hover: hover) and (pointer: fine) {
+  .boton-editar:hover {
+    border-color: var(--acento-modulo);
+  }
 }
 
-.boton-alternar-desactivar:hover:not(:disabled) {
-  border-color: var(--peligro-texto);
-  color: var(--peligro-texto);
+@media (hover: hover) and (pointer: fine) {
+  .boton-alternar-desactivar:hover:not(:disabled) {
+    border-color: var(--peligro-texto);
+    color: var(--peligro-texto);
+  }
 }
 
 .boton-alternar:disabled {
@@ -616,9 +624,11 @@
   cursor: pointer;
 }
 
-.boton-limpiar-filtros:hover {
-  border-color: var(--acento-modulo);
-  color: var(--pos-text-primary);
+@media (hover: hover) and (pointer: fine) {
+  .boton-limpiar-filtros:hover {
+    border-color: var(--acento-modulo);
+    color: var(--pos-text-primary);
+  }
 }
 
 /* ---- Sección Horarios (calendario semanal) ---- */
@@ -756,8 +766,10 @@
   border-right: none;
 }
 
-.celda-mes:hover {
-  background: var(--pos-bg-main);
+@media (hover: hover) and (pointer: fine) {
+  .celda-mes:hover {
+    background: var(--pos-bg-main);
+  }
 }
 
 .celda-mes-fuera {
@@ -1249,8 +1261,10 @@
   cursor: pointer;
 }
 
-.boton-eliminar-historial:hover {
-  background: color-mix(in srgb, var(--peligro-texto) 12%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .boton-eliminar-historial:hover {
+    background: color-mix(in srgb, var(--peligro-texto) 12%, transparent);
+  }
 }
 
 .texto-confirmacion {

@@ -9,6 +9,7 @@
   --acento-modulo: var(--mod-clientes);
   display: block;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
@@ -19,6 +20,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .clientes-header {
@@ -105,8 +107,10 @@
   white-space: nowrap;
 }
 
-.boton-eliminar-historial:hover {
-  background: color-mix(in srgb, var(--peligro-texto) 12%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .boton-eliminar-historial:hover {
+    background: color-mix(in srgb, var(--peligro-texto) 12%, transparent);
+  }
 }
 
 .texto-confirmacion {
@@ -214,9 +218,14 @@
   cursor: pointer;
 }
 
-.item-cliente:hover,
 .item-cliente:focus-visible {
   box-shadow: var(--sombra-elevada);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .item-cliente:hover {
+    box-shadow: var(--sombra-elevada);
+  }
 }
 
 .item-cliente-info {
@@ -526,8 +535,10 @@
   white-space: nowrap;
 }
 
-.boton-configurar-lealtad:hover {
-  background: color-mix(in srgb, var(--acento-modulo) 12%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .boton-configurar-lealtad:hover {
+    background: color-mix(in srgb, var(--acento-modulo) 12%, transparent);
+  }
 }
 
 .boton-nuevo {

@@ -11,6 +11,7 @@
   --acento-modulo: var(--mod-gastos);
   display: block;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
@@ -21,6 +22,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .gastos-header {
@@ -143,9 +145,11 @@
   cursor: pointer;
 }
 
-.boton-filtro-rapido:hover {
-  border-color: var(--acento-modulo);
-  color: var(--acento-modulo);
+@media (hover: hover) and (pointer: fine) {
+  .boton-filtro-rapido:hover {
+    border-color: var(--acento-modulo);
+    color: var(--acento-modulo);
+  }
 }
 
 .grupo-chips-gastos {
@@ -198,9 +202,11 @@
   cursor: pointer;
 }
 
-.boton-limpiar-filtros:hover {
-  border-color: var(--acento-modulo);
-  color: var(--pos-text-primary);
+@media (hover: hover) and (pointer: fine) {
+  .boton-limpiar-filtros:hover {
+    border-color: var(--acento-modulo);
+    color: var(--pos-text-primary);
+  }
 }
 
 /* "Eliminar historial" (2026-10-29): acción de alto riesgo, solo
@@ -225,8 +231,10 @@
   cursor: pointer;
 }
 
-.boton-eliminar-historial:hover {
-  background: color-mix(in srgb, var(--peligro-texto) 12%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .boton-eliminar-historial:hover {
+    background: color-mix(in srgb, var(--peligro-texto) 12%, transparent);
+  }
 }
 
 .campos-eliminar-historial {
@@ -409,14 +417,18 @@
   white-space: nowrap;
 }
 
-.boton-editar:hover {
-  border-color: var(--acento-modulo);
-  color: var(--acento-modulo);
+@media (hover: hover) and (pointer: fine) {
+  .boton-editar:hover {
+    border-color: var(--acento-modulo);
+    color: var(--acento-modulo);
+  }
 }
 
-.boton-eliminar:hover {
-  border-color: var(--peligro-texto);
-  color: var(--peligro-texto);
+@media (hover: hover) and (pointer: fine) {
+  .boton-eliminar:hover {
+    border-color: var(--peligro-texto);
+    color: var(--peligro-texto);
+  }
 }
 
 /* ===================== Esqueleto de carga ===================== */
@@ -560,8 +572,10 @@
   white-space: nowrap;
 }
 
-.boton-accion:hover {
-  border-color: var(--acento-modulo);
+@media (hover: hover) and (pointer: fine) {
+  .boton-accion:hover {
+    border-color: var(--acento-modulo);
+  }
 }
 
 .boton-accion:disabled {

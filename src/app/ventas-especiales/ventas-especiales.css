@@ -10,6 +10,7 @@
   --acento-modulo: var(--mod-ventas-especiales);
   display: block;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
@@ -20,6 +21,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .ventas-especiales-header {
@@ -103,8 +105,10 @@
   box-shadow: var(--sombra-acento);
 }
 
-.boton-nueva-cotizacion:hover {
-  background: color-mix(in srgb, var(--acento-modulo) 85%, black);
+@media (hover: hover) and (pointer: fine) {
+  .boton-nueva-cotizacion:hover {
+    background: color-mix(in srgb, var(--acento-modulo) 85%, black);
+  }
 }
 
 .boton-nueva-cotizacion:active {
@@ -240,9 +244,11 @@
   cursor: pointer;
 }
 
-.boton-limpiar-filtros:hover {
-  border-color: var(--acento-modulo);
-  color: var(--pos-text-primary);
+@media (hover: hover) and (pointer: fine) {
+  .boton-limpiar-filtros:hover {
+    border-color: var(--acento-modulo);
+    color: var(--pos-text-primary);
+  }
 }
 
 /* "Eliminar historial" (2026-10-29): acción de alto riesgo, solo
@@ -268,8 +274,10 @@
   cursor: pointer;
 }
 
-.boton-eliminar-historial:hover {
-  background: color-mix(in srgb, var(--action-danger) 12%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .boton-eliminar-historial:hover {
+    background: color-mix(in srgb, var(--action-danger) 12%, transparent);
+  }
 }
 
 .campos-eliminar-historial-ve {
@@ -431,8 +439,10 @@
   cursor: pointer;
 }
 
-.chip-estado-form:hover {
-  border-color: var(--acento-modulo);
+@media (hover: hover) and (pointer: fine) {
+  .chip-estado-form:hover {
+    border-color: var(--acento-modulo);
+  }
 }
 
 /* Mismos colores por estado que ya usan .badge-estado-ve (la insignia de
@@ -567,9 +577,14 @@
   cursor: pointer;
 }
 
-.item-producto-menu-ve:hover,
 .item-producto-menu-ve:focus-visible {
   background: var(--pos-bg-main);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .item-producto-menu-ve:hover {
+    background: var(--pos-bg-main);
+  }
 }
 
 .item-producto-menu-ve:focus-visible {
@@ -666,8 +681,10 @@
   justify-content: center;
 }
 
-.item-cotizado-controles button:hover {
-  border-color: var(--acento-modulo);
+@media (hover: hover) and (pointer: fine) {
+  .item-cotizado-controles button:hover {
+    border-color: var(--acento-modulo);
+  }
 }
 
 .item-cotizado-cantidad {
@@ -694,8 +711,10 @@
   justify-content: center;
 }
 
-.boton-quitar-item-ve:hover {
-  color: var(--peligro-texto);
+@media (hover: hover) and (pointer: fine) {
+  .boton-quitar-item-ve:hover {
+    color: var(--peligro-texto);
+  }
 }
 
 .campo-nota-item-ve {
@@ -780,9 +799,11 @@
   font-weight: 600;
 }
 
-.boton-eliminar-cotizacion-ve:hover {
-  background: var(--action-danger);
-  color: #fff;
+@media (hover: hover) and (pointer: fine) {
+  .boton-eliminar-cotizacion-ve:hover {
+    background: var(--action-danger);
+    color: #fff;
+  }
 }
 
 .texto-confirmacion-ve {
@@ -885,9 +906,11 @@
   cursor: pointer;
 }
 
-.boton-variante-ve:hover {
-  border-color: var(--acento-modulo);
-  color: var(--acento-modulo);
+@media (hover: hover) and (pointer: fine) {
+  .boton-variante-ve:hover {
+    border-color: var(--acento-modulo);
+    color: var(--acento-modulo);
+  }
 }
 
 /* En pantallas angostas el nombre/pago de cada fila de la agenda no caben
@@ -936,9 +959,11 @@
   align-self: flex-end;
 }
 
-.boton-filtro-rapido:hover {
-  border-color: var(--acento-modulo);
-  color: var(--acento-modulo);
+@media (hover: hover) and (pointer: fine) {
+  .boton-filtro-rapido:hover {
+    border-color: var(--acento-modulo);
+    color: var(--acento-modulo);
+  }
 }
 
 /* ===================== Invitaciones (2026-11-06) ===================== */

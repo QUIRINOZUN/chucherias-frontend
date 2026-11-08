@@ -10,6 +10,7 @@
   --acento-modulo: var(--mod-mermas);
   display: block;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
@@ -20,6 +21,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .mermas-header {
@@ -161,9 +163,11 @@
   cursor: pointer;
 }
 
-.boton-limpiar-filtros:hover {
-  border-color: var(--acento-modulo);
-  color: var(--pos-text-primary);
+@media (hover: hover) and (pointer: fine) {
+  .boton-limpiar-filtros:hover {
+    border-color: var(--acento-modulo);
+    color: var(--pos-text-primary);
+  }
 }
 
 /* "Eliminar historial" (2026-10-29): acción de alto riesgo, solo
@@ -188,8 +192,10 @@
   cursor: pointer;
 }
 
-.boton-eliminar-historial:hover {
-  background: color-mix(in srgb, var(--peligro-texto) 12%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .boton-eliminar-historial:hover {
+    background: color-mix(in srgb, var(--peligro-texto) 12%, transparent);
+  }
 }
 
 .overlay {
@@ -373,8 +379,10 @@
   cursor: pointer;
 }
 
-.boton-ver-mas-merma:hover {
-  text-decoration: underline;
+@media (hover: hover) and (pointer: fine) {
+  .boton-ver-mas-merma:hover {
+    text-decoration: underline;
+  }
 }
 
 /* ===================== Etiquetas de producto dañado (2026-11-06) ===================== */
@@ -459,7 +467,9 @@
   font-weight: 700;
 }
 
-.lista-mermas .boton-ver-mas-merma:hover {
-  background: color-mix(in srgb, var(--acento-modulo) 14%, transparent);
-  text-decoration: none;
+@media (hover: hover) and (pointer: fine) {
+  .lista-mermas .boton-ver-mas-merma:hover {
+    background: color-mix(in srgb, var(--acento-modulo) 14%, transparent);
+    text-decoration: none;
+  }
 }

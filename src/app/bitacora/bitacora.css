@@ -10,6 +10,7 @@
 
 .bitacora-container {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--pos-bg-main);
   color: var(--pos-text-primary);
 }
@@ -155,9 +156,11 @@
   cursor: pointer;
 }
 
-.boton-filtro-rapido:hover {
-  border-color: var(--acento-modulo);
-  color: var(--acento-modulo);
+@media (hover: hover) and (pointer: fine) {
+  .boton-filtro-rapido:hover {
+    border-color: var(--acento-modulo);
+    color: var(--acento-modulo);
+  }
 }
 
 .etiqueta-grupo-chips {
@@ -206,9 +209,11 @@
   cursor: pointer;
 }
 
-.boton-limpiar-filtros:hover {
-  border-color: var(--acento-modulo);
-  color: var(--pos-text-primary);
+@media (hover: hover) and (pointer: fine) {
+  .boton-limpiar-filtros:hover {
+    border-color: var(--acento-modulo);
+    color: var(--pos-text-primary);
+  }
 }
 
 .lista-bitacora {

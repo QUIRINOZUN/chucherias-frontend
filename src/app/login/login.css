@@ -19,6 +19,7 @@
 .login-container {
   min-height: 100vh;
   min-height: 100dvh;
+  min-height: 100dvh;
   display: grid;
   grid-template-rows: auto 1fr;
   background: var(--color-fondo);
@@ -269,8 +270,10 @@ input.campo-invalido {
   padding: 0 12px;
 }
 
-.boton-mostrar:hover {
-  background: #fdebd9;
+@media (hover: hover) and (pointer: fine) {
+  .boton-mostrar:hover {
+    background: #fdebd9;
+  }
 }
 
 .boton-mostrar:focus-visible {
@@ -316,9 +319,11 @@ input.campo-invalido {
     transform 0.1s ease;
 }
 
-.boton-enviar:hover:not(:disabled) {
-  background: var(--color-acento-hover);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .boton-enviar:hover:not(:disabled) {
+    background: var(--color-acento-hover);
+    transform: translateY(-1px);
+  }
 }
 
 .boton-enviar:active:not(:disabled) {

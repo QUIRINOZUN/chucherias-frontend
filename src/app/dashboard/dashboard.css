@@ -8,6 +8,7 @@
 :host {
   display: block;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
@@ -21,6 +22,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* Encabezado: logo a la izquierda, saludo junto a él, botón de tema a la
@@ -204,9 +206,11 @@
   text-align: center;
 }
 
-.resumen-stat:hover {
-  border-color: var(--acento-texto);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .resumen-stat:hover {
+    border-color: var(--acento-texto);
+    transform: translateY(-1px);
+  }
 }
 
 /* Insumos bajo mínimo con algo que atender: la cifra va en rojo funcional. */
@@ -676,8 +680,10 @@
   transition: background-color 0.15s ease;
 }
 
-.boton-cerrar-sesion:hover {
-  background: color-mix(in srgb, var(--action-danger) 12%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .boton-cerrar-sesion:hover {
+    background: color-mix(in srgb, var(--action-danger) 12%, transparent);
+  }
 }
 
 /* ---- Cambiar mi contraseña ---- */
@@ -701,8 +707,11 @@
   font-size: 0.9rem;
   font-weight: 600;
 }
-.boton-cambiar-clave:hover {
-  background: var(--pos-bg-card);
+
+@media (hover: hover) and (pointer: fine) {
+  .boton-cambiar-clave:hover {
+    background: var(--pos-bg-card);
+  }
 }
 .overlay-clave {
   position: fixed;

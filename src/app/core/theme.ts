@@ -35,6 +35,10 @@ export class ThemeService {
     const nuevoTema: Tema = this.tema() === 'dark' ? 'light' : 'dark';
     this.tema.set(nuevoTema);
     document.documentElement.setAttribute('data-theme', nuevoTema);
+    // Barra del navegador en el teléfono con el color del fondo del tema.
+    document
+      .querySelector('meta[name=theme-color]')
+      ?.setAttribute('content', nuevoTema === 'light' ? '#fdf6ec' : '#1d1511');
     try {
       localStorage.setItem(CLAVE_ALMACENAMIENTO, nuevoTema);
     } catch {

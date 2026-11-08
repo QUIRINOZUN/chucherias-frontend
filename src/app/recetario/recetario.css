@@ -11,6 +11,7 @@
   --acento-modulo: var(--mod-recetario);
   display: block;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
@@ -21,6 +22,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .recetario-header {
@@ -321,8 +323,10 @@
   cursor: pointer;
 }
 
-.item-variante:hover {
-  background: var(--pos-bg-main);
+@media (hover: hover) and (pointer: fine) {
+  .item-variante:hover {
+    background: var(--pos-bg-main);
+  }
 }
 
 .variante-info {
@@ -627,8 +631,10 @@
   transition: transform 0.15s ease;
 }
 
-.receta-portada-boton-foto:hover {
-  transform: scale(1.06);
+@media (hover: hover) and (pointer: fine) {
+  .receta-portada-boton-foto:hover {
+    transform: scale(1.06);
+  }
 }
 
 .receta-portada-boton-foto-subiendo {
@@ -692,8 +698,10 @@
   color: var(--pos-text-primary);
 }
 
-.linea-receta-insumo:hover {
-  border-bottom-color: var(--pos-border);
+@media (hover: hover) and (pointer: fine) {
+  .linea-receta-insumo:hover {
+    border-bottom-color: var(--pos-border);
+  }
 }
 
 .linea-receta-insumo:focus {
@@ -757,9 +765,14 @@
   transition: opacity 0.15s ease;
 }
 
-.linea-receta:hover .boton-quitar-linea,
 .linea-receta:focus-within .boton-quitar-linea {
   opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .linea-receta:hover .boton-quitar-linea {
+    opacity: 1;
+  }
 }
 
 .costo-total-receta {
@@ -817,9 +830,11 @@
   cursor: pointer;
 }
 
-.boton-agregar-linea:hover {
-  border-color: var(--acento-modulo);
-  color: var(--pos-text-primary);
+@media (hover: hover) and (pointer: fine) {
+  .boton-agregar-linea:hover {
+    border-color: var(--acento-modulo);
+    color: var(--pos-text-primary);
+  }
 }
 
 .boton-agregar-linea .icono {
@@ -892,8 +907,10 @@
   color: var(--pos-text-primary);
 }
 
-.paso-tutorial-texto:hover {
-  border-bottom-color: var(--pos-border);
+@media (hover: hover) and (pointer: fine) {
+  .paso-tutorial-texto:hover {
+    border-bottom-color: var(--pos-border);
+  }
 }
 
 .paso-tutorial-texto:focus {
@@ -911,9 +928,14 @@
   transition: opacity 0.15s ease;
 }
 
-.paso-tutorial:hover .paso-tutorial-acciones,
 .paso-tutorial:focus-within .paso-tutorial-acciones {
   opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .paso-tutorial:hover .paso-tutorial-acciones {
+    opacity: 1;
+  }
 }
 
 .boton-mover-paso {
@@ -1087,8 +1109,10 @@
   min-height: 44px;
 }
 
-.boton-enlace:hover {
-  text-decoration: underline;
+@media (hover: hover) and (pointer: fine) {
+  .boton-enlace:hover {
+    text-decoration: underline;
+  }
 }
 
 .boton-enlace-chico {
@@ -1105,8 +1129,10 @@
   padding: 4px 10px;
 }
 
-.boton-enlace-chico:hover {
-  text-decoration: underline;
+@media (hover: hover) and (pointer: fine) {
+  .boton-enlace-chico:hover {
+    text-decoration: underline;
+  }
 }
 
 .boton-enlace-chico:disabled {
@@ -1198,8 +1224,10 @@
   cursor: pointer;
 }
 
-.item-producto-menu:hover {
-  background: var(--pos-bg-main);
+@media (hover: hover) and (pointer: fine) {
+  .item-producto-menu:hover {
+    background: var(--pos-bg-main);
+  }
 }
 
 .item-producto-menu-info {
@@ -1288,8 +1316,10 @@
     background-color 0.15s ease;
 }
 
-.selector-foto-producto:hover {
-  border-color: var(--acento-modulo);
+@media (hover: hover) and (pointer: fine) {
+  .selector-foto-producto:hover {
+    border-color: var(--acento-modulo);
+  }
 }
 
 .selector-foto-producto img {
@@ -1451,13 +1481,17 @@
   white-space: nowrap;
 }
 
-.boton-editar:hover {
-  border-color: var(--acento-modulo);
+@media (hover: hover) and (pointer: fine) {
+  .boton-editar:hover {
+    border-color: var(--acento-modulo);
+  }
 }
 
-.boton-alternar-desactivar:hover:not(:disabled) {
-  border-color: var(--peligro-texto);
-  color: var(--peligro-texto);
+@media (hover: hover) and (pointer: fine) {
+  .boton-alternar-desactivar:hover:not(:disabled) {
+    border-color: var(--peligro-texto);
+    color: var(--peligro-texto);
+  }
 }
 
 .boton-alternar:disabled {
@@ -1480,8 +1514,10 @@
   white-space: nowrap;
 }
 
-.boton-eliminar-chico:hover {
-  background: color-mix(in srgb, var(--action-danger) 14%, var(--pos-bg-main));
+@media (hover: hover) and (pointer: fine) {
+  .boton-eliminar-chico:hover {
+    background: color-mix(in srgb, var(--action-danger) 14%, var(--pos-bg-main));
+  }
 }
 
 .mensaje-estado-chico {
@@ -1504,8 +1540,10 @@
   flex-wrap: wrap;
 }
 
-.item-variante-menu:hover {
-  background: none;
+@media (hover: hover) and (pointer: fine) {
+  .item-variante-menu:hover {
+    background: none;
+  }
 }
 
 .acciones-variante-menu {
@@ -1770,8 +1808,10 @@
   stroke-width: 1.8;
 }
 
-.boton-icono-categoria:hover {
-  border-color: var(--acento-modulo);
+@media (hover: hover) and (pointer: fine) {
+  .boton-icono-categoria:hover {
+    border-color: var(--acento-modulo);
+  }
 }
 
 .boton-icono-categoria-activo {
@@ -1872,8 +1912,14 @@
     box-shadow 0.15s ease;
 }
 
-.chip-resumen-enlace:hover,
 .chip-resumen-activo {
   border-color: var(--peligro-texto);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--peligro-texto) 25%, transparent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .chip-resumen-enlace:hover {
+    border-color: var(--peligro-texto);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--peligro-texto) 25%, transparent);
+  }
 }

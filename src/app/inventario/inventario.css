@@ -9,6 +9,7 @@
   --acento-modulo: var(--mod-inventario);
   display: block;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
@@ -19,6 +20,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .inventario-header {
@@ -132,8 +134,10 @@
     transform 0.1s ease;
 }
 
-.boton-nuevo-insumo:hover {
-  background: color-mix(in srgb, var(--acento-modulo) 85%, black);
+@media (hover: hover) and (pointer: fine) {
+  .boton-nuevo-insumo:hover {
+    background: color-mix(in srgb, var(--acento-modulo) 85%, black);
+  }
 }
 
 .boton-nuevo-insumo:active {
@@ -155,8 +159,10 @@
   cursor: pointer;
 }
 
-.boton-eliminar-historial:hover {
-  background: color-mix(in srgb, var(--peligro-texto) 12%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .boton-eliminar-historial:hover {
+    background: color-mix(in srgb, var(--peligro-texto) 12%, transparent);
+  }
 }
 
 .texto-confirmacion {
@@ -450,8 +456,10 @@
   border-bottom: none;
 }
 
-.tarjeta-insumo:hover {
-  background: color-mix(in srgb, var(--pos-text-primary) 4%, var(--pos-bg-card));
+@media (hover: hover) and (pointer: fine) {
+  .tarjeta-insumo:hover {
+    background: color-mix(in srgb, var(--pos-text-primary) 4%, var(--pos-bg-card));
+  }
 }
 
 /* Franja de nivel: el único lenguaje de color de existencia por fila. */
@@ -581,9 +589,11 @@
   cursor: pointer;
 }
 
-.boton-unidad-alterna:hover {
-  color: var(--acento-modulo);
-  border-bottom-style: solid;
+@media (hover: hover) and (pointer: fine) {
+  .boton-unidad-alterna:hover {
+    color: var(--acento-modulo);
+    border-bottom-style: solid;
+  }
 }
 
 /* Punto de color con el nivel de stock del insumo (bajo/medio/alto) — mismos
@@ -658,8 +668,10 @@
   height: 22px;
 }
 
-.boton-surtir:hover {
-  background: color-mix(in srgb, var(--acento-modulo) 85%, black);
+@media (hover: hover) and (pointer: fine) {
+  .boton-surtir:hover {
+    background: color-mix(in srgb, var(--acento-modulo) 85%, black);
+  }
 }
 
 .boton-surtir:active {
@@ -678,8 +690,10 @@
   white-space: nowrap;
 }
 
-.boton-accion:hover {
-  border-color: var(--acento-modulo);
+@media (hover: hover) and (pointer: fine) {
+  .boton-accion:hover {
+    border-color: var(--acento-modulo);
+  }
 }
 
 .boton-accion:disabled {
@@ -1008,8 +1022,10 @@
   cursor: pointer;
 }
 
-.boton-captura-costos:hover {
-  background: color-mix(in srgb, var(--acento-modulo) 12%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .boton-captura-costos:hover {
+    background: color-mix(in srgb, var(--acento-modulo) 12%, transparent);
+  }
 }
 
 .panel-captura-costos {
@@ -1052,8 +1068,10 @@
   justify-content: center;
 }
 
-.boton-cerrar-costos:hover {
-  color: var(--pos-text-primary);
+@media (hover: hover) and (pointer: fine) {
+  .boton-cerrar-costos:hover {
+    color: var(--pos-text-primary);
+  }
 }
 
 .texto-ayuda-costos {
@@ -1248,10 +1266,16 @@
   height: 22px;
 }
 
-.boton-menu:hover,
 .boton-menu[aria-expanded='true'] {
   border-color: var(--acento-modulo);
   color: var(--pos-text-primary);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .boton-menu:hover {
+    border-color: var(--acento-modulo);
+    color: var(--pos-text-primary);
+  }
 }
 
 .menu-acciones-lista {
@@ -1281,8 +1305,10 @@
   cursor: pointer;
 }
 
-.menu-acciones-lista button:hover {
-  background: color-mix(in srgb, var(--acento-modulo) 14%, var(--pos-bg-card));
+@media (hover: hover) and (pointer: fine) {
+  .menu-acciones-lista button:hover {
+    background: color-mix(in srgb, var(--acento-modulo) 14%, var(--pos-bg-card));
+  }
 }
 
 /* Controles compactos en móvil (2026-11-04): con aviso, 3 botones, buscador y

@@ -11,6 +11,7 @@
   --acento-modulo: var(--mod-caja);
   display: block;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
@@ -21,6 +22,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .caja-header {
@@ -219,8 +221,10 @@
   background: var(--action-danger);
 }
 
-.boton-retiro:hover:not(:disabled) {
-  background: var(--action-danger-hover);
+@media (hover: hover) and (pointer: fine) {
+  .boton-retiro:hover:not(:disabled) {
+    background: var(--action-danger-hover);
+  }
 }
 
 /* Renglón "etiqueta ........ monto" del resumen. Divisor punteado entre
@@ -347,9 +351,11 @@
   box-shadow: 0 0 0 3px var(--acento-modulo);
 }
 
-.denominacion-visual-billete:hover,
-.denominacion-visual-moneda:hover {
-  transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+  .denominacion-visual-billete:hover,
+  .denominacion-visual-moneda:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .denominacion-visual-billete:active,
@@ -458,9 +464,11 @@
   cursor: pointer;
 }
 
-.boton-guardar-corte:hover:not(:disabled),
-.boton-nuevo-corte:hover {
-  background: color-mix(in srgb, var(--acento-modulo) 85%, black);
+@media (hover: hover) and (pointer: fine) {
+  .boton-guardar-corte:hover:not(:disabled),
+  .boton-nuevo-corte:hover {
+    background: color-mix(in srgb, var(--acento-modulo) 85%, black);
+  }
 }
 
 .boton-guardar-corte:disabled {
@@ -535,9 +543,11 @@
   cursor: pointer;
 }
 
-.boton-limpiar-filtros:hover {
-  border-color: var(--acento-modulo);
-  color: var(--pos-text-primary);
+@media (hover: hover) and (pointer: fine) {
+  .boton-limpiar-filtros:hover {
+    border-color: var(--acento-modulo);
+    color: var(--pos-text-primary);
+  }
 }
 
 .item-historial-detalle {
@@ -754,9 +764,11 @@
   cursor: pointer;
 }
 
-.boton-listado-retiros:hover:not(:disabled) {
-  border-style: solid;
-  background: color-mix(in srgb, var(--acento-modulo) 18%, var(--pos-bg-main));
+@media (hover: hover) and (pointer: fine) {
+  .boton-listado-retiros:hover:not(:disabled) {
+    border-style: solid;
+    background: color-mix(in srgb, var(--acento-modulo) 18%, var(--pos-bg-main));
+  }
 }
 
 .boton-listado-retiros:disabled {
@@ -898,8 +910,10 @@
   font-weight: 600;
 }
 
-.boton-cancelar:hover {
-  background: var(--acento-suave);
+@media (hover: hover) and (pointer: fine) {
+  .boton-cancelar:hover {
+    background: var(--acento-suave);
+  }
 }
 
 .boton-confirmar {
@@ -915,8 +929,10 @@
   box-shadow: var(--sombra-acento);
 }
 
-.boton-confirmar:hover {
-  background: color-mix(in srgb, var(--acento-modulo) 85%, black);
+@media (hover: hover) and (pointer: fine) {
+  .boton-confirmar:hover {
+    background: color-mix(in srgb, var(--acento-modulo) 85%, black);
+  }
 }
 
 /* "Eliminar historial" (2026-10-29): acción de alto riesgo, solo
@@ -942,8 +958,10 @@
   cursor: pointer;
 }
 
-.boton-eliminar-historial:hover {
-  background: color-mix(in srgb, var(--peligro-texto) 12%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .boton-eliminar-historial:hover {
+    background: color-mix(in srgb, var(--peligro-texto) 12%, transparent);
+  }
 }
 
 .panel-eliminar-historial {

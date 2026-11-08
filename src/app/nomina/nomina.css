@@ -10,6 +10,7 @@
   --acento-modulo: var(--mod-nomina);
   display: block;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--pos-bg-main);
   font-family: var(--fuente-texto);
   color: var(--pos-text-primary);
@@ -20,6 +21,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .nomina-header {
@@ -142,9 +144,11 @@
   cursor: pointer;
 }
 
-.boton-filtro-rapido:hover {
-  border-color: var(--acento-modulo);
-  color: var(--acento-modulo);
+@media (hover: hover) and (pointer: fine) {
+  .boton-filtro-rapido:hover {
+    border-color: var(--acento-modulo);
+    color: var(--acento-modulo);
+  }
 }
 
 .campo-checkbox {
@@ -176,9 +180,11 @@
   cursor: pointer;
 }
 
-.boton-limpiar-filtros:hover {
-  border-color: var(--acento-modulo);
-  color: var(--pos-text-primary);
+@media (hover: hover) and (pointer: fine) {
+  .boton-limpiar-filtros:hover {
+    border-color: var(--acento-modulo);
+    color: var(--pos-text-primary);
+  }
 }
 
 /* ===================== Resumen del periodo ===================== */
@@ -351,9 +357,11 @@
   white-space: nowrap;
 }
 
-.boton-editar-tarifa:hover {
-  border-color: var(--acento-modulo);
-  color: var(--acento-modulo);
+@media (hover: hover) and (pointer: fine) {
+  .boton-editar-tarifa:hover {
+    border-color: var(--acento-modulo);
+    color: var(--acento-modulo);
+  }
 }
 
 /* ===================== Esqueleto de carga ===================== */

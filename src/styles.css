@@ -332,9 +332,11 @@ textarea:focus-visible {
     transform 0.1s ease;
 }
 
-.boton-volver:hover,
-.boton-tema:hover {
-  background: var(--acento-suave) !important;
+@media (hover: hover) and (pointer: fine) {
+  .boton-volver:hover,
+  .boton-tema:hover {
+    background: var(--acento-suave) !important;
+  }
 }
 
 .boton-volver:active,
@@ -713,11 +715,13 @@ button.boton-nuevo[type] {
   box-shadow: none;
 }
 
-button.boton-nuevo-usuario[type]:hover,
-button.boton-nueva-cotizacion[type]:hover,
-button.boton-nuevo-gasto[type]:hover,
-button.boton-nuevo[type]:hover {
-  background: color-mix(in srgb, var(--acento-modulo) 85%, black);
+@media (hover: hover) and (pointer: fine) {
+  button.boton-nuevo-usuario[type]:hover,
+  button.boton-nueva-cotizacion[type]:hover,
+  button.boton-nuevo-gasto[type]:hover,
+  button.boton-nuevo[type]:hover {
+    background: color-mix(in srgb, var(--acento-modulo) 85%, black);
+  }
 }
 
 .mensaje-estado {
@@ -728,4 +732,48 @@ button.boton-nuevo[type]:hover {
 
 .mensaje-estado.mensaje-error {
   color: var(--peligro-texto);
+}
+
+/* =============================================================================
+   BASE PARA TELÉFONO / TABLET (2026-11-08, skill mobile-native)
+   =============================================================================
+   Lo que hace que la app se sienta instalada y no "una página web":
+   - Sin el destello gris/azul del navegador al tocar un botón (cada botón ya
+     tiene su propio :active).
+   - Toque inmediato (sin la espera de doble-toque) en botones y enlaces.
+   - Las etiquetas de los botones no se seleccionan al mantener el dedo.
+   - Un scroll interno (ventanas, listas) no arrastra la página de atrás.
+   - Campos de 16px en pantallas táctiles: con menos, iOS acerca la pantalla
+     al tocar el campo y no la regresa. NUNCA se desactiva el zoom. */
+html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+button,
+a,
+[role='button'],
+summary {
+  touch-action: manipulation;
+}
+
+button,
+[role='button'] {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.overlay,
+.panel-formulario,
+.panel-cobro,
+.panel-detalle-producto {
+  overscroll-behavior: contain;
+}
+
+@media (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
 }
