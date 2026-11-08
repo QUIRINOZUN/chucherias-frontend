@@ -14,9 +14,10 @@
     />
     <div class="dashboard-header-texto">
       @if (authService.usuarioActual(); as usuario) {
-        <h1>Hola, {{ usuario.nombre }}</h1>
+        <h1>{{ saludo }}, {{ usuario.nombre }}</h1>
         <p class="dashboard-rol">
           <span class="rol-pastilla">{{ usuario.rol }}</span>
+          <span class="dashboard-fecha">{{ fechaHoy }}</span>
         </p>
       }
     </div>
@@ -40,44 +41,64 @@
          caja" para quien puede consultar GET /api/caja/resumen (admin/
          encargado/cajero); "Personal en turno" solo admin/encargado, que son
          los únicos que pueden consultar GET /api/asistencias/hoy. -->
-    @if (puedeVerResumenCaja() || puedeVerPersonalEnTurno()) {
-      <div class="dashboard-resumen">
-        @if (puedeVerResumenCaja()) {
-          @if (resumenCaja(); as resumen) {
-            <!-- Objeto completo en vez de ventasHoyTotal() por separado:
-                 un signal<number> que de verdad vale 0 (cero ventas hoy) es
-                 "falsy" y el @if lo trataría como "todavía sin dato" — el
-                 objeto resumen en cambio solo es null/undefined antes de
-                 que responda el servidor, nunca por un total en cero. -->
-            <div class="resumen-stat">
-              <span class="resumen-stat-valor">
-                {{ resumen.ventas_efectivo + resumen.total_transferencia | currency: 'MXN' }}
-              </span>
-              <span class="resumen-stat-etiqueta">Ventas de hoy</span>
-            </div>
-            <div class="resumen-stat">
-              <span class="resumen-stat-valor">{{ resumen.total_efectivo | currency: 'MXN' }}</span>
-              <span class="resumen-stat-etiqueta">Efectivo en caja</span>
-            </div>
+    <div class="dashboard-resumen">
+      @if (puedeVerResumenCaja()) {
+        <a class="resumen-stat" [routerLink]="rutaVentasHoy()">
+          <span class="resumen-stat-valor">
+            @if (resumenCaja(); as resumen) {
+              {{ resumen.ventas_efectivo + resumen.total_transferencia | currency: 'MXN' }}
+            } @else {
+              —
+            }
+          </span>
+          <span class="resumen-stat-etiqueta">Ventas de hoy</span>
+        </a>
+        <a class="resumen-stat" routerLink="/caja">
+          <span class="resumen-stat-valor">
+            @if (resumenCaja(); as resumen) {
+              {{ resumen.total_efectivo | currency: 'MXN' }}
+            } @else {
+              —
+            }
+          </span>
+          <span class="resumen-stat-etiqueta">Efectivo en caja</span>
+        </a>
+      }
+      <a class="resumen-stat" routerLink="/comandas">
+        <span class="resumen-stat-valor">{{ pedidosEnCocina() ?? '—' }}</span>
+        <span class="resumen-stat-etiqueta">Pedidos en cocina</span>
+      </a>
+      @if (puedeVerPersonalEnTurno()) {
+        <a class="resumen-stat" routerLink="/asistencias">
+          <span class="resumen-stat-valor">{{ personalEnTurnoHoy() ?? '—' }}</span>
+          <span class="resumen-stat-etiqueta">Personal en turno</span>
+        </a>
+        <a
+          class="resumen-stat"
+          routerLink="/inventario"
+          [class.resumen-stat-alerta]="(insumosBajoMinimoCount() ?? 0) > 0"
+        >
+          <span class="resumen-stat-valor">{{ insumosBajoMinimoCount() ?? '—' }}</span>
+          <span class="resumen-stat-etiqueta">Insumos bajo mínimo</span>
+        </a>
+      }
+      <a
+        class="resumen-stat"
+        routerLink="/checklist"
+        [class.resumen-stat-listo]="
+          checklistAvance()?.total && checklistAvance()!.hechos === checklistAvance()!.total
+        "
+      >
+        <span class="resumen-stat-valor">
+          @if (checklistAvance(); as avance) {
+            {{ avance.hechos }}/{{ avance.total }}
           } @else {
-            <div class="resumen-stat">
-              <span class="resumen-stat-valor">—</span>
-              <span class="resumen-stat-etiqueta">Ventas de hoy</span>
-            </div>
-            <div class="resumen-stat">
-              <span class="resumen-stat-valor">—</span>
-              <span class="resumen-stat-etiqueta">Efectivo en caja</span>
-            </div>
+            —
           }
-        }
-        @if (puedeVerPersonalEnTurno()) {
-          <div class="resumen-stat">
-            <span class="resumen-stat-valor">{{ personalEnTurnoHoy() ?? '—' }}</span>
-            <span class="resumen-stat-etiqueta">Personal en turno</span>
-          </div>
-        }
-      </div>
-    }
+        </span>
+        <span class="resumen-stat-etiqueta"> Checklist de {{ tipoChecklistHoy }} </span>
+      </a>
+    </div>
 
     <!-- Sin módulos: rol sin permisos asignados (ver dashboard.ts). -->
     @if (modulosVisibles().length === 0) {
@@ -85,33 +106,43 @@
         Todavía no tienes módulos asignados. Habla con tu encargado o el administrador.
       </p>
     } @else {
-      <!-- TARJETAS DE MÓDULOS: cada una es un enlace a su ruta (protegida además por rolGuard en app.routes.ts). -->
-      <div class="grid-modulos">
-        @for (modulo of modulosVisibles(); track modulo.ruta) {
-          <a
-            class="tarjeta-modulo"
-            [routerLink]="modulo.ruta"
-            [style.--acento-modulo]="modulo.colorVar"
-          >
-            @if (alertasPorRuta()[modulo.ruta]; as cuenta) {
-              <span class="modulo-badge-alerta" [attr.aria-label]="cuenta + ' pendientes'">
-                {{ cuenta }}
-              </span>
-            }
-            <span class="modulo-icono">
-              <svg class="icono" aria-hidden="true">
-                <use [attr.href]="'#ic-' + modulo.icono" />
-              </svg>
-            </span>
-            <!-- Agrupados (2026-10-16) para que la columna izquierda/derecha
-                 del menú principal pueda ponerlos junto al ícono en una fila,
-                 sin que el título y la descripción pierdan su propia columna
-                 interna — ver .modulo-texto en dashboard.css. -->
-            <span class="modulo-texto">
-              <span class="modulo-titulo">{{ modulo.titulo }}</span>
-              <span class="modulo-descripcion">{{ modulo.descripcion }}</span>
-            </span>
-          </a>
+      <!-- TARJETAS DE MÓDULOS, por grupo (2026-11-08): cada grupo lleva su título;
+           en monitor grande los grupos son columnas, en teléfono van apilados.
+           Cada tarjeta es un enlace a su ruta (protegida además por rolGuard
+           en app.routes.ts). -->
+      <div class="grupos-modulos" [style.--n-grupos]="gruposVisibles().length">
+        @for (grupo of gruposVisibles(); track grupo.titulo) {
+          <section class="grupo-modulos" [attr.aria-label]="grupo.titulo">
+            <h2 class="grupo-titulo">{{ grupo.titulo }}</h2>
+            <div class="grid-modulos">
+              @for (modulo of grupo.modulos; track modulo.ruta) {
+                <a
+                  class="tarjeta-modulo"
+                  [routerLink]="modulo.ruta"
+                  [style.--acento-modulo]="modulo.colorVar"
+                >
+                  @if (alertasPorRuta()[modulo.ruta]; as cuenta) {
+                    <span class="modulo-badge-alerta" [attr.aria-label]="cuenta + ' pendientes'">
+                      {{ cuenta }}
+                    </span>
+                  }
+                  <span class="modulo-icono">
+                    <svg class="icono" aria-hidden="true">
+                      <use [attr.href]="'#ic-' + modulo.icono" />
+                    </svg>
+                  </span>
+                  <!-- Agrupados (2026-10-16) para que la columna izquierda/derecha
+                     del menú principal pueda ponerlos junto al ícono en una fila,
+                     sin que el título y la descripción pierdan su propia columna
+                     interna — ver .modulo-texto en dashboard.css. -->
+                  <span class="modulo-texto">
+                    <span class="modulo-titulo">{{ modulo.titulo }}</span>
+                    <span class="modulo-descripcion">{{ modulo.descripcion }}</span>
+                  </span>
+                </a>
+              }
+            </div>
+          </section>
         }
       </div>
     }

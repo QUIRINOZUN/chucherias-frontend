@@ -41,6 +41,8 @@ import { AsistenciasService } from '../core/asistencias';
 import { GastosService } from '../core/gastos';
 import { VentasEspecialesService } from '../core/ventas-especiales';
 import { InsumosService } from '../core/insumos';
+import { OrdenesService } from '../core/ordenes';
+import { ChecklistService } from '../core/checklist';
 import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -236,6 +238,42 @@ const MODULOS: Modulo[] = [
   },
 ];
 
+// GRUPOS DEL MENÚ (2026-11-08): los módulos ya estaban ordenados por tema en
+// MODULOS, pero la rejilla los pintaba como 16 tarjetas sueltas. Cada ruta se
+// asigna aquí a un grupo con título; en monitor grande cada grupo es una
+// columna, en teléfono/tablet son secciones apiladas. Un módulo nuevo que no
+// esté en este mapa cae en "Otros" (nunca desaparece del menú).
+const GRUPO_POR_RUTA: Record<string, string> = {
+  '/pos': 'Ventas y caja',
+  '/comandas': 'Ventas y caja',
+  '/caja': 'Ventas y caja',
+  '/ventas': 'Ventas y caja',
+  '/ventas-especiales': 'Ventas y caja',
+  '/recetario': 'Cocina e inventario',
+  '/inventario': 'Cocina e inventario',
+  '/mermas': 'Cocina e inventario',
+  '/usuarios': 'Personas',
+  '/asistencias': 'Personas',
+  '/nomina': 'Personas',
+  '/clientes': 'Personas',
+  '/gastos': 'Control y finanzas',
+  '/reportes': 'Control y finanzas',
+  '/checklist': 'Control y finanzas',
+  '/bitacora': 'Control y finanzas',
+};
+const ORDEN_GRUPOS = [
+  'Ventas y caja',
+  'Cocina e inventario',
+  'Personas',
+  'Control y finanzas',
+  'Otros',
+];
+
+interface GrupoModulos {
+  titulo: string;
+  modulos: Modulo[];
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -251,6 +289,35 @@ export class DashboardComponent implements OnInit {
     const rol = this.authService.usuarioActual()?.rol;
     return MODULOS.filter((modulo) => rol && modulo.roles.includes(rol));
   });
+
+  // Los módulos visibles, repartidos por grupo (los grupos sin ningún módulo
+  // para este rol no se muestran — un auxiliar solo ve "Ventas y caja" con
+  // Comandas y "Control y finanzas" con Checklist).
+  gruposVisibles = computed<GrupoModulos[]>(() => {
+    const porGrupo = new Map<string, Modulo[]>();
+    for (const modulo of this.modulosVisibles()) {
+      const grupo = GRUPO_POR_RUTA[modulo.ruta] ?? 'Otros';
+      porGrupo.set(grupo, [...(porGrupo.get(grupo) ?? []), modulo]);
+    }
+    return ORDEN_GRUPOS.filter((g) => porGrupo.has(g)).map((g) => ({
+      titulo: g,
+      modulos: porGrupo.get(g)!,
+    }));
+  });
+
+  // Saludo según la hora del dispositivo y fecha de hoy (2026-11-08).
+  saludo = (() => {
+    const hora = new Date().getHours();
+    return hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
+  })();
+  fechaHoy = (() => {
+    const texto = new Date().toLocaleDateString('es-MX', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
+  })();
 
   // Aviso en la tarjeta de Recetario (2026-10-09): cuántas variantes activas
   // todavía no tienen receta capturada. Una variante sin receta es un
@@ -280,6 +347,15 @@ export class DashboardComponent implements OnInit {
   resumenCaja = signal<ResumenCaja | null>(null);
 
   personalEnTurnoHoy = signal<number | null>(null);
+
+  // Más datos del resumen (2026-11-08), cada uno es un enlace a su módulo:
+  // pedidos que siguen en cocina (sin preparar + preparando) y avance del
+  // checklist del turno (apertura antes de las 5 pm, cierre después).
+  pedidosEnCocina = signal<number | null>(null);
+  checklistAvance = signal<{ hechos: number; total: number } | null>(null);
+  tipoChecklistHoy: 'apertura' | 'cierre' = new Date().getHours() < 17 ? 'apertura' : 'cierre';
+  // "Ventas de hoy" lleva a Ventas solo si el rol puede abrirlo; el cajero va a Caja.
+  rutaVentasHoy = computed(() => (this.puedeVerPersonalEnTurno() ? '/ventas' : '/caja'));
 
   // ---- Alertas por tarjeta de módulo (2026-10-31) --------------------------
   // Mismo patrón que variantesSinRecetaCount: un número rojo sobre la
@@ -361,6 +437,8 @@ export class DashboardComponent implements OnInit {
     private gastosService: GastosService,
     private ventasEspecialesService: VentasEspecialesService,
     private insumosService: InsumosService,
+    private ordenesService: OrdenesService,
+    private checklistService: ChecklistService,
   ) {}
 
   ngOnInit(): void {
@@ -379,11 +457,36 @@ export class DashboardComponent implements OnInit {
     if (this.puedeVerPersonalEnTurno()) {
       this.cargarPersonalEnTurno();
     }
+    // Pedidos en cocina y checklist: los ven los 4 roles (mismos que abren
+    // Comandas y Checklist).
+    this.cargarPedidosEnCocina();
+    this.cargarChecklistAvance();
     // Ventas especiales: administrador, encargado y cajero (mismos roles
     // que ya ven ese módulo en el menú).
     if (rol === 'administrador' || rol === 'encargado' || rol === 'cajero') {
       this.cargarVentasEspecialesHoy();
     }
+  }
+
+  cargarPedidosEnCocina(): void {
+    this.ordenesService.obtenerOrdenesActivas().subscribe({
+      next: (ordenes) =>
+        this.pedidosEnCocina.set(
+          ordenes.filter((o) => o.estado === 'sin_preparar' || o.estado === 'preparando').length,
+        ),
+      error: () => {},
+    });
+  }
+
+  cargarChecklistAvance(): void {
+    this.checklistService.obtenerHoy(this.tipoChecklistHoy).subscribe({
+      next: (items) =>
+        this.checklistAvance.set({
+          hechos: items.filter((i) => i.marcado).length,
+          total: items.length,
+        }),
+      error: () => {},
+    });
   }
 
   // Insumos con existencia <= cantidad_minima (RF-12) — mismo `alerta` que

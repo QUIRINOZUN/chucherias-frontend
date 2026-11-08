@@ -109,7 +109,17 @@
 }
 
 .dashboard-rol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
   margin: 10px 0 0;
+}
+
+/* Fecha de hoy junto a la pastilla del rol (2026-11-08). */
+.dashboard-fecha {
+  font-size: 0.85rem;
+  color: var(--pos-text-secondary);
 }
 
 /* Etiqueta del rol del usuario en sesión. */
@@ -178,12 +188,35 @@
 }
 
 .resumen-stat {
+  /* Cada cifra es un enlace a su módulo (2026-11-08). */
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
   flex: 1 1 160px;
   padding: 16px 20px;
   background: var(--pos-bg-card);
   border-radius: var(--radio-lg);
   box-shadow: var(--sombra-suave);
   text-align: center;
+}
+
+.resumen-stat:hover {
+  border-color: var(--acento-texto);
+  transform: translateY(-1px);
+}
+
+/* Insumos bajo mínimo con algo que atender: la cifra va en rojo funcional. */
+.resumen-stat-alerta .resumen-stat-valor {
+  color: var(--peligro-texto);
+}
+
+/* Checklist completo: la cifra va en verde de éxito. */
+.resumen-stat-listo .resumen-stat-valor {
+  color: var(--exito-texto);
 }
 
 .resumen-stat-valor {
@@ -225,6 +258,41 @@
   gap: 18px;
   width: 100%;
   max-width: 720px;
+}
+
+/* GRUPOS DEL MENÚ (2026-11-08): cada grupo es una sección con su título y su
+   propia rejilla de tarjetas. En teléfono/tablet van apilados uno tras otro;
+   en monitor grande (ver @media 1100px) son columnas lado a lado. */
+.grupos-modulos {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 100%;
+  max-width: 720px;
+}
+
+.grupo-modulos .grid-modulos {
+  max-width: none;
+}
+
+.grupo-titulo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 12px;
+  font-family: var(--fuente-texto);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pos-text-secondary);
+  font-variation-settings: normal;
+}
+
+.grupo-titulo::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--pos-border);
 }
 
 /* Tarjeta de un módulo: es un enlace completo (área táctil grande). El
@@ -426,6 +494,10 @@
    real, así que aplicar esto sin la rejilla fija daría resultados
    incoherentes en pantallas intermedias. */
 @media (min-width: 640px) {
+  .grupos-modulos {
+    max-width: 780px;
+  }
+
   .grid-modulos {
     grid-template-columns: repeat(3, 1fr);
     max-width: 780px;
@@ -491,6 +563,100 @@
 
   .tarjeta-modulo:nth-child(3n) .modulo-titulo {
     font-size: 1.3rem;
+  }
+}
+
+/* MONITOR GRANDE (2026-11-07): con el administrador viendo 16 módulos, la
+   rejilla de 3 columnas de arriba (pensada para tablet/teléfono) llegaba a 6
+   filas y obligaba a bajar con scroll. A partir de 1100px se aprovecha el
+   ancho: 4 columnas, tarjetas compactas y uniformes (ícono a la izquierda,
+   texto a la derecha) en vez de las tres identidades por columna — con tantas
+   tarjetas juntas esa variedad se leía como desorden, no como carácter. Con
+   16 módulos quedan 4 filas exactas; con 15 (encargado) también 4. El
+   selector `.grid-modulos .tarjeta-modulo:nth-child(n)` (especificidad 0,3,0)
+   le gana a las reglas por columna de arriba (0,2,0) sin tocarlas, así que
+   teléfono y tablet quedan exactamente como estaban. */
+@media (min-width: 1100px) {
+  .dashboard-header {
+    padding: 14px 40px;
+  }
+
+  .dashboard-logo {
+    width: 170px;
+  }
+
+  .dashboard-cuerpo {
+    padding: 14px 40px;
+  }
+
+  .dashboard-resumen {
+    max-width: 1320px;
+    margin-bottom: 20px;
+    gap: 16px;
+  }
+
+  .resumen-stat {
+    padding: 12px 20px;
+  }
+
+  /* Cada grupo es una columna; dentro, las tarjetas van en una sola columna
+     apiladas. Con menos grupos (cajero, auxiliar) el ancho se acota para que
+     las tarjetas no se estiren de más. */
+  .grupos-modulos {
+    display: grid;
+    grid-template-columns: repeat(var(--n-grupos, 4), minmax(0, 1fr));
+    gap: 20px 24px;
+    align-items: start;
+    max-width: min(1320px, calc(var(--n-grupos, 4) * 340px));
+  }
+
+  .grupo-modulos .grid-modulos {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .grid-modulos .tarjeta-modulo:nth-child(n) {
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    text-align: left;
+    min-height: 80px;
+  }
+
+  .grid-modulos .tarjeta-modulo:nth-child(n) .modulo-texto {
+    align-items: flex-start;
+    text-align: left;
+    gap: 3px;
+  }
+
+  .grid-modulos .tarjeta-modulo:nth-child(n) .modulo-icono {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  .grid-modulos .tarjeta-modulo:nth-child(n) .modulo-icono .icono {
+    width: 26px;
+    height: 26px;
+  }
+
+  .grid-modulos .tarjeta-modulo:nth-child(n) .modulo-titulo {
+    font-size: 1.05rem;
+  }
+
+  .grid-modulos .tarjeta-modulo:nth-child(n) .modulo-descripcion {
+    font-size: 0.8rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .modulo-badge-alerta {
+    top: 8px;
+    right: 8px;
   }
 }
 
@@ -619,4 +785,26 @@
   border: 2px solid var(--pos-border);
   background: none;
   color: var(--pos-text-primary);
+}
+
+/* Teléfono: con 6 cifras en el resumen, 2 por fila empujaban los módulos casi
+   una pantalla hacia abajo; en 3 por fila ocupa la mitad. */
+@media (max-width: 639px) {
+  .dashboard-resumen {
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .resumen-stat {
+    flex: 1 1 96px;
+    padding: 10px 8px;
+  }
+
+  .resumen-stat-valor {
+    font-size: 1.15rem;
+  }
+
+  .resumen-stat-etiqueta {
+    font-size: 0.72rem;
+  }
 }

@@ -144,7 +144,7 @@
      grisáceo de Reportes, taupe cálido de Checklist) con un gris casi
      negro, evocando tinta/sello — el lenguaje visual de un libro de
      registro. */
-  --mod-bitacora: #1f2937;
+  --mod-bitacora: #94a3b8; /* gris pizarra claro: en tema oscuro el grafito original (#1f2937) casi no se veía; el tema claro lo restaura abajo */
 
   /* Franja arcoíris (2026-10-13, tercera pasada): el usuario pidió que el
      "arcoíris" (el guiño al logotipo real multicolor, antes solo en el
@@ -179,6 +179,7 @@
 
 /* ===================== Tema claro ===================== */
 :root[data-theme='light'] {
+  --mod-bitacora: #1f2937;
   color-scheme: light;
 
   --pos-bg-main: #fdf6ec;
