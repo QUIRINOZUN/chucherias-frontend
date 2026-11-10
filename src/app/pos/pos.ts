@@ -53,6 +53,8 @@ import { InsumosService } from '../core/insumos';
 import { ConfigLealtad, EscalonLealtad, LealtadService } from '../core/lealtad';
 import { ThemeService } from '../core/theme';
 import { MetodoPago, RespuestaVenta, TipoEntrega, VentasService } from '../core/ventas';
+import { ImpresoraService } from '../core/impresora';
+import { LINEA_DOBLE, importeEnLetras } from '../core/ticket-formato';
 import { aplicarEstilosPersonalizados, obtenerEstiloCategoria } from './categoria-estilos';
 import { IngredienteRemovible, obtenerIngredientesRemovibles } from './producto-ingredientes';
 import { GrupoEleccion, OpcionEleccion, obtenerEleccionesDeVariante } from './producto-elecciones';
@@ -127,6 +129,8 @@ interface Recibo {
   // si el cliente ya tenía una visita contada hoy por otra compra.
   clienteLealtadNombre: string | null;
   descuentoLealtad: number;
+  // Cargo de transporte (solo pedidos a domicilio), tal como lo cobró el servidor.
+  cargoEnvio: number;
   // Avance del ciclo de lealtad DESPUÉS de esta compra, o null si no había
   // cliente de lealtad ligado — alimenta el "X de N" del ticket (2026-10-17,
   // ver "potenciar ticket"). Nunca decide dinero.
@@ -500,13 +504,18 @@ export class PosComponent implements OnInit, OnDestroy {
   // se usa para cobrar en efectivo y armar las sugerencias de billete —
   // `totalCarrito()` sigue siendo la suma cruda, sin descuento, para el
   // badge del carrito (ahí todavía no se ha elegido ningún cliente).
+  // Cargo fijo de transporte en pedidos a domicilio (lo decide el servidor; aquí solo se muestra).
+  tarifaEnvio = signal(25);
+  cargoEnvio = computed(() => (this.tipoEntrega() === 'domicilio' ? this.tarifaEnvio() : 0));
+
   totalAPagar = computed(() => {
     const total = this.totalCarrito();
     const preview = this.previsualizacionLealtad();
-    if (!preview || preview.porcentaje === 0) {
-      return total;
-    }
-    return Math.round(total * (1 - preview.porcentaje / 100) * 100) / 100;
+    const conDescuento =
+      !preview || preview.porcentaje === 0
+        ? total
+        : Math.round(total * (1 - preview.porcentaje / 100) * 100) / 100;
+    return conDescuento + this.cargoEnvio();
   });
 
   // Denominaciones que dibuja la plantilla (billetes con su ilustración
@@ -602,6 +611,7 @@ export class PosComponent implements OnInit, OnDestroy {
     private empleadosService: EmpleadosService,
     private lealtadService: LealtadService,
     private authService: AuthService,
+    private impresoraService: ImpresoraService,
     public themeService: ThemeService,
     private router: Router,
   ) {}
@@ -647,6 +657,13 @@ export class PosComponent implements OnInit, OnDestroy {
         }
         this.costosExtraPorInsumo.set(mapa);
       },
+      error: () => {},
+    });
+
+    // Tarifa de envío vigente (editable por el administrador en Nómina). Falla en
+    // silencio con $25 de respaldo; el servidor es quien decide el cargo real.
+    this.ventasService.tarifaEnvio().subscribe({
+      next: (r) => this.tarifaEnvio.set(Number(r.tarifa)),
       error: () => {},
     });
 
@@ -1480,6 +1497,7 @@ export class PosComponent implements OnInit, OnDestroy {
           repartidorNombre: this.repartidores().find((r) => r.id === repartidorId)?.nombre || null,
           clienteLealtadNombre: clienteLealtad?.nombre_completo || null,
           descuentoLealtad: descuentoReal,
+          cargoEnvio: Number(respuesta.venta.cargo_envio ?? 0),
           visitasLealtad: respuesta.visitas_lealtad,
           cicloVisitas: respuesta.ciclo_visitas,
           cicloCompletado: respuesta.ciclo_completado,
@@ -1497,10 +1515,35 @@ export class PosComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Abre el diálogo de impresión del navegador. El estilo @media print de
-  // pos.css hace que solo salga el comprobante, en blanco y negro.
-  imprimirRecibo(): void {
-    window.print();
+  // Aviso bajo el botón Imprimir (éxito o por qué se usó el respaldo).
+  readonly avisoImpresion = signal('');
+  readonly imprimiendo = signal(false);
+
+  // Imprime en la impresora térmica por el agente local (ESC/POS, con
+  // acentos y corte). Si el agente no está encendido o falla, cae al
+  // diálogo de impresión del navegador (el @media print de pos.css hace
+  // que solo salga el comprobante).
+  async imprimirRecibo(): Promise<void> {
+    const r = this.recibo();
+    if (!r || this.imprimiendo()) {
+      return;
+    }
+    this.imprimiendo.set(true);
+    this.avisoImpresion.set('');
+    try {
+      await this.impresoraService.imprimirTexto(this.textoPlanoTicket(r, true));
+      this.avisoImpresion.set('Ticket enviado a la impresora.');
+    } catch (error) {
+      const apagado = error instanceof Error && error.message === 'AGENTE_APAGADO';
+      this.avisoImpresion.set(
+        apagado
+          ? 'El agente de impresión no está encendido; se abrió la impresión del navegador.'
+          : `La impresora falló (${error instanceof Error ? error.message : 'error'}); se abrió la impresión del navegador.`,
+      );
+      window.print();
+    } finally {
+      this.imprimiendo.set(false);
+    }
   }
 
   // Porcentaje real que aplicó el servidor, a partir del monto — ya no
@@ -1602,16 +1645,17 @@ export class PosComponent implements OnInit, OnDestroy {
   // pantalla sigue viéndose exactamente igual que antes, con todo el diseño
   // y las animaciones ya construidas. 32 caracteres de ancho: el ancho
   // típico de una impresora térmica de 58mm con fuente normal.
-  textoPlanoTicket(r: Recibo): string {
+  textoPlanoTicket(r: Recibo, conAcentos = false): string {
+    const qa = (t: string): string => (conAcentos ? t : this.quitarAcentos(t));
     const ANCHO = 32;
     const linea = (izquierda: string, derecha: string): string => {
-      const i = this.quitarAcentos(izquierda);
-      const d = this.quitarAcentos(derecha);
+      const i = qa(izquierda);
+      const d = qa(derecha);
       const espacios = Math.max(1, ANCHO - i.length - d.length);
       return i + ' '.repeat(espacios) + d;
     };
     const centrado = (texto: string): string => {
-      const t = this.quitarAcentos(texto);
+      const t = qa(texto);
       const espacios = Math.max(0, Math.floor((ANCHO - t.length) / 2));
       return ' '.repeat(espacios) + t;
     };
@@ -1622,7 +1666,7 @@ export class PosComponent implements OnInit, OnDestroy {
     const envolver = (texto: string): string[] => {
       const salida: string[] = [];
       let actual = '';
-      for (const palabra of this.quitarAcentos(texto).split(' ')) {
+      for (const palabra of qa(texto).split(' ')) {
         if ((actual + ' ' + palabra).trim().length > ANCHO) {
           salida.push(actual);
           actual = palabra;
@@ -1640,29 +1684,27 @@ export class PosComponent implements OnInit, OnDestroy {
     if (n.direccion) filas.push(...envolver(n.direccion).map((x) => centrado(x)));
     if (n.telefono) filas.push(centrado(`Tel: ${n.telefono}`));
     if (n.horario) filas.push(...envolver(n.horario).map((x) => centrado(x)));
-    filas.push(separador);
+    filas.push(LINEA_DOBLE);
     filas.push(centrado('TICKET DE VENTA'));
-    filas.push('');
+    filas.push(LINEA_DOBLE);
     const cola = this.colaDeCuentas();
     if (cola) {
       filas.push(centrado(`Cuenta ${this.indiceCuentaActual() + 1} de ${cola.length}`));
     }
-    filas.push(this.quitarAcentos(`Orden ${r.venta.orden.numero_orden}`));
-    filas.push(this.quitarAcentos(this.formatoFechaCorta(r.fecha)));
+    filas.push(qa(`Orden ${r.venta.orden.numero_orden}`));
+    filas.push(qa(this.formatoFechaCorta(r.fecha)));
     if (r.cajero) {
-      filas.push(this.quitarAcentos(`Atendio: ${r.cajero}`));
+      filas.push(qa(`Atendio: ${r.cajero}`));
     }
     filas.push(separador);
     filas.push('CANT DESCRIPCION         IMPORTE');
 
     for (const item of r.items) {
-      filas.push(
-        this.quitarAcentos(`${item.cantidad}x ${item.productoNombre} (${item.varianteNombre})`),
-      );
+      filas.push(qa(`${item.cantidad}x ${item.productoNombre} (${item.varianteNombre})`));
       filas.push(linea('', money(this.subtotalLinea(item))));
       const nota = this.notaCompleta(item);
       if (nota) {
-        filas.push(this.quitarAcentos(`  ${nota}`));
+        filas.push(qa(`  ${nota}`));
       }
     }
     filas.push(separador);
@@ -1672,9 +1714,15 @@ export class PosComponent implements OnInit, OnDestroy {
     if (r.descuentoLealtad > 0) {
       filas.push(linea('Desc. lealtad', '-' + money(r.descuentoLealtad)));
     }
+    if (r.cargoEnvio > 0) {
+      filas.push(linea('Envio a domicilio', money(r.cargoEnvio)));
+    }
+    filas.push(LINEA_DOBLE);
     filas.push(linea('TOTAL', money(r.total)));
+    filas.push(...envolver(importeEnLetras(r.total)).map((x) => centrado(x)));
+    filas.push(LINEA_DOBLE);
     if (r.clienteLealtadNombre) {
-      filas.push(this.quitarAcentos(`Cliente: ${r.clienteLealtadNombre}`));
+      filas.push(qa(`Cliente: ${r.clienteLealtadNombre}`));
       // Mismo avance de las 10 casillas del comprobante con diseño (ver
       // avanceLealtad()/textoAvanceLealtad()), pero con caracteres ASCII
       // puros ('#'/'.') en vez de los círculos llenos/vacíos de pantalla —
@@ -1683,16 +1731,16 @@ export class PosComponent implements OnInit, OnDestroy {
       const avance = this.avanceLealtad(r);
       if (avance.length) {
         filas.push(avance.map((llena) => (llena ? '#' : '.')).join(''));
-        filas.push(this.quitarAcentos(this.textoAvanceLealtad(r)));
+        filas.push(qa(this.textoAvanceLealtad(r)));
       }
     }
     filas.push(linea('Entrega', r.tipoEntrega === 'presencial' ? 'Presencial' : 'Domicilio'));
     if (r.tipoEntrega === 'domicilio') {
-      filas.push(this.quitarAcentos(`A: ${r.clienteNombre}`));
-      filas.push(this.quitarAcentos(r.clienteDireccion));
-      filas.push(this.quitarAcentos(`Tel: ${r.clienteTelefono}`));
+      filas.push(qa(`A: ${r.clienteNombre}`));
+      filas.push(qa(r.clienteDireccion));
+      filas.push(qa(`Tel: ${r.clienteTelefono}`));
       if (r.repartidorNombre) {
-        filas.push(this.quitarAcentos(`Repartidor: ${r.repartidorNombre}`));
+        filas.push(qa(`Repartidor: ${r.repartidorNombre}`));
       }
     }
     filas.push(linea('Pago', r.metodoPago === 'efectivo' ? 'Efectivo' : 'Transferencia'));
@@ -1705,6 +1753,7 @@ export class PosComponent implements OnInit, OnDestroy {
       }
     }
     filas.push(separador);
+    filas.push(centrado('*** GRACIAS POR SU COMPRA ***'));
     // Misma despedida con variedad del comprobante con diseño (no un texto
     // fijo) — determinística por el id de la venta, así el mismo ticket
     // siempre muestra la misma frase si se reimprime.
@@ -1712,6 +1761,27 @@ export class PosComponent implements OnInit, OnDestroy {
     if (this.negocio.leyenda) filas.push(...envolver(this.negocio.leyenda).map((x) => centrado(x)));
     filas.push('');
 
+    return filas.join('\n');
+  }
+
+  // Ticket de retiro de efectivo en texto (mismo estilo que el de venta):
+  // lo imprime el navegador (<pre>) y también sirve para el agente de impresión.
+  textoPlanoRetiro(t: MovimientoCaja): string {
+    const qa = (x: string) => this.quitarAcentos(x);
+    const ANCHO = 32;
+    const centrado = (x: string) => ' '.repeat(Math.max(0, Math.floor((ANCHO - x.length) / 2))) + x;
+    const linea = (i: string, d: string) =>
+      i + ' '.repeat(Math.max(1, ANCHO - i.length - d.length)) + d;
+    const filas: string[] = [centrado(qa(this.negocio.nombre.toUpperCase()))];
+    filas.push(LINEA_DOBLE, centrado('RETIRO DE EFECTIVO'), LINEA_DOBLE);
+    if (t.fecha_confirmacion)
+      filas.push(qa(this.formatoFechaCorta(new Date(t.fecha_confirmacion))));
+    filas.push(linea('MONTO', `$${(+t.monto).toFixed(2)}`));
+    filas.push(LINEA_DOBLE);
+    filas.push(qa(`Autorizo: ${t.responsable}`));
+    if (t.confirmado_por_nombre) filas.push(qa(`Confirmo: ${t.confirmado_por_nombre}`));
+    if (t.motivo) filas.push(qa(`Motivo: ${t.motivo}`));
+    filas.push('', '', '________________________', centrado('Firma de quien recibe'), '');
     return filas.join('\n');
   }
 

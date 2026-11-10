@@ -2898,7 +2898,21 @@
 
 /* El comprobante se imprime siempre en fondo claro y texto negro, sin
    importar el tema activo: se reescriben los tokens dentro del panel. */
+.comprobante-logo-impresion {
+  display: none;
+}
+
 @media print {
+  /* Logo en el ticket impreso: en blanco y negro con buen contraste para que
+     la térmica (o cualquier impresora) lo reproduzca nítido. */
+  .comprobante-logo-impresion {
+    display: block !important;
+    width: 170px;
+    max-width: 70%;
+    height: auto;
+    margin: 0 auto 6px;
+    filter: grayscale(1) contrast(1.8) brightness(0.9);
+  }
   .pos-header,
   .pos-caja-barra,
   .pos-cuerpo,
@@ -3002,7 +3016,7 @@
      por esta regla — es una decisión deliberada mientras no se consiga un
      driver gráfico para la impresora real de prueba, no una limitación del
      sistema en general. */
-  .comprobante > *:not(.comprobante-texto-plano) {
+  .comprobante > *:not(.comprobante-texto-plano):not(.comprobante-logo-impresion) {
     display: none !important;
   }
 
@@ -3182,4 +3196,12 @@
 
 .comprobante-leyenda {
   margin-top: 6px;
+}
+
+/* Aviso bajo el botón Imprimir (agente local de impresión). */
+.aviso-impresion {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--pos-text-secondary);
 }

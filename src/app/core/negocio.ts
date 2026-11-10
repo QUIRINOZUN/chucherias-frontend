@@ -10,8 +10,8 @@ export const NEGOCIO = {
   nombre: 'Chucherías Mix',
   titular: 'Reyna Ximena Morales Berumen',
   rfc: '',
-  direccion: '',
-  telefono: '',
+  direccion: 'Av. 5 de Mayo #400, Francisco I. Madero, Durango',
+  telefono: '677 883 1025',
   horario: 'Martes a domingo, 2:00 pm a 9:30 pm',
   leyenda: 'Ticket de venta. No es comprobante fiscal.',
 };

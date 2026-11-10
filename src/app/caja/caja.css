@@ -1014,7 +1014,21 @@
 
 /* El ticket se imprime siempre en fondo claro y texto negro, sin importar
    el tema activo — mismo criterio que el comprobante de venta del POS. */
+.comprobante-logo-impresion {
+  display: none;
+}
+
 @media print {
+  /* Logo en el ticket impreso: en blanco y negro con buen contraste para que
+     la térmica (o cualquier impresora) lo reproduzca nítido. */
+  .comprobante-logo-impresion {
+    display: block !important;
+    width: 170px;
+    max-width: 70%;
+    height: auto;
+    margin: 0 auto 6px;
+    filter: grayscale(1) contrast(1.8) brightness(0.9);
+  }
   .caja-header,
   .caja-cuerpo {
     display: none !important;
@@ -1060,7 +1074,7 @@
      bloque de texto plano armado a mano (ver textoPlanoListadoRetiros() en
      caja.ts). En pantalla, y en una impresora con driver gráfico real,
      nada de esto se nota. */
-  .comprobante > *:not(.comprobante-texto-plano) {
+  .comprobante > *:not(.comprobante-texto-plano):not(.comprobante-logo-impresion) {
     display: none !important;
   }
 

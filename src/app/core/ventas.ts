@@ -49,12 +49,20 @@ export interface NuevaVenta {
 
 // Lo que responde el servidor tras registrar la venta (se usa para el
 // número de orden del comprobante).
+export interface EnvioRepartidor {
+  repartidor_id: number | null;
+  repartidor: string | null;
+  envios: number;
+  total: string;
+}
+
 export interface RespuestaVenta {
   orden: { id: number; numero_orden: string };
   venta: {
     id: number;
     subtotal: string;
     descuento_lealtad: string;
+    cargo_envio?: string;
     total: string;
     metodo_pago: MetodoPago;
   };
@@ -196,6 +204,22 @@ export class VentasService {
     if (filtros.tipoEntrega) params['tipo_entrega'] = filtros.tipoEntrega;
     if (filtros.buscar?.trim()) params['buscar'] = filtros.buscar.trim();
     return this.http.get<VentaHistorial[]>(`${this.apiUrl}/ventas`, { params });
+  }
+
+  tarifaEnvio(): Observable<{ tarifa: number }> {
+    return this.http.get<{ tarifa: number }>(`${this.apiUrl}/ventas/envios/tarifa`);
+  }
+
+  guardarTarifaEnvio(tarifa: number): Observable<{ tarifa: number }> {
+    return this.http.patch<{ tarifa: number }>(`${this.apiUrl}/ventas/envios/tarifa`, { tarifa });
+  }
+
+  // GET /api/ventas/envios — cargos de envío a domicilio por repartidor (pago semanal).
+  envios(desde: string | null, hasta: string | null): Observable<EnvioRepartidor[]> {
+    const params: Record<string, string> = {};
+    if (desde) params['desde'] = desde;
+    if (hasta) params['hasta'] = hasta;
+    return this.http.get<EnvioRepartidor[]>(`${this.apiUrl}/ventas/envios`, { params });
   }
 
   // PATCH /api/ventas/:id/cancelar — solo administrador y encargado.

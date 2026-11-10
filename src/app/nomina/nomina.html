@@ -106,6 +106,23 @@
         <span class="hero-nomina-detalle">{{ totalHoras() }} horas trabajadas en total</span>
       </div>
 
+      @if (envios().length > 0) {
+        <section class="franja-atencion-nomina" aria-label="Envíos a domicilio por pagar">
+          <strong
+            >Envíos a domicilio (cargo de $25 cobrado al cliente):
+            {{ totalEnvios() | currency: 'MXN' }}</strong
+          >
+          <ul class="lista-atencion-nomina">
+            @for (e of envios(); track e.repartidor_id) {
+              <li>
+                {{ e.repartidor || 'Sin repartidor asignado' }}: {{ e.envios }}
+                {{ e.envios === 1 ? 'envío' : 'envíos' }} — {{ +e.total | currency: 'MXN' }}
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
       @if (empleadosSinTarifa() > 0 || turnosSinCerrarTotal() > 0) {
         <div class="franja-atencion-nomina">
           <ul class="lista-atencion-nomina">
@@ -237,6 +254,53 @@
             [disabled]="!puedeGuardarTarifa() || guardandoTarifa()"
           >
             {{ guardandoTarifa() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+  @if (editandoEnvio()) {
+    <div class="overlay">
+      <div
+        class="panel-formulario-nomina"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Tarifa de envío a domicilio"
+        appFocoDialogo
+        (cerrarConEscape)="editandoEnvio.set(false)"
+      >
+        <h2>Tarifa de envío a domicilio</h2>
+        <div class="campo">
+          <label for="tarifa-envio">Cargo por envío (MXN)</label>
+          <input
+            id="tarifa-envio"
+            type="number"
+            min="0"
+            step="1"
+            [value]="tarifaEnvioForm()"
+            (input)="tarifaEnvioForm.set($any($event.target).value)"
+          />
+          <p class="ayuda-campo">Aplica a las ventas nuevas; las ya cobradas conservan su monto.</p>
+        </div>
+        @if (errorEnvio()) {
+          <p class="mensaje-error">{{ errorEnvio() }}</p>
+        }
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="editandoEnvio.set(false)"
+            [disabled]="guardandoEnvio()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar"
+            (click)="guardarTarifaEnvio()"
+            [disabled]="guardandoEnvio()"
+          >
+            {{ guardandoEnvio() ? 'Guardando...' : 'Guardar' }}
           </button>
         </div>
       </div>

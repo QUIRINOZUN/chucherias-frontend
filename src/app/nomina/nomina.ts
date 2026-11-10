@@ -21,6 +21,8 @@ import { Router } from '@angular/router';
 import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { NominaService, ResumenNomina, EmpleadoNomina } from '../core/nomina';
 import { ThemeService } from '../core/theme';
+import { AuthService } from '../core/auth';
+import { EnvioRepartidor, VentasService } from '../core/ventas';
 
 // "AAAA-MM-DD" en hora LOCAL — nunca toISOString(), que corre la fecha un
 // día con el offset negativo de México (mismo criterio que usa todo el
@@ -97,10 +99,49 @@ export class NominaComponent implements OnInit {
     return Number.isFinite(valor) && valor > 0;
   });
 
+  // Cargos de envío a domicilio por repartidor, del mismo periodo (pago semanal).
+  envios = signal<EnvioRepartidor[]>([]);
+  totalEnvios = computed(() => this.envios().reduce((s, e) => s + Number(e.total), 0));
+
+  esAdministrador = computed(() => this.authService.usuarioActual()?.rol === 'administrador');
+  tarifaEnvio = signal<number | null>(null);
+  editandoEnvio = signal(false);
+  tarifaEnvioForm = signal('');
+  guardandoEnvio = signal(false);
+  errorEnvio = signal('');
+
+  abrirTarifaEnvio(): void {
+    this.tarifaEnvioForm.set(String(this.tarifaEnvio() ?? 25));
+    this.errorEnvio.set('');
+    this.editandoEnvio.set(true);
+  }
+
+  guardarTarifaEnvio(): void {
+    const valor = Number(this.tarifaEnvioForm());
+    if (this.tarifaEnvioForm().trim() === '' || !Number.isFinite(valor) || valor < 0) {
+      this.errorEnvio.set('Captura un monto válido (0 o más).');
+      return;
+    }
+    this.guardandoEnvio.set(true);
+    this.ventasService.guardarTarifaEnvio(valor).subscribe({
+      next: (r) => {
+        this.tarifaEnvio.set(Number(r.tarifa));
+        this.guardandoEnvio.set(false);
+        this.editandoEnvio.set(false);
+      },
+      error: (e: HttpErrorResponse) => {
+        this.guardandoEnvio.set(false);
+        this.errorEnvio.set(e.error?.error || 'No se pudo guardar la tarifa.');
+      },
+    });
+  }
+
   private consulta?: Subscription;
 
   constructor(
     private nominaService: NominaService,
+    private ventasService: VentasService,
+    private authService: AuthService,
     public themeService: ThemeService,
     private router: Router,
   ) {}
@@ -114,6 +155,10 @@ export class NominaComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.ventasService.tarifaEnvio().subscribe({
+      next: (r) => this.tarifaEnvio.set(Number(r.tarifa)),
+      error: () => {},
+    });
     this.cargarNomina();
   }
 
@@ -124,6 +169,11 @@ export class NominaComponent implements OnInit {
     this.consulta?.unsubscribe();
     this.cargando.set(true);
     this.error.set('');
+
+    this.ventasService.envios(this.filtroDesde(), this.filtroHasta()).subscribe({
+      next: (envios) => this.envios.set(envios),
+      error: () => this.envios.set([]),
+    });
 
     this.consulta = this.nominaService
       .calcular({

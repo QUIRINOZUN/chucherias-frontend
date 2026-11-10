@@ -352,10 +352,12 @@ export class CajaComponent implements OnInit {
     const money = (n: number) => `$${n.toFixed(2)}`;
 
     const filas: string[] = [];
+    const doble = '='.repeat(ANCHO);
     filas.push(centrado('CHUCHERIAS MIX'));
-    filas.push(centrado('Listado de retiros'));
+    filas.push(doble);
+    filas.push(centrado('LISTADO DE RETIROS'));
     filas.push(centrado(this.fechaCortaDesdeIso(listado.fecha)));
-    filas.push(separador);
+    filas.push(doble);
 
     if (listado.retiros.length === 0) {
       filas.push(this.quitarAcentos('No hay retiros registrados hoy.'));
@@ -370,8 +372,9 @@ export class CajaComponent implements OnInit {
           filas.push(this.quitarAcentos('  Sin confirmar por el cajero'));
         }
       }
-      filas.push(separador);
-      filas.push(linea('Total retirado', money(listado.total)));
+      filas.push(doble);
+      filas.push(linea('TOTAL RETIRADO', money(listado.total)));
+      filas.push(doble);
     }
     filas.push('');
 
