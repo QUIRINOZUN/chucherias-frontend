@@ -1734,7 +1734,7 @@ export class PosComponent implements OnInit, OnDestroy {
     // Misma despedida con variedad del comprobante con diseño (no un texto
     // fijo) — determinística por el id de la venta, así el mismo ticket
     // siempre muestra la misma frase si se reimprime.
-    filas.push(centrado(this.despedidaCalida(r)));
+    filas.push(...envolver(this.despedidaCalida(r)).map((x) => centrado(x)));
     if (this.negocio.leyenda) filas.push(...envolver(this.negocio.leyenda).map((x) => centrado(x)));
     filas.push('');
 
