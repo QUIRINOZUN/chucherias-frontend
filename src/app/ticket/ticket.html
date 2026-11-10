@@ -1,0 +1,125 @@
+<!-- ============================================================================
+     ticket.html — DATOS DEL TICKET (lógica en ticket.ts). Solo administrador.
+     ============================================================================ -->
+<div class="ticket-container">
+  <header class="ticket-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      Volver
+    </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-recibo" /></svg>
+    </span>
+    <h1>Datos del ticket</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
+    >
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
+    </button>
+  </header>
+
+  <main class="ticket-cuerpo">
+    <section class="ticket-formulario">
+      <p class="ticket-intro">
+        Lo que escribas aquí se imprime en todos los tickets (venta, retiro y listado de retiros).
+        Un campo vacío simplemente no se imprime.
+      </p>
+
+      <div class="ticket-logo-bloque">
+        <div class="ticket-logo-marco">
+          <img [src]="negocioService.logoUrl()" alt="Logotipo actual del ticket" />
+        </div>
+        <div class="ticket-logo-acciones">
+          <strong>Logotipo</strong>
+          <p>PNG con fondo transparente o blanco; se imprime en blanco y negro. Máximo 5 MB.</p>
+          <div class="ticket-botones-fila">
+            <label class="boton-principal" [class.deshabilitado]="subiendoLogo()">
+              {{ subiendoLogo() ? 'Subiendo…' : 'Cambiar logotipo' }}
+              <input
+                type="file"
+                accept="image/*"
+                (change)="elegirLogo($event)"
+                [disabled]="subiendoLogo()"
+              />
+            </label>
+            @if (negocioService.datos().logo_url) {
+              <button
+                type="button"
+                class="boton-secundario"
+                (click)="restablecerLogo()"
+                [disabled]="subiendoLogo()"
+              >
+                Volver al original
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      @if (cargando()) {
+        <p class="ticket-intro">Cargando…</p>
+      } @else {
+        @for (campo of campos; track campo.clave) {
+          <div class="ticket-campo">
+            <label [for]="'campo-' + campo.clave">{{ campo.etiqueta }}</label>
+            <input
+              [id]="'campo-' + campo.clave"
+              type="text"
+              autocomplete="off"
+              [maxLength]="campo.max"
+              [value]="form()[campo.clave]"
+              (input)="actualizar(campo.clave, $any($event.target).value)"
+            />
+            <span class="ticket-ayuda">{{ campo.ayuda }}</span>
+          </div>
+        }
+
+        @if (error()) {
+          <p class="ticket-error" role="alert">{{ error() }}</p>
+        }
+        @if (mensaje()) {
+          <p class="ticket-ok" role="status">{{ mensaje() }}</p>
+        }
+
+        <div class="ticket-botones-fila">
+          <button
+            type="button"
+            class="boton-principal"
+            (click)="guardar()"
+            [disabled]="guardando() || !hayCambios()"
+          >
+            {{ guardando() ? 'Guardando…' : 'Guardar cambios' }}
+          </button>
+          @if (hayCambios()) {
+            <button
+              type="button"
+              class="boton-secundario"
+              (click)="descartar()"
+              [disabled]="guardando()"
+            >
+              Descartar
+            </button>
+          }
+        </div>
+      }
+    </section>
+
+    <aside class="ticket-previa" aria-label="Vista previa del ticket">
+      <h2>Vista previa</h2>
+      <div class="ticket-papel">
+        <img [src]="negocioService.logoUrl()" alt="" class="ticket-papel-logo" />
+        <pre>{{ vistaPrevia() }}</pre>
+      </div>
+      <p class="ticket-ayuda">
+        Así se verá el encabezado y el pie. Se actualiza mientras escribes.
+      </p>
+    </aside>
+  </main>
+</div>

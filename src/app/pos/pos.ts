@@ -39,7 +39,7 @@
 //     p. ej. carrito(), y se cambia con .set() o .update().
 // =============================================================================
 import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
-import { NEGOCIO } from '../core/negocio';
+import { NegocioService } from '../core/negocio';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -602,6 +602,7 @@ export class PosComponent implements OnInit, OnDestroy {
   });
 
   constructor(
+    public negocioService: NegocioService,
     private catalogoService: CatalogoService,
     private ventasService: VentasService,
     private cajaService: CajaService,
@@ -617,6 +618,7 @@ export class PosComponent implements OnInit, OnDestroy {
   // Al abrir la pantalla se cargan categorías y productos del servidor, y
   // arranca el sondeo de retiros de efectivo sin confirmar.
   ngOnInit(): void {
+    this.negocioService.cargar();
     this.catalogoService.obtenerCategorias().subscribe({
       next: (categorias) => {
         this.categorias.set(categorias);
@@ -1581,7 +1583,9 @@ export class PosComponent implements OnInit, OnDestroy {
   }
 
   // Datos del establecimiento para el encabezado/pie del ticket (core/negocio.ts).
-  readonly negocio = NEGOCIO;
+  get negocio() {
+    return this.negocioService.datos();
+  }
 
   // Total de piezas vendidas (suma de cantidades), para el pie del ticket.
   totalArticulos(r: Recibo): number {

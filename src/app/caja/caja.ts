@@ -24,6 +24,7 @@
 // Cambiar de pestaña no vuelve a pedir nada al servidor — los 4 bloques de
 // datos ya se cargan una sola vez en ngOnInit, igual que en reportes.ts.
 // =============================================================================
+import { NegocioService } from '../core/negocio';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -220,6 +221,7 @@ export class CajaComponent implements OnInit {
   });
 
   constructor(
+    public negocioService: NegocioService,
     private cajaService: CajaService,
     private usuariosService: UsuariosService,
     public authService: AuthService,
@@ -228,6 +230,7 @@ export class CajaComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.negocioService.cargar();
     this.cargarResumen();
     // El historial, los movimientos de hoy y el filtro de usuarios solo se
     // cargan para quien puede verlos.
@@ -353,7 +356,7 @@ export class CajaComponent implements OnInit {
 
     const filas: string[] = [];
     const doble = '='.repeat(ANCHO);
-    filas.push(centrado('CHUCHERIAS MIX'));
+    filas.push(centrado(this.quitarAcentos(this.negocioService.datos().nombre.toUpperCase())));
     filas.push(doble);
     filas.push(centrado('LISTADO DE RETIROS'));
     filas.push(centrado(this.fechaCortaDesdeIso(listado.fecha)));

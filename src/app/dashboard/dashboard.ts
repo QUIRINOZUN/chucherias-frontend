@@ -229,6 +229,14 @@ const MODULOS: Modulo[] = [
   // pertenece a ningún grupo temático (no es un dominio de negocio, es
   // supervisión del sistema mismo), mismo criterio que ya aplica a Reportes.
   {
+    ruta: '/ticket',
+    titulo: 'Datos del ticket',
+    icono: 'recibo',
+    descripcion: 'Teléfono, dirección, horario y logotipo que se imprimen.',
+    roles: ['administrador'],
+    colorVar: 'var(--mod-reportes)',
+  },
+  {
     ruta: '/bitacora',
     titulo: 'Bitácora',
     icono: 'bitacora',
@@ -260,6 +268,7 @@ const GRUPO_POR_RUTA: Record<string, string> = {
   '/reportes': 'Control y finanzas',
   '/checklist': 'Control y finanzas',
   '/bitacora': 'Control y finanzas',
+  '/ticket': 'Control y finanzas',
 };
 const ORDEN_GRUPOS = [
   'Ventas y caja',

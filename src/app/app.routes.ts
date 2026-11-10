@@ -48,6 +48,7 @@ import { NominaComponent } from './nomina/nomina';
 import { VentasEspecialesComponent } from './ventas-especiales/ventas-especiales';
 import { GastosComponent } from './gastos/gastos';
 import { BitacoraComponent } from './bitacora/bitacora';
+import { TicketComponent } from './ticket/ticket';
 import { authGuard, rolGuard } from './core/auth-guard';
 
 export const routes: Routes = [
@@ -157,6 +158,12 @@ export const routes: Routes = [
   {
     path: 'bitacora',
     component: BitacoraComponent,
+    canActivate: [authGuard, rolGuard('administrador')],
+  },
+  // Datos que se imprimen en los tickets (2026-11-10) — solo administrador.
+  {
+    path: 'ticket',
+    component: TicketComponent,
     canActivate: [authGuard, rolGuard('administrador')],
   },
   // La raíz del sitio y cualquier URL desconocida llevan al login. (La pantalla

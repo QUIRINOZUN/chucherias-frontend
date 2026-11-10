@@ -721,11 +721,7 @@
         @if (recibo(); as r) {
           <div class="comprobante" id="comprobante-imprimible">
             <div class="comprobante-encabezado">
-              <img
-                src="https://res.cloudinary.com/isjkpamh/image/upload/v1792190975/chucherias/marca/xnua730fuk6dau2nsko1.png"
-                alt="Chucherías Mix"
-                class="comprobante-logo"
-              />
+              <img [src]="negocioService.logoUrl()" alt="Chucherías Mix" class="comprobante-logo" />
               <!-- Check animado (2026-10-17): el cajero ve este momento decenas de
                    veces al día — se dibuja a sí mismo con stroke-dasharray en vez
                    de ser un ícono estático. Ver pos.css para el detalle. -->
@@ -932,7 +928,7 @@
                  pos.ts. aria-hidden porque es un duplicado puramente visual
                  del mismo contenido de arriba, no información nueva. -->
             <img
-              src="https://res.cloudinary.com/isjkpamh/image/upload/v1792190975/chucherias/marca/xnua730fuk6dau2nsko1.png"
+              [src]="negocioService.logoUrl()"
               alt=""
               class="comprobante-logo-impresion"
               aria-hidden="true"
@@ -1649,11 +1645,7 @@
       >
         <div class="comprobante">
           <div class="comprobante-encabezado">
-            <img
-              src="https://res.cloudinary.com/isjkpamh/image/upload/v1792190975/chucherias/marca/xnua730fuk6dau2nsko1.png"
-              alt="Chucherías Mix"
-              class="comprobante-logo"
-            />
+            <img [src]="negocioService.logoUrl()" alt="Chucherías Mix" class="comprobante-logo" />
             <p class="venta-registrada-badge">Retiro de efectivo</p>
             <p class="comprobante-fecha">
               {{ ticket.fecha_confirmacion | date: 'dd/MM/yyyy HH:mm' }}
@@ -1679,7 +1671,7 @@
           </div>
 
           <img
-            src="https://res.cloudinary.com/isjkpamh/image/upload/v1792190975/chucherias/marca/xnua730fuk6dau2nsko1.png"
+            [src]="negocioService.logoUrl()"
             alt=""
             class="comprobante-logo-impresion"
             aria-hidden="true"
