@@ -531,7 +531,11 @@
    negativos — overflow: hidden recorta sus esquinas de vuelta al radio
    redondeado del panel en vez de que sobresalgan cuadradas. */
 .panel-formulario-libro {
-  overflow: hidden;
+  /* Scroll propio dentro del cuadro: el contenido largo ya no se sale de la pantalla. */
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .panel-formulario h2 {
