@@ -777,3 +777,21 @@ button,
     font-size: 16px !important;
   }
 }
+
+/* Ventanas emergentes (2026-11-10): ninguna puede ser más alta que la pantalla.
+   Si el contenido no cabe (celular, teclado abierto, listas largas), la ventana
+   se desplaza POR DENTRO; antes quedaba centrada y su parte de arriba se perdía.
+   Las ventanas que ya fijan su propio alto (componentes) conservan el suyo. */
+:is(.overlay, .overlay-checklist, .overlay-clave) > * {
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Cajas de nota: crecen con el texto en vez de cortarlo (mínimo 3 renglones). */
+textarea {
+  field-sizing: content;
+  min-height: 4.5em;
+  max-height: 50vh;
+}
