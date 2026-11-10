@@ -2902,6 +2902,11 @@
   display: none;
 }
 
+@page {
+  size: 58mm auto;
+  margin: 2mm;
+}
+
 @media print {
   /* Logo en el ticket impreso: en blanco y negro con buen contraste para que
      la térmica (o cualquier impresora) lo reproduzca nítido. */
@@ -3020,15 +3025,24 @@
     display: none !important;
   }
 
+  /* 32 columnas caben en ~48 mm imprimibles de una térmica de 58 mm: 9px Courier
+     (0.6em por carácter). Sin salto de línea automático para no romper columnas. */
   .comprobante-texto-plano {
     display: block !important;
     margin: 0;
+    padding: 0;
     font-family: 'Courier New', Courier, monospace;
-    font-size: 12px;
-    line-height: 1.4;
-    white-space: pre-wrap;
-    word-break: break-word;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.25;
+    white-space: pre;
+    overflow: hidden;
     color: #000;
+  }
+
+  .comprobante {
+    padding: 0 !important;
+    margin: 0 !important;
   }
 }
 

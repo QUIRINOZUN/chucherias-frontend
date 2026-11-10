@@ -53,7 +53,6 @@ import { InsumosService } from '../core/insumos';
 import { ConfigLealtad, EscalonLealtad, LealtadService } from '../core/lealtad';
 import { ThemeService } from '../core/theme';
 import { MetodoPago, RespuestaVenta, TipoEntrega, VentasService } from '../core/ventas';
-import { ImpresoraService } from '../core/impresora';
 import { LINEA_DOBLE, importeEnLetras } from '../core/ticket-formato';
 import { aplicarEstilosPersonalizados, obtenerEstiloCategoria } from './categoria-estilos';
 import { IngredienteRemovible, obtenerIngredientesRemovibles } from './producto-ingredientes';
@@ -611,7 +610,6 @@ export class PosComponent implements OnInit, OnDestroy {
     private empleadosService: EmpleadosService,
     private lealtadService: LealtadService,
     private authService: AuthService,
-    private impresoraService: ImpresoraService,
     public themeService: ThemeService,
     private router: Router,
   ) {}
@@ -1515,35 +1513,10 @@ export class PosComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Aviso bajo el botón Imprimir (éxito o por qué se usó el respaldo).
-  readonly avisoImpresion = signal('');
-  readonly imprimiendo = signal(false);
-
-  // Imprime en la impresora térmica por el agente local (ESC/POS, con
-  // acentos y corte). Si el agente no está encendido o falla, cae al
-  // diálogo de impresión del navegador (el @media print de pos.css hace
-  // que solo salga el comprobante).
-  async imprimirRecibo(): Promise<void> {
-    const r = this.recibo();
-    if (!r || this.imprimiendo()) {
-      return;
-    }
-    this.imprimiendo.set(true);
-    this.avisoImpresion.set('');
-    try {
-      await this.impresoraService.imprimirTexto(this.textoPlanoTicket(r, true));
-      this.avisoImpresion.set('Ticket enviado a la impresora.');
-    } catch (error) {
-      const apagado = error instanceof Error && error.message === 'AGENTE_APAGADO';
-      this.avisoImpresion.set(
-        apagado
-          ? 'El agente de impresión no está encendido; se abrió la impresión del navegador.'
-          : `La impresora falló (${error instanceof Error ? error.message : 'error'}); se abrió la impresión del navegador.`,
-      );
-      window.print();
-    } finally {
-      this.imprimiendo.set(false);
-    }
+  // Imprime con el diálogo del navegador: el @media print de pos.css deja
+  // solo el ticket (logo + texto de 32 columnas), sin depender de ningún programa extra.
+  imprimirRecibo(): void {
+    window.print();
   }
 
   // Porcentaje real que aplicó el servidor, a partir del monto — ya no

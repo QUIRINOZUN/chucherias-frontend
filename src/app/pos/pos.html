@@ -941,17 +941,9 @@
 
             <!-- Acciones del comprobante: imprimir (diálogo del navegador) o iniciar una nueva venta.
                  Se ocultan al imprimir. -->
-            @if (avisoImpresion()) {
-              <p class="aviso-impresion" role="status">{{ avisoImpresion() }}</p>
-            }
             <div class="comprobante-acciones">
-              <button
-                type="button"
-                class="boton-cancelar"
-                [disabled]="imprimiendo()"
-                (click)="imprimirRecibo()"
-              >
-                {{ imprimiendo() ? 'Imprimiendo…' : 'Imprimir' }}
+              <button type="button" class="boton-cancelar" (click)="imprimirRecibo()">
+                Imprimir
               </button>
               <button type="button" class="boton-confirmar" (click)="nuevaVenta()">
                 @if (colaDeCuentas(); as cola) {
