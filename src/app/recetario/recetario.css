@@ -748,7 +748,8 @@
    algún dato para calcularlo. */
 .linea-receta-costo {
   flex-shrink: 0;
-  width: 60px;
+  min-width: 60px;
+  white-space: nowrap;
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--pos-text-secondary);
@@ -925,9 +926,10 @@
 .paso-tutorial-acciones {
   flex-shrink: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: 4px;
-  margin-top: 2px;
+  margin-top: 8px;
   opacity: 0.35;
   transition: opacity 0.15s ease;
 }
