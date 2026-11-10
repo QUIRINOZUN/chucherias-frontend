@@ -53,7 +53,7 @@ import { InsumosService } from '../core/insumos';
 import { ConfigLealtad, EscalonLealtad, LealtadService } from '../core/lealtad';
 import { ThemeService } from '../core/theme';
 import { MetodoPago, RespuestaVenta, TipoEntrega, VentasService } from '../core/ventas';
-import { LINEA_DOBLE, importeEnLetras } from '../core/ticket-formato';
+import { LINEA_DOBLE, envolver as envolverTexto, importeEnLetras } from '../core/ticket-formato';
 import { aplicarEstilosPersonalizados, obtenerEstiloCategoria } from './categoria-estilos';
 import { IngredienteRemovible, obtenerIngredientesRemovibles } from './producto-ingredientes';
 import { GrupoEleccion, OpcionEleccion, obtenerEleccionesDeVariante } from './producto-elecciones';
@@ -1738,7 +1738,8 @@ export class PosComponent implements OnInit, OnDestroy {
     if (this.negocio.leyenda) filas.push(...envolver(this.negocio.leyenda).map((x) => centrado(x)));
     filas.push('');
 
-    return filas.join('\n');
+    // Red de seguridad: ningún renglón puede pasar de 32 columnas (se cortaría al imprimir).
+    return filas.flatMap((l) => (l.length > 32 ? envolverTexto(l.trim()) : [l])).join('\n');
   }
 
   // Ticket de retiro de efectivo en texto (mismo estilo que el de venta):
@@ -1759,7 +1760,7 @@ export class PosComponent implements OnInit, OnDestroy {
     if (t.confirmado_por_nombre) filas.push(qa(`Confirmo: ${t.confirmado_por_nombre}`));
     if (t.motivo) filas.push(qa(`Motivo: ${t.motivo}`));
     filas.push('', '', '________________________', centrado('Firma de quien recibe'), '');
-    return filas.join('\n');
+    return filas.flatMap((l) => (l.length > 32 ? envolverTexto(l.trim()) : [l])).join('\n');
   }
 
   // dd/MM/yyyy HH:mm sin depender del pipe `date` de Angular (que no se usa
