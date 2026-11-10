@@ -1379,3 +1379,7 @@
     margin-bottom: 4px;
   }
 }
+
+.menu-acciones-lista button.menu-accion-peligro {
+  color: var(--peligro-texto);
+}

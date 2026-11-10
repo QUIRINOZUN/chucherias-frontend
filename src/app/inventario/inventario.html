@@ -357,6 +357,14 @@
                                     : 'Historial'
                                 }}
                               </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                class="menu-accion-peligro"
+                                (click)="abrirEliminarInsumo(insumo)"
+                              >
+                                Eliminar insumo
+                              </button>
                             </div>
                           }
                         </div>
@@ -823,6 +831,48 @@
             [disabled]="!puedeGuardarMovimiento()"
           >
             {{ procesandoMovimiento() ? 'Guardando...' : 'Registrar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Eliminar UN insumo (2026-11-10). -->
+  @if (insumoAEliminar(); as insumo) {
+    <div class="overlay">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Eliminar insumo"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarEliminarInsumo()"
+      >
+        <h2>Eliminar insumo</h2>
+        <p class="texto-confirmacion">
+          ¿Eliminar <strong>{{ insumo.nombre }}</strong
+          >? Se borra también su historial de entradas y compras. No se puede deshacer. Si alguna
+          receta lo usa, el sistema no lo permitirá.
+        </p>
+        @if (errorEliminarInsumo()) {
+          <p class="mensaje-error">{{ errorEliminarInsumo() }}</p>
+        }
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton-cancelar"
+            (click)="cerrarEliminarInsumo()"
+            [disabled]="eliminandoInsumo()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-confirmar-eliminar"
+            [disabled]="eliminandoInsumo()"
+            (click)="confirmarEliminarInsumo()"
+          >
+            {{ eliminandoInsumo() ? 'Eliminando...' : 'Sí, eliminar' }}
           </button>
         </div>
       </div>

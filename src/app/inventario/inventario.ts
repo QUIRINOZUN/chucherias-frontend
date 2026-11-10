@@ -569,6 +569,40 @@ export class InventarioComponent implements OnInit {
 
   // ---- Eliminar historial (2026-10-29): solo administrador, irreversible ----
   esAdministrador = computed(() => this.authService.usuarioActual()?.rol === 'administrador');
+  // Eliminar UN insumo (2026-11-10): confirmación aparte del borrado de historial.
+  insumoAEliminar = signal<Insumo | null>(null);
+  eliminandoInsumo = signal(false);
+  errorEliminarInsumo = signal('');
+
+  abrirEliminarInsumo(insumo: Insumo): void {
+    this.errorEliminarInsumo.set('');
+    this.insumoAEliminar.set(insumo);
+  }
+
+  cerrarEliminarInsumo(): void {
+    this.insumoAEliminar.set(null);
+  }
+
+  confirmarEliminarInsumo(): void {
+    const insumo = this.insumoAEliminar();
+    if (!insumo || this.eliminandoInsumo()) {
+      return;
+    }
+    this.eliminandoInsumo.set(true);
+    this.errorEliminarInsumo.set('');
+    this.insumosService.eliminar(insumo.id).subscribe({
+      next: () => {
+        this.eliminandoInsumo.set(false);
+        this.insumoAEliminar.set(null);
+        this.cargarInsumos();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.eliminandoInsumo.set(false);
+        this.errorEliminarInsumo.set(error.error?.error || 'No se pudo eliminar el insumo.');
+      },
+    });
+  }
+
   mostrarEliminarHistorial = signal(false);
   desdeEliminarHistorial = signal('');
   hastaEliminarHistorial = signal('');

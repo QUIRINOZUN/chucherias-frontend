@@ -147,6 +147,11 @@ export class InsumosService {
     });
   }
 
+  // DELETE /api/insumos/:id — elimina un insumo (409 si lo usa una receta).
+  eliminar(id: number): Observable<{ mensaje: string }> {
+    return this.http.delete<{ mensaje: string }>(`${this.apiUrl}/insumos/${id}`);
+  }
+
   // POST /api/insumos/:id/entrada — registrar mercancía recibida.
   // costoUnitario/proveedorId (2026-10-31, ambos opcionales): cuánto costó
   // ESTA compra — si se captura, actualiza el costo vigente del insumo y
