@@ -899,7 +899,11 @@
   font-size: 1.02rem;
   line-height: 1.5;
   font-family: inherit;
-  resize: vertical;
+  /* Crece con el texto: el paso se ve completo, sin barra de desplazamiento. */
+  field-sizing: content;
+  min-height: 3.5em;
+  overflow: hidden;
+  resize: none;
   border: none;
   border-bottom: 2px solid transparent;
   border-radius: 0;
