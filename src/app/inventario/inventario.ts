@@ -45,7 +45,7 @@
 //     usa `categoriasColapsadas` para un toggle por fila.
 // =============================================================================
 import { Component, HostListener, OnInit, computed, signal } from '@angular/core';
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { AuthService } from '../core/auth';
 import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -157,7 +157,7 @@ function redondear(valor: number): number {
 @Component({
   selector: 'app-inventario',
   standalone: true,
-  imports: [DatePipe, CurrencyPipe, FocoDialogoDirective],
+  imports: [DatePipe, DecimalPipe, CurrencyPipe, FocoDialogoDirective],
   templateUrl: './inventario.html',
   styleUrl: './inventario.css',
 })
@@ -491,6 +491,22 @@ export class InventarioComponent implements OnInit {
     return Math.round(cantidad * opcion.factor * 100) / 100;
   });
 
+  // AJUSTE (2026-11-10): el usuario captura la cantidad REAL que hay ahora
+  // (para corregir un conteo mal capturado) y el sistema calcula la
+  // diferencia contra la existencia actual; al servidor sigue llegando solo
+  // el movimiento de ajuste (positivo o negativo), nada cambia en el backend.
+  ajusteDiferencia = computed<number | null>(() => {
+    const insumo = this.insumoMovimiento();
+    const cantidad = this.cantidadMovimientoForm();
+    if (this.tipoMovimiento() !== 'ajuste' || !insumo || cantidad == null) {
+      return null;
+    }
+    const factor =
+      this.opcionesUnidadMovimiento().find((o) => o.valor === this.unidadMovimientoForm())
+        ?.factor ?? 1;
+    return Math.round((cantidad * factor - Number(insumo.existencia)) * 100) / 100;
+  });
+
   mostrarConversion = computed(() => {
     const insumo = this.insumoMovimiento();
     return (
@@ -806,6 +822,16 @@ export class InventarioComponent implements OnInit {
       return false;
     }
     const cantidad = this.cantidadMovimientoForm();
+    if (this.tipoMovimiento() === 'ajuste') {
+      // La cantidad es la existencia real (puede ser 0); debe haber diferencia.
+      const diferencia = this.ajusteDiferencia();
+      return (
+        cantidad != null &&
+        cantidad >= 0 &&
+        !!diferencia &&
+        this.motivoMovimientoForm().trim().length > 0
+      );
+    }
     if (cantidad == null || cantidad === 0) {
       return false;
     }
@@ -846,7 +872,9 @@ export class InventarioComponent implements OnInit {
     const factor =
       this.opcionesUnidadMovimiento().find((o) => o.valor === this.unidadMovimientoForm())
         ?.factor ?? 1;
-    const cantidadBase = cantidad * factor;
+    // En un ajuste se manda la DIFERENCIA contra la existencia actual.
+    const cantidadBase =
+      this.tipoMovimiento() === 'ajuste' ? (this.ajusteDiferencia() ?? 0) : cantidad * factor;
 
     // costoPorUnidadBasePreview ya hace la misma cuenta (costo total ÷
     // cantidadBase) que se necesita aquí — se reutiliza tal cual para que

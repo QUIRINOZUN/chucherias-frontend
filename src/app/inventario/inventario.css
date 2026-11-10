@@ -401,7 +401,15 @@
   flex-direction: column;
   border: 1px solid var(--pos-border);
   border-radius: var(--radio-md);
-  overflow: hidden;
+  /* Sin overflow: hidden — recortaba el menú "⋯" de la última fila. */
+}
+
+.lista-insumos > .tarjeta-insumo:first-child {
+  border-radius: var(--radio-md) var(--radio-md) 0 0;
+}
+
+.lista-insumos > .tarjeta-insumo:last-child {
+  border-radius: 0 0 var(--radio-md) var(--radio-md);
 }
 
 .lista-insumos-esqueleto {

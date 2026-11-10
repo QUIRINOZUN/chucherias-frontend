@@ -659,7 +659,7 @@
 
         <div class="campo">
           <label for="cantidad-movimiento">
-            Cantidad{{ tipo === 'ajuste' ? ' — negativa para restar' : '' }}
+            {{ tipo === 'ajuste' ? 'Cantidad real que hay ahora' : 'Cantidad' }}
           </label>
           <div class="fila-cantidad-unidad">
             <input
@@ -705,7 +705,26 @@
                deja el mismo rastro financiero/de auditoría que una
                cancelación de venta. "Ajuste" es solo para corregir un
                conteo que no coincide con lo que el sistema calculó. -->
-          @if (tipo === 'ajuste' && (cantidadMovimientoForm() ?? 0) < 0) {
+          @if (tipo === 'ajuste') {
+            <p class="texto-conversion">
+              El sistema calcula
+              {{ insumoMovimiento()?.existencia | number: '1.0-2' }}
+              {{ insumoMovimiento()?.unidad_medida }}.
+              @if (ajusteDiferencia() !== null) {
+                @if (ajusteDiferencia() === 0) {
+                  Ya coincide, no hay nada que ajustar.
+                } @else {
+                  Se registrará un ajuste de
+                  <strong
+                    >{{ (ajusteDiferencia() ?? 0) > 0 ? '+' : ''
+                    }}{{ ajusteDiferencia() | number: '1.0-2' }}
+                    {{ insumoMovimiento()?.unidad_medida }}</strong
+                  >.
+                }
+              }
+            </p>
+          }
+          @if (tipo === 'ajuste' && (ajusteDiferencia() ?? 0) < 0) {
             <p class="aviso-usar-merma">
               Si esto se perdió, se cayó o caducó, usa
               <strong>Merma</strong> en vez de Ajuste — así queda en el Reporte de Mermas. Usa
