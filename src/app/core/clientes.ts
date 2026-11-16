@@ -19,6 +19,29 @@ export interface Cliente {
   telefono: string | null;
   visitas_acumuladas: number;
   fecha_registro?: string;
+  // Cumpleaños (2026-11-16), "AAAA-MM-DD" o null si no se capturó.
+  fecha_nacimiento?: string | null;
+}
+
+// Recordatorios de lealtad (2026-11-16).
+export interface Recordatorios {
+  cumpleanos_disponible: boolean;
+  cumpleanos_mes: {
+    id: number;
+    nombre_completo: string;
+    telefono: string | null;
+    fecha_nacimiento: string;
+    dia: number;
+  }[];
+  dias_inactividad: number;
+  inactivos: {
+    id: number;
+    nombre_completo: string;
+    telefono: string | null;
+    visitas_acumuladas: number;
+    ultima_visita: string;
+    dias_sin_venir: number;
+  }[];
 }
 
 // Un evento del historial de lealtad de un cliente.
@@ -100,10 +123,24 @@ export class ClientesService {
   }
 
   // PATCH /api/clientes/:id — corrige nombre/teléfono (administrador/encargado).
-  editar(id: number, nombreCompleto: string, telefono?: string): Observable<Cliente> {
+  // fechaNacimiento: undefined = no tocar; '' = quitarla; 'AAAA-MM-DD' = guardarla.
+  editar(
+    id: number,
+    nombreCompleto: string,
+    telefono?: string,
+    fechaNacimiento?: string,
+  ): Observable<Cliente> {
     return this.http.patch<Cliente>(`${this.apiUrl}/clientes/${id}`, {
       nombre_completo: nombreCompleto,
       telefono: telefono || null,
+      ...(fechaNacimiento !== undefined ? { fecha_nacimiento: fechaNacimiento || null } : {}),
+    });
+  }
+
+  // GET /api/clientes/recordatorios — cumpleaños del mes y clientes inactivos.
+  recordatorios(dias = 30): Observable<Recordatorios> {
+    return this.http.get<Recordatorios>(`${this.apiUrl}/clientes/recordatorios`, {
+      params: { dias },
     });
   }
 

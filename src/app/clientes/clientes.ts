@@ -17,7 +17,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth';
-import { Cliente, ClienteDetalle, ClientesService } from '../core/clientes';
+import { Cliente, ClienteDetalle, ClientesService, Recordatorios } from '../core/clientes';
 import { ConfigLealtad, EscalonLealtad, LealtadService } from '../core/lealtad';
 import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { ThemeService } from '../core/theme';
@@ -96,6 +96,46 @@ export class ClientesComponent implements OnInit {
   ngOnInit(): void {
     this.cargarClientes();
     this.cargarConfigLealtad();
+    this.cargarRecordatorios();
+  }
+
+  // ===========================================================================
+  // RECORDATORIOS (2026-11-16): cumpleaños del mes y clientes que dejaron de venir
+  // ===========================================================================
+  recordatorios = signal<Recordatorios | null>(null);
+  mostrarRecordatorios = signal(false);
+  nacimientoEditForm = signal('');
+
+  totalRecordatorios = computed(() => {
+    const r = this.recordatorios();
+    return r ? r.cumpleanos_mes.length + r.inactivos.length : 0;
+  });
+
+  cargarRecordatorios(): void {
+    this.clientesService.recordatorios().subscribe({
+      next: (r) => this.recordatorios.set(r),
+      error: () => this.recordatorios.set(null),
+    });
+  }
+
+  // Enlace de WhatsApp (wa.me) con un mensaje listo; solo dígitos, con lada de México.
+  enlaceWhatsApp(telefono: string | null, mensaje: string): string | null {
+    const digitos = (telefono ?? '').replace(/\D/g, '');
+    if (digitos.length < 10) return null;
+    const numero = digitos.length === 10 ? '52' + digitos : digitos;
+    return 'https://wa.me/' + numero + '?text=' + encodeURIComponent(mensaje);
+  }
+
+  mensajeCumpleanos(nombre: string): string {
+    return 'Hola ' + nombre.split(' ')[0] + ', ¡feliz cumpleaños! De parte de Chucherías Mix 🎉';
+  }
+
+  mensajeExtrano(nombre: string): string {
+    return (
+      'Hola ' +
+      nombre.split(' ')[0] +
+      ', hace tiempo que no te vemos en Chucherías Mix. ¡Te esperamos pronto!'
+    );
   }
 
   // ===========================================================================
@@ -324,6 +364,7 @@ export class ClientesComponent implements OnInit {
     }
     this.nombreEditForm.set(detalle.nombre_completo);
     this.telefonoEditForm.set(detalle.telefono || '');
+    this.nacimientoEditForm.set(detalle.fecha_nacimiento || '');
     this.errorEdicion.set('');
     this.editando.set(true);
   }
@@ -342,23 +383,26 @@ export class ClientesComponent implements OnInit {
     }
     this.guardandoEdicion.set(true);
     this.errorEdicion.set('');
-    this.clientesService.editar(detalle.id, nombre, this.telefonoEditForm().trim()).subscribe({
-      next: (actualizado) => {
-        this.guardandoEdicion.set(false);
-        this.editando.set(false);
-        // Se mezcla el cambio sobre el detalle ya cargado (conserva el
-        // historial, que PATCH no vuelve a mandar) y sobre la fila de la
-        // lista, para no tener que recargar toda la consulta.
-        this.clienteDetalle.set({ ...detalle, ...actualizado });
-        this.clientes.update((lista) =>
-          lista.map((c) => (c.id === actualizado.id ? { ...c, ...actualizado } : c)),
-        );
-      },
-      error: (error: HttpErrorResponse) => {
-        this.guardandoEdicion.set(false);
-        this.errorEdicion.set(error.error?.error || 'Error al guardar los cambios.');
-      },
-    });
+    this.clientesService
+      .editar(detalle.id, nombre, this.telefonoEditForm().trim(), this.nacimientoEditForm())
+      .subscribe({
+        next: (actualizado) => {
+          this.guardandoEdicion.set(false);
+          this.editando.set(false);
+          // Se mezcla el cambio sobre el detalle ya cargado (conserva el
+          // historial, que PATCH no vuelve a mandar) y sobre la fila de la
+          // lista, para no tener que recargar toda la consulta.
+          this.clienteDetalle.set({ ...detalle, ...actualizado });
+          this.cargarRecordatorios();
+          this.clientes.update((lista) =>
+            lista.map((c) => (c.id === actualizado.id ? { ...c, ...actualizado } : c)),
+          );
+        },
+        error: (error: HttpErrorResponse) => {
+          this.guardandoEdicion.set(false);
+          this.errorEdicion.set(error.error?.error || 'Error al guardar los cambios.');
+        },
+      });
   }
 
   volverAlDashboard(): void {

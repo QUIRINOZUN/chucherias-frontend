@@ -686,3 +686,59 @@
   border-bottom-color: var(--acento-modulo);
   color: var(--pos-text-primary);
 }
+
+/* Recordatorios (2026-11-16) */
+.contador-recordatorios {
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: var(--radio-pastilla);
+  background: var(--acento-modulo);
+  color: #fff;
+  font-size: 0.75rem;
+}
+.panel-recordatorios {
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  max-height: 88dvh;
+  overflow-y: auto;
+  padding: 20px;
+  background: var(--pos-bg-card);
+  border-top: 4px solid var(--acento-modulo);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-elevada);
+}
+.panel-recordatorios h2 {
+  margin: 0 0 8px;
+}
+.panel-recordatorios h3 {
+  margin: 16px 0 6px;
+  font-size: 0.95rem;
+}
+.lista-recordatorios {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.lista-recordatorios li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  border-bottom: 1px dotted var(--pos-border);
+}
+.texto-ayuda-recordatorios {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--pos-text-secondary);
+}
+.enlace-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  color: var(--acento-modulo);
+  font-weight: 700;
+  text-decoration: underline;
+}

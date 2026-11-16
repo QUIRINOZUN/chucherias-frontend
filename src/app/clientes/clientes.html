@@ -41,6 +41,16 @@
           (input)="actualizarBusqueda($any($event.target).value)"
         />
       </div>
+      <button
+        type="button"
+        class="boton-configurar-lealtad"
+        (click)="mostrarRecordatorios.set(true)"
+      >
+        Recordatorios
+        @if (totalRecordatorios() > 0) {
+          <span class="contador-recordatorios">{{ totalRecordatorios() }}</span>
+        }
+      </button>
       <button type="button" class="boton-configurar-lealtad" (click)="abrirConfigLealtad()">
         Configurar programa
       </button>
@@ -137,6 +147,11 @@
             @if (detalle.telefono) {
               <p class="subtitulo-formulario">{{ detalle.telefono }}</p>
             }
+            @if (detalle.fecha_nacimiento) {
+              <p class="subtitulo-formulario">
+                Cumpleaños: {{ detalle.fecha_nacimiento | date: "d 'de' MMMM" }}
+              </p>
+            }
 
             <div class="progreso-lealtad">
               <p class="progreso-lealtad-texto">
@@ -186,6 +201,15 @@
                 type="tel"
                 [value]="telefonoEditForm()"
                 (input)="telefonoEditForm.set($any($event.target).value)"
+              />
+            </div>
+            <div class="campo">
+              <label for="nacimiento-cliente-edit">Cumpleaños (opcional)</label>
+              <input
+                id="nacimiento-cliente-edit"
+                type="date"
+                [value]="nacimientoEditForm()"
+                (input)="nacimientoEditForm.set($any($event.target).value)"
               />
             </div>
             @if (errorEdicion()) {
@@ -546,6 +570,84 @@
             </button>
           </div>
         }
+      </div>
+    </div>
+  }
+
+  <!-- Recordatorios (2026-11-16): cumpleaños del mes y clientes que dejaron de venir. -->
+  @if (mostrarRecordatorios()) {
+    <div class="overlay">
+      <div
+        class="panel-recordatorios"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Recordatorios de clientes"
+        appFocoDialogo
+        (cerrarConEscape)="mostrarRecordatorios.set(false)"
+      >
+        <h2>Recordatorios</h2>
+        @if (recordatorios(); as r) {
+          <h3>Cumpleaños de este mes</h3>
+          @if (!r.cumpleanos_disponible) {
+            <p class="texto-ayuda-recordatorios">
+              Todavía no está habilitado. Cuando lo esté, captura el cumpleaños de cada cliente en
+              su ficha (Editar).
+            </p>
+          } @else if (r.cumpleanos_mes.length === 0) {
+            <p class="texto-ayuda-recordatorios">
+              Nadie cumple años este mes (o aún no hay fechas capturadas).
+            </p>
+          } @else {
+            <ul class="lista-recordatorios">
+              @for (c of r.cumpleanos_mes; track c.id) {
+                <li>
+                  <span
+                    ><strong>{{ c.nombre_completo }}</strong> · día {{ c.dia }}</span
+                  >
+                  @if (
+                    enlaceWhatsApp(c.telefono, mensajeCumpleanos(c.nombre_completo));
+                    as enlace
+                  ) {
+                    <a class="enlace-whatsapp" [href]="enlace" target="_blank" rel="noopener"
+                      >Felicitar</a
+                    >
+                  } @else {
+                    <span class="texto-ayuda-recordatorios">sin teléfono</span>
+                  }
+                </li>
+              }
+            </ul>
+          }
+
+          <h3>Hace tiempo que no vienen ({{ r.dias_inactividad }}+ días)</h3>
+          @if (r.inactivos.length === 0) {
+            <p class="texto-ayuda-recordatorios">Ningún cliente lleva tanto tiempo sin venir.</p>
+          } @else {
+            <ul class="lista-recordatorios">
+              @for (c of r.inactivos; track c.id) {
+                <li>
+                  <span>
+                    <strong>{{ c.nombre_completo }}</strong> · {{ c.dias_sin_venir }} días sin venir
+                  </span>
+                  @if (enlaceWhatsApp(c.telefono, mensajeExtrano(c.nombre_completo)); as enlace) {
+                    <a class="enlace-whatsapp" [href]="enlace" target="_blank" rel="noopener"
+                      >Escribirle</a
+                    >
+                  } @else {
+                    <span class="texto-ayuda-recordatorios">sin teléfono</span>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        } @else {
+          <p class="texto-ayuda-recordatorios">No se pudieron cargar los recordatorios.</p>
+        }
+        <div class="acciones-formulario">
+          <button type="button" class="boton-cancelar" (click)="mostrarRecordatorios.set(false)">
+            Cerrar
+          </button>
+        </div>
       </div>
     </div>
   }
