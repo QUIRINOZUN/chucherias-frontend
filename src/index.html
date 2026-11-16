@@ -21,6 +21,14 @@
          — demasiado pesado (~1 MB) para servirlo tal cual en cada carga. -->
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link rel="icon" type="image/png" sizes="192x192" href="icon.png" />
+    <!-- PWA instalable (2026-11-16): manifiesto + ícono de iOS. A propósito SIN
+         service worker: no hace falta para instalar y evita que un caché viejo
+         sirva una versión anterior tras cada deploy automático en Vercel. -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Chucherías" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Fraunces gana los ejes variables SOFT y WONK (2026-10-13): antes solo
