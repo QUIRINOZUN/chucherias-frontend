@@ -47,6 +47,7 @@ import { ChecklistComponent } from './checklist/checklist';
 import { NominaComponent } from './nomina/nomina';
 import { VentasEspecialesComponent } from './ventas-especiales/ventas-especiales';
 import { GastosComponent } from './gastos/gastos';
+import { ComprasComponent } from './compras/compras';
 import { BitacoraComponent } from './bitacora/bitacora';
 import { TicketComponent } from './ticket/ticket';
 import { authGuard, rolGuard } from './core/auth-guard';
@@ -144,6 +145,12 @@ export const routes: Routes = [
     path: 'ventas-especiales',
     component: VentasEspecialesComponent,
     canActivate: [authGuard, rolGuard('administrador', 'encargado', 'cajero')],
+  },
+  // Compras a proveedores (2026-11-16): costos y abastecimiento, mismo criterio que Inventario.
+  {
+    path: 'compras',
+    component: ComprasComponent,
+    canActivate: [authGuard, rolGuard('administrador', 'encargado')],
   },
   // Gastos generales del negocio — información financiera, igual criterio
   // que Nómina/Caja/Reportes (RNF-03). Deliberadamente aparte de Caja.

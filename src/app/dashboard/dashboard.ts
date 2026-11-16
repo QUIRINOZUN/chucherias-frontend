@@ -154,6 +154,14 @@ const MODULOS: Modulo[] = [
     colorVar: 'var(--mod-inventario)',
   },
   {
+    ruta: '/compras',
+    titulo: 'Compras',
+    icono: 'bolsa',
+    descripcion: 'Qué surtir, pedidos a proveedores y su llegada.',
+    roles: ['administrador', 'encargado'],
+    colorVar: 'var(--mod-compras)',
+  },
+  {
     ruta: '/mermas',
     titulo: 'Mermas',
     icono: 'picante',
@@ -260,6 +268,7 @@ const GRUPO_POR_RUTA: Record<string, string> = {
   '/ventas-especiales': 'Ventas y caja',
   '/recetario': 'Cocina e inventario',
   '/inventario': 'Cocina e inventario',
+  '/compras': 'Cocina e inventario',
   '/mermas': 'Cocina e inventario',
   '/usuarios': 'Personas',
   '/asistencias': 'Personas',

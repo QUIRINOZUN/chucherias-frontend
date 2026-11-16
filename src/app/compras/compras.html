@@ -1,0 +1,496 @@
+<!-- ============================================================================
+     compras.html — COMPRAS Y PROVEEDORES (lógica en compras.ts)
+     ============================================================================ -->
+<div class="compras-container">
+  <header class="compras-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      Volver
+    </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-paquete" /></svg>
+    </span>
+    <h1>Compras</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
+    >
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
+    </button>
+  </header>
+
+  <div class="compras-cuerpo">
+    <nav class="tabs-compras" role="tablist" aria-label="Secciones de compras">
+      <button
+        type="button"
+        role="tab"
+        class="tab-compras"
+        [class.tab-compras-activa]="pestana() === 'surtir'"
+        [attr.aria-selected]="pestana() === 'surtir'"
+        (click)="cambiarPestana('surtir')"
+      >
+        Por surtir
+        @if (sugerencias().length > 0) {
+          <span class="contador-tab">{{ sugerencias().length }}</span>
+        }
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="tab-compras"
+        [class.tab-compras-activa]="pestana() === 'pedidos'"
+        [attr.aria-selected]="pestana() === 'pedidos'"
+        (click)="cambiarPestana('pedidos')"
+      >
+        Pedidos
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="tab-compras"
+        [class.tab-compras-activa]="pestana() === 'proveedores'"
+        [attr.aria-selected]="pestana() === 'proveedores'"
+        (click)="cambiarPestana('proveedores')"
+      >
+        Proveedores
+      </button>
+    </nav>
+
+    <!-- ========================= POR SURTIR ========================= -->
+    @if (pestana() === 'surtir') {
+      <p class="ayuda-compras">
+        Estos insumos ya están por debajo de su mínimo. La cantidad sugerida repone hasta el doble
+        del mínimo, descontando lo que ya está pedido. Ajusta las cantidades y crea la orden por
+        proveedor.
+      </p>
+      @if (avisoOrden()) {
+        <p class="aviso-exito">{{ avisoOrden() }}</p>
+      }
+      @if (errorOrden()) {
+        <p class="mensaje-error">{{ errorOrden() }}</p>
+      }
+      @if (cargandoSugerencias()) {
+        <div class="esqueleto esqueleto-grupo-compras" aria-hidden="true"></div>
+      } @else if (errorSugerencias()) {
+        <p class="mensaje-estado mensaje-error">{{ errorSugerencias() }}</p>
+      } @else if (grupos().length === 0) {
+        <p class="mensaje-estado">
+          Nada por surtir: ningún insumo con mínimo está por debajo de él.
+        </p>
+      } @else {
+        @for (g of grupos(); track g.proveedorId) {
+          <section class="grupo-compras">
+            <header class="grupo-compras-encabezado">
+              <div>
+                <h2>{{ g.proveedor }}</h2>
+                <span class="grupo-compras-sub">
+                  {{ seleccionadosDe(g) }} de {{ g.items.length }} marcados
+                  @if (estimadoDe(g) > 0) {
+                    · estimado {{ estimadoDe(g) | currency: 'MXN' }}
+                  }
+                </span>
+              </div>
+              <button
+                type="button"
+                class="boton-compras-principal"
+                [disabled]="creandoOrden() || seleccionadosDe(g) === 0"
+                (click)="crearOrden(g)"
+              >
+                Crear orden
+              </button>
+            </header>
+            <ul class="lista-surtir">
+              @for (s of g.items; track s.insumo_id) {
+                <li class="fila-surtir">
+                  <label class="fila-surtir-marca">
+                    <input
+                      type="checkbox"
+                      [checked]="estaSeleccionado(s.insumo_id)"
+                      (change)="alternarSeleccion(s)"
+                      [attr.aria-label]="'Incluir ' + s.nombre + ' en la orden'"
+                    />
+                    <span class="fila-surtir-texto">
+                      <span class="fila-surtir-nombre">{{ s.nombre }}</span>
+                      <span class="fila-surtir-detalle">
+                        hay {{ s.existencia | number: '1.0-2' }} · mínimo
+                        {{ s.cantidad_minima | number: '1.0-2' }} {{ s.unidad_medida }}
+                        @if (s.en_pedido > 0) {
+                          · ya pedido {{ s.en_pedido | number: '1.0-2' }}
+                        }
+                      </span>
+                    </span>
+                  </label>
+                  <div class="fila-surtir-campo">
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      inputmode="decimal"
+                      [attr.aria-label]="'Cantidad a pedir de ' + s.nombre"
+                      [disabled]="!estaSeleccionado(s.insumo_id)"
+                      [value]="cantidadDe(s.insumo_id)"
+                      (input)="cambiarCantidad(s.insumo_id, $any($event.target).value)"
+                    />
+                    <span class="unidad-surtir">{{ s.unidad_medida }}</span>
+                    <button
+                      type="button"
+                      class="boton-enlace-compras"
+                      (click)="verPrecios(s)"
+                      [attr.aria-label]="'Comparar precios de ' + s.nombre"
+                    >
+                      Precios
+                    </button>
+                  </div>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      }
+    }
+
+    <!-- ========================= PEDIDOS ========================= -->
+    @if (pestana() === 'pedidos') {
+      <div class="chips-compras" role="group" aria-label="Filtrar pedidos por estado">
+        @for (
+          e of [
+            ['pendiente', 'Pendientes'],
+            ['recibida', 'Recibidos'],
+            ['cancelada', 'Cancelados'],
+            ['', 'Todos'],
+          ];
+          track e[0]
+        ) {
+          <button
+            type="button"
+            class="chip-compras"
+            [class.chip-compras-activo]="filtroEstado() === e[0]"
+            (click)="elegirEstado($any(e[0]))"
+          >
+            {{ e[1] }}
+          </button>
+        }
+      </div>
+      @if (cargandoOrdenes()) {
+        <div class="esqueleto esqueleto-grupo-compras" aria-hidden="true"></div>
+      } @else if (errorOrdenes()) {
+        <p class="mensaje-estado mensaje-error">{{ errorOrdenes() }}</p>
+      } @else if (ordenes().length === 0) {
+        <p class="mensaje-estado">No hay pedidos en esta vista.</p>
+      } @else {
+        <ul class="lista-ordenes">
+          @for (o of ordenes(); track o.id) {
+            <li>
+              <button type="button" class="tarjeta-orden-compra" (click)="abrirOrden(o)">
+                <span class="orden-compra-titulo">
+                  Orden #{{ o.id }} · {{ o.proveedor || 'Sin proveedor' }}
+                </span>
+                <span class="orden-compra-sub">
+                  {{ o.fecha_creacion | date: 'dd/MM/yyyy HH:mm' }} · {{ o.renglones }}
+                  {{ o.renglones === 1 ? 'insumo' : 'insumos' }}
+                  @if (o.estado === 'recibida') {
+                    · pagado {{ o.total_recibido | currency: 'MXN' }}
+                  }
+                </span>
+                <span class="insignia-estado-compra insignia-{{ o.estado }}">
+                  {{
+                    o.estado === 'pendiente'
+                      ? 'Pendiente'
+                      : o.estado === 'recibida'
+                        ? 'Recibida'
+                        : 'Cancelada'
+                  }}
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    }
+
+    <!-- ========================= PROVEEDORES ========================= -->
+    @if (pestana() === 'proveedores') {
+      <div class="barra-proveedores">
+        <button type="button" class="boton-compras-principal" (click)="abrirProveedor()">
+          + Nuevo proveedor
+        </button>
+      </div>
+      @if (cargandoProveedores()) {
+        <div class="esqueleto esqueleto-grupo-compras" aria-hidden="true"></div>
+      } @else if (proveedores().length === 0) {
+        <p class="mensaje-estado">Todavía no hay proveedores. Agrega el primero.</p>
+      } @else {
+        <ul class="lista-ordenes">
+          @for (p of proveedores(); track p.id) {
+            <li class="tarjeta-proveedor">
+              <div class="proveedor-datos">
+                <strong>{{ p.nombre }}</strong>
+                <span class="orden-compra-sub">
+                  {{ p.contacto || 'Sin contacto' }}
+                  @if (p.telefono) {
+                    · {{ p.telefono }}
+                  }
+                </span>
+              </div>
+              <div class="proveedor-acciones">
+                <button type="button" class="boton-enlace-compras" (click)="abrirProveedor(p)">
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  class="boton-enlace-compras boton-enlace-peligro"
+                  (click)="errorEliminarProveedor.set(''); proveedorAEliminar.set(p)"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    }
+  </div>
+
+  <!-- ===== Ventana: detalle de una orden / registrar llegada ===== -->
+  @if (ordenAbierta(); as o) {
+    <div class="overlay">
+      <div
+        class="panel-compras"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="'Orden de compra ' + o.id"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarOrden()"
+      >
+        <h2>Orden #{{ o.id }} · {{ o.proveedor || 'Sin proveedor' }}</h2>
+        @if (o.estado === 'pendiente') {
+          <p class="ayuda-compras">
+            Cuando llegue la mercancía captura lo recibido (0 si no llegó) y, si quieres que el
+            costo se actualice, lo que pagaste en total por ese insumo.
+          </p>
+        }
+        <ul class="lista-recepcion">
+          @for (r of o.items; track r.id) {
+            <li class="fila-recepcion">
+              <div class="fila-surtir-texto">
+                <span class="fila-surtir-nombre">{{ r.nombre }}</span>
+                <span class="fila-surtir-detalle">
+                  pedido {{ r.cantidad_pedida | number: '1.0-2' }} {{ r.unidad_medida }}
+                  @if (o.estado === 'recibida') {
+                    · recibido {{ r.cantidad_recibida | number: '1.0-2' }}
+                    @if (r.costo_total_recibido !== null) {
+                      · {{ r.costo_total_recibido | currency: 'MXN' }}
+                    }
+                  }
+                </span>
+              </div>
+              @if (o.estado === 'pendiente') {
+                <div class="fila-recepcion-campos">
+                  <label>
+                    Llegó
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      inputmode="decimal"
+                      [value]="valorRecibido(r.id, 'cantidad')"
+                      (input)="campoRecibido(r.id, 'cantidad', $any($event.target).value)"
+                    />
+                  </label>
+                  <label>
+                    Pagado ($)
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      inputmode="decimal"
+                      placeholder="opcional"
+                      [value]="valorRecibido(r.id, 'costo')"
+                      (input)="campoRecibido(r.id, 'costo', $any($event.target).value)"
+                    />
+                  </label>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+        @if (errorRecepcion()) {
+          <p class="mensaje-error">{{ errorRecepcion() }}</p>
+        }
+        <div class="botones-panel-compras">
+          @if (o.estado === 'pendiente') {
+            <button
+              type="button"
+              class="boton-compras-peligro"
+              [disabled]="trabajandoRecepcion()"
+              (click)="cancelarOrden()"
+            >
+              Cancelar orden
+            </button>
+          }
+          <button type="button" class="boton-compras-secundario" (click)="cerrarOrden()">
+            Cerrar
+          </button>
+          @if (o.estado === 'pendiente') {
+            <button
+              type="button"
+              class="boton-compras-principal"
+              [disabled]="trabajandoRecepcion()"
+              (click)="registrarLlegada()"
+            >
+              {{ trabajandoRecepcion() ? 'Guardando...' : 'Registrar llegada' }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ===== Ventana: alta / edición de proveedor ===== -->
+  @if (formProveedor(); as f) {
+    <div class="overlay">
+      <div
+        class="panel-compras panel-compras-angosto"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Proveedor"
+        appFocoDialogo
+        (cerrarConEscape)="formProveedor.set(null)"
+      >
+        <h2>{{ f.id === null ? 'Nuevo proveedor' : 'Editar proveedor' }}</h2>
+        <label class="campo-compras">
+          Nombre *
+          <input
+            type="text"
+            [value]="f.nombre"
+            (input)="campoProveedor('nombre', $any($event.target).value)"
+          />
+        </label>
+        <label class="campo-compras">
+          Contacto
+          <input
+            type="text"
+            [value]="f.contacto"
+            (input)="campoProveedor('contacto', $any($event.target).value)"
+          />
+        </label>
+        <label class="campo-compras">
+          Teléfono
+          <input
+            type="tel"
+            inputmode="tel"
+            [value]="f.telefono"
+            (input)="campoProveedor('telefono', $any($event.target).value)"
+          />
+        </label>
+        @if (errorProveedor()) {
+          <p class="mensaje-error">{{ errorProveedor() }}</p>
+        }
+        <div class="botones-panel-compras">
+          <button type="button" class="boton-compras-secundario" (click)="formProveedor.set(null)">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-compras-principal"
+            [disabled]="guardandoProveedor()"
+            (click)="guardarProveedor()"
+          >
+            {{ guardandoProveedor() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ===== Ventana: confirmar eliminar proveedor ===== -->
+  @if (proveedorAEliminar(); as p) {
+    <div class="overlay">
+      <div
+        class="panel-compras panel-compras-angosto"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Eliminar proveedor"
+        appFocoDialogo
+        (cerrarConEscape)="proveedorAEliminar.set(null)"
+      >
+        <h2>Eliminar proveedor</h2>
+        <p>
+          ¿Eliminar a <strong>{{ p.nombre }}</strong
+          >? Solo se puede si nada lo usa todavía.
+        </p>
+        @if (errorEliminarProveedor()) {
+          <p class="mensaje-error">{{ errorEliminarProveedor() }}</p>
+        }
+        <div class="botones-panel-compras">
+          <button
+            type="button"
+            class="boton-compras-secundario"
+            (click)="proveedorAEliminar.set(null)"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-compras-peligro"
+            (click)="confirmarEliminarProveedor()"
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ===== Ventana: comparar precios de un insumo ===== -->
+  @if (comparandoInsumo(); as c) {
+    <div class="overlay">
+      <div
+        class="panel-compras panel-compras-angosto"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="'Precios de ' + c.nombre"
+        appFocoDialogo
+        (cerrarConEscape)="comparandoInsumo.set(null)"
+      >
+        <h2>Precios de {{ c.nombre }}</h2>
+        @if (c.precios.length === 0) {
+          <p class="ayuda-compras">
+            Todavía no hay compras con costo registradas de este insumo. Se llenará solo al
+            registrar la llegada de una orden con el costo pagado.
+          </p>
+        } @else {
+          <ul class="lista-recepcion">
+            @for (p of c.precios; track p.proveedor_id) {
+              <li class="fila-recepcion">
+                <div class="fila-surtir-texto">
+                  <span class="fila-surtir-nombre">{{ p.proveedor }}</span>
+                  <span class="fila-surtir-detalle">
+                    {{ p.compras }} {{ p.compras === 1 ? 'compra' : 'compras' }} · última
+                    {{ p.ultima_fecha | date: 'dd/MM/yyyy' }}
+                  </span>
+                </div>
+                <strong>{{ p.ultimo_costo | currency: 'MXN' }}</strong>
+              </li>
+            }
+          </ul>
+        }
+        <div class="botones-panel-compras">
+          <button
+            type="button"
+            class="boton-compras-secundario"
+            (click)="comparandoInsumo.set(null)"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

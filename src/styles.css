@@ -137,6 +137,8 @@
      criterio ya validado para el resto de --mod-* que se usan como fondo
      sólido de botón (no solo borde/acento). */
   --mod-gastos: #786f08;
+  /* Compras comparte la familia de Inventario (mismo dominio: abastecer). */
+  --mod-compras: var(--mod-inventario);
   /* grafito/tinta — Bitácora (2026-10-30): tercer módulo "neutro" (junto a
      Reportes y Checklist) — un registro de auditoría no es un dominio de
      negocio propio, así que sigue el mismo criterio de no sumar un tono
@@ -369,7 +371,8 @@ textarea:focus-visible {
 .checklist-header,
 .nomina-header,
 .ventas-especiales-header,
-.gastos-header {
+.gastos-header,
+.compras-header {
   position: relative;
   overflow: hidden;
   border-bottom: 0 !important;
@@ -415,6 +418,7 @@ textarea:focus-visible {
 .nomina-header h1,
 .ventas-especiales-header h1,
 .gastos-header h1,
+.compras-header h1,
 .bitacora-header h1 {
   min-width: 0;
   overflow: hidden;
@@ -445,6 +449,7 @@ textarea:focus-visible {
 .nomina-header::before,
 .ventas-especiales-header::before,
 .gastos-header::before,
+.compras-header::before,
 .bitacora-header::before {
   content: '';
   position: absolute;
