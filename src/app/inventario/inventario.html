@@ -73,6 +73,10 @@
               Captura de costos ({{ totalConCosto() }}/{{ totalInsumosReal() }})
             </button>
 
+            <button type="button" class="boton-captura-costos" (click)="abrirConteo()">
+              Conteo físico
+            </button>
+
             @if (esAdministrador()) {
               <button
                 type="button"
@@ -1023,6 +1027,165 @@
             <p class="mensaje-estado">Ningún insumo coincide con la búsqueda.</p>
           }
         </ul>
+      </div>
+    </div>
+  }
+
+  <!-- Conteo físico (2026-11-16): se captura lo que hay de verdad; el sistema
+       muestra la diferencia contra su existencia calculada y, tras revisarla,
+       aplica los ajustes de una sola vez. -->
+  @if (mostrarConteo()) {
+    <div class="overlay">
+      <div
+        class="panel-captura-costos"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Conteo físico de inventario"
+        appFocoDialogo
+        (cerrarConEscape)="cerrarConteo()"
+      >
+        <div class="captura-costos-encabezado">
+          <h2>Conteo físico</h2>
+          <button type="button" class="boton-cerrar-costos" (click)="cerrarConteo()">
+            <svg class="icono" aria-hidden="true"><use href="#ic-cerrar" /></svg>
+          </button>
+        </div>
+
+        @if (conteoAplicado(); as ap) {
+          <p class="conteo-exito">
+            Conteo aplicado: {{ ap.diferencias.length }}
+            {{ ap.diferencias.length === 1 ? 'ajuste registrado' : 'ajustes registrados' }},
+            {{ ap.sin_diferencia }} sin diferencia.
+          </p>
+          <button type="button" class="boton-conteo-principal" (click)="cerrarConteo()">
+            Cerrar
+          </button>
+        } @else if (revisionConteo(); as rev) {
+          <p class="texto-ayuda-costos">
+            Revisa las diferencias. Nada se ha guardado todavía: al aplicar, cada diferencia queda
+            como un ajuste con el motivo "Conteo físico". Si algo se perdió (se cayó, caducó),
+            regístralo antes como Merma para que salga en el reporte de mermas.
+          </p>
+          @if (rev.diferencias.length === 0) {
+            <p class="mensaje-estado">Todo coincide con el sistema: no hay nada que ajustar.</p>
+          } @else {
+            <ul class="lista-captura-costos">
+              @for (d of rev.diferencias; track d.insumo_id) {
+                <li class="fila-conteo">
+                  <div class="fila-captura-costo-nombre">
+                    <span>{{ d.nombre }}</span>
+                    <span class="fila-captura-costo-unidad">
+                      sistema {{ d.sistema }} → contado {{ d.contada }} {{ d.unidad_medida }}
+                    </span>
+                  </div>
+                  <strong
+                    [class.conteo-falta]="d.diferencia < 0"
+                    [class.conteo-sobra]="d.diferencia > 0"
+                  >
+                    {{ d.diferencia > 0 ? '+' : '' }}{{ d.diferencia }} {{ d.unidad_medida }}
+                  </strong>
+                </li>
+              }
+            </ul>
+          }
+          @if (errorConteo()) {
+            <p class="mensaje-error">{{ errorConteo() }}</p>
+          }
+          <div class="conteo-botones">
+            <button
+              type="button"
+              class="boton-conteo-secundario"
+              [disabled]="trabajandoConteo()"
+              (click)="revisionConteo.set(null)"
+            >
+              Volver a editar
+            </button>
+            <button
+              type="button"
+              class="boton-conteo-principal"
+              [disabled]="trabajandoConteo() || rev.diferencias.length === 0"
+              (click)="aplicarConteo()"
+            >
+              {{ trabajandoConteo() ? 'Aplicando...' : 'Aplicar ajustes' }}
+            </button>
+          </div>
+        } @else {
+          <p class="texto-ayuda-costos">
+            Escribe lo que cuentes de cada insumo (en su unidad: g, ml, piezas...). Los que dejes
+            vacíos no se tocan. {{ totalContados() }} contados.
+          </p>
+          <div class="campo-busqueda">
+            <svg class="icono" aria-hidden="true"><use href="#ic-buscar" /></svg>
+            <input
+              type="text"
+              placeholder="Buscar insumo..."
+              [value]="busquedaConteo()"
+              (input)="busquedaConteo.set($any($event.target).value)"
+            />
+          </div>
+          <ul class="lista-captura-costos">
+            @for (insumo of insumosParaConteo(); track insumo.id) {
+              <li class="fila-conteo">
+                <div class="fila-captura-costo-nombre">
+                  <span>{{ insumo.nombre }}</span>
+                  <span class="fila-captura-costo-unidad">
+                    sistema: {{ insumo.existencia }} {{ insumo.unidad_medida }}
+                  </span>
+                </div>
+                <div class="fila-conteo-campo">
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    inputmode="decimal"
+                    placeholder="Contado"
+                    [attr.aria-label]="'Cantidad contada de ' + insumo.nombre"
+                    [value]="conteoCaptura().get(insumo.id) ?? ''"
+                    (input)="capturarConteo(insumo.id, $any($event.target).value)"
+                  />
+                  @if (diferenciaConteo(insumo); as dif) {
+                    <span
+                      class="conteo-dif"
+                      [class.conteo-falta]="dif < 0"
+                      [class.conteo-sobra]="dif > 0"
+                    >
+                      {{ dif > 0 ? '+' : '' }}{{ dif }}
+                    </span>
+                  }
+                </div>
+              </li>
+            }
+            @if (insumosParaConteo().length === 0) {
+              <p class="mensaje-estado">Ningún insumo coincide con la búsqueda.</p>
+            }
+          </ul>
+          <label class="conteo-nota">
+            Nota (opcional)
+            <input
+              type="text"
+              maxlength="150"
+              placeholder="Ej. cierre de la semana"
+              [value]="notaConteo()"
+              (input)="notaConteo.set($any($event.target).value)"
+            />
+          </label>
+          @if (errorConteo()) {
+            <p class="mensaje-error">{{ errorConteo() }}</p>
+          }
+          <div class="conteo-botones">
+            <button type="button" class="boton-conteo-secundario" (click)="cerrarConteo()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton-conteo-principal"
+              [disabled]="trabajandoConteo() || totalContados() === 0"
+              (click)="revisarConteo()"
+            >
+              {{ trabajandoConteo() ? 'Revisando...' : 'Revisar diferencias' }}
+            </button>
+          </div>
+        }
       </div>
     </div>
   }

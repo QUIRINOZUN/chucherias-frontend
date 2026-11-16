@@ -147,6 +147,20 @@ export class InsumosService {
     });
   }
 
+  // POST /api/insumos/conteo — conteo físico (2026-11-16). aplicar=false solo
+  // simula: devuelve las diferencias contra el sistema sin escribir nada.
+  contarInventario(
+    conteos: { insumo_id: number; cantidad_contada: number }[],
+    nota: string,
+    aplicar: boolean,
+  ): Observable<ResultadoConteo> {
+    return this.http.post<ResultadoConteo>(`${this.apiUrl}/insumos/conteo`, {
+      conteos,
+      nota,
+      aplicar,
+    });
+  }
+
   // DELETE /api/insumos/:id — elimina un insumo (409 si lo usa una receta).
   eliminar(id: number): Observable<{ mensaje: string }> {
     return this.http.delete<{ mensaje: string }>(`${this.apiUrl}/insumos/${id}`);
@@ -202,4 +216,19 @@ export class InsumosService {
       params: { desde, hasta },
     });
   }
+}
+
+// Resultado de un conteo físico (ver POST /api/insumos/conteo).
+export interface ResultadoConteo {
+  aplicado: boolean;
+  contados: number;
+  sin_diferencia: number;
+  diferencias: {
+    insumo_id: number;
+    nombre: string;
+    unidad_medida: string;
+    sistema: number;
+    contada: number;
+    diferencia: number;
+  }[];
 }

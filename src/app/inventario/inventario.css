@@ -1383,3 +1383,89 @@
 .menu-acciones-lista button.menu-accion-peligro {
   color: var(--peligro-texto);
 }
+
+/* ---- Conteo físico (2026-11-16) ---- */
+.fila-conteo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px dotted var(--pos-border);
+}
+.fila-conteo-campo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fila-conteo-campo input {
+  width: 110px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-md);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  font-size: 1rem;
+  text-align: right;
+}
+.conteo-dif {
+  min-width: 48px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.conteo-falta {
+  color: var(--peligro-texto);
+}
+.conteo-sobra {
+  color: var(--exito-texto);
+}
+.conteo-nota {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.conteo-nota input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-md);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+.conteo-botones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+.boton-conteo-principal,
+.boton-conteo-secundario {
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: var(--radio-pastilla);
+  font-weight: 700;
+  cursor: pointer;
+}
+.boton-conteo-principal {
+  border: none;
+  background: var(--acento-modulo);
+  color: #fff;
+}
+.boton-conteo-principal:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.boton-conteo-secundario {
+  border: 2px solid var(--pos-border);
+  background: none;
+  color: var(--pos-text-primary);
+}
+.conteo-exito {
+  color: var(--exito-texto);
+  font-weight: 600;
+}

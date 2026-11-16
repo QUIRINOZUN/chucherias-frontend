@@ -58,6 +58,7 @@ import {
   Insumo,
   InsumosService,
   MovimientoInventario,
+  ResultadoConteo,
 } from '../core/insumos';
 import { Proveedor, ProveedoresService } from '../core/proveedores';
 
@@ -566,6 +567,116 @@ export class InventarioComponent implements OnInit {
   // filtro de búsqueda) — para ver el avance sin tener que contarlos.
   totalConCosto = computed(() => this.insumos().filter((i) => i.costo_unitario != null).length);
   totalInsumosReal = computed(() => this.insumos().length);
+
+  // ---- Conteo físico (2026-11-16) ---------------------------------------------
+  // Se cuenta lo que hay en la bodega y se compara contra la existencia que
+  // calculó el sistema; las diferencias se aplican como ajustes (un solo paso,
+  // todo o nada). Primero se REVISA (simulación sin escribir) y solo entonces
+  // se aplica.
+  mostrarConteo = signal(false);
+  busquedaConteo = signal('');
+  notaConteo = signal('');
+  conteoCaptura = signal<Map<number, string>>(new Map());
+  revisionConteo = signal<ResultadoConteo | null>(null);
+  trabajandoConteo = signal(false);
+  errorConteo = signal('');
+  conteoAplicado = signal<ResultadoConteo | null>(null);
+
+  insumosParaConteo = computed(() => {
+    const texto = this.busquedaConteo().trim().toLowerCase();
+    const lista = texto
+      ? this.insumos().filter((i) => i.nombre.toLowerCase().includes(texto))
+      : this.insumos();
+    return [...lista].sort((a, b) => a.nombre.localeCompare(b.nombre));
+  });
+
+  // Cuántos insumos ya tienen una cantidad capturada en este conteo.
+  totalContados = computed(() => this.conteoCaptura().size);
+
+  abrirConteo(): void {
+    this.conteoCaptura.set(new Map());
+    this.busquedaConteo.set('');
+    this.notaConteo.set('');
+    this.revisionConteo.set(null);
+    this.conteoAplicado.set(null);
+    this.errorConteo.set('');
+    this.mostrarConteo.set(true);
+  }
+
+  cerrarConteo(): void {
+    if (this.trabajandoConteo()) return;
+    this.mostrarConteo.set(false);
+  }
+
+  // Guarda lo escrito en la captura (vacío = no contado).
+  capturarConteo(insumoId: number, texto: string): void {
+    const valor = texto.trim();
+    this.conteoCaptura.update((mapa) => {
+      const nuevo = new Map(mapa);
+      if (valor === '') nuevo.delete(insumoId);
+      else nuevo.set(insumoId, valor);
+      return nuevo;
+    });
+    this.revisionConteo.set(null);
+  }
+
+  // Diferencia en vivo (contado − sistema) de un insumo, o null si no hay captura válida.
+  diferenciaConteo(insumo: Insumo): number | null {
+    const texto = this.conteoCaptura().get(insumo.id);
+    if (texto === undefined) return null;
+    const contada = Number(texto);
+    if (!Number.isFinite(contada) || contada < 0) return null;
+    return Math.round((contada - Number(insumo.existencia)) * 100) / 100;
+  }
+
+  private conteosParaEnviar(): { insumo_id: number; cantidad_contada: number }[] | null {
+    const lista: { insumo_id: number; cantidad_contada: number }[] = [];
+    for (const [id, texto] of this.conteoCaptura()) {
+      const n = Number(texto);
+      if (!Number.isFinite(n) || n < 0) {
+        this.errorConteo.set('Hay una cantidad inválida: debe ser un número de cero o más.');
+        return null;
+      }
+      lista.push({ insumo_id: id, cantidad_contada: n });
+    }
+    return lista;
+  }
+
+  revisarConteo(): void {
+    const conteos = this.conteosParaEnviar();
+    if (!conteos || conteos.length === 0) return;
+    this.errorConteo.set('');
+    this.trabajandoConteo.set(true);
+    this.insumosService.contarInventario(conteos, this.notaConteo(), false).subscribe({
+      next: (r) => {
+        this.trabajandoConteo.set(false);
+        this.revisionConteo.set(r);
+      },
+      error: (e: HttpErrorResponse) => {
+        this.trabajandoConteo.set(false);
+        this.errorConteo.set(e.error?.error || 'No se pudo revisar el conteo.');
+      },
+    });
+  }
+
+  aplicarConteo(): void {
+    const conteos = this.conteosParaEnviar();
+    if (!conteos || conteos.length === 0) return;
+    this.errorConteo.set('');
+    this.trabajandoConteo.set(true);
+    this.insumosService.contarInventario(conteos, this.notaConteo(), true).subscribe({
+      next: (r) => {
+        this.trabajandoConteo.set(false);
+        this.conteoAplicado.set(r);
+        this.revisionConteo.set(null);
+        this.cargarInsumos();
+      },
+      error: (e: HttpErrorResponse) => {
+        this.trabajandoConteo.set(false);
+        this.errorConteo.set(e.error?.error || 'No se pudo aplicar el conteo.');
+      },
+    });
+  }
 
   // ---- Eliminar historial (2026-10-29): solo administrador, irreversible ----
   esAdministrador = computed(() => this.authService.usuarioActual()?.rol === 'administrador');
