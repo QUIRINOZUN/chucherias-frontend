@@ -33,10 +33,14 @@ export interface Usuario {
   rol: string;
 }
 
-// Respuesta de POST /api/auth/login.
-interface RespuestaLogin {
-  token: string;
-  usuario: Usuario;
+// Respuesta de POST /api/auth/login. Si la cuenta tiene verificación en dos
+// pasos y todavía no se mandó el código, llega solo { requiere_codigo: true }.
+export interface RespuestaLogin {
+  token?: string;
+  usuario?: Usuario;
+  requiere_codigo?: boolean;
+  debe_cambiar_contrasena?: boolean;
+  totp_activo?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -52,6 +56,12 @@ export class AuthService {
   // (inactividad o token vencido); vacío en un logout normal.
   avisoSesion = signal('');
 
+  // Seguridad de la cuenta (2026-11-16). debeCambiarContrasena se guarda en
+  // localStorage para que una recarga no permita saltarse el cambio obligatorio;
+  // el servidor igual lo hace cumplir (403 en todo lo que no sea /auth).
+  debeCambiarContrasena = signal(localStorage.getItem('debeCambiarContrasena') === '1');
+  totpActivo = signal(false);
+
   constructor(
     private http: HttpClient,
     private router: Router,
@@ -60,17 +70,57 @@ export class AuthService {
   // Inicia sesión: envía las credenciales y, si el servidor las acepta,
   // guarda el token y el usuario. El componente de login se suscribe al
   // resultado para navegar al dashboard o mostrar el error.
-  login(usuario: string, contrasena: string): Observable<RespuestaLogin> {
+  login(usuario: string, contrasena: string, codigo?: string): Observable<RespuestaLogin> {
     return this.http
-      .post<RespuestaLogin>(`${this.apiUrl}/auth/login`, { usuario, contrasena })
+      .post<RespuestaLogin>(`${this.apiUrl}/auth/login`, { usuario, contrasena, codigo })
       .pipe(
         // `tap` ejecuta este efecto sin alterar la respuesta que recibe el login.
         tap((respuesta) => {
+          // Sin token = el servidor pide el código de dos pasos; no hay sesión todavía.
+          if (!respuesta.token || !respuesta.usuario) return;
           localStorage.setItem('token', respuesta.token);
           localStorage.setItem('usuario', JSON.stringify(respuesta.usuario));
           this.usuarioActual.set(respuesta.usuario);
+          this.fijarDebeCambiar(!!respuesta.debe_cambiar_contrasena);
+          this.totpActivo.set(!!respuesta.totp_activo);
         }),
       );
+  }
+
+  private fijarDebeCambiar(valor: boolean): void {
+    if (valor) localStorage.setItem('debeCambiarContrasena', '1');
+    else localStorage.removeItem('debeCambiarContrasena');
+    this.debeCambiarContrasena.set(valor);
+  }
+
+  // Vuelve a leer del servidor el estado de seguridad (tras recargar la página).
+  refrescarSeguridad(): void {
+    this.http
+      .get<{ debe_cambiar_contrasena: boolean; totp_activo: boolean }>(`${this.apiUrl}/auth/me`)
+      .subscribe({
+        next: (r) => {
+          this.fijarDebeCambiar(!!r.debe_cambiar_contrasena);
+          this.totpActivo.set(!!r.totp_activo);
+        },
+        error: () => {},
+      });
+  }
+
+  // ---- Verificación en dos pasos ----
+  preparar2fa(): Observable<{ secreto: string; uri: string }> {
+    return this.http.post<{ secreto: string; uri: string }>(`${this.apiUrl}/auth/2fa/preparar`, {});
+  }
+
+  activar2fa(codigo: string): Observable<{ ok: boolean }> {
+    return this.http
+      .post<{ ok: boolean }>(`${this.apiUrl}/auth/2fa/activar`, { codigo })
+      .pipe(tap(() => this.totpActivo.set(true)));
+  }
+
+  desactivar2fa(contrasena: string, codigo: string): Observable<{ ok: boolean }> {
+    return this.http
+      .post<{ ok: boolean }>(`${this.apiUrl}/auth/2fa/desactivar`, { contrasena, codigo })
+      .pipe(tap(() => this.totpActivo.set(false)));
   }
 
   // Cambia la contraseña de la cuenta en sesión (exige la actual).
@@ -78,10 +128,12 @@ export class AuthService {
     contrasenaActual: string,
     contrasenaNueva: string,
   ): Observable<{ ok: boolean }> {
-    return this.http.patch<{ ok: boolean }>(`${this.apiUrl}/auth/contrasena`, {
-      contrasena_actual: contrasenaActual,
-      contrasena_nueva: contrasenaNueva,
-    });
+    return this.http
+      .patch<{ ok: boolean }>(`${this.apiUrl}/auth/contrasena`, {
+        contrasena_actual: contrasenaActual,
+        contrasena_nueva: contrasenaNueva,
+      })
+      .pipe(tap(() => this.fijarDebeCambiar(false)));
   }
 
   // Cierra la sesión: borra token y usuario y regresa al login.
@@ -91,6 +143,9 @@ export class AuthService {
     this.avisoSesion.set(aviso);
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
+    localStorage.removeItem('debeCambiarContrasena');
+    this.debeCambiarContrasena.set(false);
+    this.totpActivo.set(false);
     this.usuarioActual.set(null);
     this.router.navigate(['/login']);
   }

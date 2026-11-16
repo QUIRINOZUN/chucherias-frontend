@@ -492,3 +492,10 @@ input.campo-invalido {
     animation: none;
   }
 }
+
+.ayuda-codigo {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.82rem;
+  opacity: 0.8;
+}

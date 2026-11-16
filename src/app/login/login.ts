@@ -36,13 +36,16 @@ export class LoginComponent {
   cargando = signal(false);
   // Alterna el campo de contraseña entre texto oculto y visible.
   mostrarContrasena = signal(false);
+  // true cuando la cuenta tiene verificación en dos pasos y el servidor ya
+  // validó usuario y contraseña: falta el código de 6 dígitos de la app.
+  pedirCodigo = signal(false);
 
   form: ReturnType<FormBuilder['group']>;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
   ) {
     // Si se llegó aquí por un cierre automático de sesión, se explica por qué.
     // El aviso se consume (se limpia) para que no reaparezca en el siguiente
@@ -54,6 +57,7 @@ export class LoginComponent {
     this.form = this.fb.group({
       usuario: ['', [Validators.required, Validators.minLength(3)]],
       contrasena: ['', [Validators.required, Validators.minLength(6)]],
+      codigo: [''],
     });
   }
 
@@ -86,10 +90,16 @@ export class LoginComponent {
     }
 
     this.cargando.set(true);
-    const { usuario, contrasena } = this.form.value;
+    const { usuario, contrasena, codigo } = this.form.value;
 
-    this.authService.login(usuario!, contrasena!).subscribe({
-      next: () => {
+    this.authService.login(usuario!, contrasena!, codigo || undefined).subscribe({
+      next: (respuesta) => {
+        // Contraseña correcta, pero la cuenta exige el código de dos pasos.
+        if (respuesta.requiere_codigo) {
+          this.cargando.set(false);
+          this.pedirCodigo.set(true);
+          return;
+        }
         // AuthService ya guardó token y usuario; solo queda entrar al sistema.
         this.cargando.set(false);
         this.router.navigate(['/dashboard']);
@@ -110,7 +120,7 @@ export class LoginComponent {
       return 'No se pudo conectar con el servidor. Verifica tu conexión a Internet.';
     }
     if (error.status === 401) {
-      return 'Usuario o contraseña incorrectos.';
+      return error.error?.error || 'Usuario o contraseña incorrectos.';
     }
     if (error.status === 403) {
       return error.error?.error || 'Esta cuenta está desactivada. Contacta al administrador.';

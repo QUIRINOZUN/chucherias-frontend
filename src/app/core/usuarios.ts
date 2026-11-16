@@ -85,6 +85,11 @@ export class UsuariosService {
     return this.http.patch<Usuario>(`${this.apiUrl}/usuarios/${id}/activo`, { activo });
   }
 
+  // PATCH /api/usuarios/:id/2fa/reiniciar — apaga el 2FA de alguien que perdió su teléfono.
+  reiniciar2fa(id: number): Observable<{ ok: boolean }> {
+    return this.http.patch<{ ok: boolean }>(`${this.apiUrl}/usuarios/${id}/2fa/reiniciar`, {});
+  }
+
   // DELETE /api/usuarios/:id — borrado real, solo si la cuenta nunca se usó.
   eliminar(id: number): Observable<{ id: number; eliminado: boolean }> {
     return this.http.delete<{ id: number; eliminado: boolean }>(`${this.apiUrl}/usuarios/${id}`);

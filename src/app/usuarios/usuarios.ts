@@ -249,6 +249,17 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
+  // Teléfono perdido o cambiado: el administrador apaga el 2FA de esa cuenta.
+  reiniciar2fa(usuario: Usuario): void {
+    const mensaje = `¿Quitar la verificación en dos pasos de ${usuario.nombre}? Podrá activarla de nuevo.`;
+    if (!window.confirm(mensaje)) return;
+    this.usuariosService.reiniciar2fa(usuario.id).subscribe({
+      next: () => this.error.set(''),
+      error: (e: HttpErrorResponse) =>
+        this.error.set(e.error?.error || 'No se pudo reiniciar el 2FA.'),
+    });
+  }
+
   abrirConfirmarEliminar(usuario: Usuario): void {
     this.usuarioAEliminar.set(usuario);
     this.errorEliminar.set('');

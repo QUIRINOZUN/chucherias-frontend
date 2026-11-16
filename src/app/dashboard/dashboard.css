@@ -817,3 +817,15 @@
     font-size: 0.72rem;
   }
 }
+
+.qr-2fa {
+  align-self: center;
+  width: 220px;
+  height: 220px;
+  border-radius: var(--radio-md);
+  background: #fff;
+}
+.panel-clave {
+  max-height: 92dvh;
+  overflow-y: auto;
+}

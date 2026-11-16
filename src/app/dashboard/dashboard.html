@@ -153,13 +153,16 @@
     <button type="button" class="boton-cambiar-clave" (click)="abrirCambioClave()">
       Cambiar mi contraseña
     </button>
+    <button type="button" class="boton-cambiar-clave" (click)="abrir2fa()">
+      Verificación en dos pasos
+    </button>
     <button type="button" class="boton-cerrar-sesion" (click)="authService.logout()">
       Cerrar sesión
     </button>
   </div>
 
   @if (mostrarCambioClave()) {
-    <div class="overlay-clave" (click)="cerrarCambioClave()">
+    <div class="overlay-clave">
       <div
         class="panel-clave"
         role="dialog"
@@ -170,6 +173,11 @@
         (click)="$event.stopPropagation()"
       >
         <h2>Cambiar mi contraseña</h2>
+        @if (cambioObligatorio()) {
+          <p class="clave-ayuda">
+            Tu cuenta usa una contraseña temporal. Elige una propia para continuar.
+          </p>
+        }
         @if (exitoClave()) {
           <p class="clave-exito">
             Listo, tu contraseña se cambió. Úsala la próxima vez que inicies sesión.
@@ -210,9 +218,11 @@
             <p class="clave-error" role="alert">{{ errorClave() }}</p>
           }
           <div class="clave-botones">
-            <button type="button" class="boton-clave-secundario" (click)="cerrarCambioClave()">
-              Cancelar
-            </button>
+            @if (!cambioObligatorio()) {
+              <button type="button" class="boton-clave-secundario" (click)="cerrarCambioClave()">
+                Cancelar
+              </button>
+            }
             <button
               type="button"
               class="boton-clave-principal"
@@ -220,6 +230,117 @@
               (click)="guardarCambioClave()"
             >
               {{ guardandoClave() ? 'Guardando…' : 'Guardar' }}
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (mostrar2fa()) {
+    <div class="overlay-clave">
+      <div
+        class="panel-clave"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Verificación en dos pasos"
+        appFocoDialogo
+        (cerrarConEscape)="cerrar2fa()"
+      >
+        <h2>Verificación en dos pasos</h2>
+        @if (authService.totpActivo()) {
+          <p class="clave-exito">Está activada: al iniciar sesión se pedirá un código de tu app.</p>
+          <label>
+            Tu contraseña
+            <input
+              type="password"
+              autocomplete="current-password"
+              [value]="clave2fa()"
+              (input)="clave2fa.set($any($event.target).value)"
+            />
+          </label>
+          <label>
+            Código actual de tu app
+            <input
+              type="text"
+              inputmode="numeric"
+              maxlength="6"
+              autocomplete="one-time-code"
+              [value]="codigo2fa()"
+              (input)="codigo2fa.set($any($event.target).value)"
+            />
+          </label>
+          @if (error2fa()) {
+            <p class="clave-error" role="alert">{{ error2fa() }}</p>
+          }
+          <div class="clave-botones">
+            <button type="button" class="boton-clave-secundario" (click)="cerrar2fa()">
+              Cerrar
+            </button>
+            <button
+              type="button"
+              class="boton-clave-principal"
+              [disabled]="trabajando2fa() || !clave2fa() || codigo2fa().length !== 6"
+              (click)="desactivar2fa()"
+            >
+              Desactivar
+            </button>
+          </div>
+        } @else if (!secreto2fa()) {
+          <p class="clave-ayuda">
+            Agrega una capa extra: además de tu contraseña se pedirá un código de 6 dígitos que
+            cambia cada 30 segundos. Necesitas una app como Google Authenticator o Microsoft
+            Authenticator en tu teléfono.
+          </p>
+          @if (error2fa()) {
+            <p class="clave-error" role="alert">{{ error2fa() }}</p>
+          }
+          <div class="clave-botones">
+            <button type="button" class="boton-clave-secundario" (click)="cerrar2fa()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton-clave-principal"
+              [disabled]="trabajando2fa()"
+              (click)="preparar2fa()"
+            >
+              Empezar
+            </button>
+          </div>
+        } @else {
+          <p class="clave-ayuda">
+            1) Escanea este código con tu app. 2) Escribe el código de 6 dígitos que te muestra.
+          </p>
+          <img class="qr-2fa" [src]="qr2fa()" alt="Código QR para tu app autenticadora" />
+          <p class="clave-ayuda">
+            ¿No puedes escanear? Escribe esta clave en la app: <strong>{{ secreto2fa() }}</strong>
+          </p>
+          <label>
+            Código de 6 dígitos
+            <input
+              type="text"
+              inputmode="numeric"
+              maxlength="6"
+              autocomplete="one-time-code"
+              [value]="codigo2fa()"
+              (input)="codigo2fa.set($any($event.target).value)"
+            />
+          </label>
+          @if (error2fa()) {
+            <p class="clave-error" role="alert">{{ error2fa() }}</p>
+          }
+          <div class="clave-botones">
+            <button type="button" class="boton-clave-secundario" (click)="cerrar2fa()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton-clave-principal"
+              [disabled]="trabajando2fa() || codigo2fa().length !== 6"
+              (click)="activar2fa()"
+            >
+              Activar
             </button>
           </div>
         }

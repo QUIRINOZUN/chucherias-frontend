@@ -20,11 +20,17 @@ import { AuthService } from './auth';
 
 // Se coloca en cualquier ruta que requiera sesión iniciada.
 // Si no hay sesión, redirige automáticamente al login.
-export const authGuard: CanActivateFn = () => {
+export const authGuard: CanActivateFn = (_route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
   if (authService.estaAutenticado()) {
+    // Cambio de contraseña obligatorio pendiente: el dashboard (que muestra el
+    // formulario) es lo único accesible; cualquier otra ruta regresa ahí.
+    if (authService.debeCambiarContrasena() && !state.url.startsWith('/dashboard')) {
+      router.navigate(['/dashboard']);
+      return false;
+    }
     return true;
   }
 

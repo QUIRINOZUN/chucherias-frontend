@@ -113,6 +113,9 @@
                       >
                         {{ usuario.activo ? 'Desactivar' : 'Activar' }}
                       </button>
+                      <button type="button" role="menuitem" (click)="reiniciar2fa(usuario)">
+                        Reiniciar verificación en 2 pasos
+                      </button>
                       <button
                         type="button"
                         role="menuitem"

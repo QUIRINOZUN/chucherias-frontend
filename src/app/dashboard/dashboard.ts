@@ -30,7 +30,8 @@
 // centra verticalmente su contenido (`justify-content: center`), así que con
 // solo la rejilla de módulos quedaba un hueco grande en viewports altos.
 // =============================================================================
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, signal } from '@angular/core';
+import QRCode from 'qrcode';
 import { CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth';
@@ -412,8 +413,87 @@ export class DashboardComponent implements OnInit {
     this.mostrarCambioClave.set(true);
   }
 
+  // Cambio obligatorio (cuenta nueva o contraseña restablecida por el
+  // administrador): la ventana no se puede cerrar hasta elegir contraseña propia.
+  cambioObligatorio = computed(() => this.authService.debeCambiarContrasena());
+  private venianObligadoACambiar = false;
+
   cerrarCambioClave(): void {
+    if (this.cambioObligatorio()) return;
     this.mostrarCambioClave.set(false);
+    // Mientras estuvo pendiente el cambio, el servidor rechazó las consultas del
+    // resumen: se recarga para que el menú cargue ya con la sesión completa.
+    if (this.venianObligadoACambiar) window.location.reload();
+  }
+
+  // ---- Verificación en dos pasos ----
+  mostrar2fa = signal(false);
+  secreto2fa = signal('');
+  qr2fa = signal('');
+  codigo2fa = signal('');
+  clave2fa = signal('');
+  error2fa = signal('');
+  trabajando2fa = signal(false);
+
+  abrir2fa(): void {
+    this.secreto2fa.set('');
+    this.qr2fa.set('');
+    this.codigo2fa.set('');
+    this.clave2fa.set('');
+    this.error2fa.set('');
+    this.mostrar2fa.set(true);
+  }
+
+  cerrar2fa(): void {
+    this.mostrar2fa.set(false);
+  }
+
+  // Paso 1: el servidor genera el secreto y aquí se dibuja como código QR.
+  preparar2fa(): void {
+    this.trabajando2fa.set(true);
+    this.error2fa.set('');
+    this.authService.preparar2fa().subscribe({
+      next: async (r) => {
+        this.secreto2fa.set(r.secreto);
+        this.qr2fa.set(await QRCode.toDataURL(r.uri, { width: 220, margin: 1 }));
+        this.trabajando2fa.set(false);
+      },
+      error: (e: HttpErrorResponse) => {
+        this.trabajando2fa.set(false);
+        this.error2fa.set(e.error?.error ?? 'No se pudo preparar la verificación.');
+      },
+    });
+  }
+
+  // Paso 2: se comprueba que la app ya genera códigos válidos y se activa.
+  activar2fa(): void {
+    this.trabajando2fa.set(true);
+    this.error2fa.set('');
+    this.authService.activar2fa(this.codigo2fa().trim()).subscribe({
+      next: () => {
+        this.trabajando2fa.set(false);
+        this.mostrar2fa.set(false);
+      },
+      error: (e: HttpErrorResponse) => {
+        this.trabajando2fa.set(false);
+        this.error2fa.set(e.error?.error ?? 'No se pudo activar.');
+      },
+    });
+  }
+
+  desactivar2fa(): void {
+    this.trabajando2fa.set(true);
+    this.error2fa.set('');
+    this.authService.desactivar2fa(this.clave2fa(), this.codigo2fa().trim()).subscribe({
+      next: () => {
+        this.trabajando2fa.set(false);
+        this.mostrar2fa.set(false);
+      },
+      error: (e: HttpErrorResponse) => {
+        this.trabajando2fa.set(false);
+        this.error2fa.set(e.error?.error ?? 'No se pudo desactivar.');
+      },
+    });
   }
 
   guardarCambioClave(): void {
@@ -448,9 +528,19 @@ export class DashboardComponent implements OnInit {
     private insumosService: InsumosService,
     private ordenesService: OrdenesService,
     private checklistService: ChecklistService,
-  ) {}
+  ) {
+    // Si la cuenta tiene un cambio de contraseña pendiente, se abre sola la ventana.
+    effect(() => {
+      if (this.authService.debeCambiarContrasena()) {
+        this.venianObligadoACambiar = true;
+        this.abrirCambioClave();
+      }
+    });
+  }
 
   ngOnInit(): void {
+    // Estado de seguridad vigente (cambio obligatorio, dos pasos) tras una recarga.
+    this.authService.refrescarSeguridad();
     // Solo administrador/encargado ven el módulo Recetario (y pueden
     // consultar GET /api/recetas) — para los demás roles la llamada daría
     // 403, así que ni se intenta.
