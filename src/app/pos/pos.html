@@ -39,6 +39,43 @@
   <!-- BARRA DE CAJA: "Saldo inicial" e "Ingresar efectivo" los registra quien está en el POS;
        un retiro SOLO lo emite el administrador desde la pantalla de Caja — aquí no hay botón para eso.
        "Registrar cliente" (2026-10-16) da de alta a un cliente de lealtad sin que compre nada. -->
+  <!-- VENTAS SIN INTERNET (2026-11-16): guardadas en este equipo y enviadas solas al volver la conexión. -->
+  @if (ventaGuardadaSinConexion() !== null) {
+    <div class="aviso-cola aviso-cola-guardada" role="status">
+      <span>
+        Sin conexión: la venta de {{ ventaGuardadaSinConexion() | currency: 'MXN' }} se guardó en
+        este equipo y se enviará sola. No tiene folio todavía; anótala en la libreta si el cliente
+        pide comprobante.
+      </span>
+      <button type="button" class="boton-aviso-cola" (click)="ventaGuardadaSinConexion.set(null)">
+        Entendido
+      </button>
+    </div>
+  }
+  @if (colaVentas.porEnviar() > 0) {
+    <div class="aviso-cola" role="status">
+      <span>{{ colaVentas.porEnviar() }} venta(s) por enviar al servidor.</span>
+      <button
+        type="button"
+        class="boton-aviso-cola"
+        [disabled]="colaVentas.enviando()"
+        (click)="colaVentas.enviarPendientes()"
+      >
+        {{ colaVentas.enviando() ? 'Enviando...' : 'Enviar ahora' }}
+      </button>
+    </div>
+  }
+  @for (v of colaVentas.rechazadas(); track v.clave) {
+    <div class="aviso-cola aviso-cola-error" role="alert">
+      <span>
+        Una venta de {{ v.total | currency: 'MXN' }} no se pudo registrar: {{ v.rechazo }} Captúrala
+        a mano.
+      </span>
+      <button type="button" class="boton-aviso-cola" (click)="colaVentas.descartar(v.clave)">
+        Descartar
+      </button>
+    </div>
+  }
   <div class="pos-caja-barra">
     <button type="button" class="accion-caja" (click)="abrirMovimientoCaja('apertura')">
       <span class="accion-caja-icono accion-caja-icono-neutral">

@@ -3305,3 +3305,37 @@
   font-size: 0.72rem;
   font-weight: 700;
 }
+
+/* Ventas sin internet (2026-11-16) */
+.aviso-cola {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 8px 16px;
+  padding: 10px 14px;
+  border-radius: var(--radio-md);
+  border: 1px solid var(--mod-caja);
+  background: color-mix(in srgb, var(--mod-caja) 14%, var(--pos-bg-card));
+  color: var(--pos-text-primary);
+  font-size: 0.9rem;
+}
+.aviso-cola-guardada {
+  border-color: var(--exito-texto);
+  background: color-mix(in srgb, var(--exito-texto) 12%, var(--pos-bg-card));
+}
+.aviso-cola-error {
+  border-color: var(--peligro-texto);
+  background: color-mix(in srgb, var(--peligro-texto) 12%, var(--pos-bg-card));
+}
+.boton-aviso-cola {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid currentColor;
+  border-radius: var(--radio-pastilla);
+  background: none;
+  color: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}

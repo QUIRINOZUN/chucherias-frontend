@@ -49,6 +49,8 @@ export interface NuevaVenta {
   programada_para?: string;
   // Propina (2026-11-16): extra que deja el cliente; no es ingreso del negocio.
   propina?: number;
+  // Clave única de esta venta (2026-11-16): permite reintentarla sin duplicarla.
+  clave?: string;
 }
 
 // Lo que responde el servidor tras registrar la venta (se usa para el

@@ -53,6 +53,7 @@ import { InsumosService } from '../core/insumos';
 import { ConfigLealtad, EscalonLealtad, LealtadService } from '../core/lealtad';
 import { ThemeService } from '../core/theme';
 import { MetodoPago, RespuestaVenta, TipoEntrega, VentasService } from '../core/ventas';
+import { ColaVentasService } from '../core/cola-ventas';
 import { LINEA_DOBLE, envolver as envolverTexto, importeEnLetras } from '../core/ticket-formato';
 import { aplicarEstilosPersonalizados, obtenerEstiloCategoria } from './categoria-estilos';
 import { IngredienteRemovible, obtenerIngredientesRemovibles } from './producto-ingredientes';
@@ -194,6 +195,16 @@ export class PosComponent implements OnInit, OnDestroy {
   // ingredientes removibles de cada producto.
   ingredientesDisponibles = obtenerIngredientesRemovibles;
   tipoEntrega = signal<TipoEntrega>('presencial');
+  // Venta sin internet (2026-11-16): clave única de la venta en curso (se conserva
+  // mientras el cobro siga abierto con el mismo carrito) y aviso de "guardada".
+  private claveVenta = '';
+  ventaGuardadaSinConexion = signal<number | null>(null);
+
+  private nuevaClave(): string {
+    const c = globalThis.crypto;
+    if (c && typeof c.randomUUID === 'function') return c.randomUUID();
+    return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+  }
   // Pedido programado (2026-11-16): "HH:MM" de hoy (o de mañana si esa hora ya pasó);
   // vacío = pedido para ahora.
   programarParaForm = signal('');
@@ -650,6 +661,7 @@ export class PosComponent implements OnInit, OnDestroy {
     public negocioService: NegocioService,
     private catalogoService: CatalogoService,
     private ventasService: VentasService,
+    public colaVentas: ColaVentasService,
     private cajaService: CajaService,
     private insumosService: InsumosService,
     private clientesService: ClientesService,
@@ -1417,6 +1429,7 @@ export class PosComponent implements OnInit, OnDestroy {
   }
 
   cerrarCobro(): void {
+    this.claveVenta = '';
     this.mostrarCobro.set(false);
   }
 
@@ -1519,6 +1532,7 @@ export class PosComponent implements OnInit, OnDestroy {
       ...(clienteLealtad ? { cliente_id: clienteLealtad.id } : {}),
       ...(programadaIso ? { programada_para: programadaIso } : {}),
       ...(propinaMonto > 0 ? { propina: propinaMonto } : {}),
+      clave: this.claveVenta || (this.claveVenta = this.nuevaClave()),
       items: itemsCarrito.map((item) => ({
         variante_id: item.varianteId,
         cantidad: item.cantidad,
@@ -1541,6 +1555,7 @@ export class PosComponent implements OnInit, OnDestroy {
     this.ventasService.registrarVenta(payload).subscribe({
       next: (respuesta) => {
         this.procesandoVenta.set(false);
+        this.claveVenta = '';
         // El total/descuento REALES son los que decidió el servidor (puede
         // diferir de la vista previa si, por ejemplo, este cliente ya tenía
         // una visita contada hoy por otra compra) — el comprobante siempre
@@ -1575,6 +1590,15 @@ export class PosComponent implements OnInit, OnDestroy {
       },
       error: (error: HttpErrorResponse) => {
         this.procesandoVenta.set(false);
+        // Sin respuesta del servidor (sin internet): la venta se guarda en este equipo y
+        // se envía sola al volver la conexión; el cajero puede seguir cobrando.
+        if (error.status === 0) {
+          this.colaVentas.agregar(payload, total + this.cargoEnvio() + propinaMonto);
+          this.claveVenta = '';
+          this.ventaGuardadaSinConexion.set(total + this.cargoEnvio() + propinaMonto);
+          this.nuevaVenta();
+          return;
+        }
         // Se prefiere el mensaje del servidor; si no hubo respuesta, el de conexión.
         this.errorVenta.set(error.error?.error || this.interpretarErrorConexion(error));
       },
