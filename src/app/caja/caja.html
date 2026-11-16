@@ -151,6 +151,12 @@
                 <span>Ventas en efectivo</span>
                 <span>{{ r.ventas_efectivo | currency: 'MXN' }}</span>
               </div>
+              @if ((r.propinas_efectivo ?? 0) > 0) {
+                <div class="linea-corte linea-corte-secundaria">
+                  <span>+ Propinas en efectivo</span>
+                  <span>{{ r.propinas_efectivo | currency: 'MXN' }}</span>
+                </div>
+              }
               @if (r.apertura > 0) {
                 <div class="linea-corte linea-corte-secundaria">
                   <span>+ Saldo inicial</span>

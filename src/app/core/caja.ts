@@ -28,6 +28,9 @@ import { environment } from '../../environments/environment';
 export interface ResumenCaja {
   fecha: string;
   ventas_efectivo: number;
+  // Propinas del día (2026-11-16): no son ingreso, pero sí dinero que entró.
+  propinas_efectivo?: number;
+  propinas_transferencia?: number;
   apertura: number;
   ingresos_efectivo: number;
   retiros_efectivo: number;

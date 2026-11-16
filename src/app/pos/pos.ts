@@ -124,6 +124,8 @@ interface Recibo {
   repartidorNombre: string | null;
   // Hora del pedido programado ("5:30 pm"), o vacío si fue para ahora.
   horaProgramada: string;
+  // Propina cobrada (2026-11-16), 0 si no hubo. No forma parte de `total`.
+  propina: number;
   // RF-21/RF-22 (2026-10-15): nombre del cliente de LEALTAD (si se ligó
   // alguno) y el descuento que el SERVIDOR de verdad aplicó — nunca el
   // estimado local (ver previsualizacionLealtad), que puede no coincidir
@@ -541,6 +543,22 @@ export class PosComponent implements OnInit, OnDestroy {
     return conDescuento + this.cargoEnvio();
   });
 
+  // Propina (2026-11-16): extra opcional que deja el cliente. Va aparte del total
+  // de la venta (no es ingreso) pero se cobra en el mismo método de pago.
+  propinaForm = signal('');
+  propina = computed(() => {
+    const n = Number(this.propinaForm());
+    return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : 0;
+  });
+  totalConPropina = computed(() => this.totalAPagar() + this.propina());
+
+  // Atajos: propina como % del total de la venta, redondeada al peso.
+  fijarPropinaPorcentaje(porcentaje: number): void {
+    this.propinaForm.set(
+      porcentaje === 0 ? '' : String(Math.round((this.totalAPagar() * porcentaje) / 100)),
+    );
+  }
+
   // Denominaciones que dibuja la plantilla (billetes con su ilustración
   // propia; monedas como chip circular con el número).
   denominacionesBilletes = DENOMINACIONES_BILLETES_MXN;
@@ -621,7 +639,7 @@ export class PosComponent implements OnInit, OnDestroy {
     if (this.metodoPago() !== 'efectivo' || recibido == null) {
       return null;
     }
-    const diferencia = recibido - this.totalAPagar();
+    const diferencia = recibido - this.totalConPropina();
     return diferencia;
   });
 
@@ -1227,6 +1245,7 @@ export class PosComponent implements OnInit, OnDestroy {
       this.clienteDireccionForm.set('');
       this.clienteTelefonoForm.set('');
       this.programarParaForm.set('');
+      this.propinaForm.set('');
       this.repartidorSeleccionadoId.set(null);
     }
   }
@@ -1464,6 +1483,7 @@ export class PosComponent implements OnInit, OnDestroy {
     const clienteLealtad = this.clienteLealtadSeleccionado();
     const repartidorId = this.repartidorSeleccionadoId();
     const programadaIso = this.programadaIso();
+    const propinaMonto = this.propina();
     const horaProgramada = this.textoHoraProgramada();
 
     // Lo que viaja al servidor: método, entrega y, por línea, SOLO variante,
@@ -1483,6 +1503,7 @@ export class PosComponent implements OnInit, OnDestroy {
         : {}),
       ...(clienteLealtad ? { cliente_id: clienteLealtad.id } : {}),
       ...(programadaIso ? { programada_para: programadaIso } : {}),
+      ...(propinaMonto > 0 ? { propina: propinaMonto } : {}),
       items: itemsCarrito.map((item) => ({
         variante_id: item.varianteId,
         cantidad: item.cantidad,
@@ -1524,6 +1545,7 @@ export class PosComponent implements OnInit, OnDestroy {
           clienteTelefono,
           repartidorNombre: this.repartidores().find((r) => r.id === repartidorId)?.nombre || null,
           horaProgramada,
+          propina: propinaMonto,
           clienteLealtadNombre: clienteLealtad?.nombre_completo || null,
           descuentoLealtad: descuentoReal,
           cargoEnvio: Number(respuesta.venta.cargo_envio ?? 0),
@@ -1726,6 +1748,10 @@ export class PosComponent implements OnInit, OnDestroy {
     filas.push(LINEA_DOBLE);
     filas.push(linea('TOTAL', money(r.total)));
     filas.push(...envolver(importeEnLetras(r.total)).map((x) => centrado(x)));
+    if (r.propina > 0) {
+      filas.push(linea('Propina', money(r.propina)));
+      filas.push(linea('Total pagado', money(r.total + r.propina)));
+    }
     filas.push(LINEA_DOBLE);
     if (r.clienteLealtadNombre) {
       filas.push(qa(`Cliente: ${r.clienteLealtadNombre}`));
@@ -1819,6 +1845,7 @@ export class PosComponent implements OnInit, OnDestroy {
       this.clienteDireccionForm.set('');
       this.clienteTelefonoForm.set('');
       this.programarParaForm.set('');
+      this.propinaForm.set('');
       this.repartidorSeleccionadoId.set(null);
       this.clienteLealtadSeleccionado.set(null);
       this.clienteLealtadQuery.set('');
@@ -1840,6 +1867,7 @@ export class PosComponent implements OnInit, OnDestroy {
     this.clienteDireccionForm.set('');
     this.clienteTelefonoForm.set('');
     this.programarParaForm.set('');
+    this.propinaForm.set('');
     this.repartidorSeleccionadoId.set(null);
     this.montoRecibido.set(null);
     this.conteoEfectivo.set(new Map());

@@ -47,6 +47,8 @@ export interface NuevaVenta {
   cliente_id?: number;
   // Pedido programado (2026-11-16): ISO 8601 de la hora para la que se pidió.
   programada_para?: string;
+  // Propina (2026-11-16): extra que deja el cliente; no es ingreso del negocio.
+  propina?: number;
 }
 
 // Lo que responde el servidor tras registrar la venta (se usa para el

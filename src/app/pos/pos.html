@@ -830,6 +830,16 @@
                 <span>Total</span>
                 <span>{{ r.total | currency: 'MXN' }}</span>
               </div>
+              @if (r.propina > 0) {
+                <div class="comprobante-linea">
+                  <span>Propina</span>
+                  <span>{{ r.propina | currency: 'MXN' }}</span>
+                </div>
+                <div class="comprobante-linea">
+                  <span>Total pagado</span>
+                  <span>{{ r.total + r.propina | currency: 'MXN' }}</span>
+                </div>
+              }
               @if (r.clienteLealtadNombre) {
                 <div class="comprobante-linea">
                   <span>Cliente de lealtad</span>
@@ -1364,6 +1374,36 @@
                   Incluye {{ cargoEnvio() | currency: 'MXN' }} de envío a domicilio.
                 </p>
               }
+              <!-- PROPINA (2026-11-16): opcional, aparte del total (no es ingreso). -->
+              <div class="bloque-propina">
+                <span class="bloque-propina-titulo">Propina (opcional)</span>
+                <div class="bloque-propina-fila">
+                  <button type="button" class="boton-propina" (click)="fijarPropinaPorcentaje(0)">
+                    Sin
+                  </button>
+                  <button type="button" class="boton-propina" (click)="fijarPropinaPorcentaje(10)">
+                    10%
+                  </button>
+                  <button type="button" class="boton-propina" (click)="fijarPropinaPorcentaje(15)">
+                    15%
+                  </button>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    inputmode="decimal"
+                    placeholder="$"
+                    aria-label="Monto de la propina"
+                    [value]="propinaForm()"
+                    (input)="propinaForm.set($any($event.target).value)"
+                  />
+                </div>
+                @if (propina() > 0) {
+                  <span class="bloque-propina-total">
+                    Total con propina: {{ totalConPropina() | currency: 'MXN' }}
+                  </span>
+                }
+              </div>
               @if (previsualizacionLealtad(); as preview) {
                 @if (preview.porcentaje > 0) {
                   <p class="aviso-descuento-lealtad">
@@ -1425,7 +1465,8 @@
                 <div class="cambio" [class.cambio-invalido]="(cambio() ?? -1) < 0">
                   @if ((cambio() ?? -1) < 0) {
                     <span
-                      >Falta {{ totalAPagar() - (montoRecibido() ?? 0) | currency: 'MXN' }}</span
+                      >Falta
+                      {{ totalConPropina() - (montoRecibido() ?? 0) | currency: 'MXN' }}</span
                     >
                   } @else {
                     <span>Cambio: {{ cambio() | currency: 'MXN' }}</span>

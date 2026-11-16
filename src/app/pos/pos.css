@@ -3243,3 +3243,47 @@
   font-size: 0.8rem;
   color: var(--pos-text-secondary);
 }
+
+/* Propina (2026-11-16) */
+.bloque-propina {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+}
+.bloque-propina-titulo {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--pos-text-secondary);
+}
+.bloque-propina-fila {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.boton-propina {
+  min-height: 44px;
+  min-width: 56px;
+  padding: 0 14px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+.bloque-propina-fila input {
+  width: 90px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-md);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  text-align: right;
+}
+.bloque-propina-total {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--exito-texto);
+}
