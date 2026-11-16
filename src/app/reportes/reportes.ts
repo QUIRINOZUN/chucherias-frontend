@@ -51,7 +51,13 @@ import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { Router, RouterLink } from '@angular/router';
-import { ReportesService, ResumenReportes } from '../core/reportes';
+import {
+  AnalisisMenu,
+  ClaseMenu,
+  ItemMenu,
+  ReportesService,
+  ResumenReportes,
+} from '../core/reportes';
 import { ThemeService } from '../core/theme';
 
 // "AAAA-MM-DD" en hora LOCAL — nunca toISOString(), que corre la fecha un
@@ -234,13 +240,68 @@ export class ReportesComponent implements OnInit {
   filtroHasta = signal('');
 
   pestanaActiva = signal<
-    'general' | 'ventas' | 'inventario' | 'personal' | 'clientes' | 'rentabilidad'
+    'general' | 'ventas' | 'inventario' | 'personal' | 'clientes' | 'rentabilidad' | 'menu'
   >('general');
 
   cambiarPestana(
-    pestana: 'general' | 'ventas' | 'inventario' | 'personal' | 'clientes' | 'rentabilidad',
+    pestana:
+      'general' | 'ventas' | 'inventario' | 'personal' | 'clientes' | 'rentabilidad' | 'menu',
   ): void {
     this.pestanaActiva.set(pestana);
+  }
+
+  // ---- Ingeniería de menú (2026-11-16) ----
+  analisisMenu = signal<AnalisisMenu | null>(null);
+  errorMenu = signal('');
+
+  readonly CLASES_MENU: { clase: ClaseMenu; titulo: string; consejo: string }[] = [
+    {
+      clase: 'estrella',
+      titulo: 'Estrellas',
+      consejo: 'Se venden mucho y dejan buen margen. Mantenlos y presúmelos.',
+    },
+    {
+      clase: 'caballo',
+      titulo: 'Caballos de batalla',
+      consejo: 'Se venden mucho pero dejan poco. Sube el precio o baja el costo.',
+    },
+    {
+      clase: 'rompecabezas',
+      titulo: 'Rompecabezas',
+      consejo: 'Dejan buen margen pero se venden poco. Promociónalos.',
+    },
+    {
+      clase: 'perro',
+      titulo: 'Perros',
+      consejo: 'Se venden poco y dejan poco. Candidatos a retirarse del menú.',
+    },
+  ];
+  readonly NOMBRES_DIA = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+  itemsMenuDe(clase: ClaseMenu): ItemMenu[] {
+    return (this.analisisMenu()?.items ?? []).filter((i) => i.clase === clase);
+  }
+
+  // Ancho de barra (0-100) relativo al mayor valor de la serie.
+  anchoBarraMonto(valor: number, serie: { monto: number }[]): number {
+    const mayor = Math.max(...serie.map((s) => s.monto), 1);
+    return Math.round((valor / mayor) * 100);
+  }
+
+  private cargarAnalisisMenu(): void {
+    this.errorMenu.set('');
+    this.reportesService
+      .obtenerAnalisisMenu({
+        desde: this.filtroDesde() || undefined,
+        hasta: this.filtroHasta() || undefined,
+      })
+      .subscribe({
+        next: (a) => this.analisisMenu.set(a),
+        error: () => {
+          this.analisisMenu.set(null);
+          this.errorMenu.set('No se pudo cargar el análisis del menú.');
+        },
+      });
   }
 
   hayFiltros = computed(() => !!this.filtroDesde() || !!this.filtroHasta());
@@ -440,6 +501,7 @@ export class ReportesComponent implements OnInit {
   }
 
   cargarResumen(): void {
+    this.cargarAnalisisMenu();
     // Si se cambia un filtro antes de que responda la consulta anterior, se
     // cancela: una respuesta vieja y lenta no debe pisar el resultado actual
     // (mismo criterio que ya usa mermas.ts/caja.ts con sus filtros de fecha).

@@ -167,6 +167,17 @@
           <svg class="icono" aria-hidden="true"><use href="#ic-calculadora" /></svg>
           Rentabilidad
         </button>
+        <button
+          type="button"
+          role="tab"
+          class="tab-reportes"
+          [class.tab-reportes-activa]="pestanaActiva() === 'menu'"
+          [attr.aria-selected]="pestanaActiva() === 'menu'"
+          (click)="cambiarPestana('menu')"
+        >
+          <svg class="icono" aria-hidden="true"><use href="#ic-cocinar" /></svg>
+          Menú
+        </button>
       </nav>
       <div class="tabs-reportes-desvanecido" aria-hidden="true"></div>
     </div>
@@ -994,6 +1005,119 @@
               Todavía no hay suficientes costos capturados para calcular márgenes por producto —
               captúralos desde Inventario.
             </p>
+          }
+        </section>
+      }
+
+      <!-- ========================= PESTAÑA: MENÚ (ingeniería de menú) ========================= -->
+      @if (pestanaActiva() === 'menu') {
+        <section
+          class="seccion-reporte seccion-reporte-completa"
+          style="--acento-seccion: var(--mod-recetario)"
+        >
+          <div class="seccion-reporte-encabezado">
+            <span class="seccion-reporte-icono" aria-hidden="true">
+              <svg class="icono"><use href="#ic-cocinar" /></svg>
+            </span>
+            <h2>¿Qué conviene vender?</h2>
+          </div>
+          @if (errorMenu()) {
+            <p class="mensaje-estado mensaje-error">{{ errorMenu() }}</p>
+          } @else if (analisisMenu(); as m) {
+            @if (m.items.length === 0) {
+              <p class="mensaje-estado">Todavía no hay ventas en este periodo para analizar.</p>
+            } @else {
+              <p class="nota-seccion-reporte">
+                Cada producto se compara por lo que se vende (popularidad) y lo que deja por pieza
+                (margen). Un producto sin receta o con insumos sin costo capturado no se clasifica:
+                aparece aparte para no inventar un margen.
+              </p>
+              <div class="grid-clases-menu">
+                @for (c of CLASES_MENU; track c.clase) {
+                  <article class="clase-menu clase-menu-{{ c.clase }}">
+                    <header>
+                      <strong>{{ c.titulo }}</strong>
+                      <span class="clase-menu-conteo">{{ m.conteo[c.clase] }}</span>
+                    </header>
+                    <p class="clase-menu-consejo">{{ c.consejo }}</p>
+                    @if (itemsMenuDe(c.clase).length > 0) {
+                      <ul class="lista-clase-menu">
+                        @for (i of itemsMenuDe(c.clase); track i.variante_id) {
+                          <li>
+                            <span class="item-menu-nombre"
+                              >{{ i.producto }} — {{ i.variante }}</span
+                            >
+                            <span class="item-menu-datos">
+                              {{ i.unidades }} pz · {{ i.margen_unitario | currency: 'MXN' }} por
+                              pieza
+                            </span>
+                          </li>
+                        }
+                      </ul>
+                    } @else {
+                      <p class="clase-menu-vacio">Ninguno en este periodo.</p>
+                    }
+                  </article>
+                }
+              </div>
+
+              @if (itemsMenuDe('sin_costo').length > 0) {
+                <details class="detalle-sin-costo">
+                  <summary>
+                    {{ itemsMenuDe('sin_costo').length }} producto(s) sin costo capturado (no se
+                    clasifican)
+                  </summary>
+                  <ul class="lista-clase-menu">
+                    @for (i of itemsMenuDe('sin_costo'); track i.variante_id) {
+                      <li>
+                        <span class="item-menu-nombre">{{ i.producto }} — {{ i.variante }}</span>
+                        <span class="item-menu-datos">
+                          {{ i.unidades }} pz · {{ i.ingreso | currency: 'MXN' }}
+                        </span>
+                      </li>
+                    }
+                  </ul>
+                </details>
+              }
+
+              <h3 class="subtitulo-menu">Ventas por día de la semana</h3>
+              <ul class="barras-tiempo">
+                @for (d of m.por_dia_semana; track d.dia) {
+                  <li>
+                    <span class="barra-tiempo-etiqueta">{{ NOMBRES_DIA[d.dia] }}</span>
+                    <span class="barra-tiempo-pista">
+                      <span
+                        class="barra-tiempo-relleno"
+                        [style.width.%]="anchoBarraMonto(d.monto, m.por_dia_semana)"
+                      ></span>
+                    </span>
+                    <span class="barra-tiempo-valor">
+                      {{ d.monto | currency: 'MXN' }} · {{ d.ventas }}
+                    </span>
+                  </li>
+                }
+              </ul>
+
+              <h3 class="subtitulo-menu">Ventas por hora del día</h3>
+              <ul class="barras-tiempo">
+                @for (h of m.por_hora; track h.hora) {
+                  <li>
+                    <span class="barra-tiempo-etiqueta">{{ h.hora }}:00</span>
+                    <span class="barra-tiempo-pista">
+                      <span
+                        class="barra-tiempo-relleno"
+                        [style.width.%]="anchoBarraMonto(h.monto, m.por_hora)"
+                      ></span>
+                    </span>
+                    <span class="barra-tiempo-valor">
+                      {{ h.monto | currency: 'MXN' }} · {{ h.ventas }}
+                    </span>
+                  </li>
+                }
+              </ul>
+            }
+          } @else {
+            <div class="esqueleto esqueleto-seccion-reporte" aria-hidden="true"></div>
           }
         </section>
       }

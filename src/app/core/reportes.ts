@@ -121,6 +121,34 @@ export interface FiltrosReporte {
   hasta?: string;
 }
 
+// ---- Ingeniería de menú (2026-11-16) ----
+export type ClaseMenu = 'estrella' | 'caballo' | 'rompecabezas' | 'perro' | 'sin_costo';
+
+export interface ItemMenu {
+  variante_id: number;
+  producto: string;
+  variante: string;
+  categoria: string | null;
+  unidades: number;
+  ingreso: number;
+  costo_unitario: number | null;
+  margen_unitario: number | null;
+  margen_total: number | null;
+  clase: ClaseMenu;
+}
+
+export interface AnalisisMenu {
+  umbral_unidades: number;
+  margen_promedio: number;
+  conteo: Record<ClaseMenu, number>;
+  total_unidades: number;
+  total_ingreso: number;
+  items: ItemMenu[];
+  // dia: 0 = domingo ... 6 = sábado (hora de Durango)
+  por_dia_semana: { dia: number; ventas: number; monto: number }[];
+  por_hora: { hora: number; ventas: number; monto: number }[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ReportesService {
   private readonly apiUrl = environment.apiUrl;
@@ -139,5 +167,13 @@ export class ReportesService {
       params['hasta'] = filtros.hasta;
     }
     return this.http.get<ResumenReportes>(`${this.apiUrl}/reportes/resumen`, { params });
+  }
+
+  // GET /api/reportes/ingenieria-menu?desde=&hasta= — qué conviene vender.
+  obtenerAnalisisMenu(filtros: FiltrosReporte): Observable<AnalisisMenu> {
+    const params: Record<string, string> = {};
+    if (filtros.desde) params['desde'] = filtros.desde;
+    if (filtros.hasta) params['hasta'] = filtros.hasta;
+    return this.http.get<AnalisisMenu>(`${this.apiUrl}/reportes/ingenieria-menu`, { params });
   }
 }
