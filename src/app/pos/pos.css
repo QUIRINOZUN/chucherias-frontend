@@ -3219,3 +3219,27 @@
   text-align: center;
   color: var(--pos-text-secondary);
 }
+
+/* Pedido programado (2026-11-16) */
+.campo-programado-fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.campo-programado-fila input[type='time'] {
+  min-height: 44px;
+  padding: 0 12px;
+}
+.boton-quitar-programado {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: none;
+  color: var(--pos-text-secondary);
+  cursor: pointer;
+}
+.ayuda-programado {
+  font-size: 0.8rem;
+  color: var(--pos-text-secondary);
+}

@@ -475,6 +475,27 @@ export class ComandasComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Pedido programado (2026-11-16): una orden para más tarde no debe contar como
+  // "esperando" desde que se cobró, sino desde 30 min antes de su hora.
+  referenciaDeEspera(orden: Orden): string {
+    if (!orden.programada_para) return orden.fecha_creacion;
+    const inicio = new Date(orden.programada_para).getTime() - 30 * 60000;
+    return new Date(Math.max(new Date(orden.fecha_creacion).getTime(), inicio)).toISOString();
+  }
+
+  // "5:30 pm" de la hora programada.
+  horaProgramada(orden: Orden): string {
+    return new Date(orden.programada_para!).toLocaleTimeString('es-MX', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  }
+
+  // Minutos que faltan para la hora programada (negativo = ya pasó).
+  minutosParaProgramada(orden: Orden): number {
+    return Math.round((new Date(orden.programada_para!).getTime() - Date.now()) / 60000);
+  }
+
   // Minutos enteros desde que se registró la venta.
   minutosEsperando(fechaCreacion: string): number {
     return Math.max(0, Math.floor((Date.now() - new Date(fechaCreacion).getTime()) / 60000));
@@ -494,13 +515,13 @@ export class ComandasComponent implements OnInit, OnDestroy {
 
   // true si la comanda ya lleva demasiado esperando (se resalta en rojo).
   esUrgente(orden: Orden): boolean {
-    return this.minutosEsperando(orden.fecha_creacion) >= MINUTOS_PARA_RESALTAR;
+    return this.minutosEsperando(this.referenciaDeEspera(orden)) >= MINUTOS_PARA_RESALTAR;
   }
 
   // true si ya se acerca al límite pero todavía no lo pasa (se resalta en
   // naranja, un paso antes del rojo de esUrgente).
   necesitaAtencion(orden: Orden): boolean {
-    const minutos = this.minutosEsperando(orden.fecha_creacion);
+    const minutos = this.minutosEsperando(this.referenciaDeEspera(orden));
     return minutos >= MINUTOS_PARA_ATENCION && minutos < MINUTOS_PARA_RESALTAR;
   }
 

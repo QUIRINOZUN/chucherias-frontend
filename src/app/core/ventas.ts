@@ -45,6 +45,8 @@ export interface NuevaVenta {
   // desde Comandas si todavía no se sabe quién la va a llevar.
   repartidor_id?: number;
   cliente_id?: number;
+  // Pedido programado (2026-11-16): ISO 8601 de la hora para la que se pidió.
+  programada_para?: string;
 }
 
 // Lo que responde el servidor tras registrar la venta (se usa para el

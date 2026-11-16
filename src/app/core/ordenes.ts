@@ -51,6 +51,8 @@ export interface Orden {
   cocinero_nombre: string | null;
   // Momento de la venta; sirve para calcular "hace X min" y resaltar demoras.
   fecha_creacion: string;
+  // Pedido programado (2026-11-16): hora para la que se pidió, o null si es para ahora.
+  programada_para: string | null;
   items: ItemOrden[];
 }
 

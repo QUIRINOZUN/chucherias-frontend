@@ -851,6 +851,12 @@
                 <span>Entrega</span>
                 <span>{{ r.tipoEntrega === 'presencial' ? 'Presencial' : 'A domicilio' }}</span>
               </div>
+              @if (r.horaProgramada) {
+                <div class="comprobante-linea">
+                  <span>Programado</span>
+                  <span>{{ r.horaProgramada }}</span>
+                </div>
+              }
               @if (r.tipoEntrega === 'domicilio') {
                 <div class="comprobante-linea">
                   <span>Cliente</span>
@@ -995,6 +1001,34 @@
                   >
                     A domicilio
                   </button>
+                </div>
+
+                <!-- PEDIDO PROGRAMADO (2026-11-16): opcional, para recoger o entregar
+                     más tarde; cocina lo ve en Comandas con su hora. -->
+                <div class="campo-cliente-domicilio campo-programado">
+                  <label for="programar-para">Programar para (opcional)</label>
+                  <div class="campo-programado-fila">
+                    <input
+                      id="programar-para"
+                      type="time"
+                      [value]="programarParaForm()"
+                      (input)="programarParaForm.set($any($event.target).value)"
+                    />
+                    @if (programarParaForm()) {
+                      <button
+                        type="button"
+                        class="boton-quitar-programado"
+                        (click)="programarParaForm.set('')"
+                      >
+                        Quitar
+                      </button>
+                    }
+                  </div>
+                  @if (programarParaForm()) {
+                    <span class="ayuda-programado">
+                      Se entregará hoy a las {{ textoHoraProgramada() }}.
+                    </span>
+                  }
                 </div>
 
                 <!-- DATOS DEL CLIENTE: solo para domicilio, obligatorios para poder cobrar. -->

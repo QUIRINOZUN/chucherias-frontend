@@ -704,3 +704,16 @@
   font-weight: 700;
   cursor: pointer;
 }
+
+/* Pedido programado (2026-11-16) */
+.etiqueta-programada {
+  align-self: flex-start;
+  margin: 2px 0 6px;
+  padding: 4px 10px;
+  border-radius: var(--radio-pastilla);
+  border: 1px solid var(--acento-modulo);
+  background: color-mix(in srgb, var(--acento-modulo) 12%, transparent);
+  color: var(--pos-text-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+}

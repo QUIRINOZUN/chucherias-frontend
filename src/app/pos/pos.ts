@@ -122,6 +122,8 @@ interface Recibo {
   // Nombre del repartidor asignado (2026-10-16), si tipoEntrega es
   // 'domicilio' y se eligió uno — null si no se asignó todavía.
   repartidorNombre: string | null;
+  // Hora del pedido programado ("5:30 pm"), o vacío si fue para ahora.
+  horaProgramada: string;
   // RF-21/RF-22 (2026-10-15): nombre del cliente de LEALTAD (si se ligó
   // alguno) y el descuento que el SERVIDOR de verdad aplicó — nunca el
   // estimado local (ver previsualizacionLealtad), que puede no coincidir
@@ -190,6 +192,28 @@ export class PosComponent implements OnInit, OnDestroy {
   // ingredientes removibles de cada producto.
   ingredientesDisponibles = obtenerIngredientesRemovibles;
   tipoEntrega = signal<TipoEntrega>('presencial');
+  // Pedido programado (2026-11-16): "HH:MM" de hoy (o de mañana si esa hora ya pasó);
+  // vacío = pedido para ahora.
+  programarParaForm = signal('');
+
+  // ISO 8601 de la hora programada, o null si no hay. Si la hora de hoy ya pasó
+  // hace más de 10 min se interpreta como mañana.
+  private programadaIso(): string | null {
+    const texto = this.programarParaForm().trim();
+    if (!/^\d{2}:\d{2}$/.test(texto)) return null;
+    const [h, m] = texto.split(':').map(Number);
+    const fecha = new Date();
+    fecha.setHours(h, m, 0, 0);
+    if (fecha.getTime() < Date.now() - 10 * 60 * 1000) fecha.setDate(fecha.getDate() + 1);
+    return fecha.toISOString();
+  }
+
+  // Texto "5:30 pm" de la hora programada (para el ticket y los avisos).
+  textoHoraProgramada(): string {
+    const iso = this.programadaIso();
+    if (!iso) return '';
+    return new Date(iso).toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit' });
+  }
   // Solo se piden y se mandan al servidor cuando tipoEntrega es 'domicilio'.
   clienteNombreForm = signal('');
   clienteDireccionForm = signal('');
@@ -1202,6 +1226,7 @@ export class PosComponent implements OnInit, OnDestroy {
       this.clienteNombreForm.set('');
       this.clienteDireccionForm.set('');
       this.clienteTelefonoForm.set('');
+      this.programarParaForm.set('');
       this.repartidorSeleccionadoId.set(null);
     }
   }
@@ -1438,6 +1463,8 @@ export class PosComponent implements OnInit, OnDestroy {
     const total = this.totalCarrito();
     const clienteLealtad = this.clienteLealtadSeleccionado();
     const repartidorId = this.repartidorSeleccionadoId();
+    const programadaIso = this.programadaIso();
+    const horaProgramada = this.textoHoraProgramada();
 
     // Lo que viaja al servidor: método, entrega y, por línea, SOLO variante,
     // cantidad y notas. Ningún precio. Datos del cliente solo si es domicilio.
@@ -1455,6 +1482,7 @@ export class PosComponent implements OnInit, OnDestroy {
           }
         : {}),
       ...(clienteLealtad ? { cliente_id: clienteLealtad.id } : {}),
+      ...(programadaIso ? { programada_para: programadaIso } : {}),
       items: itemsCarrito.map((item) => ({
         variante_id: item.varianteId,
         cantidad: item.cantidad,
@@ -1495,6 +1523,7 @@ export class PosComponent implements OnInit, OnDestroy {
           clienteDireccion,
           clienteTelefono,
           repartidorNombre: this.repartidores().find((r) => r.id === repartidorId)?.nombre || null,
+          horaProgramada,
           clienteLealtadNombre: clienteLealtad?.nombre_completo || null,
           descuentoLealtad: descuentoReal,
           cargoEnvio: Number(respuesta.venta.cargo_envio ?? 0),
@@ -1712,6 +1741,7 @@ export class PosComponent implements OnInit, OnDestroy {
       }
     }
     filas.push(linea('Entrega', r.tipoEntrega === 'presencial' ? 'Presencial' : 'Domicilio'));
+    if (r.horaProgramada) filas.push(linea('Programado', r.horaProgramada));
     if (r.tipoEntrega === 'domicilio') {
       filas.push(qa(`A: ${r.clienteNombre}`));
       filas.push(qa(r.clienteDireccion));
@@ -1788,6 +1818,7 @@ export class PosComponent implements OnInit, OnDestroy {
       this.clienteNombreForm.set('');
       this.clienteDireccionForm.set('');
       this.clienteTelefonoForm.set('');
+      this.programarParaForm.set('');
       this.repartidorSeleccionadoId.set(null);
       this.clienteLealtadSeleccionado.set(null);
       this.clienteLealtadQuery.set('');
@@ -1808,6 +1839,7 @@ export class PosComponent implements OnInit, OnDestroy {
     this.clienteNombreForm.set('');
     this.clienteDireccionForm.set('');
     this.clienteTelefonoForm.set('');
+    this.programarParaForm.set('');
     this.repartidorSeleccionadoId.set(null);
     this.montoRecibido.set(null);
     this.conteoEfectivo.set(new Map());

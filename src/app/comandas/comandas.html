@@ -114,9 +114,20 @@
               <div class="tarjeta-orden-encabezado">
                 <span class="numero-orden">{{ orden.numero_orden }}</span>
                 <span class="tiempo-transcurrido">{{
-                  tiempoTranscurrido(orden.fecha_creacion)
+                  tiempoTranscurrido(referenciaDeEspera(orden))
                 }}</span>
               </div>
+
+              @if (orden.programada_para) {
+                <span class="etiqueta-programada">
+                  Programada {{ horaProgramada(orden) }} ·
+                  @if (minutosParaProgramada(orden) > 0) {
+                    faltan {{ minutosParaProgramada(orden) }} min
+                  } @else {
+                    ya es la hora
+                  }
+                </span>
+              }
 
               <span
                 class="etiqueta-entrega"
