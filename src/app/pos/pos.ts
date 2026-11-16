@@ -441,6 +441,9 @@ export class PosComponent implements OnInit, OnDestroy {
 
   // Referencia al temporizador del sondeo, para poder detenerlo al salir.
   private intervaloRetirosId?: ReturnType<typeof setInterval>;
+  // Refresco silencioso del menú cada 5 min: una promoción que empieza o termina
+  // (2026-11-16) cambia el precio sin que haya que recargar la página.
+  private intervaloCatalogoId?: ReturnType<typeof setInterval>;
 
   // ---------------------------------------------------------------------------
   // Valores calculados (se recalculan solos cuando cambia lo que leen)
@@ -671,7 +674,7 @@ export class PosComponent implements OnInit, OnDestroy {
         this.errorCarga.set(this.interpretarErrorConexion(error)),
     });
 
-    this.catalogoService.obtenerProductos().subscribe({
+    this.catalogoService.obtenerProductos(false, true).subscribe({
       next: (productos) => {
         this.productos.set(productos);
         this.cargando.set(false);
@@ -681,6 +684,15 @@ export class PosComponent implements OnInit, OnDestroy {
         this.cargando.set(false);
       },
     });
+
+    this.intervaloCatalogoId = setInterval(
+      () =>
+        this.catalogoService.obtenerProductos(false, true).subscribe({
+          next: (productos) => this.productos.set(productos),
+          error: () => {},
+        }),
+      5 * 60 * 1000,
+    );
 
     this.verificarRetirosPendientes();
     this.intervaloRetirosId = setInterval(
@@ -760,6 +772,9 @@ export class PosComponent implements OnInit, OnDestroy {
   // Al salir de la pantalla se apaga el sondeo; si no, seguiría consultando
   // al servidor en segundo plano.
   ngOnDestroy(): void {
+    if (this.intervaloCatalogoId) {
+      clearInterval(this.intervaloCatalogoId);
+    }
     if (this.intervaloRetirosId) {
       clearInterval(this.intervaloRetirosId);
     }

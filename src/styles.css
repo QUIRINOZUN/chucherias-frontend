@@ -139,6 +139,8 @@
   --mod-gastos: #786f08;
   /* Compras comparte la familia de Inventario (mismo dominio: abastecer). */
   --mod-compras: var(--mod-inventario);
+  /* Promociones comparte la familia de Ventas especiales (fucsia: es una "oferta"). */
+  --mod-promociones: var(--mod-recetario);
   /* grafito/tinta — Bitácora (2026-10-30): tercer módulo "neutro" (junto a
      Reportes y Checklist) — un registro de auditoría no es un dominio de
      negocio propio, así que sigue el mismo criterio de no sumar un tono
@@ -372,7 +374,8 @@ textarea:focus-visible {
 .nomina-header,
 .ventas-especiales-header,
 .gastos-header,
-.compras-header {
+.compras-header,
+.promociones-header {
   position: relative;
   overflow: hidden;
   border-bottom: 0 !important;
@@ -419,6 +422,7 @@ textarea:focus-visible {
 .ventas-especiales-header h1,
 .gastos-header h1,
 .compras-header h1,
+.promociones-header h1,
 .bitacora-header h1 {
   min-width: 0;
   overflow: hidden;
@@ -450,6 +454,7 @@ textarea:focus-visible {
 .ventas-especiales-header::before,
 .gastos-header::before,
 .compras-header::before,
+.promociones-header::before,
 .bitacora-header::before {
   content: '';
   position: absolute;

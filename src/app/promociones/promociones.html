@@ -1,0 +1,310 @@
+<!-- ============================================================================
+     promociones.html — PROMOCIONES CON VIGENCIA (lógica en promociones.ts)
+     ============================================================================ -->
+<div class="promociones-container">
+  <header class="promociones-header">
+    <button type="button" class="boton-volver" (click)="volverAlDashboard()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      Volver
+    </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-regalo" /></svg>
+    </span>
+    <h1>Promociones</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
+    >
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
+    </button>
+  </header>
+
+  <div class="promociones-cuerpo">
+    <p class="ayuda-promos">
+      Un descuento que se aplica solo en el punto de venta cuando toca (por día, horario o fechas).
+      Si dos promociones aplican a lo mismo, gana la que más descuenta; no se suman.
+    </p>
+    <div class="barra-promos">
+      <button type="button" class="boton-promos-principal" (click)="abrir()">
+        + Nueva promoción
+      </button>
+    </div>
+
+    @if (cargando()) {
+      <div class="esqueleto esqueleto-promos" aria-hidden="true"></div>
+    } @else if (error()) {
+      <p class="mensaje-estado mensaje-error">{{ error() }}</p>
+    } @else if (promociones().length === 0) {
+      <p class="mensaje-estado">Todavía no hay promociones. Crea la primera.</p>
+    } @else {
+      <ul class="lista-promos">
+        @for (p of promociones(); track p.id) {
+          <li class="tarjeta-promo" [class.tarjeta-promo-inactiva]="!p.activo">
+            <div class="promo-cabecera">
+              <strong class="promo-nombre">{{ p.nombre }}</strong>
+              <span class="promo-valor">
+                {{ p.tipo === 'porcentaje' ? p.valor + '%' : (p.valor | currency: 'MXN') }} menos
+              </span>
+            </div>
+            <span class="promo-detalle">{{ aplicaA(p) }}</span>
+            <span class="promo-detalle">{{ cuando(p) }}</span>
+            <div class="promo-pie">
+              @if (!p.activo) {
+                <span class="insignia-promo insignia-promo-apagada">Desactivada</span>
+              } @else if (p.vigente_ahora) {
+                <span class="insignia-promo insignia-promo-vigente">Vigente ahora</span>
+              } @else {
+                <span class="insignia-promo">Fuera de horario</span>
+              }
+              <div class="promo-acciones">
+                <button type="button" class="boton-enlace-promos" (click)="abrir(p)">Editar</button>
+                <button type="button" class="boton-enlace-promos" (click)="alternarActivo(p)">
+                  {{ p.activo ? 'Desactivar' : 'Activar' }}
+                </button>
+                <button
+                  type="button"
+                  class="boton-enlace-promos boton-enlace-peligro"
+                  (click)="errorEliminar.set(''); aEliminar.set(p)"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  <!-- ===== Ventana: crear / editar ===== -->
+  @if (form(); as f) {
+    <div class="overlay">
+      <div
+        class="panel-promos"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Promoción"
+        appFocoDialogo
+        (cerrarConEscape)="form.set(null)"
+      >
+        <h2>{{ f.id === null ? 'Nueva promoción' : 'Editar promoción' }}</h2>
+
+        <label class="campo-promos">
+          Nombre *
+          <input
+            type="text"
+            maxlength="80"
+            placeholder="Ej. Martes de alitas"
+            [value]="f.nombre"
+            (input)="campo('nombre', $any($event.target).value)"
+          />
+        </label>
+
+        <div class="fila-promos">
+          <div class="campo-promos">
+            Tipo
+            <div class="pastillas-promos">
+              <button
+                type="button"
+                class="pastilla-promo"
+                [class.pastilla-promo-activa]="f.tipo === 'porcentaje'"
+                (click)="campo('tipo', 'porcentaje')"
+              >
+                % de descuento
+              </button>
+              <button
+                type="button"
+                class="pastilla-promo"
+                [class.pastilla-promo-activa]="f.tipo === 'monto'"
+                (click)="campo('tipo', 'monto')"
+              >
+                $ menos
+              </button>
+            </div>
+          </div>
+          <label class="campo-promos campo-promos-corto">
+            {{ f.tipo === 'porcentaje' ? 'Porcentaje *' : 'Monto *' }}
+            <input
+              type="number"
+              min="0"
+              step="any"
+              inputmode="decimal"
+              [value]="f.valor"
+              (input)="campo('valor', $any($event.target).value)"
+            />
+          </label>
+        </div>
+
+        <div class="campo-promos">
+          Aplica a
+          <div class="pastillas-promos">
+            @for (
+              a of [
+                ['todo', 'Todo el menú'],
+                ['categoria', 'Categoría'],
+                ['producto', 'Producto'],
+                ['variante', 'Variante'],
+              ];
+              track a[0]
+            ) {
+              <button
+                type="button"
+                class="pastilla-promo"
+                [class.pastilla-promo-activa]="f.alcance === a[0]"
+                (click)="cambiarAlcance($any(a[0]))"
+              >
+                {{ a[1] }}
+              </button>
+            }
+          </div>
+          @if (f.alcance === 'categoria') {
+            <select
+              [value]="f.alcanceId ?? ''"
+              (change)="campo('alcanceId', +$any($event.target).value || null)"
+              aria-label="Categoría"
+            >
+              <option value="">Elige una categoría…</option>
+              @for (c of categorias(); track c.id) {
+                <option [value]="c.id" [selected]="c.id === f.alcanceId">{{ c.nombre }}</option>
+              }
+            </select>
+          }
+          @if (f.alcance === 'producto') {
+            <select
+              [value]="f.alcanceId ?? ''"
+              (change)="campo('alcanceId', +$any($event.target).value || null)"
+              aria-label="Producto"
+            >
+              <option value="">Elige un producto…</option>
+              @for (p of productos(); track p.id) {
+                <option [value]="p.id" [selected]="p.id === f.alcanceId">{{ p.nombre }}</option>
+              }
+            </select>
+          }
+          @if (f.alcance === 'variante') {
+            <select
+              [value]="f.alcanceId ?? ''"
+              (change)="campo('alcanceId', +$any($event.target).value || null)"
+              aria-label="Variante"
+            >
+              <option value="">Elige una variante…</option>
+              @for (v of variantes(); track v.id) {
+                <option [value]="v.id" [selected]="v.id === f.alcanceId">{{ v.nombre }}</option>
+              }
+            </select>
+          }
+        </div>
+
+        <div class="campo-promos">
+          Días (sin marcar = todos)
+          <div class="pastillas-promos">
+            @for (d of DIAS; track d) {
+              <button
+                type="button"
+                class="pastilla-promo pastilla-dia"
+                [class.pastilla-promo-activa]="f.dias.includes(d)"
+                [attr.aria-pressed]="f.dias.includes(d)"
+                (click)="alternarDia(d)"
+              >
+                {{ NOMBRES_DIA[d] }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="fila-promos">
+          <label class="campo-promos campo-promos-corto">
+            Desde la hora
+            <input
+              type="time"
+              [value]="f.horaInicio"
+              (input)="campo('horaInicio', $any($event.target).value)"
+            />
+          </label>
+          <label class="campo-promos campo-promos-corto">
+            Hasta la hora
+            <input
+              type="time"
+              [value]="f.horaFin"
+              (input)="campo('horaFin', $any($event.target).value)"
+            />
+          </label>
+        </div>
+
+        <div class="fila-promos">
+          <label class="campo-promos campo-promos-corto">
+            Desde el día
+            <input
+              type="date"
+              [value]="f.fechaInicio"
+              (input)="campo('fechaInicio', $any($event.target).value)"
+            />
+          </label>
+          <label class="campo-promos campo-promos-corto">
+            Hasta el día
+            <input
+              type="date"
+              [value]="f.fechaFin"
+              (input)="campo('fechaFin', $any($event.target).value)"
+            />
+          </label>
+        </div>
+
+        @if (errorForm()) {
+          <p class="mensaje-error">{{ errorForm() }}</p>
+        }
+        <div class="botones-promos">
+          <button type="button" class="boton-promos-secundario" (click)="form.set(null)">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-promos-principal"
+            [disabled]="guardando()"
+            (click)="guardar()"
+          >
+            {{ guardando() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ===== Ventana: confirmar eliminar ===== -->
+  @if (aEliminar(); as p) {
+    <div class="overlay">
+      <div
+        class="panel-promos panel-promos-angosto"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Eliminar promoción"
+        appFocoDialogo
+        (cerrarConEscape)="aEliminar.set(null)"
+      >
+        <h2>Eliminar promoción</h2>
+        <p>
+          ¿Eliminar <strong>{{ p.nombre }}</strong
+          >? Las ventas ya cobradas conservan lo que se cobró. Si solo quieres pausarla, mejor
+          desactívala.
+        </p>
+        @if (errorEliminar()) {
+          <p class="mensaje-error">{{ errorEliminar() }}</p>
+        }
+        <div class="botones-promos">
+          <button type="button" class="boton-promos-secundario" (click)="aEliminar.set(null)">
+            Cancelar
+          </button>
+          <button type="button" class="boton-promos-peligro" (click)="confirmarEliminar()">
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

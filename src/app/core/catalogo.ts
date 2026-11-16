@@ -45,6 +45,10 @@ export interface Variante {
   // criterio ya establecido de que "sin receta" no es un error). El POS la
   // usa para mostrarla en gris y bloquear agregarla al carrito.
   insumos_suficientes: boolean;
+  // Promociones (2026-11-16): solo vienen cuando se pide con promociones (POS) y la
+  // variante tiene una vigente — `precio` ya es el precio con descuento.
+  precio_original?: number;
+  promocion?: string;
 }
 
 // Un producto del menú con todas sus variantes ya incluidas.
@@ -97,8 +101,11 @@ export class CatalogoService {
   // GET /api/productos?todos=1 — por default solo activos (con sus variantes
   // activas); incluirInactivos trae también los desactivados, para la
   // pantalla de gestión del menú.
-  obtenerProductos(incluirInactivos = false): Observable<Producto[]> {
+  // conPromociones (2026-11-16): solo el POS lo pide — así el precio ya trae el
+  // descuento vigente; las pantallas de gestión necesitan el precio de lista.
+  obtenerProductos(incluirInactivos = false, conPromociones = false): Observable<Producto[]> {
     const params: Record<string, string> = incluirInactivos ? { todos: '1' } : {};
+    if (conPromociones) params['con_promociones'] = '1';
     return this.http.get<Producto[]>(`${this.apiUrl}/productos`, { params });
   }
 

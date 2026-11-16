@@ -162,6 +162,14 @@ const MODULOS: Modulo[] = [
     colorVar: 'var(--mod-compras)',
   },
   {
+    ruta: '/promociones',
+    titulo: 'Promociones',
+    icono: 'regalo',
+    descripcion: 'Descuentos por día, horario y fechas.',
+    roles: ['administrador', 'encargado'],
+    colorVar: 'var(--mod-promociones)',
+  },
+  {
     ruta: '/mermas',
     titulo: 'Mermas',
     icono: 'picante',
@@ -269,6 +277,7 @@ const GRUPO_POR_RUTA: Record<string, string> = {
   '/recetario': 'Cocina e inventario',
   '/inventario': 'Cocina e inventario',
   '/compras': 'Cocina e inventario',
+  '/promociones': 'Ventas y caja',
   '/mermas': 'Cocina e inventario',
   '/usuarios': 'Personas',
   '/asistencias': 'Personas',
