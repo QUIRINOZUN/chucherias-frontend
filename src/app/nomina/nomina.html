@@ -90,6 +90,24 @@
       }
     </section>
 
+    <!-- TARIFA DE ENVÍO A DOMICILIO: siempre visible; solo el administrador la edita. -->
+    <section class="tarjeta-tarifa-envio" aria-label="Tarifa de envío a domicilio">
+      <div class="tarifa-envio-texto">
+        <span class="tarifa-envio-etiqueta">Tarifa de envío a domicilio</span>
+        <span class="tarifa-envio-valor">
+          {{ tarifaEnvio() === null ? '—' : (tarifaEnvio() | currency: 'MXN') }}
+        </span>
+        <span class="tarifa-envio-nota">
+          Se cobra al cliente en cada pedido a domicilio y se le paga al repartidor.
+        </span>
+      </div>
+      @if (esAdministrador()) {
+        <button type="button" class="boton-tarifa-envio" (click)="abrirTarifaEnvio()">
+          Editar tarifa de envío
+        </button>
+      }
+    </section>
+
     @if (error()) {
       <p class="mensaje-estado mensaje-error">{{ error() }}</p>
     } @else if (cargando()) {
@@ -109,7 +127,7 @@
       @if (envios().length > 0) {
         <section class="franja-atencion-nomina" aria-label="Envíos a domicilio por pagar">
           <strong
-            >Envíos a domicilio (cargo de $25 cobrado al cliente):
+            >Envíos a domicilio (cargo cobrado al cliente):
             {{ totalEnvios() | currency: 'MXN' }}</strong
           >
           <ul class="lista-atencion-nomina">

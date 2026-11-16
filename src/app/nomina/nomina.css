@@ -151,6 +151,59 @@
   }
 }
 
+/* Tarifa de envío a domicilio: dato fijo del módulo, con su botón de edición. */
+.tarjeta-tarifa-envio {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  padding: 14px 18px;
+  border: 1px solid var(--pos-border);
+  border-left: 5px solid var(--acento-modulo);
+  border-radius: var(--radio-md);
+  background: var(--pos-bg-card);
+}
+
+.tarifa-envio-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tarifa-envio-etiqueta {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pos-text-secondary);
+}
+
+.tarifa-envio-valor {
+  font-family: var(--fuente-titulo);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--pos-text-primary);
+}
+
+.tarifa-envio-nota {
+  font-size: 0.82rem;
+  color: var(--pos-text-secondary);
+}
+
+.boton-tarifa-envio {
+  min-height: 44px;
+  padding: 0 18px;
+  border: none;
+  border-radius: var(--radio-pastilla);
+  background: var(--acento-modulo);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .campo-checkbox {
   display: flex;
   align-items: center;
