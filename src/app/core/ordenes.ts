@@ -54,6 +54,8 @@ export interface Orden {
   // Pedido programado (2026-11-16): hora para la que se pidió, o null si es para ahora.
   programada_para: string | null;
   items: ItemOrden[];
+  // Embalaje para llevar elegido en el cobro (2026-11-17).
+  embalajes?: { nombre: string; cantidad: number }[];
 }
 
 // Un renglón del historial de tiempos de una orden (RF-08): cuánto duró en

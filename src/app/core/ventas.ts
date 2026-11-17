@@ -51,6 +51,8 @@ export interface NuevaVenta {
   propina?: number;
   // Clave única de esta venta (2026-11-16): permite reintentarla sin duplicarla.
   clave?: string;
+  // Embalaje para llevar (2026-11-17): charolas, cajas, etc.; se descuentan del inventario.
+  embalajes?: { insumo_id: number; cantidad: number }[];
 }
 
 // Lo que responde el servidor tras registrar la venta (se usa para el

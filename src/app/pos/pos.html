@@ -1080,6 +1080,44 @@
                   }
                 </div>
 
+                <!-- EMBALAJE PARA LLEVAR (2026-11-17): opcional; se descuenta del inventario. -->
+                @if (embalajesCatalogo().length > 0) {
+                  <div class="bloque-embalaje">
+                    <span class="bloque-embalaje-titulo">Embalaje para llevar (opcional)</span>
+                    <ul class="lista-embalaje">
+                      @for (e of embalajesCatalogo(); track e.id) {
+                        <li class="fila-embalaje" [class.fila-embalaje-agotada]="e.agotado">
+                          <span class="fila-embalaje-nombre">
+                            {{ e.nombre }}
+                            @if (e.agotado) {
+                              <small>Agotado</small>
+                            }
+                          </span>
+                          <span class="fila-embalaje-contador">
+                            @if (cantidadEmbalaje(e.id) > 0) {
+                              <button
+                                type="button"
+                                [attr.aria-label]="'Quitar uno de ' + e.nombre"
+                                (click)="restarEmbalaje(e)"
+                              >
+                                −
+                              </button>
+                              <strong>{{ cantidadEmbalaje(e.id) }}</strong>
+                            }
+                            <button
+                              type="button"
+                              [attr.aria-label]="'Agregar uno de ' + e.nombre"
+                              (click)="sumarEmbalaje(e)"
+                            >
+                              +
+                            </button>
+                          </span>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                }
+
                 <!-- DATOS DEL CLIENTE: solo para domicilio, obligatorios para poder cobrar. -->
                 @if (tipoEntrega() === 'domicilio') {
                   <div class="campo-cliente-domicilio">

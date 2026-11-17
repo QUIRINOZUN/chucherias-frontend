@@ -1,0 +1,359 @@
+/* =============================================================================
+   embalajes.css — EMBALAJES Y DECORACIONES (2026-11-17)
+   =============================================================================
+   Parte de Inventario: mismo color de identidad (--mod-inventario). El encabezado se decora
+   desde styles.css; aquí va su disposición. */
+
+:host {
+  --acento-modulo: var(--mod-inventario);
+  display: block;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--pos-bg-main);
+  font-family: var(--fuente-texto);
+  color: var(--pos-text-primary);
+  animation: aparecer 0.22s ease;
+}
+
+.embalajes-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.embalajes-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--pos-bg-card);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.embalajes-header h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.boton-volver,
+.boton-tema {
+  min-height: 44px;
+  border: none;
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  border-radius: var(--radio-pastilla);
+  padding: 0 18px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.boton-tema {
+  min-width: 44px;
+  padding: 0;
+}
+
+.embalajes-cuerpo {
+  flex: 1;
+  width: 100%;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.ayuda-embalajes {
+  margin: 0 0 12px;
+  font-size: 0.88rem;
+  color: var(--pos-text-secondary);
+}
+
+/* ---- Pestañas ---- */
+.tabs-embalajes {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--pos-border);
+  overflow-x: auto;
+}
+.tab-embalajes {
+  min-height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--pos-text-secondary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tab-embalajes-activa {
+  color: var(--pos-text-primary);
+  border-bottom-color: var(--acento-modulo);
+}
+.contador-tab {
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: var(--radio-pastilla);
+  background: var(--acento-modulo);
+  color: #fff;
+  font-size: 0.75rem;
+}
+
+.barra-embalajes {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+/* ---- Botones ---- */
+.boton-embalajes-principal,
+.boton-embalajes-secundario,
+.boton-embalajes-peligro {
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: var(--radio-pastilla);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.boton-embalajes-principal {
+  border: none;
+  background: var(--acento-modulo);
+  color: #fff;
+}
+.boton-embalajes-principal:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.boton-embalajes-principal.chico {
+  padding: 0 14px;
+  font-size: 0.8rem;
+}
+.boton-embalajes-secundario {
+  border: 1px solid var(--pos-border);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+}
+.boton-embalajes-peligro {
+  border: none;
+  background: var(--action-danger, #b91c1c);
+  color: #fff;
+}
+.boton-enlace-embalajes {
+  min-height: 44px;
+  padding: 0 10px;
+  border: none;
+  background: none;
+  color: var(--acento-modulo);
+  font-weight: 700;
+  font-size: 0.82rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.boton-enlace-peligro {
+  color: var(--peligro-texto);
+}
+
+.mensaje-estado {
+  padding: 24px 8px;
+  text-align: center;
+  color: var(--pos-text-secondary);
+}
+.mensaje-error {
+  color: var(--peligro-texto);
+  font-size: 0.9rem;
+}
+.esqueleto-embalajes {
+  height: 200px;
+}
+
+/* ---- Lista ---- */
+.lista-embalajes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tarjeta-embalaje {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 14px;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--pos-bg-card);
+  border: 1px solid var(--pos-border);
+  border-left: 5px solid var(--acento-modulo);
+  border-radius: var(--radio-md);
+}
+.tarjeta-embalaje-alerta {
+  border-left-color: var(--peligro-texto);
+}
+.embalaje-datos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.embalaje-nombre {
+  font-family: var(--fuente-titulo);
+  font-size: 1.05rem;
+}
+.insignia-clase {
+  padding: 1px 8px;
+  border-radius: var(--radio-pastilla);
+  background: color-mix(in srgb, var(--acento-modulo) 16%, transparent);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.embalaje-detalle {
+  flex-basis: 100%;
+  font-size: 0.82rem;
+  color: var(--pos-text-secondary);
+}
+.embalaje-existencia {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.embalaje-cifra {
+  font-family: var(--fuente-titulo);
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.embalaje-unidad {
+  font-size: 0.8rem;
+  color: var(--pos-text-secondary);
+}
+.embalaje-aviso {
+  flex-basis: 100%;
+  text-align: right;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--peligro-texto);
+}
+.embalaje-acciones {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  padding-top: 6px;
+  border-top: 1px dotted var(--pos-border);
+}
+
+/* ---- Ventanas ---- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 40;
+  animation: aparecer 0.2s ease;
+  overflow-y: auto;
+}
+.panel-formulario {
+  width: 100%;
+  max-width: 460px;
+  max-height: 90vh;
+  max-height: 90dvh;
+  overflow-y: auto;
+  padding: 20px;
+  background: var(--pos-bg-card);
+  border-top: 4px solid var(--acento-modulo);
+  border-radius: var(--radio-lg);
+  box-shadow: var(--sombra-elevada);
+}
+.panel-formulario h2 {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+}
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.etiqueta-campo {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.campo input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-sm);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  font-size: 1rem;
+  font-family: inherit;
+}
+.campo input:focus {
+  outline: 2px solid var(--acento-modulo);
+  outline-offset: 1px;
+}
+.ayuda-campo {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--pos-text-secondary);
+}
+.fila-campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.pastillas-embalajes {
+  display: flex;
+  gap: 8px;
+}
+.pastilla-embalajes {
+  flex: 1;
+  min-height: 44px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+.pastilla-embalajes-activa {
+  background: var(--acento-modulo);
+  border-color: var(--acento-modulo);
+  color: #fff;
+}
+.acciones-formulario {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+@media (max-width: 480px) {
+  .fila-campos {
+    grid-template-columns: 1fr;
+  }
+  .tarjeta-embalaje {
+    grid-template-columns: 1fr;
+  }
+  .embalaje-existencia {
+    justify-content: flex-start;
+  }
+  .embalaje-aviso {
+    text-align: left;
+  }
+}

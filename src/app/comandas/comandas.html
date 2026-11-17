@@ -253,6 +253,15 @@
                 }
               </ul>
 
+              @if (orden.embalajes && orden.embalajes.length > 0) {
+                <p class="embalaje-orden">
+                  <strong>Para llevar:</strong>
+                  @for (e of orden.embalajes; track e.nombre; let ultimo = $last) {
+                    {{ e.cantidad }}× {{ e.nombre }}{{ ultimo ? '' : ',' }}
+                  }
+                </p>
+              }
+
               <!-- BOTÓN DE AVANCE: solo administrador, encargado y auxiliar. Pasa la comanda al siguiente estado;
                    en "por entregar" el botón es verde porque cierra el ciclo. -->
               @if (puedeAvanzar()) {

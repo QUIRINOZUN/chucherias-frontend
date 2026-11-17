@@ -92,6 +92,9 @@ export interface ProductoMargenBajo {
 export interface ResumenRentabilidad {
   ingresos: number;
   costo_ventas: number;
+  // Embalaje y decoraciones usados en el periodo (2026-11-17), ya restado de la utilidad bruta.
+  costo_embalaje?: number;
+  embalajes_sin_costo?: number;
   utilidad_bruta: number;
   margen_porcentaje: number | null;
   lineas_con_costo: number;

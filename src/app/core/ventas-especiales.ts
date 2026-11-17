@@ -50,6 +50,14 @@ export interface VentaEspecialDetalle extends VentaEspecialResumen {
   fecha_creacion: string;
   fecha_actualizacion: string | null;
   items: ItemVentaEspecial[];
+  // Embalaje y decoraciones elegidos (2026-11-17).
+  embalajes?: {
+    insumo_id: number;
+    nombre: string;
+    clase: 'embalaje' | 'decoracion' | null;
+    unidad_medida: string;
+    cantidad: number;
+  }[];
 }
 
 export interface FiltrosVentasEspeciales {
@@ -76,6 +84,7 @@ export interface DatosNuevaVentaEspecial {
   hora_evento?: string | null;
   notas?: string | null;
   items: ItemParaGuardar[];
+  embalajes?: { insumo_id: number; cantidad: number }[];
 }
 
 // Edición parcial: todo opcional, lo que no llega conserva su valor actual
@@ -91,6 +100,7 @@ export interface DatosEdicionVentaEspecial {
   notas?: string | null;
   estado?: EstadoVentaEspecial;
   items?: ItemParaGuardar[];
+  embalajes?: { insumo_id: number; cantidad: number }[];
 }
 
 @Injectable({ providedIn: 'root' })

@@ -29,6 +29,7 @@ import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { CatalogoService, Categoria, Producto, Variante } from '../core/catalogo';
 import { aplicarEstilosPersonalizados, obtenerEstiloCategoria } from '../pos/categoria-estilos';
 import { ThemeService } from '../core/theme';
+import { Embalaje, EmbalajesService } from '../core/embalajes';
 import {
   VentasEspecialesService,
   VentaEspecialResumen,
@@ -186,9 +187,38 @@ export class VentasEspecialesComponent implements OnInit {
   errorEliminarHistorial = signal('');
   resultadoEliminarHistorial = signal<string | null>(null);
 
+  // Embalaje y decoraciones de la cotización (2026-11-17): catálogo de ventas especiales y cuántos de cada uno.
+  embalajesCatalogo = signal<Embalaje[]>([]);
+  embalajeSeleccion = signal<Map<number, number>>(new Map());
+  embalajesDeClase = (clase: 'embalaje' | 'decoracion') =>
+    computed(() => this.embalajesCatalogo().filter((e) => (e.clase ?? 'embalaje') === clase));
+  soloEmbalajes = this.embalajesDeClase('embalaje');
+  soloDecoraciones = this.embalajesDeClase('decoracion');
+
+  cantidadEmbalaje(id: number): number {
+    return this.embalajeSeleccion().get(id) ?? 0;
+  }
+
+  sumarEmbalaje(e: Embalaje): void {
+    this.embalajeSeleccion.update((m) =>
+      new Map(m).set(e.id, Math.min((m.get(e.id) ?? 0) + 1, 500)),
+    );
+  }
+
+  restarEmbalaje(e: Embalaje): void {
+    this.embalajeSeleccion.update((m) => {
+      const nuevo = new Map(m);
+      const cant = (nuevo.get(e.id) ?? 0) - 1;
+      if (cant <= 0) nuevo.delete(e.id);
+      else nuevo.set(e.id, cant);
+      return nuevo;
+    });
+  }
+
   constructor(
     private ventasEspecialesService: VentasEspecialesService,
     private catalogoService: CatalogoService,
+    private embalajesService: EmbalajesService,
     private authService: AuthService,
     public themeService: ThemeService,
     private router: Router,
@@ -336,13 +366,24 @@ export class VentasEspecialesComponent implements OnInit {
     this.notasForm.set('');
     this.estadoForm.set('cotizada');
     this.itemsForm.set([]);
+    this.embalajeSeleccion.set(new Map());
     this.errorGuardar.set('');
+    this.cargarEmbalajes();
     this.cargarCatalogoSiHaceFalta();
     this.vista.set('detalle');
   }
 
+  // Catálogo de embalaje y decoraciones para ventas especiales; si falla, el formulario sigue sin esa sección.
+  private cargarEmbalajes(): void {
+    this.embalajesService.listar('especial').subscribe({
+      next: (l) => this.embalajesCatalogo.set(l),
+      error: () => this.embalajesCatalogo.set([]),
+    });
+  }
+
   abrirEditarCotizacion(resumen: VentaEspecialResumen): void {
     this.errorGuardar.set('');
+    this.cargarEmbalajes();
     this.cargarCatalogoSiHaceFalta();
     this.vista.set('detalle');
     this.ventasEspecialesService.obtener(resumen.id).subscribe({
@@ -356,6 +397,9 @@ export class VentasEspecialesComponent implements OnInit {
         this.horaEventoForm.set(venta.hora_evento?.slice(0, 5) ?? '');
         this.notasForm.set(venta.notas ?? '');
         this.estadoForm.set(venta.estado);
+        this.embalajeSeleccion.set(
+          new Map((venta.embalajes ?? []).map((e) => [e.insumo_id, e.cantidad])),
+        );
         this.itemsForm.set(
           venta.items.map((item) => ({
             id: siguienteIdItem++,
@@ -506,6 +550,10 @@ export class VentasEspecialesComponent implements OnInit {
       hora_evento: this.horaEventoForm() || null,
       notas: this.notasForm().trim() || null,
       items,
+      embalajes: [...this.embalajeSeleccion().entries()].map(([insumo_id, cantidad]) => ({
+        insumo_id,
+        cantidad,
+      })),
     };
 
     const ventaActual = this.ventaEditando();

@@ -1042,3 +1042,57 @@
 .lista-ve .tarjeta-ve[data-estado='cancelada'] {
   opacity: 0.6;
 }
+
+/* Embalaje y decoraciones de la cotización (2026-11-17) */
+.tarjeta-embalaje-ve {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: var(--pos-bg-card);
+  border: 1px solid var(--pos-border);
+  border-left: 5px solid var(--acento-modulo);
+  border-radius: var(--radio-md);
+}
+.tarjeta-embalaje-ve h2 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+}
+.grupo-embalaje-ve {
+  margin-top: 12px;
+}
+.grupo-embalaje-ve-titulo {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pos-text-secondary);
+}
+.fila-embalaje-ve {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  border-bottom: 1px dotted var(--pos-border);
+}
+.contador-embalaje-ve {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.contador-embalaje-ve button {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--pos-border);
+  border-radius: 50%;
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+.contador-embalaje-ve strong {
+  min-width: 24px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}

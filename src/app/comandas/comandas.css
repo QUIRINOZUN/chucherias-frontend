@@ -717,3 +717,12 @@
   font-size: 0.8rem;
   font-weight: 700;
 }
+
+/* Embalaje para llevar de la orden (2026-11-17) */
+.embalaje-orden {
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  border-radius: var(--radio-sm);
+  background: color-mix(in srgb, var(--acento-modulo) 12%, transparent);
+  font-size: 0.85rem;
+}

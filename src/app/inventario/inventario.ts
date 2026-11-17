@@ -1134,6 +1134,11 @@ export class InventarioComponent implements OnInit {
       });
   }
 
+  /** Abre el catálogo de embalajes (charolas, cajas, decoraciones), parte de Inventario. */
+  irAEmbalajes(): void {
+    this.router.navigate(['/embalajes']);
+  }
+
   /** Lleva al módulo de pedidos a proveedores (cierra la ventana de entrada). */
   irACompras(): void {
     this.cerrarMovimiento();

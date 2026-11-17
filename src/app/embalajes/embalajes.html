@@ -1,0 +1,387 @@
+<!-- ============================================================================
+     embalajes.html — EMBALAJES Y DECORACIONES (lógica en embalajes.ts). Parte de Inventario.
+     ============================================================================ -->
+<div class="embalajes-container">
+  <header class="embalajes-header">
+    <button type="button" class="boton-volver" (click)="volver()">
+      <svg class="icono" aria-hidden="true"><use href="#ic-volver" /></svg>
+      Inventario
+    </button>
+    <span class="insignia-pantalla" aria-hidden="true">
+      <svg class="icono"><use href="#ic-bolsa" /></svg>
+    </span>
+    <h1>Embalajes</h1>
+    <button
+      type="button"
+      class="boton-tema"
+      (click)="themeService.alternarTema()"
+      [attr.aria-label]="
+        themeService.tema() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+      "
+    >
+      <svg class="icono" aria-hidden="true">
+        <use [attr.href]="themeService.tema() === 'dark' ? '#ic-sol' : '#ic-luna'" />
+      </svg>
+    </button>
+  </header>
+
+  <main class="embalajes-cuerpo">
+    <p class="ayuda-embalajes">
+      Charolas, cajas, bolsas y decoraciones. Cada una lleva su existencia y su costo como un
+      insumo: lo que se usa en las ventas se descuenta solo y su costo entra a Reportes.
+    </p>
+
+    <nav class="tabs-embalajes" role="tablist" aria-label="Tipo de embalaje">
+      <button
+        type="button"
+        role="tab"
+        class="tab-embalajes"
+        [class.tab-embalajes-activa]="uso() === 'venta'"
+        [attr.aria-selected]="uso() === 'venta'"
+        (click)="elegirUso('venta')"
+      >
+        Ventas normales
+        <span class="contador-tab">{{ cuenta().venta }}</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="tab-embalajes"
+        [class.tab-embalajes-activa]="uso() === 'especial'"
+        [attr.aria-selected]="uso() === 'especial'"
+        (click)="elegirUso('especial')"
+      >
+        Ventas especiales
+        <span class="contador-tab">{{ cuenta().especial }}</span>
+      </button>
+    </nav>
+
+    <p class="ayuda-embalajes">
+      @if (uso() === 'venta') {
+        Se eligen en el cobro del punto de venta cuando el pedido es para llevar (charolas, cajas de
+        pizza, bolsas...). Se descuentan junto con los insumos del pedido.
+      } @else {
+        Se eligen al cotizar una venta especial: embalaje y decoraciones (globos, listones, cajas de
+        regalo...). Se descuentan cuando la cotización se marca como entregada.
+      }
+    </p>
+
+    <div class="barra-embalajes">
+      <button type="button" class="boton-embalajes-principal" (click)="abrirForm()">
+        + Nuevo {{ uso() === 'venta' ? 'embalaje' : 'embalaje o decoración' }}
+      </button>
+    </div>
+
+    @if (cargando()) {
+      <div class="esqueleto esqueleto-embalajes" aria-hidden="true"></div>
+    } @else if (error()) {
+      <p class="mensaje-error">{{ error() }}</p>
+    } @else if (lista().length === 0) {
+      <p class="mensaje-estado">Todavía no hay nada aquí. Agrega el primero.</p>
+    } @else {
+      <ul class="lista-embalajes">
+        @for (e of lista(); track e.id) {
+          <li class="tarjeta-embalaje" [class.tarjeta-embalaje-alerta]="e.alerta || e.agotado">
+            <div class="embalaje-datos">
+              <strong class="embalaje-nombre">{{ e.nombre }}</strong>
+              @if (e.uso === 'especial') {
+                <span class="insignia-clase">{{ etiquetaClase(e) }}</span>
+              }
+              <span class="embalaje-detalle">
+                @if (e.costo_unitario != null) {
+                  {{ e.costo_unitario | currency: 'MXN' : 'symbol' : '1.2-4' }} por
+                  {{ e.unidad_medida }}
+                } @else {
+                  Sin costo capturado
+                }
+                @if (e.cantidad_minima) {
+                  · mín. {{ e.cantidad_minima | number: '1.0-2' }}
+                }
+              </span>
+            </div>
+            <div class="embalaje-existencia">
+              <span class="embalaje-cifra">{{ e.existencia | number: '1.0-2' }}</span>
+              <span class="embalaje-unidad">{{ e.unidad_medida }}</span>
+              @if (e.existencia <= 0) {
+                <span class="embalaje-aviso">Agotado</span>
+              } @else if (e.alerta) {
+                <span class="embalaje-aviso">Bajo mínimo</span>
+              }
+            </div>
+            <div class="embalaje-acciones">
+              <button
+                type="button"
+                class="boton-embalajes-principal chico"
+                (click)="abrirMovimiento(e, 'entrada')"
+              >
+                + Entrada
+              </button>
+              <button type="button" class="boton-enlace-embalajes" (click)="abrirForm(e)">
+                Editar
+              </button>
+              <button
+                type="button"
+                class="boton-enlace-embalajes"
+                (click)="abrirMovimiento(e, 'ajuste')"
+              >
+                Ajuste
+              </button>
+              <button
+                type="button"
+                class="boton-enlace-embalajes"
+                (click)="abrirMovimiento(e, 'merma')"
+              >
+                Merma
+              </button>
+              <button
+                type="button"
+                class="boton-enlace-embalajes boton-enlace-peligro"
+                (click)="errorEliminar.set(''); aEliminar.set(e)"
+              >
+                Eliminar
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </main>
+
+  <!-- ===== Alta / edición ===== -->
+  @if (form(); as f) {
+    <div class="overlay">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="f.id === null ? 'Nuevo embalaje' : 'Editar embalaje'"
+        appFocoDialogo
+        (cerrarConEscape)="form.set(null)"
+      >
+        <h2>
+          {{ f.id === null ? 'Nuevo' : 'Editar' }} {{ uso() === 'venta' ? 'embalaje' : 'elemento' }}
+        </h2>
+        <p class="ayuda-embalajes">
+          Para {{ uso() === 'venta' ? 'ventas normales' : 'ventas especiales' }}.
+        </p>
+
+        <div class="campo">
+          <label for="emb-nombre">Nombre *</label>
+          <input
+            id="emb-nombre"
+            type="text"
+            autocomplete="off"
+            placeholder="Ej. Charola desechable mediana"
+            [value]="f.nombre"
+            (input)="campo('nombre', $any($event.target).value)"
+          />
+        </div>
+
+        @if (uso() === 'especial') {
+          <div class="campo">
+            <span class="etiqueta-campo">Es un...</span>
+            <div class="pastillas-embalajes" role="group" aria-label="Clase">
+              <button
+                type="button"
+                class="pastilla-embalajes"
+                [class.pastilla-embalajes-activa]="f.clase === 'embalaje'"
+                (click)="elegirClase('embalaje')"
+              >
+                Embalaje
+              </button>
+              <button
+                type="button"
+                class="pastilla-embalajes"
+                [class.pastilla-embalajes-activa]="f.clase === 'decoracion'"
+                (click)="elegirClase('decoracion')"
+              >
+                Decoración
+              </button>
+            </div>
+          </div>
+        }
+
+        <div class="fila-campos">
+          <div class="campo">
+            <label for="emb-unidad">Unidad</label>
+            <input
+              id="emb-unidad"
+              type="text"
+              autocomplete="off"
+              placeholder="pza"
+              [value]="f.unidad"
+              (input)="campo('unidad', $any($event.target).value)"
+            />
+          </div>
+          <div class="campo">
+            <label for="emb-min">Mínimo (avisa al llegar a esta cantidad)</label>
+            <input
+              id="emb-min"
+              type="number"
+              min="0"
+              step="any"
+              inputmode="decimal"
+              [value]="minimoForm()"
+              (input)="minimoForm.set($any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="emb-costo">Costo por {{ f.unidad || 'pieza' }} (opcional)</label>
+          <input
+            id="emb-costo"
+            type="number"
+            min="0"
+            step="any"
+            inputmode="decimal"
+            placeholder="Ej. 2.50"
+            [value]="costoForm()"
+            (input)="costoForm.set($any($event.target).value)"
+          />
+          <span class="ayuda-campo">
+            Con el costo, Reportes descuenta lo que se gasta en empaque de la utilidad. También se
+            actualiza solo cuando registras una entrada con lo que pagaste.
+          </span>
+        </div>
+
+        @if (errorForm()) {
+          <p class="mensaje-error">{{ errorForm() }}</p>
+        }
+        <div class="acciones-formulario">
+          <button type="button" class="boton-embalajes-secundario" (click)="form.set(null)">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-embalajes-principal"
+            [disabled]="guardando()"
+            (click)="guardar()"
+          >
+            {{ guardando() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ===== Entrada / ajuste / merma ===== -->
+  @if (movimiento(); as m) {
+    <div class="overlay">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="tituloMovimiento(m.tipo)"
+        appFocoDialogo
+        (cerrarConEscape)="movimiento.set(null)"
+      >
+        <h2>{{ tituloMovimiento(m.tipo) }}</h2>
+        <p class="ayuda-embalajes">
+          {{ m.embalaje.nombre }} · hay {{ m.embalaje.existencia | number: '1.0-2' }}
+          {{ m.embalaje.unidad_medida }}
+        </p>
+
+        <div class="campo">
+          <label for="mov-cant">
+            {{
+              m.tipo === 'ajuste'
+                ? 'Cantidad real que hay ahora'
+                : 'Cantidad (' + m.embalaje.unidad_medida + ')'
+            }}
+          </label>
+          <input
+            id="mov-cant"
+            type="number"
+            min="0"
+            step="any"
+            inputmode="decimal"
+            [value]="cantidadMov()"
+            (input)="cantidadMov.set($any($event.target).value)"
+          />
+        </div>
+
+        @if (m.tipo === 'entrada') {
+          <div class="campo">
+            <label for="mov-costo">Costo TOTAL de esta compra (opcional)</label>
+            <input
+              id="mov-costo"
+              type="number"
+              min="0"
+              step="any"
+              inputmode="decimal"
+              placeholder="Lo que pagaste por todo"
+              [value]="costoTotalMov()"
+              (input)="costoTotalMov.set($any($event.target).value)"
+            />
+            @if (costoPorPieza() !== null) {
+              <span class="ayuda-campo">
+                = {{ costoPorPieza() | currency: 'MXN' : 'symbol' : '1.2-4' }} por
+                {{ m.embalaje.unidad_medida }}; se guarda como su costo.
+              </span>
+            }
+          </div>
+        }
+
+        <div class="campo">
+          <label for="mov-motivo">Motivo {{ m.tipo === 'entrada' ? '(opcional)' : '*' }}</label>
+          <input
+            id="mov-motivo"
+            type="text"
+            autocomplete="off"
+            [value]="motivoMov()"
+            (input)="motivoMov.set($any($event.target).value)"
+          />
+        </div>
+
+        @if (errorMov()) {
+          <p class="mensaje-error">{{ errorMov() }}</p>
+        }
+        <div class="acciones-formulario">
+          <button type="button" class="boton-embalajes-secundario" (click)="movimiento.set(null)">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-embalajes-principal"
+            [disabled]="guardandoMov()"
+            (click)="guardarMovimiento()"
+          >
+            {{ guardandoMov() ? 'Guardando...' : 'Registrar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ===== Confirmar eliminar ===== -->
+  @if (aEliminar(); as e) {
+    <div class="overlay">
+      <div
+        class="panel-formulario"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Eliminar embalaje"
+        appFocoDialogo
+        (cerrarConEscape)="aEliminar.set(null)"
+      >
+        <h2>Eliminar "{{ e.nombre }}"</h2>
+        <p class="ayuda-embalajes">
+          Solo se puede eliminar si nunca se usó en una venta; se pierde también su historial de
+          entradas.
+        </p>
+        @if (errorEliminar()) {
+          <p class="mensaje-error">{{ errorEliminar() }}</p>
+        }
+        <div class="acciones-formulario">
+          <button type="button" class="boton-embalajes-secundario" (click)="aEliminar.set(null)">
+            Cancelar
+          </button>
+          <button type="button" class="boton-embalajes-peligro" (click)="confirmarEliminar()">
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

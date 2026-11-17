@@ -373,6 +373,7 @@ textarea:focus-visible {
 .ventas-especiales-header,
 .gastos-header,
 .compras-header,
+.embalajes-header,
 .ticket-header {
   position: relative;
   overflow: hidden;
@@ -420,6 +421,7 @@ textarea:focus-visible {
 .ventas-especiales-header h1,
 .gastos-header h1,
 .compras-header h1,
+.embalajes-header h1,
 .ticket-header h1,
 .bitacora-header h1 {
   min-width: 0;
@@ -452,6 +454,7 @@ textarea:focus-visible {
 .ventas-especiales-header::before,
 .gastos-header::before,
 .compras-header::before,
+.embalajes-header::before,
 .ticket-header::before,
 .bitacora-header::before {
   content: '';
@@ -823,17 +826,20 @@ textarea {
   .ventas-especiales-header,
   .gastos-header,
   .compras-header,
+  .embalajes-header,
   .ticket-header,
   .bitacora-header {
     gap: 8px !important;
     padding-inline: 10px !important;
   }
   .compras-header h1,
+  .embalajes-header h1,
   .ventas-especiales-header h1,
   .ticket-header h1 {
     font-size: 1.1rem !important;
   }
   .compras-header .boton-volver,
+  .embalajes-header .boton-volver,
   .ventas-especiales-header .boton-volver,
   .ticket-header .boton-volver {
     padding: 0 12px !important;

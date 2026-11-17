@@ -286,6 +286,72 @@
         <p class="ayuda-campo">Los campos con * son obligatorios.</p>
       </section>
 
+      <section class="tarjeta-embalaje-ve">
+        <h2>Embalaje y decoraciones</h2>
+        <p class="ayuda-campo">
+          Qué se usará para empacar y decorar este pedido. Se descuenta del inventario cuando la
+          cotización se marca como entregada.
+        </p>
+        <div class="grupo-embalaje-ve">
+          <span class="grupo-embalaje-ve-titulo">Embalaje</span>
+          @for (e of soloEmbalajes(); track e.id) {
+            <div class="fila-embalaje-ve">
+              <span>{{ e.nombre }}</span>
+              <span class="contador-embalaje-ve">
+                @if (cantidadEmbalaje(e.id) > 0) {
+                  <button
+                    type="button"
+                    [attr.aria-label]="'Quitar uno de ' + e.nombre"
+                    (click)="restarEmbalaje(e)"
+                  >
+                    −
+                  </button>
+                  <strong>{{ cantidadEmbalaje(e.id) }}</strong>
+                }
+                <button
+                  type="button"
+                  [attr.aria-label]="'Agregar uno de ' + e.nombre"
+                  (click)="sumarEmbalaje(e)"
+                >
+                  +
+                </button>
+              </span>
+            </div>
+          } @empty {
+            <p class="ayuda-campo">Todavía no hay. Se agregan en Inventario → Embalajes.</p>
+          }
+        </div>
+        <div class="grupo-embalaje-ve">
+          <span class="grupo-embalaje-ve-titulo">Decoraciones</span>
+          @for (e of soloDecoraciones(); track e.id) {
+            <div class="fila-embalaje-ve">
+              <span>{{ e.nombre }}</span>
+              <span class="contador-embalaje-ve">
+                @if (cantidadEmbalaje(e.id) > 0) {
+                  <button
+                    type="button"
+                    [attr.aria-label]="'Quitar uno de ' + e.nombre"
+                    (click)="restarEmbalaje(e)"
+                  >
+                    −
+                  </button>
+                  <strong>{{ cantidadEmbalaje(e.id) }}</strong>
+                }
+                <button
+                  type="button"
+                  [attr.aria-label]="'Agregar uno de ' + e.nombre"
+                  (click)="sumarEmbalaje(e)"
+                >
+                  +
+                </button>
+              </span>
+            </div>
+          } @empty {
+            <p class="ayuda-campo">Todavía no hay. Se agregan en Inventario → Embalajes.</p>
+          }
+        </div>
+      </section>
+
       <section class="tarjeta-agregar-productos">
         <h2>Agregar productos del menú</h2>
 

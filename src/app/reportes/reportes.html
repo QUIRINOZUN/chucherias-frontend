@@ -832,6 +832,21 @@
               }}</span>
               <span class="stat-reporte-etiqueta">Costo de venta</span>
             </div>
+            @if (
+              (r.rentabilidad.costo_embalaje ?? 0) > 0 ||
+              (r.rentabilidad.embalajes_sin_costo ?? 0) > 0
+            ) {
+              <a
+                class="stat-reporte stat-reporte-enlace"
+                routerLink="/embalajes"
+                title="Ir a Embalajes"
+              >
+                <span class="stat-reporte-valor">{{
+                  r.rentabilidad.costo_embalaje ?? 0 | currency: 'MXN'
+                }}</span>
+                <span class="stat-reporte-etiqueta">Embalaje y decoración</span>
+              </a>
+            }
             <div class="stat-reporte">
               <span class="stat-reporte-valor">{{
                 r.rentabilidad.lineas_sin_costo > 0
@@ -859,6 +874,13 @@
             </p>
           }
 
+          @if ((r.rentabilidad.embalajes_sin_costo ?? 0) > 0) {
+            <p class="seccion-reporte-aviso">
+              Hay embalajes usados en el periodo que todavía no tienen costo capturado; captúralo en
+              Inventario → Embalajes para que la utilidad sea exacta.
+            </p>
+          }
+
           <!-- UTILIDAD NETA (2026-10-29): cierra el círculo que dejó abierto
                el módulo Gastos — utilidad bruta menos mano de obra y gastos
                generales del periodo. Es la cifra "hero" de esta pestaña, el
@@ -867,7 +889,7 @@
           <div class="hero-reporte hero-reporte-neutral">
             <div class="hero-reporte-texto">
               <span class="hero-reporte-etiqueta">
-                Ingresos − costo de insumos − mano de obra − gastos generales
+                Ingresos − costo de insumos y embalaje − mano de obra − gastos generales
               </span>
               <span class="hero-reporte-valor">{{
                 r.rentabilidad.lineas_sin_costo > 0

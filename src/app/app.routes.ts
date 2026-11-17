@@ -48,6 +48,7 @@ import { NominaComponent } from './nomina/nomina';
 import { VentasEspecialesComponent } from './ventas-especiales/ventas-especiales';
 import { GastosComponent } from './gastos/gastos';
 import { ComprasComponent } from './compras/compras';
+import { EmbalajesComponent } from './embalajes/embalajes';
 import { BitacoraComponent } from './bitacora/bitacora';
 import { TicketComponent } from './ticket/ticket';
 import { authGuard, rolGuard } from './core/auth-guard';
@@ -150,6 +151,12 @@ export const routes: Routes = [
   {
     path: 'compras',
     component: ComprasComponent,
+    canActivate: [authGuard, rolGuard('administrador', 'encargado')],
+  },
+  // Embalajes y decoraciones (2026-11-17): parte de Inventario, mismos roles.
+  {
+    path: 'embalajes',
+    component: EmbalajesComponent,
     canActivate: [authGuard, rolGuard('administrador', 'encargado')],
   },
   // Gastos generales del negocio — información financiera, igual criterio
