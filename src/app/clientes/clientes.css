@@ -742,3 +742,21 @@
   font-weight: 700;
   text-decoration: underline;
 }
+
+/* Recordatorios: filas con aire y un botón de cierre separado de la lista. */
+.lista-recordatorios li {
+  padding: 8px 0;
+}
+.lista-recordatorios li > span:first-child {
+  min-width: 0;
+}
+.lista-recordatorios li > .texto-ayuda-recordatorios {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.panel-recordatorios .lista-recordatorios + h3 {
+  margin-top: 20px;
+}
+.panel-recordatorios .acciones-formulario {
+  margin-top: 18px;
+}

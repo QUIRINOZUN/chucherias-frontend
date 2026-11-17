@@ -1,4 +1,5 @@
-/* ticket.css — DATOS DEL TICKET. Encabezado y botones base vienen de styles.css. */
+/* ticket.css — DATOS DEL TICKET. La decoración del encabezado (fondo, franja, insignia) viene de
+   styles.css; aquí va su disposición y los botones, igual que en los demás módulos. */
 :host {
   --acento-modulo: var(--mod-reportes);
   display: block;
@@ -6,6 +7,41 @@
   min-height: 100dvh;
   background: var(--pos-bg-main);
   color: var(--pos-text-primary);
+}
+.ticket-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--pos-bg-card);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.ticket-header h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.25rem;
+}
+.boton-volver,
+.boton-tema {
+  min-height: 44px;
+  border: none;
+  background: var(--pos-bg-main);
+  color: var(--pos-text-primary);
+  border-radius: var(--radio-pastilla);
+  padding: 0 18px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.boton-tema {
+  min-width: 44px;
+  padding: 0;
+  justify-content: center;
 }
 .ticket-container {
   max-width: 1100px;
