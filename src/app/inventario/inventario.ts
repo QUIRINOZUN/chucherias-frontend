@@ -1130,6 +1130,12 @@ export class InventarioComponent implements OnInit {
       });
   }
 
+  /** Lleva al módulo de pedidos a proveedores (cierra la ventana de entrada). */
+  irACompras(): void {
+    this.cerrarMovimiento();
+    this.router.navigate(['/compras']);
+  }
+
   volverAlDashboard(): void {
     this.router.navigate(['/dashboard']);
   }

@@ -515,3 +515,22 @@
     width: 100%;
   }
 }
+
+.acciones-grupo-compras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.boton-compras-secundario {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 2px solid var(--acento-modulo);
+  border-radius: var(--radio-pastilla);
+  color: var(--acento-modulo);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+}

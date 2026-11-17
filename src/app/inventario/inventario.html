@@ -311,6 +311,7 @@
                           (click)="abrirMovimiento(insumo, 'entrada')"
                         >
                           <svg class="icono" aria-hidden="true"><use href="#ic-mas" /></svg>
+                          <span class="boton-surtir-texto">Entrada</span>
                         </button>
                         <!-- Resto de acciones en un menú "⋯" (2026-11-04): 150 filas por
                              5 controles era ruido; "+" sigue a la vista por ser la más frecuente. -->
@@ -668,6 +669,16 @@
           }}
         </h2>
         <p class="subtitulo-movimiento">{{ insumoMovimiento()?.nombre }}</p>
+        @if (tipo === 'entrada') {
+          <div class="aviso-entrada">
+            <strong>Úsalo cuando llegue mercancía.</strong> Escribe cuánto llegó y, si quieres,
+            cuánto pagaste en total: así sube la existencia y se guarda el costo de ese insumo. Si
+            todavía no compraste, mira qué falta en <em>Compras</em>.
+            <button type="button" class="enlace-aviso-entrada" (click)="irACompras()">
+              Ir a Compras
+            </button>
+          </div>
+        }
 
         <div class="campo">
           <label for="cantidad-movimiento">

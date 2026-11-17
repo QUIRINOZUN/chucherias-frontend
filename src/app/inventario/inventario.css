@@ -656,13 +656,17 @@
    primero, como botón circular de acento, para que salte a la vista. */
 .boton-surtir {
   flex-shrink: 0;
-  width: 44px;
+  min-width: 44px;
   height: 44px;
+  padding: 0 14px 0 10px;
+  gap: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radio-pastilla);
+  font-weight: 700;
+  font-size: 0.8rem;
   background: var(--acento-modulo);
   color: #fff;
   cursor: pointer;
@@ -1468,4 +1472,27 @@
 .conteo-exito {
   color: var(--exito-texto);
   font-weight: 600;
+}
+
+/* Aclaración de cuándo usar "Entrada" frente a un pedido de Compras. */
+.aviso-entrada {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-left: 4px solid var(--acento-modulo);
+  background: color-mix(in srgb, var(--acento-modulo) 8%, var(--pos-bg-card));
+  border-radius: var(--radio-sm);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+.enlace-aviso-entrada {
+  display: block;
+  min-height: 44px;
+  margin-top: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--acento-modulo);
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
 }
