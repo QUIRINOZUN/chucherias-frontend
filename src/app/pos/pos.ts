@@ -452,8 +452,7 @@ export class PosComponent implements OnInit, OnDestroy {
 
   // Referencia al temporizador del sondeo, para poder detenerlo al salir.
   private intervaloRetirosId?: ReturnType<typeof setInterval>;
-  // Refresco silencioso del menú cada 5 min: una promoción que empieza o termina
-  // (2026-11-16) cambia el precio sin que haya que recargar la página.
+  // Refresco silencioso del menú cada 5 min: mantiene al día lo que está "Agotado".
   private intervaloCatalogoId?: ReturnType<typeof setInterval>;
 
   // ---------------------------------------------------------------------------
@@ -686,7 +685,7 @@ export class PosComponent implements OnInit, OnDestroy {
         this.errorCarga.set(this.interpretarErrorConexion(error)),
     });
 
-    this.catalogoService.obtenerProductos(false, true).subscribe({
+    this.catalogoService.obtenerProductos().subscribe({
       next: (productos) => {
         this.productos.set(productos);
         this.cargando.set(false);
@@ -699,7 +698,7 @@ export class PosComponent implements OnInit, OnDestroy {
 
     this.intervaloCatalogoId = setInterval(
       () =>
-        this.catalogoService.obtenerProductos(false, true).subscribe({
+        this.catalogoService.obtenerProductos().subscribe({
           next: (productos) => this.productos.set(productos),
           error: () => {},
         }),

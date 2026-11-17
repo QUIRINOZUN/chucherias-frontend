@@ -649,14 +649,8 @@
                 <span>{{ variante.nombre }}</span>
                 @if (variante.insumos_suficientes) {
                   <span class="precio-variante">
-                    @if (variante.promocion) {
-                      <s class="precio-tachado">{{ variante.precio_original | currency: 'MXN' }}</s>
-                    }
                     {{ variante.precio | currency: 'MXN' }}
                   </span>
-                  @if (variante.promocion) {
-                    <span class="etiqueta-promocion">{{ variante.promocion }}</span>
-                  }
                 } @else {
                   <span class="etiqueta-agotado">Agotado</span>
                 }

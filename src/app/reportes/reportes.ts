@@ -268,7 +268,7 @@ export class ReportesComponent implements OnInit {
     {
       clase: 'rompecabezas',
       titulo: 'Rompecabezas',
-      consejo: 'Dejan buen margen pero se venden poco. Promociónalos.',
+      consejo: 'Dejan buen margen pero se venden poco. Dales más visibilidad en el menú.',
     },
     {
       clase: 'perro',

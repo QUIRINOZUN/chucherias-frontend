@@ -139,8 +139,6 @@
   --mod-gastos: #786f08;
   /* Compras comparte la familia de Inventario (mismo dominio: abastecer). */
   --mod-compras: var(--mod-inventario);
-  /* Promociones comparte la familia de Ventas especiales (fucsia: es una "oferta"). */
-  --mod-promociones: var(--mod-recetario);
   /* grafito/tinta — Bitácora (2026-10-30): tercer módulo "neutro" (junto a
      Reportes y Checklist) — un registro de auditoría no es un dominio de
      negocio propio, así que sigue el mismo criterio de no sumar un tono
@@ -375,7 +373,6 @@ textarea:focus-visible {
 .ventas-especiales-header,
 .gastos-header,
 .compras-header,
-.promociones-header,
 .ticket-header {
   position: relative;
   overflow: hidden;
@@ -423,7 +420,6 @@ textarea:focus-visible {
 .ventas-especiales-header h1,
 .gastos-header h1,
 .compras-header h1,
-.promociones-header h1,
 .ticket-header h1,
 .bitacora-header h1 {
   min-width: 0;
@@ -456,7 +452,6 @@ textarea:focus-visible {
 .ventas-especiales-header::before,
 .gastos-header::before,
 .compras-header::before,
-.promociones-header::before,
 .ticket-header::before,
 .bitacora-header::before {
   content: '';
@@ -810,7 +805,7 @@ textarea {
 }
 
 /* Encabezados en teléfonos angostos (2026-11-17): con "Volver" + insignia + botón de tema, un título
-   como "Promociones" quedaba cortado con puntos suspensivos. Se compacta el espacio, no el contenido. */
+   como "Compras" quedaba cortado con puntos suspensivos. Se compacta el espacio, no el contenido. */
 @media (max-width: 420px) {
   .pos-header,
   .caja-header,
@@ -828,20 +823,17 @@ textarea {
   .ventas-especiales-header,
   .gastos-header,
   .compras-header,
-  .promociones-header,
   .ticket-header,
   .bitacora-header {
     gap: 8px !important;
     padding-inline: 10px !important;
   }
   .compras-header h1,
-  .promociones-header h1,
   .ventas-especiales-header h1,
   .ticket-header h1 {
     font-size: 1.1rem !important;
   }
   .compras-header .boton-volver,
-  .promociones-header .boton-volver,
   .ventas-especiales-header .boton-volver,
   .ticket-header .boton-volver {
     padding: 0 12px !important;

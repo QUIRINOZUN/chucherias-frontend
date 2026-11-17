@@ -3288,24 +3288,6 @@
   color: var(--exito-texto);
 }
 
-/* Promociones (2026-11-16) */
-.precio-tachado {
-  margin-right: 6px;
-  font-size: 0.8em;
-  font-weight: 400;
-  color: var(--pos-text-secondary);
-}
-.etiqueta-promocion {
-  display: inline-block;
-  margin-top: 2px;
-  padding: 1px 8px;
-  border-radius: var(--radio-pastilla);
-  background: color-mix(in srgb, var(--exito-texto) 14%, transparent);
-  color: var(--exito-texto);
-  font-size: 0.72rem;
-  font-weight: 700;
-}
-
 /* Ventas sin internet (2026-11-16) */
 .aviso-cola {
   display: flex;
