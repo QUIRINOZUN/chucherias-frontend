@@ -120,6 +120,8 @@ export interface VentaHistorial {
   fecha: string;
   subtotal: string;
   descuento_lealtad: string;
+  cargo_envio?: string;
+  propina?: string;
   total: string;
   metodo_pago: MetodoPago;
   // 'completada' incluye una venta con ALGUNOS productos cancelados pero no

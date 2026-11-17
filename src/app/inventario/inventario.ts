@@ -91,6 +91,10 @@ function nivelStock(insumo: Insumo): NivelStock {
   if (insumo.existencia < 0) {
     return 'negativo';
   }
+  // Sin mínimo capturado no hay nivel que comparar (igual que insumo.alerta).
+  if (insumo.cantidad_minima <= 0) {
+    return 'alto';
+  }
   if (insumo.existencia <= insumo.cantidad_minima) {
     return 'bajo';
   }

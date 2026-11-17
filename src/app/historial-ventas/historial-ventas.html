@@ -433,6 +433,19 @@
                     </span>
                   </div>
 
+                  <!-- Envío y propina: no están en el total de productos, pero sí en lo cobrado (la
+                   propina no es ingreso del negocio; Caja la suma al efectivo o a la transferencia). -->
+                  @if (+(venta.cargo_envio ?? 0) > 0 || +(venta.propina ?? 0) > 0) {
+                    <p class="venta-domicilio">
+                      @if (+(venta.cargo_envio ?? 0) > 0) {
+                        Incluye envío de {{ venta.cargo_envio | currency: 'MXN' }}.
+                      }
+                      @if (+(venta.propina ?? 0) > 0) {
+                        Propina aparte: {{ venta.propina | currency: 'MXN' }} (no es ingreso).
+                      }
+                    </p>
+                  }
+
                   @if (venta.tipo_entrega === 'domicilio') {
                     <p class="venta-domicilio">
                       {{ venta.cliente_nombre }} · {{ venta.cliente_direccion }} ·
@@ -464,6 +477,12 @@
                   @if (venta.estado === 'completada') {
                     @if (cancelandoId() === venta.id) {
                       <div class="panel-cancelacion">
+                        @if (+(venta.propina ?? 0) > 0) {
+                          <p class="panel-cancelacion-subtitulo">
+                            Esta venta tuvo propina de {{ venta.propina | currency: 'MXN' }}. El
+                            reembolso no la incluye: si se devuelve al cliente, entréguela aparte.
+                          </p>
+                        }
                         <!-- Qué productos se cancelan — solo si hay más de uno activo;
                        con uno solo, cancelarlo ES cancelar la venta. -->
                         @if (lineasActivas(venta).length > 1) {
