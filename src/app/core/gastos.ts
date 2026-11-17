@@ -138,4 +138,12 @@ export class GastosService {
   obtenerAlertas(): Observable<AlertaGastoRecurrente[]> {
     return this.http.get<AlertaGastoRecurrente[]>(`${this.apiUrl}/gastos/alertas`);
   }
+
+  // POST /api/gastos/alertas/baja — deja de avisar de un gasto recurrente que ya no se paga.
+  darDeBajaAlerta(categoriaId: number, concepto: string): Observable<{ actualizados: number }> {
+    return this.http.post<{ actualizados: number }>(`${this.apiUrl}/gastos/alertas/baja`, {
+      categoria_id: categoriaId,
+      concepto,
+    });
+  }
 }

@@ -738,6 +738,19 @@
   font-size: 0.82rem;
 }
 
+.boton-baja-alerta {
+  margin-left: auto;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--pos-border);
+  border-radius: var(--radio-pastilla);
+  background: transparent;
+  color: var(--pos-text-secondary);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
 .item-alerta-vencida .item-alerta-estado {
   color: var(--peligro-texto);
   font-weight: 700;

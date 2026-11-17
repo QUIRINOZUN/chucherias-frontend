@@ -178,6 +178,19 @@ export class GastosComponent implements OnInit {
     this.cargarAlertas();
   }
 
+  // "Ya no se paga": quita el aviso de esa serie (los gastos registrados se conservan).
+  darDeBajaAlerta(alerta: AlertaGastoRecurrente): void {
+    if (
+      !confirm(
+        `¿Dejar de avisar del pago "${alerta.concepto}"? Los gastos ya registrados se conservan.`,
+      )
+    )
+      return;
+    this.gastosService.darDeBajaAlerta(alerta.categoria_id, alerta.concepto).subscribe({
+      next: () => this.cargarAlertas(),
+    });
+  }
+
   cargarAlertas(): void {
     this.gastosService.obtenerAlertas().subscribe({
       next: (alertas) => this.alertasRecurrentes.set(alertas),

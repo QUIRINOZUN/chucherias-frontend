@@ -54,6 +54,9 @@
                   {{ alerta.dias_restantes === 1 ? 'día' : 'días' }} (día {{ alerta.dia_pago_mes }})
                 }
               </span>
+              <button type="button" class="boton-baja-alerta" (click)="darDeBajaAlerta(alerta)">
+                Ya no se paga
+              </button>
             </li>
           }
         </ul>
