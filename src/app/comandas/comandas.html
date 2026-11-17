@@ -253,13 +253,30 @@
                 }
               </ul>
 
-              @if (orden.embalajes && orden.embalajes.length > 0) {
-                <p class="embalaje-orden">
-                  <strong>Para llevar:</strong>
-                  @for (e of orden.embalajes; track e.nombre; let ultimo = $last) {
-                    {{ e.cantidad }}× {{ e.nombre }}{{ ultimo ? '' : ',' }}
+              <!-- EMBALAJE PARA LLEVAR (2026-11-17): lo elige quien empaca; se descuenta del inventario. -->
+              @if (
+                (orden.embalajes && orden.embalajes.length > 0) ||
+                (puedeAvanzar() && embalajesCatalogo().length > 0)
+              ) {
+                <div class="embalaje-orden">
+                  @if (orden.embalajes && orden.embalajes.length > 0) {
+                    <p>
+                      <strong>Para llevar:</strong>
+                      @for (e of orden.embalajes; track e.nombre; let ultimo = $last) {
+                        {{ e.cantidad }}× {{ e.nombre }}{{ ultimo ? '' : ',' }}
+                      }
+                    </p>
                   }
-                </p>
+                  @if (puedeAvanzar() && embalajesCatalogo().length > 0) {
+                    <button type="button" class="boton-embalaje" (click)="abrirEmbalaje(orden)">
+                      {{
+                        orden.embalajes && orden.embalajes.length > 0
+                          ? 'Cambiar embalaje'
+                          : 'Elegir embalaje'
+                      }}
+                    </button>
+                  }
+                </div>
               }
 
               <!-- BOTÓN DE AVANCE: solo administrador, encargado y auxiliar. Pasa la comanda al siguiente estado;
@@ -283,6 +300,75 @@
           }
         </section>
       }
+    </div>
+  }
+
+  <!-- VENTANA: embalaje para llevar de una orden. -->
+  @if (ordenEmbalaje(); as orden) {
+    <div class="overlay">
+      <div
+        class="panel-tutorial"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Embalaje para llevar"
+        appFocoDialogo
+        (cerrarConEscape)="ordenEmbalaje.set(null)"
+      >
+        <div class="panel-tutorial-encabezado">
+          <h2>Embalaje de {{ orden.numero_orden }}</h2>
+        </div>
+        <p class="ayuda-embalaje">
+          Elige lo que usaste para empacar este pedido. Se descuenta del inventario al guardar; si
+          te equivocas, vuelve a abrirlo y corrígelo.
+        </p>
+        <ul class="lista-embalaje">
+          @for (e of embalajesCatalogo(); track e.id) {
+            <li class="fila-embalaje" [class.fila-embalaje-agotada]="e.agotado">
+              <span class="fila-embalaje-nombre">
+                {{ e.nombre }}
+                @if (e.agotado) {
+                  <small>Agotado</small>
+                }
+              </span>
+              <span class="fila-embalaje-contador">
+                @if (cantidadEmbalaje(e.id) > 0) {
+                  <button
+                    type="button"
+                    [attr.aria-label]="'Quitar uno de ' + e.nombre"
+                    (click)="restarEmbalaje(e)"
+                  >
+                    −
+                  </button>
+                  <strong>{{ cantidadEmbalaje(e.id) }}</strong>
+                }
+                <button
+                  type="button"
+                  [attr.aria-label]="'Agregar uno de ' + e.nombre"
+                  (click)="sumarEmbalaje(e)"
+                >
+                  +
+                </button>
+              </span>
+            </li>
+          }
+        </ul>
+        @if (errorEmbalaje()) {
+          <p class="mensaje-error-embalaje">{{ errorEmbalaje() }}</p>
+        }
+        <div class="acciones-embalaje">
+          <button type="button" class="boton-embalaje" (click)="ordenEmbalaje.set(null)">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton-embalaje boton-embalaje-principal"
+            [disabled]="guardandoEmbalaje()"
+            (click)="guardarEmbalaje()"
+          >
+            {{ guardandoEmbalaje() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
     </div>
   }
 

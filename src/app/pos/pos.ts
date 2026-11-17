@@ -43,7 +43,6 @@ import { NegocioService } from '../core/negocio';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Embalaje, EmbalajesService } from '../core/embalajes';
 import { AuthService } from '../core/auth';
 import { CajaService, MovimientoCaja, TipoMovimientoCaja } from '../core/caja';
 import { CatalogoService, Categoria, Producto, Variante } from '../core/catalogo';
@@ -206,36 +205,6 @@ export class PosComponent implements OnInit, OnDestroy {
     if (c && typeof c.randomUUID === 'function') return c.randomUUID();
     return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
   }
-  // Embalaje para llevar (2026-11-17): catálogo de ventas normales y cuántos de cada uno lleva el pedido.
-  embalajesCatalogo = signal<Embalaje[]>([]);
-  embalajeSeleccion = signal<Map<number, number>>(new Map());
-
-  cantidadEmbalaje(id: number): number {
-    return this.embalajeSeleccion().get(id) ?? 0;
-  }
-
-  sumarEmbalaje(e: Embalaje): void {
-    this.embalajeSeleccion.update((m) => {
-      const nuevo = new Map(m);
-      nuevo.set(e.id, Math.min((nuevo.get(e.id) ?? 0) + 1, 50));
-      return nuevo;
-    });
-  }
-
-  restarEmbalaje(e: Embalaje): void {
-    this.embalajeSeleccion.update((m) => {
-      const nuevo = new Map(m);
-      const cant = (nuevo.get(e.id) ?? 0) - 1;
-      if (cant <= 0) nuevo.delete(e.id);
-      else nuevo.set(e.id, cant);
-      return nuevo;
-    });
-  }
-
-  totalEmbalajes = computed(() =>
-    [...this.embalajeSeleccion().values()].reduce((a, b) => a + b, 0),
-  );
-
   // Pedido programado (2026-11-16): "HH:MM" de hoy (o de mañana si esa hora ya pasó);
   // vacío = pedido para ahora.
   programarParaForm = signal('');
@@ -700,17 +669,12 @@ export class PosComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     public themeService: ThemeService,
     private router: Router,
-    private embalajesService: EmbalajesService,
   ) {}
 
   // Al abrir la pantalla se cargan categorías y productos del servidor, y
   // arranca el sondeo de retiros de efectivo sin confirmar.
   ngOnInit(): void {
     this.negocioService.cargar();
-    this.embalajesService.listar('venta').subscribe({
-      next: (l) => this.embalajesCatalogo.set(l),
-      error: () => this.embalajesCatalogo.set([]),
-    });
     this.catalogoService.obtenerCategorias().subscribe({
       next: (categorias) => {
         this.categorias.set(categorias);
@@ -1567,14 +1531,6 @@ export class PosComponent implements OnInit, OnDestroy {
       ...(clienteLealtad ? { cliente_id: clienteLealtad.id } : {}),
       ...(programadaIso ? { programada_para: programadaIso } : {}),
       ...(propinaMonto > 0 ? { propina: propinaMonto } : {}),
-      ...(this.totalEmbalajes() > 0
-        ? {
-            embalajes: [...this.embalajeSeleccion().entries()].map(([insumo_id, cantidad]) => ({
-              insumo_id,
-              cantidad,
-            })),
-          }
-        : {}),
       clave: this.claveVenta || (this.claveVenta = this.nuevaClave()),
       items: itemsCarrito.map((item) => ({
         variante_id: item.varianteId,
@@ -1928,7 +1884,6 @@ export class PosComponent implements OnInit, OnDestroy {
       this.clienteTelefonoForm.set('');
       this.programarParaForm.set('');
       this.propinaForm.set('');
-      this.embalajeSeleccion.set(new Map());
       this.repartidorSeleccionadoId.set(null);
       this.clienteLealtadSeleccionado.set(null);
       this.clienteLealtadQuery.set('');
@@ -1951,7 +1906,6 @@ export class PosComponent implements OnInit, OnDestroy {
     this.clienteTelefonoForm.set('');
     this.programarParaForm.set('');
     this.propinaForm.set('');
-    this.embalajeSeleccion.set(new Map());
     this.repartidorSeleccionadoId.set(null);
     this.montoRecibido.set(null);
     this.conteoEfectivo.set(new Map());

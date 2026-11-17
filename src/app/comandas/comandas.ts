@@ -47,6 +47,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth';
 import { Cocinero, EmpleadosService, Repartidor } from '../core/empleados';
+import { Embalaje, EmbalajesService } from '../core/embalajes';
 import { FocoDialogoDirective } from '../core/foco-dialogo';
 import { EstadoOrden, ItemOrden, Orden, OrdenesService } from '../core/ordenes';
 import { PasoTutorial, RecetasService } from '../core/recetas';
@@ -210,6 +211,58 @@ export class ComandasComponent implements OnInit, OnDestroy {
   // mientras carga o si esa variante no tiene tutorial capturado todavía) y
   // el estado de la petición.
   itemTutorial = signal<ItemOrden | null>(null);
+
+  // Embalaje para llevar (2026-11-17): quien empaca elige charolas, cajas, bolsas... de cada orden.
+  embalajesCatalogo = signal<Embalaje[]>([]);
+  ordenEmbalaje = signal<Orden | null>(null);
+  embalajeSel = signal<Map<number, number>>(new Map());
+  guardandoEmbalaje = signal(false);
+  errorEmbalaje = signal('');
+
+  abrirEmbalaje(orden: Orden): void {
+    this.errorEmbalaje.set('');
+    this.embalajeSel.set(new Map((orden.embalajes ?? []).map((e) => [e.insumo_id, e.cantidad])));
+    this.ordenEmbalaje.set(orden);
+  }
+
+  cantidadEmbalaje(id: number): number {
+    return this.embalajeSel().get(id) ?? 0;
+  }
+
+  sumarEmbalaje(e: Embalaje): void {
+    this.embalajeSel.update((m) => new Map(m).set(e.id, Math.min((m.get(e.id) ?? 0) + 1, 50)));
+  }
+
+  restarEmbalaje(e: Embalaje): void {
+    this.embalajeSel.update((m) => {
+      const nuevo = new Map(m);
+      const cant = (nuevo.get(e.id) ?? 0) - 1;
+      if (cant <= 0) nuevo.delete(e.id);
+      else nuevo.set(e.id, cant);
+      return nuevo;
+    });
+  }
+
+  guardarEmbalaje(): void {
+    const orden = this.ordenEmbalaje();
+    if (!orden) return;
+    this.guardandoEmbalaje.set(true);
+    const lista = [...this.embalajeSel().entries()].map(([insumo_id, cantidad]) => ({
+      insumo_id,
+      cantidad,
+    }));
+    this.ordenesService.guardarEmbalajes(orden.id, lista).subscribe({
+      next: () => {
+        this.guardandoEmbalaje.set(false);
+        this.ordenEmbalaje.set(null);
+        this.cargarOrdenes();
+      },
+      error: (e: HttpErrorResponse) => {
+        this.guardandoEmbalaje.set(false);
+        this.errorEmbalaje.set(e.error?.error || 'No se pudo guardar el embalaje.');
+      },
+    });
+  }
   pasosTutorial = signal<PasoTutorial[]>([]);
   cargandoTutorial = signal(false);
   // Foto de referencia "así debe quedar" (2026-10-12) — null mientras carga
@@ -234,6 +287,7 @@ export class ComandasComponent implements OnInit, OnDestroy {
     private ordenesService: OrdenesService,
     private recetasService: RecetasService,
     private empleadosService: EmpleadosService,
+    private embalajesService: EmbalajesService,
     private authService: AuthService,
     public themeService: ThemeService,
     private router: Router,
@@ -248,6 +302,13 @@ export class ComandasComponent implements OnInit, OnDestroy {
     document.addEventListener('pointerdown', this.alInteractuar);
     document.addEventListener('keydown', this.alInteractuar);
     this.prepararAudio();
+
+    if (this.puedeAvanzar()) {
+      this.embalajesService.listar('venta').subscribe({
+        next: (lista) => this.embalajesCatalogo.set(lista),
+        error: () => this.embalajesCatalogo.set([]),
+      });
+    }
 
     if (this.puedeAsignarRepartidor()) {
       this.empleadosService.listarRepartidores().subscribe({

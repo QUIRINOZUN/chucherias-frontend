@@ -55,7 +55,7 @@ export interface Orden {
   programada_para: string | null;
   items: ItemOrden[];
   // Embalaje para llevar elegido en el cobro (2026-11-17).
-  embalajes?: { nombre: string; cantidad: number }[];
+  embalajes?: { insumo_id: number; nombre: string; cantidad: number }[];
 }
 
 // Un renglón del historial de tiempos de una orden (RF-08): cuánto duró en
@@ -107,6 +107,18 @@ export class OrdenesService {
     return this.http.patch<{ id: number; repartidor_id: number | null }>(
       `${this.apiUrl}/ordenes/${ordenId}/repartidor`,
       { repartidor_id: repartidorId },
+    );
+  }
+
+  // PATCH /api/ordenes/:id/embalajes — el embalaje para llevar que usó quien empaca (2026-11-17).
+  // Se manda la lista completa; el servidor ajusta el inventario con la diferencia.
+  guardarEmbalajes(
+    ordenId: number,
+    embalajes: { insumo_id: number; cantidad: number }[],
+  ): Observable<{ embalajes: { insumo_id: number; cantidad: number }[] }> {
+    return this.http.patch<{ embalajes: { insumo_id: number; cantidad: number }[] }>(
+      `${this.apiUrl}/ordenes/${ordenId}/embalajes`,
+      { embalajes },
     );
   }
 
